@@ -1,0 +1,2 @@
+global-exclude test/*
+global-exclude *.pyc
