@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html><head>
+<title>revpimodio2.helper</title>
+<meta charset="UTF-8">
+</head>
+<body style="background-color:#FFFFFF;color:#000000"><a NAME="top" ID="top"></a>
+<h1 style="background-color:#FFFFFF;color:#0000FF">
+revpimodio2.helper</h1>
+<p>
+RevPiModIO Helperklassen und Tools.
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Global Attributes</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Classes</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#Cycletools">Cycletools</a></td>
+<td>Werkzeugkasten fuer Cycleloop-Funktion.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#EventCallback">EventCallback</a></td>
+<td>Thread fuer das interne Aufrufen von Event-Funktionen.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#ProcimgWriter">ProcimgWriter</a></td>
+<td>Klasse fuer Synchroniseriungs-Thread.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Functions</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<hr /><hr />
+<a NAME="Cycletools" ID="Cycletools"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">Cycletools</h2>
+<p>
+Werkzeugkasten fuer Cycleloop-Funktion.
+</p><p>
+    Diese Klasse enthaelt Werkzeuge fuer Zyklusfunktionen, wie Taktmerker
+    und Flankenmerker.
+    Zu beachten ist, dass die Flankenmerker beim ersten Zyklus alle den Wert
+    True haben! Ueber den Merker Cycletools.first kann ermittelt werden,
+    ob es sich um den ersten Zyklus handelt.
+</p><p>
+    Taktmerker flag1c, flag5c, flag10c, usw. haben den als Zahl angegebenen
+    Wert an Zyklen jeweils False und True.
+    Beispiel: flag5c hat 5 Zyklen den Wert False und in den naechsten 5 Zyklen
+    den Wert True.
+</p><p>
+    Flankenmerker flank5c, flank10c, usw. haben immer im, als Zahl angebenen
+    Zyklus fuer einen Zyklusdurchlauf den Wert True, sonst False.
+    Beispiel: flank5c hat immer alle 5 Zyklen den Wert True.
+</p><p>
+    Diese Merker koennen z.B. verwendet werden um, an Outputs angeschlossene,
+    Lampen synchron blinken zu lassen.
+</p><p>
+
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+None
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#Cycletools.__init__">Cycletools</a></td>
+<td>Init Cycletools class.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Cycletools._docycle">_docycle</a></td>
+<td>Zyklusarbeiten.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Cycletools.get_tofc">get_tofc</a></td>
+<td>Wert der Ausschaltverzoegerung.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Cycletools.get_tonc">get_tonc</a></td>
+<td>Einschaltverzoegerung.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Cycletools.get_tpc">get_tpc</a></td>
+<td>Impulstimer.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Cycletools.set_tofc">set_tofc</a></td>
+<td>Startet bei Aufruf einen ausschaltverzoegerten Timer.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Cycletools.set_tonc">set_tonc</a></td>
+<td>Startet einen einschaltverzoegerten Timer.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Cycletools.set_tpc">set_tpc</a></td>
+<td>Startet einen Impuls Timer.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="Cycletools.__init__" ID="Cycletools.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools (Constructor)</h3>
+<b>Cycletools</b>(<i></i>)
+<p>
+Init Cycletools class.
+</p><a NAME="Cycletools._docycle" ID="Cycletools._docycle"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools._docycle</h3>
+<b>_docycle</b>(<i></i>)
+<p>
+Zyklusarbeiten.
+</p><a NAME="Cycletools.get_tofc" ID="Cycletools.get_tofc"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools.get_tofc</h3>
+<b>get_tofc</b>(<i>name</i>)
+<p>
+Wert der Ausschaltverzoegerung.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Eindeutiger Name des Timers
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+Wert der Ausschaltverzoegerung
+</dd>
+</dl><a NAME="Cycletools.get_tonc" ID="Cycletools.get_tonc"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools.get_tonc</h3>
+<b>get_tonc</b>(<i>name</i>)
+<p>
+Einschaltverzoegerung.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Eindeutiger Name des Timers
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+Wert der Einschaltverzoegerung
+</dd>
+</dl><a NAME="Cycletools.get_tpc" ID="Cycletools.get_tpc"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools.get_tpc</h3>
+<b>get_tpc</b>(<i>name</i>)
+<p>
+Impulstimer.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Eindeutiger Name des Timers
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+Wert der des Impulses
+</dd>
+</dl><a NAME="Cycletools.set_tofc" ID="Cycletools.set_tofc"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools.set_tofc</h3>
+<b>set_tofc</b>(<i>name, cycles</i>)
+<p>
+Startet bei Aufruf einen ausschaltverzoegerten Timer.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Eindeutiger Name fuer Zugriff auf Timer
+</dd><dt><i>cycles</i></dt>
+<dd>
+Zyklusanzahl, der Verzoegerung wenn nicht neu gestartet
+</dd>
+</dl><a NAME="Cycletools.set_tonc" ID="Cycletools.set_tonc"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools.set_tonc</h3>
+<b>set_tonc</b>(<i>name, cycles</i>)
+<p>
+Startet einen einschaltverzoegerten Timer.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Eindeutiger Name fuer Zugriff auf Timer
+</dd><dt><i>cycles</i></dt>
+<dd>
+Zyklusanzahl, der Verzoegerung wenn neu gestartet
+</dd>
+</dl><a NAME="Cycletools.set_tpc" ID="Cycletools.set_tpc"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools.set_tpc</h3>
+<b>set_tpc</b>(<i>name, cycles</i>)
+<p>
+Startet einen Impuls Timer.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Eindeutiger Name fuer Zugriff auf Timer
+</dd><dt><i>cycles</i></dt>
+<dd>
+Zyklusanzahl, die der Impuls anstehen soll
+</dd>
+</dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="EventCallback" ID="EventCallback"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">EventCallback</h2>
+<p>
+Thread fuer das interne Aufrufen von Event-Funktionen.
+</p><p>
+    Der Eventfunktion, welche dieser Thread aufruft, wird der Thread selber
+    als Parameter uebergeben. Darauf muss bei der definition der Funktion
+    geachtet werden z.B. "def event(th):". Bei umfangreichen Funktionen kann
+    dieser ausgewertet werden um z.B. doppeltes Starten zu verhindern.
+    Ueber EventCallback.ioname kann der Name des IO-Objekts abgerufen werden,
+    welches das Event ausgeloest hast. EventCallback.iovalue gibt den Wert des
+    IO-Objekts zum Ausloesezeitpunkt zurueck.
+    Der Thread stellt das EventCallback.exit Event als Abbruchbedingung fuer
+    die aufgerufene Funktion zur Verfuegung.
+    Durch Aufruf der Funktion EventCallback.stop() wird das exit-Event gesetzt
+    und kann bei Schleifen zum Abbrechen verwendet werden.
+    Mit dem .exit() Event auch eine Wartefunktion realisiert
+    werden: "th.exit.wait(0.5)" - Wartet 500ms oder bricht sofort ab, wenn
+    fuer den Thread .stop() aufgerufen wird.
+</p><p>
+    while not th.exit.is_set():
+        # IO-Arbeiten
+        th.exit.wait(0.5)
+</p><p>
+
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+Thread
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#EventCallback.__init__">EventCallback</a></td>
+<td>Init EventCallback class.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#EventCallback.run">run</a></td>
+<td>Ruft die registrierte Funktion auf.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#EventCallback.stop">stop</a></td>
+<td>Setzt das exit-Event mit dem die Funktion beendet werden kann.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="EventCallback.__init__" ID="EventCallback.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+EventCallback (Constructor)</h3>
+<b>EventCallback</b>(<i>func, name, value</i>)
+<p>
+Init EventCallback class.
+</p><dl>
+<dt><i>func</i></dt>
+<dd>
+Funktion die beim Start aufgerufen werden soll
+</dd><dt><i>name</i></dt>
+<dd>
+IO-Name
+</dd><dt><i>value</i></dt>
+<dd>
+IO-Value zum Zeitpunkt des Events
+</dd>
+</dl><a NAME="EventCallback.run" ID="EventCallback.run"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+EventCallback.run</h3>
+<b>run</b>(<i></i>)
+<p>
+Ruft die registrierte Funktion auf.
+</p><a NAME="EventCallback.stop" ID="EventCallback.stop"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+EventCallback.stop</h3>
+<b>stop</b>(<i></i>)
+<p>
+Setzt das exit-Event mit dem die Funktion beendet werden kann.
+</p>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="ProcimgWriter" ID="ProcimgWriter"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">ProcimgWriter</h2>
+<p>
+Klasse fuer Synchroniseriungs-Thread.
+</p><p>
+    Diese Klasse wird als Thread gestartet, wenn das Prozessabbild zyklisch
+    synchronisiert werden soll. Diese Funktion wird hauptsaechlich fuer das
+    Event-Handling verwendet.
+</p><p>
+
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+Thread
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>refresh</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#ProcimgWriter.__init__">ProcimgWriter</a></td>
+<td>Init ProcimgWriter class.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#ProcimgWriter._gotioerror">_gotioerror</a></td>
+<td>IOError Verwaltung fuer auto_refresh.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#ProcimgWriter.get_refresh">get_refresh</a></td>
+<td>Gibt Zykluszeit zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#ProcimgWriter.run">run</a></td>
+<td>Startet die automatische Prozessabbildsynchronisierung.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#ProcimgWriter.set_refresh">set_refresh</a></td>
+<td>Setzt die Zykluszeit in Millisekunden.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#ProcimgWriter.stop">stop</a></td>
+<td>Beendet die automatische Prozessabbildsynchronisierung.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="ProcimgWriter.__init__" ID="ProcimgWriter.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+ProcimgWriter (Constructor)</h3>
+<b>ProcimgWriter</b>(<i>parentmodio</i>)
+<p>
+Init ProcimgWriter class.
+</p><dl>
+<dt><i>parentmodio</i></dt>
+<dd>
+Parent Object
+</dd>
+</dl><a NAME="ProcimgWriter._gotioerror" ID="ProcimgWriter._gotioerror"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+ProcimgWriter._gotioerror</h3>
+<b>_gotioerror</b>(<i></i>)
+<p>
+IOError Verwaltung fuer auto_refresh.
+</p><a NAME="ProcimgWriter.get_refresh" ID="ProcimgWriter.get_refresh"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+ProcimgWriter.get_refresh</h3>
+<b>get_refresh</b>(<i></i>)
+<p>
+Gibt Zykluszeit zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+int() Zykluszeit in Millisekunden
+</dd>
+</dl><a NAME="ProcimgWriter.run" ID="ProcimgWriter.run"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+ProcimgWriter.run</h3>
+<b>run</b>(<i></i>)
+<p>
+Startet die automatische Prozessabbildsynchronisierung.
+</p><a NAME="ProcimgWriter.set_refresh" ID="ProcimgWriter.set_refresh"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+ProcimgWriter.set_refresh</h3>
+<b>set_refresh</b>(<i>value</i>)
+<p>
+Setzt die Zykluszeit in Millisekunden.
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+int() Millisekunden
+</dd>
+</dl><a NAME="ProcimgWriter.stop" ID="ProcimgWriter.stop"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+ProcimgWriter.stop</h3>
+<b>stop</b>(<i></i>)
+<p>
+Beendet die automatische Prozessabbildsynchronisierung.
+</p>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr />
+</body></html>

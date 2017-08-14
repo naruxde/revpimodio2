@@ -5,6 +5,7 @@
 # (c) Sven Sager, License: LGPLv3
 #
 # -*- coding: utf-8 -*-
+"""RevPiModIO Helperklassen und Tools."""
 import warnings
 from threading import Event, Lock, Thread
 from timeit import default_timer

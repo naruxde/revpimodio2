@@ -5,10 +5,9 @@
 # (c) Sven Sager, License: LGPLv3
 #
 # -*- coding: utf-8 -*-
+"""RevPiModIO Modul fuer die Verwaltung der IOs."""
 import struct
 from threading import Event
-
-from . import device as devicemodule
 from .__init__ import RISING, FALLING, BOTH, IOType
 
 
@@ -17,13 +16,15 @@ class IOList(object):
     """Basisklasse fuer direkten Zugriff auf IO Objekte."""
 
     def __init__(self):
-        """Init IOList clacc."""
+        """Init IOList class."""
         self.__dict_iobyte = {k: [] for k in range(4096)}
+        self.__dict_iorefbyte = {}
+        self.__dict_iorefname = {}
 
     def __contains__(self, key):
         """Prueft ob IO existiert.
-        @param key IO-Name str()
-        @return True, wenn IO vorhanden"""
+        @param key IO-Name str() oder Byte int()
+        @return True, wenn IO vorhanden / Byte belegt"""
         if type(key) == int:
             return key in self.__dict_iobyte \
                 and len(self.__dict_iobyte[key]) > 0
@@ -34,11 +35,26 @@ class IOList(object):
         """Entfernt angegebenen IO.
         @param key IO zum entfernen"""
         # TODO: Prüfen ob auch Bit sein kann
-        # FIXME: IO von DeviceIO Liste entfernen
-        # FIXME: IO aus Eventhandling entfernen
-        dev = getattr(self, key)
-        self.__dict_iobyte[dev.address].remove(dev)
+
+        io_del = getattr(self, key)
+
+        # Alte Events vom Device löschen
+        io_del.unreg_event()
+
+        # IO aus Byteliste und Attributen entfernen
+        self.__dict_iobyte[io_del.address].remove(io_del)
         object.__delattr__(self, key)
+
+    def __getattr__(self, key):
+        """Verwaltet geloeschte IOs.
+        @param key Wert eines alten IOs
+        @return Alten IO, wenn in Ref-Listen"""
+        if key in self.__dict_iorefname:
+            return self.__dict_iorefname[key]
+        elif key in self.__dict_iorefbyte:
+            return self.__dict_iorefbyte[key]
+        else:
+            raise AttributeError("can not find io '{}'".format(key))
 
     def __getitem__(self, key):
         """Ruft angegebenen IO ab.
@@ -83,42 +99,23 @@ class IOList(object):
         """Setzt IO Wert.
         @param key IO Name oder Byte
         @param value Wert, auf den der IO gesetzt wird"""
-        if issubclass(type(value), IOBase):
-            if hasattr(self, key):
-                raise AttributeError(
-                    "attribute {} already exists - can not set io".format(key)
-                )
-            object.__setattr__(self, key, value)
-
-            # Bytedict erstellen für Adresszugriff
-            if value._bitaddress < 0:
-                self.__dict_iobyte[value.address].append(value)
-            else:
-                if len(self.__dict_iobyte[value.address]) != 8:
-                    # "schnell" 8 Einträge erstellen da es BIT IOs sind
-                    self.__dict_iobyte[value.address] += [
-                        None, None, None, None, None, None, None, None
-                    ]
-                self.__dict_iobyte[value.address][value._bitaddress] = value
-
-        elif key == "_IOList__dict_iobyte":
+        if key in [
+                "_IOList__dict_iobyte",
+                "_IOList__dict_iorefname",
+                "_IOList__dict_iorefbyte"
+                ]:
             object.__setattr__(self, key, value)
 
         else:
+            # Setzt Wert bei Zuweisung
             getattr(self, key).value = value
 
-    def _replace_io(self, io):
+    def __replace_oldio_with_newio(self, io):
         """Ersetzt bestehende IOs durch den neu Registrierten.
         @param io Neuer IO der eingefuegt werden soll"""
-        dict_oldio = {}
-        for oldio in self._lst_io:
-            # Alle IOs Prüfen ob sie im neuen Speicherbereich sind
-            errstart = oldio.slc_address.start >= io.slc_address.start \
-                and oldio.slc_address.start < io.slc_address.stop
-            errstop = oldio.slc_address.stop > io.slc_address.start \
-                and oldio.slc_address.stop <= io.slc_address.stop
+        for i in range(io.slc_address.start, io.slc_address.stop):
+            for oldio in self.__dict_iobyte[i + io._parentdevice.offset]:
 
-            if errstart or errstop:
                 if type(oldio) == StructIO:
                     # Hier gibt es schon einen neuen IO
                     if oldio._bitaddress >= 0:
@@ -137,39 +134,52 @@ class IOList(object):
                             )
                         )
 
-                else:
+                elif oldio is not None:
                     # IOs im Speicherbereich des neuen IO merken
-                    dict_oldio[oldio.name] = oldio
+                    if io._bitaddress >= 0:
+                        # ios für ref bei bitaddress speichern
+                        self.__dict_iorefbyte[oldio.slc_address.start] = oldio
+                        self.__dict_iorefname[oldio.name] = oldio
 
-        for oldio in dict_oldio.values():
-            if io._bitaddress >= 0:
-                # ios für ref bei bitaddress speichern
-                self._dict_iorefbyte[oldio.slc_address.start] = oldio.name
-                self._dict_iorefname[oldio.name] = oldio.slc_address.start
+                    # ios aus listen entfernen
+                    delattr(self, oldio.name)
 
-            # ios aus listen entfernen
-            delattr(self._modio.io, oldio.name)
-            self._lst_io.remove(oldio)
+    def _register_new_io_object(self, new_io):
+        """Registriert neues IO Objekt unabhaenging von __setattr__.
+        @param new_io Neues IO Objekt"""
+        if issubclass(type(new_io), IOBase):
+            if hasattr(self, new_io.name):
+                raise AttributeError(
+                    "attribute {} already exists - can not set io".format(
+                        new_io.name
+                    )
+                )
 
-        # Namensregister erweitern
-        setattr(self._modio.io, io.name, io)
+            if type(new_io) is StructIO:
+                self.__replace_oldio_with_newio(new_io)
 
-        # io einfügen (auch wenn nicht richtige stelle wegen BitOffset)
-        self._lst_io.insert(io.slc_address.start, io)
+            object.__setattr__(self, new_io.name, new_io)
 
-        # Liste neu sortieren
-        self._lst_io.sort(key=lambda x: x.slc_address.start)
-
-
-
-
-
+            # Bytedict erstellen für Adresszugriff
+            if new_io._bitaddress < 0:
+                self.__dict_iobyte[new_io.address].append(new_io)
+            else:
+                if len(self.__dict_iobyte[new_io.address]) != 8:
+                    # "schnell" 8 Einträge erstellen da es BIT IOs sind
+                    self.__dict_iobyte[new_io.address] += [
+                        None, None, None, None, None, None, None, None
+                    ]
+                self.__dict_iobyte[new_io.address][new_io._bitaddress] = new_io
+        else:
+            raise AttributeError("io must be IOBase or sub class")
 
     def _testme(self):
         # NOTE: Nur Debugging
         for x in self.__dict_iobyte:
             if len(self.__dict_iobyte[x]) > 0:
                 print(x, self.__dict_iobyte[x])
+        print(self.__dict_iorefname)
+        print(self.__dict_iorefbyte)
 
 
 class IOBase(object):
@@ -346,8 +356,8 @@ class IOBase(object):
                     )
                     break
 
-    def reg_inp(self, name, frm, **kwargs):
-        """Registriert einen neuen Input an Adresse von Diesem.
+    def replace_io(self, name, frm, **kwargs):
+        """Ersetzt bestehenden IO mit Neuem.
 
         @param name Name des neuen Inputs
         @param frm struct() formatierung (1 Zeichen)
@@ -364,7 +374,7 @@ class IOBase(object):
         >Python3 struct()</a>
 
         """
-        if not issubclass(self._parentdevice, devicemodule.Gateway):
+        if not issubclass(type(self._parentdevice), Gateway):
             raise RuntimeError(
                 "this function can be used for ios on gatway or virtual "
                 "devices only"
@@ -372,14 +382,14 @@ class IOBase(object):
 
         # StructIO erzeugen und in IO-Liste einfügen
         io_new = StructIO(
-            self._parentdevice,
+            self,
             name,
-            IOType.INP,
+            self._iotype,
             kwargs.get("byteorder", "little"),
             frm,
             **kwargs
         )
-        setattr(self._parentdevice._modio.io, name, io_new)
+        self._parentdevice._modio.io._register_new_io_object(io_new)
 
         # Optional Event eintragen
         reg_event = kwargs.get("event", None)
@@ -387,48 +397,6 @@ class IOBase(object):
             as_thread = kwargs.get("as_thread", False)
             edge = kwargs.get("edge", None)
             io_new.reg_event(reg_event, as_thread=as_thread, edge=edge)
-
-    def reg_out(self, name, frm, **kwargs):
-        """Registriert einen neuen Output.
-
-        @param name Name des neuen Outputs
-        @param startout Outputname ab dem eingefuegt wird
-        @param frm struct() formatierung (1 Zeichen)
-        @param kwargs Weitere Parameter:
-            - bmk: Bezeichnung fuer Output
-            - bit: Registriert Outputs als bool() am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer den Output, Standardwert=little
-            - defaultvalue: Standardwert fuer Output, Standard ist 0
-            - event: Funktion fuer Eventhandling registrieren
-            - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
-            - edge: event-Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
-        @see <a target="_blank"
-        href="https://docs.python.org/3/library/struct.html#format-characters"
-        >Python3 struct()</a>
-
-        """
-        if not issubclass(self._parentdevice, devicemodule.Gateway):
-            raise RuntimeError(
-                "this function can be used on gatway or virtual devices only"
-            )
-
-        # StructIO erzeugen und in IO-Liste einfügen
-        io_new = StructIO(
-            self._parentdevice,
-            name,
-            IOType.OUT,
-            kwargs.get("byteorder", "little"),
-            frm,
-            **kwargs
-        )
-        setattr(self._parentdevice._modio.io, name, io_new)
-
-        # Optional Event eintragen
-        reg_event = kwargs.get("event", None)
-        if reg_event is not None:
-            as_thread = kwargs.get("as_thread", False)
-            edge = kwargs.get("edge", None)
-            io_new.reg_event(name, reg_event, as_thread=as_thread, edge=edge)
 
     def set_value(self, value):
         """Setzt den Wert des IOs mit bytes() oder bool().
@@ -715,9 +683,9 @@ class StructIO(IOBase):
                     name,
                     kwargs.get("defaultvalue", 0),
                     bitlength,
-                    parentio.address,
+                    parentio.slc_address.start,
                     False,
-                    str(parentio.address).rjust(4, "0"),
+                    str(parentio.slc_address.start).rjust(4, "0"),
                     kwargs.get("bmk", ""),
                     bitaddress
                 ]
@@ -761,3 +729,7 @@ class StructIO(IOBase):
 
     byteorder = property(IOBase._get_byteorder)
     value = property(get_structvalue, set_structvalue)
+
+
+# Nachträglicher Import
+from .device import Gateway

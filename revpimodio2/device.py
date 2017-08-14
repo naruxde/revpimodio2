@@ -5,10 +5,8 @@
 # (c) Sven Sager, License: LGPLv3
 #
 # -*- coding: utf-8 -*-
-import struct
+"""Modul fuer die Verwaltung der Devices."""
 from threading import Lock
-
-from . import io as iomodule
 from .__init__ import IOType
 from .helper import ProcimgWriter
 
@@ -42,7 +40,13 @@ class DeviceList(object):
     def __iter__(self):
         """Gibt Iterator aller Devices zurueck.
         @return iter() aller Devices"""
-        return iter(self.__dict_position.values())
+        for dev in sorted(self.__dict_position):
+            yield self.__dict_position[dev]
+
+    def __len__(self):
+        """Gibt Anzahl der Devices zurueck.
+        return Anzahl der Devices"""
+        return len(self.__dict_position)
 
     def __setattr__(self, key, value):
         """Setzt Attribute nur wenn Device.
@@ -107,9 +111,6 @@ class Device(object):
             self.slc_out = self._buildio(dict_device.pop("out"), IOType.OUT)
         self.slc_mem = self._buildio(dict_device.pop("mem"), IOType.MEM)
 
-        # Alle IOs nach Adresse sortieren
-        self._lst_io.sort(key=lambda x: x.slc_address.start)
-
         # SLCs mit offset berechnen
         self.slc_devoff = slice(self.offset, self.offset + self._length)
         self.slc_inpoff = slice(
@@ -138,29 +139,14 @@ class Device(object):
         @param key IO-Name str() / IO-Bytenummer int()
         @return True, wenn device vorhanden"""
         if type(key) == str:
-            return hasattr(self._modio.io, key)
-        if type(key) == int:
-            key += self.offset
+            return hasattr(self._modio.io, key) \
+                and getattr(self._modio.io, key)._parentdevice == self
+        elif type(key) == int:
             return key in self._modio.io \
-                and len(self._modio.io[key]) > 0
+                and len(self._modio.io[key]) > 0 \
+                and self._modio.io[key][0]._parentdevice == self
         else:
-            return key in self._lst_io
-
-    def __getitem__(self, key):
-        """Gibt angegebenes IO-Objekt zurueck.
-        @param key Name order Byteadresse des IOs
-        @return IO-Objekt wenn Name, sonst list() mit IO-Objekt"""
-        if type(key) == int:
-            key += self.offset
-            if key in self._modio.io:
-                return self._modio.io[key]
-            else:
-                raise KeyError("byte '{}' does not exist".format(key))
-        else:
-            if hasattr(self._modio.io, key):
-                return getattr(self._modio.io, key)
-            else:
-                raise KeyError("'{}' does not exist".format(key))
+            return key._parentdevice == self
 
     def __int__(self):
         """Gibt die Positon im RevPi Bus zurueck.
@@ -170,33 +156,19 @@ class Device(object):
     def __iter__(self):
         """Gibt Iterator aller IOs zurueck.
         @return iter() aller IOs"""
-        return iter(self._lst_io)
+        for i_byte in range(self.slc_devoff.start, self.slc_devoff.stop):
+            for io in self._modio.io[i_byte]:
+                yield io
+
+    def __len__(self):
+        """Gibt Anzahl der Bytes zurueck, die dieses Device belegt.
+        @return int()"""
+        return self._length
 
     def __str__(self):
         """Gibt den Namen des Devices zurueck.
         @return Devicename"""
         return self.name
-
-    def __setitem__(self, key, value):
-        """Setzt den Wert des angegebenen Inputs.
-        @param key Name oder Byte des Inputs
-        @param value Wert der gesetzt werden soll"""
-        if type(key) == int:
-            key += self.offset
-            if key in self._modio.io:
-                if len(self._modio.io[key]) == 1:
-                    self._modio.io[key][0].value = value
-                elif len(self._modio.io[key]) == 0:
-                    raise KeyError("byte '{}' contains no input".format(key))
-                else:
-                    raise KeyError(
-                        "byte '{}' contains more than one bit-input"
-                        "".format(key)
-                    )
-            else:
-                raise KeyError("byte '{}' does not exist".format(key))
-        else:
-            getattr(self._modio.io, key).value = value
 
     def _buildio(self, dict_io, iotype):
         """Erstellt aus der piCtory-Liste die IOs fuer dieses Device.
@@ -228,22 +200,12 @@ class Device(object):
                     )
 
                 # IO registrieren
-                if hasattr(self._modio.io, io_new.name):
-                    raise NameError(
-                        "name '{}' already exists on device '{}'".format(
-                            io_new._name, self.name
-                        )
-                    )
-                else:
-                    # Namesregister aufbauen
-                    setattr(self._modio.io, io_new._name, io_new)
+                self._modio.io._register_new_io_object(io_new)
 
-                    # Speicherbereich zuweisen
-                    self._ba_devdata.extend(bytes(io_new._length))
+                # Speicherbereich zuweisen
+                self._ba_devdata.extend(bytes(io_new._length))
 
-                    # IO eintragen
-                    self._lst_io.append(io_new)
-                    self._length += io_new._length
+                self._length += io_new._length
 
                 # Kleinste und größte Speicheradresse ermitteln
                 if io_new.slc_address.start < int_min:
@@ -303,44 +265,37 @@ class Device(object):
             if not self._modio._monitoring:
                 self._modio.writeprocimg(True, self)
 
+    def get_allios(self):
+        """Gibt eine Liste aller Inputs und Outputs zurueck.
+        @return list() Input und Output, keine MEMs"""
+        return [
+            io for io in self._modio.io
+            if io._parentdevice == self and io._iotype != IOType.MEM
+        ]
+
     def get_inps(self):
         """Gibt eine Liste aller Inputs zurueck.
         @return list() Inputs"""
         return [
-            io for io in self._lst_io if io._iotype == IOType.INP
+            io for io in self._modio.io
+            if io._parentdevice == self and io._iotype == IOType.INP
         ]
 
     def get_outs(self):
         """Gibt eine Liste aller Outputs zurueck.
         @return list() Outputs"""
         return [
-            io for io in self._lst_io if io._iotype == IOType.OUT
+            io for io in self._modio.io
+            if io._parentdevice == self and io._iotype == IOType.OUT
         ]
 
     def get_mems(self):
         """Gibt eine Liste aller mems zurueck.
         @return list() Mems"""
         return [
-            io for io in self._lst_io if io._iotype == IOType.MEM
+            io for io in self._modio.io
+            if io._parentdevice == self and io._iotype == IOType.MEM
         ]
-
-    def get_iobyabsaddress(self, address):
-        """Gibt das IO-Objekt an angegebenen Byte im Prozessabbild zurueck.
-        @param address Byteadresse im Prozessabbild
-        @return list() mit IO-Objekt/en"""
-        return self[address - self.offset]
-
-    def get_iobyaddress(self, address):
-        """Gibt das IO-Objekt an angegebenen Byte des Devices zurueck.
-        @param address Byteadresse im Deviceabbild
-        @return list() mit IO-Objekt/en"""
-        return self[address]
-
-    def get_iobyname(self, name):
-        """Gibt das IO-Objekt mit angegebenen Namen zurueck.
-        @param name Name des IO-Objekts
-        @return IO-Objekt"""
-        return getattr(self._modio.io, name)
 
 
 class Core(Device):
@@ -360,6 +315,9 @@ class Core(Device):
         self._ioled = 1
         self._ioerrorlimit1 = None
         self._ioerrorlimit2 = None
+
+        # Eigene IO-Liste aufbauen
+        self._lst_io = [x for x in self.__iter__()]
 
         int_lenio = len(self._lst_io)
         if int_lenio == 6:
@@ -584,37 +542,11 @@ class Gateway(Device):
         @see #RevPiDevice.__init__ RevPiDevice.__init__(...)"""
         super().__init__(parent, dict_device, **kwargs)
 
-        # TODO: evtl. an modio.io anhängen
-        self._dict_iorefbyte = {}
-        self._dict_iorefname = {}
         self._dict_slc = {
             IOType.INP: self.slc_inp,
             IOType.OUT: self.slc_out,
             IOType.MEM: self.slc_mem
         }
-
-    def _getbytename(self, iobyte):
-        """Ermittelt den Namen eines IOs auf der Byteadresse.
-        @param iobyte Bytenummer
-        @return IO-Namen"""
-
-        # Wenn IO schon ausgetauscht wurde
-        if iobyte in self._dict_iorefbyte:
-            return self._dict_iorefbyte[iobyte]
-
-        # Wenn IO jetzt ausgetauscht wird
-        if iobyte in self._modio.io:
-            intlen = len(self._modio.io[iobyte])
-            if intlen == 1:
-                return self._modio.io[iobyte][0].name
-            elif len == 0:
-                raise KeyError("byte '{}' contains no input".format(iobyte))
-            else:
-                raise KeyError(
-                    "byte '{}' contains more than one bit-input".format(iobyte)
-                )
-        else:
-            raise KeyError("byte '{}' does not exist".format(iobyte))
 
     def get_rawbytes(self):
         """Gibt die Bytes aus, die dieses Device verwendet.
@@ -635,3 +567,7 @@ class Virtual(Gateway):
     """
 
     pass
+
+
+# Nachträglicher Import
+from . import io as iomodule

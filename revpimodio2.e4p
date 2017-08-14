@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project revpimodio2 -->
-<!-- Saved: 2017-08-13, 12:05:22 -->
+<!-- Saved: 2017-08-14, 16:08:00 -->
 <!-- Copyright (C) 2017 Sven Sager, akira@narux.de -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -30,6 +30,7 @@
   <Others>
     <Other>doc</Other>
     <Other>.hgignore</Other>
+    <Other>eric-revpimodio.api</Other>
   </Others>
   <Vcs>
     <VcsType>Mercurial</VcsType>
@@ -216,12 +217,6 @@
               <list>
                 <string>setup.py</string>
               </list>
-            </value>
-            <key>
-              <string>noindex</string>
-            </key>
-            <value>
-              <bool>True</bool>
             </value>
             <key>
               <string>outputDirectory</string>

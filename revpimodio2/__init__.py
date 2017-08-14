@@ -36,6 +36,7 @@ BOTH = 33
 
 warnings.simplefilter(action="always")
 
+
 class IOType(object):
 
     """IO Typen."""

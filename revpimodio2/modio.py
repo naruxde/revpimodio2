@@ -5,6 +5,7 @@
 # (c) Sven Sager, License: LGPLv3
 #
 # -*- coding: utf-8 -*-
+"""RevPiModIO Hauptklasse."""
 import warnings
 from json import load as jload
 from os import access, F_OK, R_OK
@@ -56,7 +57,6 @@ class RevPiModIO(object):
         # Private Variablen
         self.__cleanupfunc = None
         self._buffedwrite = False
-        self._device = []
         self._exit = Event()
         self._imgwriter = None
         self._length = 0
@@ -73,7 +73,6 @@ class RevPiModIO(object):
         # piCtory Klassen
         self.app = None
         self.device = None
-        self.devices = None
         self.io = None
         self.summary = None
 
@@ -129,7 +128,6 @@ class RevPiModIO(object):
 
         # Device und IO Klassen anlegen
         self.device = devicemodule.DeviceList()
-        #self.io = iomodule.IOList()
         self.io = IOList()
 
         # Devices initialisieren
@@ -181,8 +179,6 @@ class RevPiModIO(object):
                 dev_new = None
 
             if dev_new is not None:
-                self._device.append(dev_new)
-
                 # Offset prüfen, muss mit Länge übereinstimmen
                 if self._length < dev_new.offset:
                     self._length = dev_new.offset
@@ -196,13 +192,13 @@ class RevPiModIO(object):
                 # DeviceList für direkten Zugriff aufbauen
                 setattr(self.device, dev_new.name, dev_new)
 
-        # dict_devname zerstören, wenn doppelte Namen vorhanden sind
+        # Namenszugriff zerstören, wenn doppelte Namen vorhanden sind
         for errdev in err_names:
             delattr(self.device, errdev)
             warnings.warn(
                 "equal device name in pictory configuration. can not "
                 "build device to acces by name. you can access all devices "
-                "by position number pos_XX only!",
+                "by position number .device[nn] only!",
                 Warning
             )
 
@@ -215,7 +211,7 @@ class RevPiModIO(object):
 
         # Optional ins auto_refresh aufnehmen
         if self._auto_refresh:
-            for dev in self._device:
+            for dev in self.device:
                 dev.auto_refresh()
 
         # Summary Klasse instantiieren
@@ -277,12 +273,11 @@ class RevPiModIO(object):
 
     def cleanup(self):
         """Beendet auto_refresh und alle Threads."""
-        # TODO: wirklich alles löschen
         self.exit(full=True)
         self._myfh.close()
         self.app = None
+        self.core = None
         self.device = None
-        self.devices = None
         self.io = None
         self.summary = None
 
@@ -589,9 +584,8 @@ class RevPiModIO(object):
 
         """
         if device is None:
-            mylist = self._device
+            mylist = self.device
         else:
-            # TODO: Devicesuchen ändern
             dev = device if issubclass(type(device), devicemodule.Device) \
                 else self.device.__getitem__(device)
 
@@ -644,7 +638,7 @@ class RevPiModIO(object):
             )
 
         if device is None:
-            mylist = self._device
+            mylist = self.device
         else:
             dev = device if issubclass(type(device), devicemodule.Device) \
                 else self.__getitem__(device)
@@ -664,7 +658,7 @@ class RevPiModIO(object):
 
         """
         if device is None:
-            mylist = self._device
+            mylist = self.device
         else:
             dev = device if issubclass(type(device), devicemodule.Device) \
                 else self.__getitem__(device)
@@ -761,7 +755,7 @@ class RevPiModIO(object):
             )
 
         if device is None:
-            mylist = self._device
+            mylist = self.device
         else:
             dev = device if issubclass(type(device), devicemodule.Device) \
                 else self.__getitem__(device)
@@ -850,7 +844,7 @@ class RevPiModIOSelected(RevPiModIO):
 
         self._configure()
 
-        if len(self._device) == 0:
+        if len(self.device) == 0:
             if type(self) == RevPiModIODriver:
                 raise RuntimeError(
                     "could not find any given VIRTUAL devices in config"
@@ -859,7 +853,7 @@ class RevPiModIOSelected(RevPiModIO):
                 raise RuntimeError(
                     "could not find any given devices in config"
                 )
-        elif len(self._device) != len(self._lst_devselect):
+        elif len(self.device) != len(self._lst_devselect):
             if type(self) == RevPiModIODriver:
                 raise RuntimeError(
                     "could not find all given VIRTUAL devices in config"

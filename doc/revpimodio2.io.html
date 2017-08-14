@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html><head>
+<title>revpimodio2.io</title>
+<meta charset="UTF-8">
+</head>
+<body style="background-color:#FFFFFF;color:#000000"><a NAME="top" ID="top"></a>
+<h1 style="background-color:#FFFFFF;color:#0000FF">
+revpimodio2.io</h1>
+<p>
+RevPiModIO Modul fuer die Verwaltung der IOs.
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Global Attributes</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Classes</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#IOBase">IOBase</a></td>
+<td>Basisklasse fuer alle IO-Objekte.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOList">IOList</a></td>
+<td>Basisklasse fuer direkten Zugriff auf IO Objekte.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IntIO">IntIO</a></td>
+<td>Klasse fuer den Zugriff auf die Daten mit Konvertierung in int().</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#StructIO">StructIO</a></td>
+<td>Klasse fuer den Zugriff auf Daten ueber ein definierten struct().</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Functions</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<hr /><hr />
+<a NAME="IOBase" ID="IOBase"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">IOBase</h2>
+<p>
+Basisklasse fuer alle IO-Objekte.
+</p><p>
+    Die Basisfunktionalitaet ermoeglicht das Lesen und Schreiben der Werte
+    als bytes() oder bool(). Dies entscheidet sich bei der Instantiierung.
+    Wenn eine Bittadresse angegeben wird, werden bool()-Werte erwartet
+    und zurueckgegeben, ansonsten bytes().
+</p><p>
+    Diese Klasse dient als Basis fuer andere IO-Klassen mit denen die Werte
+    auch als int() verwendet werden koennen.
+</p><p>
+
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+object
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>address</td></tr><tr><td>length</td></tr><tr><td>name</td></tr><tr><td>value</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#IOBase.__init__">IOBase</a></td>
+<td>Instantiierung der IOBase()-Klasse.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.__bool__">__bool__</a></td>
+<td>bool()-wert der Klasse.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.__bytes__">__bytes__</a></td>
+<td>bytes()-wert der Klasse.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.__str__">__str__</a></td>
+<td>str()-wert der Klasse.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase._get_byteorder">_get_byteorder</a></td>
+<td>Gibt konfigurierte Byteorder zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.get_address">get_address</a></td>
+<td>Gibt die absolute Byteadresse im Prozessabbild zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.get_length">get_length</a></td>
+<td>Gibt die Bytelaenge des IO zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.get_name">get_name</a></td>
+<td>Gibt den Namen des IOs zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.get_value">get_value</a></td>
+<td>Gibt den Wert des IOs als bytes() oder bool() zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.reg_event">reg_event</a></td>
+<td>Registriert ein Event bei der Eventueberwachung.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.replace_io">replace_io</a></td>
+<td>Ersetzt bestehenden IO mit Neuem.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.set_value">set_value</a></td>
+<td>Setzt den Wert des IOs mit bytes() oder bool().</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.unreg_event">unreg_event</a></td>
+<td>Entfernt ein Event aus der Eventueberwachung.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.wait">wait</a></td>
+<td>Wartet auf Wertaenderung eines IOs.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="IOBase.__init__" ID="IOBase.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase (Constructor)</h3>
+<b>IOBase</b>(<i>parentdevice, valuelist, iotype, byteorder</i>)
+<p>
+Instantiierung der IOBase()-Klasse.
+</p><dl>
+<dt><i>parentdevice</i></dt>
+<dd>
+Parentdevice auf dem der IO liegt
+</dd><dt><i>valuelist</i></dt>
+<dd>
+Datenliste fuer Instantiierung
+</dd><dt><i>iotype</i></dt>
+<dd>
+IOType() Wert
+</dd><dt><i>byteorder</i></dt>
+<dd>
+Byteorder 'little' / 'big' fuer int() Berechnung
+</dd>
+</dl><a NAME="IOBase.__bool__" ID="IOBase.__bool__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.__bool__</h3>
+<b>__bool__</b>(<i></i>)
+<p>
+bool()-wert der Klasse.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+IO-Wert als bool(). Nur False wenn False oder 0 sonst True
+</dd>
+</dl><a NAME="IOBase.__bytes__" ID="IOBase.__bytes__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.__bytes__</h3>
+<b>__bytes__</b>(<i></i>)
+<p>
+bytes()-wert der Klasse.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+IO-Wert als bytes()
+</dd>
+</dl><a NAME="IOBase.__str__" ID="IOBase.__str__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.__str__</h3>
+<b>__str__</b>(<i></i>)
+<p>
+str()-wert der Klasse.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Namen des IOs
+</dd>
+</dl><a NAME="IOBase._get_byteorder" ID="IOBase._get_byteorder"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase._get_byteorder</h3>
+<b>_get_byteorder</b>(<i></i>)
+<p>
+Gibt konfigurierte Byteorder zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+str() Byteorder
+</dd>
+</dl><a NAME="IOBase.get_address" ID="IOBase.get_address"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.get_address</h3>
+<b>get_address</b>(<i></i>)
+<p>
+Gibt die absolute Byteadresse im Prozessabbild zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Absolute Byteadresse
+</dd>
+</dl><a NAME="IOBase.get_length" ID="IOBase.get_length"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.get_length</h3>
+<b>get_length</b>(<i></i>)
+<p>
+Gibt die Bytelaenge des IO zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Bytelaenge des IO
+</dd>
+</dl><a NAME="IOBase.get_name" ID="IOBase.get_name"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.get_name</h3>
+<b>get_name</b>(<i></i>)
+<p>
+Gibt den Namen des IOs zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+IO Name
+</dd>
+</dl><a NAME="IOBase.get_value" ID="IOBase.get_value"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.get_value</h3>
+<b>get_value</b>(<i></i>)
+<p>
+Gibt den Wert des IOs als bytes() oder bool() zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+IO-Wert
+</dd>
+</dl><a NAME="IOBase.reg_event" ID="IOBase.reg_event"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.reg_event</h3>
+<b>reg_event</b>(<i>func, edge=BOTH, as_thread=False</i>)
+<p>
+Registriert ein Event bei der Eventueberwachung.
+</p><dl>
+<dt><i>func</i></dt>
+<dd>
+Funktion die bei Aenderung aufgerufen werden soll
+</dd><dt><i>edge</i></dt>
+<dd>
+Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
+</dd><dt><i>as_thread</i></dt>
+<dd>
+Bei True, Funktion als EventCallback-Thread ausfuehren
+</dd>
+</dl><a NAME="IOBase.replace_io" ID="IOBase.replace_io"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.replace_io</h3>
+<b>replace_io</b>(<i>name, frm, **kwargs</i>)
+<p>
+Ersetzt bestehenden IO mit Neuem.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Name des neuen Inputs
+</dd><dt><i>frm</i></dt>
+<dd>
+struct() formatierung (1 Zeichen)
+</dd><dt><i>kwargs</i></dt>
+<dd>
+Weitere Parameter:
+            - bmk: Bezeichnung fuer Input
+            - bit: Registriert Input als bool() am angegebenen Bit im Byte
+            - byteorder: Byteorder fuer den Input, Standardwert=little
+            - defaultvalue: Standardwert fuer Input, Standard ist 0
+            - event: Funktion fuer Eventhandling registrieren
+            - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
+            - edge: event-Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
+</dd>
+</dl><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" target="_blank"        href="https://docs.python.org/3/library/struct.html#format-characters"        >Python3 struct()</a>
+</dd>
+</dl><a NAME="IOBase.set_value" ID="IOBase.set_value"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.set_value</h3>
+<b>set_value</b>(<i>value</i>)
+<p>
+Setzt den Wert des IOs mit bytes() oder bool().
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+IO-Wert als bytes() oder bool()
+</dd>
+</dl><a NAME="IOBase.unreg_event" ID="IOBase.unreg_event"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.unreg_event</h3>
+<b>unreg_event</b>(<i>func=None, edge=None</i>)
+<p>
+Entfernt ein Event aus der Eventueberwachung.
+</p><dl>
+<dt><i>func</i></dt>
+<dd>
+Nur Events mit angegebener Funktion
+</dd><dt><i>edge</i></dt>
+<dd>
+Nur Events mit angegebener Funktion und angegebener Edge
+</dd>
+</dl><a NAME="IOBase.wait" ID="IOBase.wait"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.wait</h3>
+<b>wait</b>(<i>edge=BOTH, exitevent=None, okvalue=None, timeout=0</i>)
+<p>
+Wartet auf Wertaenderung eines IOs.
+</p><p>
+        Die Wertaenderung wird immer uerberprueft, wenn fuer Devices
+        in Devicelist.auto_refresh() neue Daten gelesen wurden.
+</p><p>
+        Bei Wertaenderung, wird das Warten mit 0 als Rueckgabewert beendet.
+</p><p>
+        HINWEIS: Wenn ProcimgWriter() keine neuen Daten liefert, wird
+        bis in die Ewigkeit gewartet (nicht bei Angabe von "timeout").
+</p><p>
+        Wenn edge mit RISING oder FALLING angegeben wird muss diese Flanke
+        ausgeloest werden. Sollte der Wert 1 sein beim Eintritt mit Flanke
+        RISING, wird das Warten erst bei Aenderung von 0 auf 1 beendet.
+</p><p>
+        Als exitevent kann ein threading.Event()-Objekt uebergeben werden,
+        welches das Warten bei is_set() sofort mit 1 als Rueckgabewert
+        beendet.
+</p><p>
+        Wenn der Wert okvalue an dem IO fuer das Warten anliegt, wird
+        das Warten sofort mit -1 als Rueckgabewert beendet.
+</p><p>
+        Der Timeoutwert bricht beim Erreichen das Warten sofort mit
+        Wert 2 Rueckgabewert ab. (Das Timeout wird ueber die Zykluszeit
+        der auto_refresh Funktion berechnet, entspricht also nicht exact den
+        angegeben Millisekunden! Es wird immer nach oben gerundet!)
+</p><dl>
+<dt><i>edge</i></dt>
+<dd>
+Flanke RISING, FALLING, BOTH bei der mit True beendet wird
+</dd><dt><i>exitevent</i></dt>
+<dd>
+thrading.Event() fuer vorzeitiges Beenden mit False
+</dd><dt><i>okvalue</i></dt>
+<dd>
+IO-Wert, bei dem das Warten sofort mit True beendet wird
+</dd><dt><i>timeout</i></dt>
+<dd>
+Zeit in ms nach der mit False abgebrochen wird
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+int() erfolgreich Werte <= 0
+            - Erfolgreich gewartet
+                Wert 0: IO hat den Wert gewechselt
+                Wert -1: okvalue stimmte mit IO ueberein
+            - Fehlerhaft gewartet
+                Wert 1: exitevent wurde gesetzt
+                Wert 2: timeout abgelaufen
+                Wert 100: Devicelist.exit() wurde aufgerufen
+</dd>
+</dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="IOList" ID="IOList"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">IOList</h2>
+<p>
+Basisklasse fuer direkten Zugriff auf IO Objekte.
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+object
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#IOList.__init__">IOList</a></td>
+<td>Init IOList class.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOList.__contains__">__contains__</a></td>
+<td>Prueft ob IO existiert.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOList.__delattr__">__delattr__</a></td>
+<td>Entfernt angegebenen IO.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOList.__getattr__">__getattr__</a></td>
+<td>Verwaltet geloeschte IOs.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOList.__getitem__">__getitem__</a></td>
+<td>Ruft angegebenen IO ab.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOList.__iter__">__iter__</a></td>
+<td>Gibt Iterator aller IOs zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOList.__replace_oldio_with_newio">__replace_oldio_with_newio</a></td>
+<td>Ersetzt bestehende IOs durch den neu Registrierten.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOList.__setattr__">__setattr__</a></td>
+<td>Setzt IO Wert.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOList.__setitem__">__setitem__</a></td>
+<td>Setzt IO Wert.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOList._register_new_io_object">_register_new_io_object</a></td>
+<td>Registriert neues IO Objekt unabhaenging von __setattr__.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOList._testme">_testme</a></td>
+<td></td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="IOList.__init__" ID="IOList.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOList (Constructor)</h3>
+<b>IOList</b>(<i></i>)
+<p>
+Init IOList class.
+</p><a NAME="IOList.__contains__" ID="IOList.__contains__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOList.__contains__</h3>
+<b>__contains__</b>(<i>key</i>)
+<p>
+Prueft ob IO existiert.
+</p><dl>
+<dt><i>key</i></dt>
+<dd>
+IO-Name str() oder Byte int()
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn IO vorhanden / Byte belegt
+</dd>
+</dl><a NAME="IOList.__delattr__" ID="IOList.__delattr__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOList.__delattr__</h3>
+<b>__delattr__</b>(<i>key</i>)
+<p>
+Entfernt angegebenen IO.
+</p><dl>
+<dt><i>key</i></dt>
+<dd>
+IO zum entfernen
+</dd>
+</dl><a NAME="IOList.__getattr__" ID="IOList.__getattr__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOList.__getattr__</h3>
+<b>__getattr__</b>(<i>key</i>)
+<p>
+Verwaltet geloeschte IOs.
+</p><dl>
+<dt><i>key</i></dt>
+<dd>
+Wert eines alten IOs
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+Alten IO, wenn in Ref-Listen
+</dd>
+</dl><a NAME="IOList.__getitem__" ID="IOList.__getitem__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOList.__getitem__</h3>
+<b>__getitem__</b>(<i>key</i>)
+<p>
+Ruft angegebenen IO ab.
+</p><dl>
+<dt><i>key</i></dt>
+<dd>
+IO Name oder Byte
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+IO Object
+</dd>
+</dl><a NAME="IOList.__iter__" ID="IOList.__iter__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOList.__iter__</h3>
+<b>__iter__</b>(<i></i>)
+<p>
+Gibt Iterator aller IOs zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Iterator aller IOs
+</dd>
+</dl><a NAME="IOList.__replace_oldio_with_newio" ID="IOList.__replace_oldio_with_newio"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOList.__replace_oldio_with_newio</h3>
+<b>__replace_oldio_with_newio</b>(<i>io</i>)
+<p>
+Ersetzt bestehende IOs durch den neu Registrierten.
+</p><dl>
+<dt><i>io</i></dt>
+<dd>
+Neuer IO der eingefuegt werden soll
+</dd>
+</dl><a NAME="IOList.__setattr__" ID="IOList.__setattr__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOList.__setattr__</h3>
+<b>__setattr__</b>(<i>key, value</i>)
+<p>
+Setzt IO Wert.
+</p><dl>
+<dt><i>key</i></dt>
+<dd>
+IO Name oder Byte
+</dd><dt><i>value</i></dt>
+<dd>
+Wert, auf den der IO gesetzt wird
+</dd>
+</dl><a NAME="IOList.__setitem__" ID="IOList.__setitem__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOList.__setitem__</h3>
+<b>__setitem__</b>(<i>key, value</i>)
+<p>
+Setzt IO Wert.
+</p><dl>
+<dt><i>key</i></dt>
+<dd>
+IO Name oder Byte
+</dd><dt><i>value</i></dt>
+<dd>
+Wert, auf den der IO gesetzt wird
+</dd>
+</dl><a NAME="IOList._register_new_io_object" ID="IOList._register_new_io_object"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOList._register_new_io_object</h3>
+<b>_register_new_io_object</b>(<i>new_io</i>)
+<p>
+Registriert neues IO Objekt unabhaenging von __setattr__.
+</p><dl>
+<dt><i>new_io</i></dt>
+<dd>
+Neues IO Objekt
+</dd>
+</dl><a NAME="IOList._testme" ID="IOList._testme"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOList._testme</h3>
+<b>_testme</b>(<i></i>)
+
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="IntIO" ID="IntIO"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">IntIO</h2>
+<p>
+Klasse fuer den Zugriff auf die Daten mit Konvertierung in int().
+</p><p>
+    Diese Klasse erweitert die Funktion von IOBase() um Funktionen,
+    ueber die mit int() Werten gearbeitet werden kann. Fuer die Umwandlung
+    koennen 'Byteorder' (Default 'little') und 'signed' (Default False) als
+    Parameter gesetzt werden.
+</p><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" href="#IOBase">IOBase</a>
+</dd>
+</dl>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+IOBase
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>byteorder</td></tr><tr><td>signed</td></tr><tr><td>value</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#IntIO.__int__">__int__</a></td>
+<td>Gibt IO als int() Wert zurueck mit Beachtung byteorder/signed.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IntIO._get_signed">_get_signed</a></td>
+<td>Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IntIO._set_byteorder">_set_byteorder</a></td>
+<td>Setzt Byteorder fuer int() Umwandlung.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IntIO._set_signed">_set_signed</a></td>
+<td>Left fest, ob der Wert Vorzeichenbehaftet behandelt werden soll.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IntIO.get_int">get_int</a></td>
+<td>Gibt IO als int() Wert zurueck mit Beachtung byteorder/signed.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IntIO.set_int">set_int</a></td>
+<td>Setzt IO mit Beachtung byteorder/signed.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="IntIO.__int__" ID="IntIO.__int__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IntIO.__int__</h3>
+<b>__int__</b>(<i></i>)
+<p>
+Gibt IO als int() Wert zurueck mit Beachtung byteorder/signed.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+int() ohne Vorzeichen
+</dd>
+</dl><a NAME="IntIO._get_signed" ID="IntIO._get_signed"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IntIO._get_signed</h3>
+<b>_get_signed</b>(<i></i>)
+<p>
+Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn Vorzeichenbehaftet
+</dd>
+</dl><a NAME="IntIO._set_byteorder" ID="IntIO._set_byteorder"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IntIO._set_byteorder</h3>
+<b>_set_byteorder</b>(<i>value</i>)
+<p>
+Setzt Byteorder fuer int() Umwandlung.
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+str() 'little' or 'big'
+</dd>
+</dl><a NAME="IntIO._set_signed" ID="IntIO._set_signed"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IntIO._set_signed</h3>
+<b>_set_signed</b>(<i>value</i>)
+<p>
+Left fest, ob der Wert Vorzeichenbehaftet behandelt werden soll.
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+True, wenn mit Vorzeichen behandel
+</dd>
+</dl><a NAME="IntIO.get_int" ID="IntIO.get_int"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IntIO.get_int</h3>
+<b>get_int</b>(<i></i>)
+<p>
+Gibt IO als int() Wert zurueck mit Beachtung byteorder/signed.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+int() Wert
+</dd>
+</dl><a NAME="IntIO.set_int" ID="IntIO.set_int"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IntIO.set_int</h3>
+<b>set_int</b>(<i>value</i>)
+<p>
+Setzt IO mit Beachtung byteorder/signed.
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+int()
+</dd>
+</dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="StructIO" ID="StructIO"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">StructIO</h2>
+<p>
+Klasse fuer den Zugriff auf Daten ueber ein definierten struct().
+</p><p>
+    Diese Klasse ueberschreibt get_value() und set_value() der IOBase()
+    Klasse. Sie stellt ueber struct die Werte in der gewuenschten Formatierung
+    bereit. Der struct-Formatwert wird bei der Instantiierung festgelegt.
+</p><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" href="#IOBase">IOBase</a>
+</dd>
+</dl>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+IOBase
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>byteorder</td></tr><tr><td>value</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#StructIO.__init__">StructIO</a></td>
+<td>Erstellt einen IO mit struct-Formatierung.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#StructIO.get_structvalue">get_structvalue</a></td>
+<td>Gibt den Wert mit struct Formatierung zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#StructIO.set_structvalue">set_structvalue</a></td>
+<td>Setzt den Wert mit struct Formatierung.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="StructIO.__init__" ID="StructIO.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+StructIO (Constructor)</h3>
+<b>StructIO</b>(<i>parentio, name, iotype, byteorder, frm, **kwargs</i>)
+<p>
+Erstellt einen IO mit struct-Formatierung.
+</p><dl>
+<dt><i>parentio</i></dt>
+<dd>
+ParentIO Objekt, welches ersetzt wird
+</dd><dt><i>name</i></dt>
+<dd>
+Name des neuen IO
+</dd><dt><i>iotype</i></dt>
+<dd>
+IOType() Wert
+</dd><dt><i>byteorder</i></dt>
+<dd>
+Byteorder 'little' / 'big' fuer int() Berechnung
+</dd><dt><i>frm</i></dt>
+<dd>
+struct() formatierung (1 Zeichen)
+</dd><dt><i>kwargs</i></dt>
+<dd>
+Weitere Parameter:
+            - bmk: Bezeichnung fuer Output
+            - bit: Registriert Outputs als bool() am angegebenen Bit im Byte
+            - defaultvalue: Standardwert fuer Output, Standard ist 0
+</dd>
+</dl><a NAME="StructIO.get_structvalue" ID="StructIO.get_structvalue"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+StructIO.get_structvalue</h3>
+<b>get_structvalue</b>(<i></i>)
+<p>
+Gibt den Wert mit struct Formatierung zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Wert vom Typ der struct-Formatierung
+</dd>
+</dl><a NAME="StructIO.set_structvalue" ID="StructIO.set_structvalue"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+StructIO.set_structvalue</h3>
+<b>set_structvalue</b>(<i>value</i>)
+<p>
+Setzt den Wert mit struct Formatierung.
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+Wert vom Typ der struct-Formatierung
+</dd>
+</dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr />
+</body></html>
