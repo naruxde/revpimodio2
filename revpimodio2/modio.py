@@ -6,19 +6,17 @@
 #
 # -*- coding: utf-8 -*-
 import warnings
-
-from . import app as appmodule
-from . import device as devicemodule
-from . import helper as helpermodule
-from . import io as iomodule
-from . import summary as summarymodule
-
-from .__init__ import RISING, FALLING, BOTH
-
 from json import load as jload
 from os import access, F_OK, R_OK
 from signal import signal, SIG_DFL, SIGINT, SIGTERM
 from threading import Thread, Event
+
+from . import app as appmodule
+from . import device as devicemodule
+from . import helper as helpermodule
+from . import summary as summarymodule
+from .io import IOList
+from .__init__ import RISING, FALLING, BOTH
 
 
 class RevPiModIO(object):
@@ -131,7 +129,8 @@ class RevPiModIO(object):
 
         # Device und IO Klassen anlegen
         self.device = devicemodule.DeviceList()
-        self.io = iomodule.IOList()
+        #self.io = iomodule.IOList()
+        self.io = IOList()
 
         # Devices initialisieren
         err_names = []
@@ -213,10 +212,6 @@ class RevPiModIO(object):
         # Aktuellen Outputstatus von procimg einlesen
         if self._syncoutputs:
             self.syncoutputs(force=True)
-
-        # NOTE: Nur noch bis Final für kompatibilität
-        # Devices Klasse instantiieren
-        self.devices = devicemodule.Devicelist(self)
 
         # Optional ins auto_refresh aufnehmen
         if self._auto_refresh:

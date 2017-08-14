@@ -6,10 +6,11 @@
 #
 # -*- coding: utf-8 -*-
 import struct
-from .helper import ProcimgWriter
-from .io import IOBase, IOType, IntIO, StructIO
-from .__init__ import BOTH
 from threading import Lock
+
+from . import io as iomodule
+from .__init__ import IOType
+from .helper import ProcimgWriter
 
 
 class DeviceList(object):
@@ -38,6 +39,11 @@ class DeviceList(object):
         else:
             return getattr(self, key)
 
+    def __iter__(self):
+        """Gibt Iterator aller Devices zurueck.
+        @return iter() aller Devices"""
+        return iter(self.__dict_position.values())
+
     def __setattr__(self, key, value):
         """Setzt Attribute nur wenn Device.
         @param key Attributname
@@ -47,281 +53,6 @@ class DeviceList(object):
             self.__dict_position[value.position] = value
         elif key == "_DeviceList__dict_position":
             object.__setattr__(self, key, value)
-
-
-class Devicelist():
-
-    """Enthaelt alle Devices des RevolutionPi Buses."""
-
-    def __init__(self, parentmodio):
-        """Instantiiert die einzelnen Bus-Devices.
-
-        @param procimg Dateiname des piControl Devices
-
-        """
-        self._modio = parentmodio
-        self.core = self._modio.core
-
-    def __contains__(self, key):
-        """Prueft ob Device existiert.
-        @param key DeviceName str() / Positionsnummer int()
-        @return True, wenn device vorhanden"""
-        return key in self._modio.device
-
-    def __getitem__(self, key):
-        """Gibt angegebenes Device zurueck.
-        @param key DeviceName str() / Positionsnummer int()
-        @return Gefundenes RevPiDevice()-Objekt"""
-        return self._modio.device[key]
-
-    def __iter__(self):
-        """Gibt alle Devices zurueck.
-        @return Iterator alle Devices"""
-        return iter(self._modio._device)
-
-    def __len__(self):
-        """Gibt Anzahl der Devices zurueck.
-        @return int() Anzahl der Devices"""
-        return len(self._modio._device)
-
-    def auto_refresh(self, device, remove=False):
-        """Registriert ein Device fuer die automatische Synchronisierung.
-        @param device Device fuer Synchronisierung
-        @param remove bool() True entfernt Device aus Synchronisierung"""
-
-        dev = device if issubclass(type(device), Device) \
-            else self._modio.device[device]
-
-        dev.auto_refresh(remove)
-
-    def auto_refresh_maxioerrors(self, value=None):
-        """Maximale IO Fehler fuer auto_refresh.
-        @param value Setzt maximale Anzahl bis exception ausgeloest wird
-        @return Maximale Anzahl bis exception ausgeloest wird"""
-        return self._modio.auto_refresh_maxioerrors(value)
-
-    def auto_refresh_resetioerrors(self):
-        """Setzt aktuellen IOError-Zaehler auf 0 zurueck."""
-        self._modio.auto_refresh_resetioerrors()
-
-    def cycleloop(self, func, cycletime=50):
-        """Startet den Cycleloop.
-
-        Der aktuelle Programmthread wird hier bis Aufruf von
-        RevPiDevicelist.exit() "gefangen". Er fuehrt nach jeder Aktualisierung
-        des Prozessabbilds die uebergebene Funktion "func" aus und arbeitet sie
-        ab. Waehrend der Ausfuehrung der Funktion wird das Prozessabbild nicht
-        weiter aktualisiert. Die Inputs behalten bis zum Ende den aktuellen
-        Wert. Gesetzte Outputs werden nach Ende des Funktionsdurchlaufs in das
-        Prozessabbild geschrieben.
-
-        Verlassen wird der Cycleloop, wenn die aufgerufene Funktion einen
-        Rueckgabewert nicht gleich None liefert, oder durch Aufruf von
-        revpimodio.exit().
-
-        HINWEIS: Die Aktualisierungszeit und die Laufzeit der Funktion duerfen
-        die eingestellte auto_refresh Zeit, bzw. uebergebene cycletime nicht
-        ueberschreiten!
-
-        Ueber den Parameter cycletime kann die Aktualisierungsrate fuer das
-        Prozessabbild gesetzt werden (selbe Funktion wie
-        set_refreshtime(milliseconds)).
-
-        @param func Funktion, die ausgefuehrt werden soll
-        @param cycletime auto_refresh Wert in Millisekunden
-        @return None
-
-        """
-        return self._modio.cycleloop(func, cycletime)
-
-    def exit(self, full=True):
-        """Beendet mainloop() und optional auto_refresh.
-
-        Wenn sich das Programm im mainloop() befindet, wird durch Aufruf
-        von exit() die Kontrolle wieder an das Hauptprogramm zurueckgegeben.
-
-        Der Parameter full ist mit True vorbelegt und entfernt alle Devices aus
-        dem auto_refresh. Der Thread fuer die Prozessabbildsynchronisierung
-        wird dann gestoppt und das Programm kann sauber beendet werden.
-
-        @param full Entfernt auch alle Devices aus auto_refresh"""
-        self._modio.exit(full)
-
-    def get_devbyname(self, name):
-        """Gibt durch Namen angegebenes Device zurueck.
-        @param name Devicename aus piCtory
-        @return Gefundenes RevPiDevice()"""
-        return self._modio.device[name]
-
-    def get_devbyposition(self, position):
-        """Gibt durch Position angegebenes Device zurueck.
-        @param position Deviceposition aus piCtory
-        @return Gefundenes RevPiDevice()"""
-        return self._modio.device[position]
-
-    def get_refreshtime(self):
-        """Gibt Aktualisierungsrate in ms der Prozessabbildsynchronisierung aus.
-        @return Millisekunden"""
-        return self._modio._imgwriter.refresh
-
-    def readprocimg(self, force=False, device=None):
-        """Einlesen aller Inputs aller Devices vom Prozessabbild.
-
-        @param force auch Devices mit autoupdate=False
-        @param device nur auf einzelnes Device anwenden
-        @return True, wenn Arbeiten an allen Devices erfolgreich waren
-
-        """
-        return self._modio.readprocimg(force, device)
-
-    def mainloop(self, freeze=False, blocking=True):
-        """Startet den Mainloop mit Eventueberwachung.
-
-        Der aktuelle Programmthread wird hier bis Aufruf von
-        RevPiDevicelist.exit() "gefangen" (es sei denn blocking=False). Er
-        durchlaeuft die Eventueberwachung und prueft Aenderungen der, mit
-        einem Event registrierten, IOs. Wird eine Veraenderung erkannt,
-        fuert das Programm die dazugehoerigen Funktionen der Reihe nach aus.
-
-        Wenn der Parameter "freeze" mit True angegeben ist, wird die
-        Prozessabbildsynchronisierung angehalten bis alle Eventfunktionen
-        ausgefuehrt wurden. Inputs behalten fuer die gesamte Dauer ihren
-        aktuellen Wert und Outputs werden erst nach Durchlauf aller Funktionen
-        in das Prozessabbild geschrieben.
-
-        Wenn der Parameter "blocking" mit False angegeben wird, aktiviert
-        dies die Eventueberwachung und blockiert das Programm NICHT an der
-        Stelle des Aufrufs. Eignet sich gut fuer die GUI Programmierung, wenn
-        Events vom RevPi benoetigt werden, aber das Programm weiter ausgefuehrt
-        werden soll.
-
-        @param freeze Wenn True, Prozessabbildsynchronisierung anhalten
-        @param blocking Wenn False, blockiert das Programm NICHT
-        @return None
-
-        """
-        return self._modio.mainloop(freeze, blocking)
-
-    def set_refreshtime(self, milliseconds):
-        """Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.
-        @param milliseconds int() in Millisekunden"""
-        self._modio.set_refreshtime(milliseconds)
-
-    def setdefaultvalues(self, force=False, device=None):
-        """Alle Outputbuffer werden auf die piCtory default Werte gesetzt.
-        @param force auch Devices mit autoupdate=False
-        @param device nur auf einzelnes Device anwenden"""
-        self._modio.setdefaultvalues(force, device)
-
-    def syncoutputs(self, force=False, device=None):
-        """Lesen aller aktuell gesetzten Outputs im Prozessabbild.
-
-        @param force auch Devices mit autoupdate=False
-        @param device nur auf einzelnes Device anwenden
-        @return True, wenn Arbeiten an allen Devices erfolgreich waren
-
-        """
-        return self._modio.syncoutputs(force, device)
-
-    def updateprocimg(self, force=False, device=None):
-        """Schreiben/Lesen aller Outputs/Inputs aller Devices im Prozessab.
-
-        @param force auch Devices mit autoupdate=False
-        @param device nur auf einzelnes Device anwenden
-        @return True, wenn Arbeiten an allen Devices erfolgreich waren
-
-        """
-        return self.readprocimg(force=force, device=device) and \
-            self.writeprocimg(force=force, device=device)
-
-    def wait(self, device, io, **kwargs):
-        """Wartet auf Wertaenderung eines IOs.
-
-        Die Wertaenderung wird immer uerberprueft, wenn fuer Devices
-        in RevPiDevicelist.auto_refresh() neue Daten gelesen wurden.
-
-        Bei Wertaenderung, wird das Warten mit 0 als Rueckgabewert beendet.
-
-        HINWEIS: Wenn RevPiProcimgWriter() keine neuen Daten liefert, wird
-        bis in die Ewigkeit gewartet (nicht bei Angabe von "timeout").
-
-        Wenn edge mit RISING oder FALLING angegeben wird muss diese Flanke
-        ausgeloest werden. Sollte der Wert 1 sein beim Eintritt mit Flanke
-        RISING, wird das Warten erst bei Aenderung von 0 auf 1 beendet.
-
-        Als exitevent kann ein threading.Event()-Objekt uebergeben werden,
-        welches das Warten bei is_set() sofort mit 1 als Rueckgabewert
-        beendet.
-
-        Wenn der Wert okvalue an dem IO fuer das Warten anliegt, wird
-        das Warten sofort mit -1 als Rueckgabewert beendet.
-
-        Der Timeoutwert bricht beim Erreichen das Warten sofort mit
-        Wert 2 Rueckgabewert ab. (Das Timeout wird ueber die Zykluszeit
-        der auto_refresh Funktion berechnet, entspricht also nicht exact den
-        angegeben Millisekunden! Es wird immer nach oben gerundet!)
-
-        @param device Device auf dem sich der IO befindet
-        @param io Name des IOs auf dessen Aenderung gewartet wird
-        @param kwargs Weitere Parameter:
-            - edge: Flanke RISING, FALLING, BOTH bei der mit True beendet wird
-            - exitevent: thrading.Event() fuer vorzeitiges Beenden mit False
-            - okvalue: IO-Wert, bei dem das Warten sofort mit True beendet wird
-            - timeout: Zeit in ms nach der mit False abgebrochen wird
-        @return int() erfolgreich Werte <= 0
-            - Erfolgreich gewartet
-                Wert 0: IO hat den Wert gewechselt
-                Wert -1: okvalue stimmte mit IO ueberein
-            - Fehlerhaft gewartet
-                Wert 1: exitevent wurde gesetzt
-                Wert 2: timeout abgelaufen
-                Wert 100: RevPiDevicelist.exit() wurde aufgerufen
-
-        """
-        dev = device if issubclass(type(device), Device) \
-            else self.__getitem__(device)
-
-        io_watch = dev[io]
-        if type(io_watch) == list:
-            if len(io_watch) == 1:
-                io_watch = io_watch[0]
-            else:
-                raise KeyError(
-                    "byte '{}' contains more than one bit-input".format(io)
-                )
-
-        # kwargs auswerten
-        edge = kwargs.get("edge", BOTH)
-        evt_exit = kwargs.get("exitevent", None)
-        val_ok = kwargs.get("okvalue", None)
-        flt_timeout = kwargs.get("timeout", 0)
-
-        return io_watch.wait(edge, evt_exit, val_ok, flt_timeout)
-
-    def writedefaultinputs(self, virtual_device):
-        """Schreibt fuer ein virtuelles Device piCtory Defaultinputwerte.
-
-        Sollten in piCtory Defaultwerte fuer Inputs eines virtuellen Devices
-        angegeben sein, werden diese nur beim Systemstart oder einem piControl
-        Reset gesetzt. Sollte danach das Prozessabbild mit NULL ueberschrieben,
-        gehen diese Werte verloren.
-        Diese Funktion kann nur auf virtuelle Devices angewendet werden!
-
-        @param virtual_device Virtuelles Device fuer Wiederherstellung
-        @return True, wenn Arbeiten am virtuellen Device erfolgreich waren
-
-        """
-        return self._modio.writedefaultinputs(virtual_device)
-
-    def writeprocimg(self, force=False, device=None):
-        """Schreiben aller Outputs aller Devices ins Prozessabbild.
-
-        @param force auch Devices mit autoupdate=False
-        @param device nur auf einzelnes Device anwenden
-        @return True, wenn Arbeiten an allen Devices erfolgreich waren
-
-        """
-        return self._modio.writeprocimg(force, device)
 
 
 class Device(object):
@@ -403,8 +134,8 @@ class Device(object):
         return bytes(self._ba_devdata)
 
     def __contains__(self, key):
-        """Prueft ob IO existiert.
-        @param key IO-Name str() / Positionsnummer int()
+        """Prueft ob IO auf diesem Device liegt.
+        @param key IO-Name str() / IO-Bytenummer int()
         @return True, wenn device vorhanden"""
         if type(key) == str:
             return hasattr(self._modio.io, key)
@@ -482,14 +213,14 @@ class Device(object):
                 # Neuen IO anlegen
                 if bool(dict_io[key][7]) or self.producttype == 95:
                     # Bei Bitwerten oder Core RevPiIOBase verwenden
-                    io_new = IOBase(
+                    io_new = iomodule.IOBase(
                         self,
                         dict_io[key],
                         iotype,
                         byteorder="little"
                     )
                 else:
-                    io_new = IntIO(
+                    io_new = iomodule.IntIO(
                         self,
                         dict_io[key],
                         iotype,
@@ -610,57 +341,6 @@ class Device(object):
         @param name Name des IO-Objekts
         @return IO-Objekt"""
         return getattr(self._modio.io, name)
-
-    def reg_event(self, io_name, func, edge=BOTH, as_thread=False):
-        """Registriert ein Event bei der Eventueberwachung.
-
-        @param io_name Name des Inputs oder Outputs der ueberwacht wird
-        @param func Funktion die bei Aenderung aufgerufen werden soll
-        @param edge Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
-        @param as_thread Bei True, Funktion als RevPiCallback-Thread ausfuehren
-
-        """
-        io_event = self.__getitem__(io_name)
-        if type(io_event) == list:
-            if len(io_event) == 1:
-                io_event = io_event[0]
-            elif len(io_event) == 0:
-                raise KeyError(
-                    "byte '{}' contains no io object".format(io_name))
-            else:
-                raise KeyError(
-                    "byte '{}' contains more than one bit io object".format(
-                        io_name
-                    )
-                )
-
-        # NOTE: Abgelaufen
-        io_event.reg_event(func, edge, as_thread)
-
-    def unreg_event(self, io_name, func=None, edge=None):
-        """Entfernt ein Event aus der Eventueberwachung.
-
-        @param io_name Name des Inputs, dessen Events entfert werden sollen
-        @param func Nur Events mit angegebener Funktion
-        @param edge Nur Events mit angegebener Funktion und angegebener Edge
-
-        """
-        io_event = self.__getitem__(io_name)
-        if type(io_event) == list:
-            if len(io_event) == 1:
-                io_event = io_event[0]
-            elif len(io_event) == 0:
-                raise KeyError(
-                    "byte '{}' contains no io object".format(io_name))
-            else:
-                raise KeyError(
-                    "byte '{}' contains more than one bit io object".format(
-                        io_name
-                    )
-                )
-
-        # NOTE: Abgelaufen
-        io_event.unreg_event(func, edge)
 
 
 class Core(Device):
@@ -913,81 +593,6 @@ class Gateway(Device):
             IOType.MEM: self.slc_mem
         }
 
-    def _create_io(self, name, startio, frm, io_type, **kwargs):
-        """Erstellt einen neuen IO und ersetzt den/die Bestehenden.
-
-        @param name Name des neuen IO
-        @param startio IO ab dem eingefuegt wird
-        @param frm struct() formatierung (1 Zeichen)
-        @param io_type IOType() Wert
-        @param kwargs Weitere Parameter:
-            - bmk: Bezeichnung fuer IO
-            - bit: Registriert IO als bool() am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer diesen IO, Standardwert=little
-            - defaultvalue: Standardwert fuer IO, Standard ist 0
-
-        """
-        if len(frm) == 1:
-
-            # Byteorder prüfen und übernehmen
-            byteorder = kwargs.get("byteorder", "little")
-            if not (byteorder == "little" or byteorder == "big"):
-                raise ValueError("byteorder must be 'little' or 'big'")
-            bofrm = "<" if byteorder == "little" else ">"
-
-            bitaddress = "" if frm != "?" else str(kwargs.get("bit", 0))
-            if bitaddress == "" or \
-                    (int(bitaddress) >= 0 and int(bitaddress) < 8):
-
-                bitlength = "1" if bitaddress.isnumeric() else \
-                    struct.calcsize(bofrm + frm) * 8
-
-                if startio in self._dict_iorefname:
-                    startaddress = self._dict_iorefname[startio]
-                else:
-                    startaddress = self.__getitem__(startio).slc_address.start
-
-                # [name,default,anzbits,adressbyte,export,adressid,bmk,bitaddress]
-                list_value = [
-                    name,
-                    kwargs.get("defaultvalue", 0),
-                    bitlength,
-                    startaddress,
-                    False,
-                    str(startaddress).rjust(4, "0"),
-                    kwargs.get("bmk", ""),
-                    bitaddress
-                ]
-
-                # Neuen IO instantiieren
-                io_new = StructIO(
-                    self,
-                    list_value,
-                    io_type,
-                    byteorder,
-                    bofrm + frm
-                )
-                io_new._byteorder = byteorder
-
-                # Platz für neuen IO prüfen
-                if (io_new.slc_address.start >=
-                        self._dict_slc[io_type].start and
-                        io_new.slc_address.stop <=
-                        self._dict_slc[io_type].stop):
-
-                    self._replace_io(io_new)
-
-                else:
-                    raise BufferError(
-                        "registered value does not fit process image scope"
-                    )
-            else:
-                raise AttributeError(
-                    "bitaddress must be a value between 0 and 7"
-                )
-        else:
-            raise AttributeError("parameter frm has to be a single sign")
-
     def _getbytename(self, iobyte):
         """Ermittelt den Namen eines IOs auf der Byteadresse.
         @param iobyte Bytenummer
@@ -1011,148 +616,10 @@ class Gateway(Device):
         else:
             raise KeyError("byte '{}' does not exist".format(iobyte))
 
-    def _replace_io(self, io):
-        """Ersetzt bestehende IOs durch den neu Registrierten.
-        @param io Neuer IO der eingefuegt werden soll"""
-        if hasattr(self._modio.io, io.name):
-            raise NameError(
-                "name '{}' already exists on device '{}'".format(
-                    io._name, self.name
-                )
-            )
-        else:
-            dict_oldio = {}
-            for oldio in self._lst_io:
-                # Alle IOs Prüfen ob sie im neuen Speicherbereich sind
-                errstart = oldio.slc_address.start >= io.slc_address.start \
-                    and oldio.slc_address.start < io.slc_address.stop
-                errstop = oldio.slc_address.stop > io.slc_address.start \
-                    and oldio.slc_address.stop <= io.slc_address.stop
-
-                if errstart or errstop:
-                    if type(oldio) == StructIO:
-                        # Hier gibt es schon einen neuen IO
-                        if oldio._bitaddress >= 0:
-                            if io._bitaddress == oldio._bitaddress:
-                                raise MemoryError(
-                                    "bit {} already assigned to '{}'".format(
-                                        io._bitaddress, oldio._name
-                                    )
-                                )
-
-                        else:
-                            # Bereits überschriebene bytes() sind ungültig
-                            raise MemoryError(
-                                "new io '{}' overlaps memory of '{}'".format(
-                                    io._name, oldio._name
-                                )
-                            )
-
-                    else:
-                        # IOs im Speicherbereich des neuen IO merken
-                        dict_oldio[oldio.name] = oldio
-
-            for oldio in dict_oldio.values():
-                if io._bitaddress >= 0:
-                    # ios für ref bei bitaddress speichern
-                    self._dict_iorefbyte[oldio.slc_address.start] = oldio.name
-                    self._dict_iorefname[oldio.name] = oldio.slc_address.start
-
-                # ios aus listen entfernen
-                delattr(self._modio.io, oldio.name)
-                self._lst_io.remove(oldio)
-
-            # Namensregister erweitern
-            setattr(self._modio.io, io.name, io)
-
-            # io einfügen (auch wenn nicht richtige stelle wegen BitOffset)
-            self._lst_io.insert(io.slc_address.start, io)
-
-            # Liste neu sortieren
-            self._lst_io.sort(key=lambda x: x.slc_address.start)
-
     def get_rawbytes(self):
         """Gibt die Bytes aus, die dieses Device verwendet.
         @return bytes() des Devices"""
         return bytes(self._ba_devdata)
-
-    def reg_inp(self, name, startinp, frm, **kwargs):
-        """Registriert einen neuen Input.
-
-        @param name Name des neuen Inputs
-        @param startinp Inputname ab dem eingefuegt wird
-        @param frm struct() formatierung (1 Zeichen)
-        @param kwargs Weitere Parameter:
-            - bmk: Bezeichnung fuer Input
-            - bit: Registriert Input als bool() am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer den Input, Standardwert=little
-            - defaultvalue: Standardwert fuer Input, Standard ist 0
-            - event: Funktion fuer Eventhandling registrieren
-            - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
-            - edge: event-Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
-        @see <a target="_blank"
-        href="https://docs.python.org/3/library/struct.html#format-characters"
-        >Python3 struct()</a>
-
-        """
-        if type(startinp) == int:
-            # Byte int() umwandeln in Namen
-            startinp = self._getbytename(startinp)
-
-        if type(startinp) == str:
-            self._create_io(name, startinp, frm, IOType.INP, **kwargs)
-        else:
-            raise TypeError(
-                "start input must be str() or int() not {}".format(
-                    type(startinp)
-                )
-            )
-
-        # Optional Event eintragen
-        reg_event = kwargs.get("event", None)
-        if reg_event is not None:
-            as_thread = kwargs.get("as_thread", False)
-            edge = kwargs.get("edge", None)
-            self.reg_event(name, reg_event, as_thread=as_thread, edge=edge)
-
-    def reg_out(self, name, startout, frm, **kwargs):
-        """Registriert einen neuen Output.
-
-        @param name Name des neuen Outputs
-        @param startout Outputname ab dem eingefuegt wird
-        @param frm struct() formatierung (1 Zeichen)
-        @param kwargs Weitere Parameter:
-            - bmk: Bezeichnung fuer Output
-            - bit: Registriert Outputs als bool() am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer den Output, Standardwert=little
-            - defaultvalue: Standardwert fuer Output, Standard ist 0
-            - event: Funktion fuer Eventhandling registrieren
-            - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
-            - edge: event-Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
-        @see <a target="_blank"
-        href="https://docs.python.org/3/library/struct.html#format-characters"
-        >Python3 struct()</a>
-
-        """
-        if type(startout) == int:
-            # Byte int() umwandeln in Namen
-            startout = self._getbytename(startout)
-
-        if type(startout) == str:
-            self._create_io(name, startout, frm, IOType.OUT, **kwargs)
-        else:
-            raise TypeError(
-                "start output must be str() or int() not {}".format(
-                    type(startout)
-                )
-            )
-
-        # Optional Event eintragen
-        reg_event = kwargs.get("event", None)
-        if reg_event is not None:
-            as_thread = kwargs.get("as_thread", False)
-            edge = kwargs.get("edge", None)
-            self.reg_event(name, reg_event, as_thread=as_thread, edge=edge)
 
 
 class Virtual(Gateway):

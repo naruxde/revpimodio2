@@ -6,18 +6,10 @@
 #
 # -*- coding: utf-8 -*-
 import struct
-from .__init__ import RISING, FALLING, BOTH
-from .device import Gateway
 from threading import Event
 
-
-class IOType(object):
-
-    """IO Typen."""
-
-    INP = 300
-    OUT = 301
-    MEM = 302
+from . import device as devicemodule
+from .__init__ import RISING, FALLING, BOTH, IOType
 
 
 class IOList(object):
@@ -42,6 +34,8 @@ class IOList(object):
         """Entfernt angegebenen IO.
         @param key IO zum entfernen"""
         # TODO: Prüfen ob auch Bit sein kann
+        # FIXME: IO von DeviceIO Liste entfernen
+        # FIXME: IO aus Eventhandling entfernen
         dev = getattr(self, key)
         self.__dict_iobyte[dev.address].remove(dev)
         object.__delattr__(self, key)
@@ -57,6 +51,13 @@ class IOList(object):
                 raise KeyError("byte '{}' does not exist".format(key))
         else:
             return getattr(self, key)
+
+    def __iter__(self):
+        """Gibt Iterator aller IOs zurueck.
+        @return Iterator aller IOs"""
+        for int_io in sorted(self.__dict_iobyte):
+            for io in self.__dict_iobyte[int_io]:
+                yield io
 
     def __setitem__(self, key, value):
         """Setzt IO Wert.
@@ -106,76 +107,69 @@ class IOList(object):
         else:
             getattr(self, key).value = value
 
+    def _replace_io(self, io):
+        """Ersetzt bestehende IOs durch den neu Registrierten.
+        @param io Neuer IO der eingefuegt werden soll"""
+        dict_oldio = {}
+        for oldio in self._lst_io:
+            # Alle IOs Prüfen ob sie im neuen Speicherbereich sind
+            errstart = oldio.slc_address.start >= io.slc_address.start \
+                and oldio.slc_address.start < io.slc_address.stop
+            errstop = oldio.slc_address.stop > io.slc_address.start \
+                and oldio.slc_address.stop <= io.slc_address.stop
+
+            if errstart or errstop:
+                if type(oldio) == StructIO:
+                    # Hier gibt es schon einen neuen IO
+                    if oldio._bitaddress >= 0:
+                        if io._bitaddress == oldio._bitaddress:
+                            raise MemoryError(
+                                "bit {} already assigned to '{}'".format(
+                                    io._bitaddress, oldio._name
+                                )
+                            )
+
+                    else:
+                        # Bereits überschriebene bytes() sind ungültig
+                        raise MemoryError(
+                            "new io '{}' overlaps memory of '{}'".format(
+                                io._name, oldio._name
+                            )
+                        )
+
+                else:
+                    # IOs im Speicherbereich des neuen IO merken
+                    dict_oldio[oldio.name] = oldio
+
+        for oldio in dict_oldio.values():
+            if io._bitaddress >= 0:
+                # ios für ref bei bitaddress speichern
+                self._dict_iorefbyte[oldio.slc_address.start] = oldio.name
+                self._dict_iorefname[oldio.name] = oldio.slc_address.start
+
+            # ios aus listen entfernen
+            delattr(self._modio.io, oldio.name)
+            self._lst_io.remove(oldio)
+
+        # Namensregister erweitern
+        setattr(self._modio.io, io.name, io)
+
+        # io einfügen (auch wenn nicht richtige stelle wegen BitOffset)
+        self._lst_io.insert(io.slc_address.start, io)
+
+        # Liste neu sortieren
+        self._lst_io.sort(key=lambda x: x.slc_address.start)
+
+
+
+
+
+
     def _testme(self):
         # NOTE: Nur Debugging
         for x in self.__dict_iobyte:
             if len(self.__dict_iobyte[x]) > 0:
                 print(x, self.__dict_iobyte[x])
-
-    def reg_inp(self, name, frm, **kwargs):
-        """Registriert einen neuen Input an Adresse von Diesem.
-
-        @param name Name des neuen Inputs
-        @param frm struct() formatierung (1 Zeichen)
-        @param kwargs Weitere Parameter:
-            - bmk: Bezeichnung fuer Input
-            - bit: Registriert Input als bool() am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer den Input, Standardwert=little
-            - defaultvalue: Standardwert fuer Input, Standard ist 0
-            - event: Funktion fuer Eventhandling registrieren
-            - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
-            - edge: event-Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
-        @see <a target="_blank"
-        href="https://docs.python.org/3/library/struct.html#format-characters"
-        >Python3 struct()</a>
-
-        """
-        if not issubclass(self._parentdevice, Gateway):
-            raise RuntimeError(
-                "this function can be used on gatway or virtual devices only"
-            )
-
-        self._create_io(name, startinp, frm, IOType.INP, **kwargs)
-
-        # Optional Event eintragen
-        reg_event = kwargs.get("event", None)
-        if reg_event is not None:
-            as_thread = kwargs.get("as_thread", False)
-            edge = kwargs.get("edge", None)
-            self.reg_event(name, reg_event, as_thread=as_thread, edge=edge)
-
-    def reg_out(self, name, startout, frm, **kwargs):
-        """Registriert einen neuen Output.
-
-        @param name Name des neuen Outputs
-        @param startout Outputname ab dem eingefuegt wird
-        @param frm struct() formatierung (1 Zeichen)
-        @param kwargs Weitere Parameter:
-            - bmk: Bezeichnung fuer Output
-            - bit: Registriert Outputs als bool() am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer den Output, Standardwert=little
-            - defaultvalue: Standardwert fuer Output, Standard ist 0
-            - event: Funktion fuer Eventhandling registrieren
-            - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
-            - edge: event-Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
-        @see <a target="_blank"
-        href="https://docs.python.org/3/library/struct.html#format-characters"
-        >Python3 struct()</a>
-
-        """
-        if not issubclass(self._parentdevice, Gateway):
-            raise RuntimeError(
-                "this function can be used on gatway or virtual devices only"
-            )
-
-        self._create_io(name, startout, frm, IOType.OUT, **kwargs)
-
-        # Optional Event eintragen
-        reg_event = kwargs.get("event", None)
-        if reg_event is not None:
-            as_thread = kwargs.get("as_thread", False)
-            edge = kwargs.get("edge", None)
-            self.reg_event(name, reg_event, as_thread=as_thread, edge=edge)
 
 
 class IOBase(object):
@@ -351,6 +345,90 @@ class IOBase(object):
                         (func, edge, as_thread)
                     )
                     break
+
+    def reg_inp(self, name, frm, **kwargs):
+        """Registriert einen neuen Input an Adresse von Diesem.
+
+        @param name Name des neuen Inputs
+        @param frm struct() formatierung (1 Zeichen)
+        @param kwargs Weitere Parameter:
+            - bmk: Bezeichnung fuer Input
+            - bit: Registriert Input als bool() am angegebenen Bit im Byte
+            - byteorder: Byteorder fuer den Input, Standardwert=little
+            - defaultvalue: Standardwert fuer Input, Standard ist 0
+            - event: Funktion fuer Eventhandling registrieren
+            - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
+            - edge: event-Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
+        @see <a target="_blank"
+        href="https://docs.python.org/3/library/struct.html#format-characters"
+        >Python3 struct()</a>
+
+        """
+        if not issubclass(self._parentdevice, devicemodule.Gateway):
+            raise RuntimeError(
+                "this function can be used for ios on gatway or virtual "
+                "devices only"
+            )
+
+        # StructIO erzeugen und in IO-Liste einfügen
+        io_new = StructIO(
+            self._parentdevice,
+            name,
+            IOType.INP,
+            kwargs.get("byteorder", "little"),
+            frm,
+            **kwargs
+        )
+        setattr(self._parentdevice._modio.io, name, io_new)
+
+        # Optional Event eintragen
+        reg_event = kwargs.get("event", None)
+        if reg_event is not None:
+            as_thread = kwargs.get("as_thread", False)
+            edge = kwargs.get("edge", None)
+            io_new.reg_event(reg_event, as_thread=as_thread, edge=edge)
+
+    def reg_out(self, name, frm, **kwargs):
+        """Registriert einen neuen Output.
+
+        @param name Name des neuen Outputs
+        @param startout Outputname ab dem eingefuegt wird
+        @param frm struct() formatierung (1 Zeichen)
+        @param kwargs Weitere Parameter:
+            - bmk: Bezeichnung fuer Output
+            - bit: Registriert Outputs als bool() am angegebenen Bit im Byte
+            - byteorder: Byteorder fuer den Output, Standardwert=little
+            - defaultvalue: Standardwert fuer Output, Standard ist 0
+            - event: Funktion fuer Eventhandling registrieren
+            - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
+            - edge: event-Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
+        @see <a target="_blank"
+        href="https://docs.python.org/3/library/struct.html#format-characters"
+        >Python3 struct()</a>
+
+        """
+        if not issubclass(self._parentdevice, devicemodule.Gateway):
+            raise RuntimeError(
+                "this function can be used on gatway or virtual devices only"
+            )
+
+        # StructIO erzeugen und in IO-Liste einfügen
+        io_new = StructIO(
+            self._parentdevice,
+            name,
+            IOType.OUT,
+            kwargs.get("byteorder", "little"),
+            frm,
+            **kwargs
+        )
+        setattr(self._parentdevice._modio.io, name, io_new)
+
+        # Optional Event eintragen
+        reg_event = kwargs.get("event", None)
+        if reg_event is not None:
+            as_thread = kwargs.get("as_thread", False)
+            edge = kwargs.get("edge", None)
+            io_new.reg_event(name, reg_event, as_thread=as_thread, edge=edge)
 
     def set_value(self, value):
         """Setzt den Wert des IOs mit bytes() oder bool().
@@ -605,11 +683,65 @@ class StructIO(IOBase):
 
     """
 
-    def __init__(self, parentdevice, valuelist, iotype, byteorder, frm):
-        """Erweitert IOBase um struct-Formatierung.
-        @see #IOBase.__init__ IOBase.__init__(...)"""
-        super().__init__(parentdevice, valuelist, iotype, byteorder)
+    def __init__(self, parentio, name, iotype, byteorder, frm, **kwargs):
+        """Erstellt einen IO mit struct-Formatierung.
+
+        @param parentio ParentIO Objekt, welches ersetzt wird
+        @param name Name des neuen IO
+        @param iotype IOType() Wert
+        @param byteorder Byteorder 'little' / 'big' fuer int() Berechnung
+        @param frm struct() formatierung (1 Zeichen)
+        @param kwargs Weitere Parameter:
+            - bmk: Bezeichnung fuer Output
+            - bit: Registriert Outputs als bool() am angegebenen Bit im Byte
+            - defaultvalue: Standardwert fuer Output, Standard ist 0
+
+        """
+        if len(frm) == 1:
+            # Byteorder prüfen und übernehmen
+            if not (byteorder == "little" or byteorder == "big"):
+                raise ValueError("byteorder must be 'little' or 'big'")
+            bofrm = "<" if byteorder == "little" else ">"
+
+            bitaddress = "" if frm != "?" else str(kwargs.get("bit", 0))
+            if bitaddress == "" or \
+                    (int(bitaddress) >= 0 and int(bitaddress) < 8):
+
+                bitlength = "1" if bitaddress.isnumeric() else \
+                    struct.calcsize(bofrm + frm) * 8
+
+                # [name,default,anzbits,adressbyte,export,adressid,bmk,bitaddress]
+                valuelist = [
+                    name,
+                    kwargs.get("defaultvalue", 0),
+                    bitlength,
+                    parentio.address,
+                    False,
+                    str(parentio.address).rjust(4, "0"),
+                    kwargs.get("bmk", ""),
+                    bitaddress
+                ]
+
+            else:
+                raise AttributeError(
+                    "bitaddress must be a value between 0 and 7"
+                )
+        else:
+            raise AttributeError("parameter frm has to be a single sign")
+
+        # Basisklasse instantiieren
+        super().__init__(parentio._parentdevice, valuelist, iotype, byteorder)
         self.frm = frm
+
+        # Platz für neuen IO prüfen
+        if not (self.slc_address.start >=
+                parentio._parentdevice._dict_slc[iotype].start and
+                self.slc_address.stop <=
+                parentio._parentdevice._dict_slc[iotype].stop):
+
+            raise BufferError(
+                "registered value does not fit process image scope"
+            )
 
     def get_structvalue(self):
         """Gibt den Wert mit struct Formatierung zurueck.

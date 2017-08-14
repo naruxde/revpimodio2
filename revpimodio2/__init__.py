@@ -17,10 +17,13 @@ fuehrt das Modul bei Datenaenderung aus.
 
 """
 import warnings
+
 from .modio import *
 
 __all__ = ["RevPiModIO", "RevPiModIOSelected", "RevPiModIODriver"]
 __author__ = "Sven Sager <akira@revpimodio.org>"
+__name__ = "revpimodio2"
+__package__ = "revpimodio2"
 __version__ = "2.0.0"
 
 # Global package values
@@ -32,3 +35,11 @@ FALLING = 32
 BOTH = 33
 
 warnings.simplefilter(action="always")
+
+class IOType(object):
+
+    """IO Typen."""
+
+    INP = 300
+    OUT = 301
+    MEM = 302
