@@ -197,7 +197,7 @@ class RevPiModIO(object):
             delattr(self.device, errdev)
             warnings.warn(
                 "equal device name in pictory configuration. can not "
-                "build device to acces by name. you can access all devices "
+                "build device to access by name. you can access all devices "
                 "by position number .device[nn] only!",
                 Warning
             )
@@ -378,6 +378,7 @@ class RevPiModIO(object):
                 dev._selfupdate = False
                 if not self._monitoring:
                     self.writeprocimg(True, dev)
+        self._looprunning = False
 
     def get_jconfigrsc(self):
         """Laed die piCotry Konfiguration und erstellt ein dict().

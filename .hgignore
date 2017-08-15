@@ -17,3 +17,7 @@ glob:cur
 glob:tmp
 glob:__pycache__
 glob:**.DS_Store
+syntax: glob
+test/*
+deb/*
+dist/*

@@ -529,7 +529,7 @@ class IOBase(object):
             return -1
 
         # WaitExit Event säubern
-        self._parentdevice._parent._waitexit.clear()
+        self._parentdevice._modio._waitexit.clear()
 
         val_start = self.value
         timeout = timeout / 1000
@@ -538,12 +538,12 @@ class IOBase(object):
             exitevent = Event()
 
         flt_timecount = 0 if bool_timecount else -1
-        while not self._parentdevice._parent._waitexit.is_set() \
+        while not self._parentdevice._modio._waitexit.is_set() \
                 and not exitevent.is_set() \
                 and flt_timecount < timeout:
 
-            if self._parentdevice._parent.imgwriter.newdata.wait(2.5):
-                self._parentdevice._parent.imgwriter.newdata.clear()
+            if self._parentdevice._modio._imgwriter.newdata.wait(2.5):
+                self._parentdevice._modio._imgwriter.newdata.clear()
 
                 if val_start != self.value:
                     if edge == BOTH \
@@ -554,7 +554,7 @@ class IOBase(object):
                         val_start = not val_start
                 if bool_timecount:
                     flt_timecount += \
-                        self._parentdevice._parent.imgwriter._refresh
+                        self._parentdevice._modio._imgwriter._refresh
             elif bool_timecount:
                 # TODO: Prüfen
                 flt_timecount += 1
@@ -564,7 +564,7 @@ class IOBase(object):
             return 1
 
         # RevPiModIO mainloop wurde verlassen
-        if self._parentdevice._parent._waitexit.is_set():
+        if self._parentdevice._modio._waitexit.is_set():
             return 100
 
         # Timeout abgelaufen
