@@ -228,28 +228,38 @@ class ProcimgWriter(Thread):
         super().__init__()
         self._adjwait = 0
         self._ioerror = 0
+        self._maxioerrors = 0
         self._modio = parentmodio
         self._refresh = 0.05
         self._work = Event()
 
         self.daemon = True
         self.lck_refresh = Lock()
-        self.maxioerrors = 0
         self.newdata = Event()
 
+    def _get_ioerrors(self):
+        """Ruft aktuelle Anzahl der Fehler ab.
+        @return Aktuelle Fehleranzahl"""
+        return self._ioerror
+
     def _gotioerror(self):
-        """IOError Verwaltung fuer auto_refresh."""
+        """IOError Verwaltung fuer autorefresh."""
         self._ioerror += 1
-        if self.maxioerrors != 0 and self._ioerror >= self.maxioerrors:
+        if self._maxioerrors != 0 and self._ioerror >= self._maxioerrors:
             raise RuntimeError(
                 "reach max io error count {} on process image".format(
-                    self.maxioerrors
+                    self._maxioerrors
                 )
             )
         warnings.warn(
             "count {} io errors on process image".format(self._ioerror),
             RuntimeWarning
         )
+
+    def get_maxioerrors(self):
+        """Gibt die Anzahl der maximal erlaubten Fehler zurueck.
+        @return Anzahl erlaubte Fehler"""
+        return self._maxioerrors
 
     def get_refresh(self):
         """Gibt Zykluszeit zurueck.
@@ -342,15 +352,26 @@ class ProcimgWriter(Thread):
         """Beendet die automatische Prozessabbildsynchronisierung."""
         self._work.set()
 
+    def set_maxioerrors(self, value):
+        """Setzt die Anzahl der maximal erlaubten Fehler.
+        @param value Anzahl erlaubte Fehler"""
+        if type(value) == int and value >= 0:
+            self._maxioerrors = value
+        else:
+            raise ValueError("value must be 0 or a positive integer")
+
     def set_refresh(self, value):
         """Setzt die Zykluszeit in Millisekunden.
         @param value int() Millisekunden"""
-        if value >= 10 and value < 2000:
+        if type(value) == int and 10 <= value <= 2000:
+            waitdiff = self._refresh - self._adjwait
             self._refresh = value / 1000
-            self._adjwait = self._refresh
+            self._adjwait = self._refresh - waitdiff
         else:
             raise ValueError(
                 "refresh time must be 10 to 2000 milliseconds"
             )
 
+    ioerrors = property(_get_ioerrors)
+    maxioerrors = property(get_maxioerrors, set_maxioerrors)
     refresh = property(get_refresh, set_refresh)

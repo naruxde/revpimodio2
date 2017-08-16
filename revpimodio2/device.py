@@ -25,8 +25,10 @@ class DeviceList(object):
         @return True, wenn Device vorhanden"""
         if type(key) == int:
             return key in self.__dict_position
-        else:
+        elif type(key) == str:
             return hasattr(self, key)
+        else:
+            return key in self.__dict_position.values()
 
     def __getitem__(self, key):
         """Gibt angegebenes Device zurueck.
@@ -61,13 +63,11 @@ class DeviceList(object):
 
 class Device(object):
 
-    """Basisklasse fuer alle Device-Objekte der RevPiDevicelist()-Klasse.
+    """Basisklasse fuer alle Device-Objekte.
 
     Die Basisfunktionalitaet generiert bei Instantiierung alle IOs und
-    erweitert den Prozessabbildpuffer um die benoetigten Bytes. Ueber diese
-    Klasse oder von dieser abgeleiteten Klassen, werden alle IOs angesprochen.
-    Sie verwaltet ihren Prozessabbildpuffer und sorgt fuer die Aktualisierung
-    der IO-Werte.
+    erweitert den Prozessabbildpuffer um die benoetigten Bytes. Sie verwaltet
+    ihren Prozessabbildpuffer und sorgt fuer die Aktualisierung der IO-Werte.
 
     """
 
@@ -78,7 +78,7 @@ class Device(object):
         @param dict_device dict() fuer dieses Device aus piCotry Konfiguration
         @param kwargs Weitere Parameter:
             - autoupdate: Wenn True fuehrt dieses Device Arbeiten am
-              Prozessabbild bei Aufruf der RevPiDevicelist-Funktionen aus
+              Prozessabbild bei Aufruf der read- writeprocimg Funktionen aus
             - simulator: Laed das Modul als Simulator und vertauscht IOs
 
         """
@@ -87,7 +87,6 @@ class Device(object):
         self._dict_events = {}
         self._filelock = Lock()
         self._length = 0
-        self._lst_io = []
         self._selfupdate = False
 
         self.autoupdate = kwargs.get("autoupdate", True)
@@ -98,11 +97,7 @@ class Device(object):
         self.position = int(dict_device.pop("position"))
         self.producttype = int(dict_device.pop("productType"))
 
-        # Neues bytearray und Kopie für mainloop anlegen
-        self._ba_devdata = bytearray()
-        self._ba_datacp = bytearray()
-
-        # Erst inp/out/mem poppen, dann in Klasse einfügen
+        # IOM-Objekte erstellen und Adressen in SLCs speichern
         if kwargs.get("simulator", False):
             self.slc_inp = self._buildio(dict_device.pop("out"), IOType.INP)
             self.slc_out = self._buildio(dict_device.pop("inp"), IOType.OUT)
@@ -122,6 +117,11 @@ class Device(object):
         self.slc_memoff = slice(
             self.slc_mem.start + self.offset, self.slc_mem.stop + self.offset
         )
+
+        # Neues bytearray und Kopie für mainloop anlegen
+        # NOTE: Testen
+        self._ba_devdata = bytearray(self._length)
+        self._ba_datacp = bytearray()
 
         # Alle restlichen attribute an Klasse anhängen
         self.__dict__.update(dict_device)
@@ -156,8 +156,8 @@ class Device(object):
     def __iter__(self):
         """Gibt Iterator aller IOs zurueck.
         @return iter() aller IOs"""
-        for i_byte in range(self.slc_devoff.start, self.slc_devoff.stop):
-            for io in self._modio.io[i_byte]:
+        for lst_io in self._modio.io[self.slc_devoff]:
+            for io in lst_io:
                 yield io
 
     def __len__(self):
@@ -178,52 +178,45 @@ class Device(object):
         @return slice()-Objekt mit Start und Stop Position dieser IOs
 
         """
-        if len(dict_io) > 0:
-            int_min, int_max = 4096, 0
-            for key in sorted(dict_io, key=lambda x: int(x)):
-
-                # Neuen IO anlegen
-                if bool(dict_io[key][7]) or self.producttype == 95:
-                    # Bei Bitwerten oder Core RevPiIOBase verwenden
-                    io_new = iomodule.IOBase(
-                        self,
-                        dict_io[key],
-                        iotype,
-                        byteorder="little"
-                    )
-                else:
-                    io_new = iomodule.IntIO(
-                        self,
-                        dict_io[key],
-                        iotype,
-                        byteorder="little"
-                    )
-
-                # IO registrieren
-                self._modio.io._register_new_io_object(io_new)
-
-                # Speicherbereich zuweisen
-                self._ba_devdata.extend(bytes(io_new._length))
-
-                self._length += io_new._length
-
-                # Kleinste und größte Speicheradresse ermitteln
-                if io_new.slc_address.start < int_min:
-                    int_min = io_new.slc_address.start
-                if io_new.slc_address.stop > int_max:
-                    int_max = io_new.slc_address.stop
-
-            return slice(int_min, int_max)
-
-        else:
+        if len(dict_io) <= 0:
             return slice(0, 0)
+
+        int_min, int_max = 4096, 0
+        for key in sorted(dict_io, key=lambda x: int(x)):
+
+            # Neuen IO anlegen
+            if bool(dict_io[key][7]) or self.producttype == 95:
+                # Bei Bitwerten oder Core RevPiIOBase verwenden
+                io_new = iomodule.IOBase(
+                    self, dict_io[key], iotype, "little", False
+                )
+            else:
+                io_new = iomodule.IntIO(
+                    self, dict_io[key],
+                    iotype,
+                    "little",
+                    self.producttype == 103
+                )
+
+            # IO registrieren
+            self._modio.io._private_register_new_io_object(io_new)
+
+            self._length += io_new._length
+
+            # Kleinste und größte Speicheradresse ermitteln
+            if io_new.slc_address.start < int_min:
+                int_min = io_new.slc_address.start
+            if io_new.slc_address.stop > int_max:
+                int_max = io_new.slc_address.stop
+
+        return slice(int_min, int_max)
 
     def _devconfigure(self):
         """Funktion zum ueberschreiben von abgeleiteten Klassen."""
         pass
 
-    def auto_refresh(self, remove=False):
-        """Registriert ein Device fuer die automatische Synchronisierung.
+    def autorefresh(self, remove=False):
+        """Registriert dieses Device fuer die automatische Synchronisierung.
         @param remove bool() True entfernt Device aus Synchronisierung"""
         if not remove and self not in self._modio._lst_refresh:
 
@@ -266,36 +259,37 @@ class Device(object):
                 self._modio.writeprocimg(True, self)
 
     def get_allios(self):
-        """Gibt eine Liste aller Inputs und Outputs zurueck.
+        """Gibt eine Liste aller Inputs und Outputs zurueck, keine MEMs.
         @return list() Input und Output, keine MEMs"""
-        return [
-            io for io in self._modio.io
-            if io._parentdevice == self and io._iotype != IOType.MEM
-        ]
+        lst_return = []
+        for lst_io in self._modio.io[
+                self.slc_inpoff.start:self.slc_outoff.stop]:
+            lst_return += lst_io
+        return lst_return
 
     def get_inps(self):
         """Gibt eine Liste aller Inputs zurueck.
         @return list() Inputs"""
-        return [
-            io for io in self._modio.io
-            if io._parentdevice == self and io._iotype == IOType.INP
-        ]
+        lst_return = []
+        for lst_io in self._modio.io[self.slc_inpoff]:
+            lst_return += lst_io
+        return lst_return
 
     def get_outs(self):
         """Gibt eine Liste aller Outputs zurueck.
         @return list() Outputs"""
-        return [
-            io for io in self._modio.io
-            if io._parentdevice == self and io._iotype == IOType.OUT
-        ]
+        lst_return = []
+        for lst_io in self._modio.io[self.slc_outoff]:
+            lst_return += lst_io
+        return lst_return
 
     def get_mems(self):
         """Gibt eine Liste aller mems zurueck.
         @return list() Mems"""
-        return [
-            io for io in self._modio.io
-            if io._parentdevice == self and io._iotype == IOType.MEM
-        ]
+        lst_return = []
+        for lst_io in self._modio.io[self.slc_memoff]:
+            lst_return += lst_io
+        return lst_return
 
 
 class Core(Device):

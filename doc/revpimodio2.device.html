@@ -22,7 +22,7 @@ Classes</h3>
 <td>Klasse fuer den RevPi Core.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Device">Device</a></td>
-<td>Basisklasse fuer alle Device-Objekte der RevPiDevicelist()-Klasse.</td>
+<td>Basisklasse fuer alle Device-Objekte.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#DeviceList">DeviceList</a></td>
 <td>Basisklasse fuer direkten Zugriff auf Device Objekte.</td>
@@ -344,13 +344,11 @@ True, wenn IO Modul nicht konfiguriert
 <a NAME="Device" ID="Device"></a>
 <h2 style="background-color:#FFFFFF;color:#0000FF">Device</h2>
 <p>
-Basisklasse fuer alle Device-Objekte der RevPiDevicelist()-Klasse.
+Basisklasse fuer alle Device-Objekte.
 </p><p>
     Die Basisfunktionalitaet generiert bei Instantiierung alle IOs und
-    erweitert den Prozessabbildpuffer um die benoetigten Bytes. Ueber diese
-    Klasse oder von dieser abgeleiteten Klassen, werden alle IOs angesprochen.
-    Sie verwaltet ihren Prozessabbildpuffer und sorgt fuer die Aktualisierung
-    der IO-Werte.
+    erweitert den Prozessabbildpuffer um die benoetigten Bytes. Sie verwaltet
+    ihren Prozessabbildpuffer und sorgt fuer die Aktualisierung der IO-Werte.
 </p><p>
 
 </p>
@@ -398,11 +396,11 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#Device._devconfigure">_devconfigure</a></td>
 <td>Funktion zum ueberschreiben von abgeleiteten Klassen.</td>
 </tr><tr>
-<td><a style="color:#0000FF" href="#Device.auto_refresh">auto_refresh</a></td>
-<td>Registriert ein Device fuer die automatische Synchronisierung.</td>
+<td><a style="color:#0000FF" href="#Device.autorefresh">autorefresh</a></td>
+<td>Registriert dieses Device fuer die automatische Synchronisierung.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Device.get_allios">get_allios</a></td>
-<td>Gibt eine Liste aller Inputs und Outputs zurueck.</td>
+<td>Gibt eine Liste aller Inputs und Outputs zurueck, keine MEMs.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Device.get_inps">get_inps</a></td>
 <td>Gibt eine Liste aller Inputs zurueck.</td>
@@ -436,7 +434,7 @@ dict() fuer dieses Device aus piCotry Konfiguration
 <dd>
 Weitere Parameter:
             - autoupdate: Wenn True fuehrt dieses Device Arbeiten am
-              Prozessabbild bei Aufruf der RevPiDevicelist-Funktionen aus
+              Prozessabbild bei Aufruf der read- writeprocimg Funktionen aus
             - simulator: Laed das Modul als Simulator und vertauscht IOs
 </dd>
 </dl><a NAME="Device.__bytes__" ID="Device.__bytes__"></a>
@@ -535,12 +533,12 @@ Device._devconfigure</h3>
 <b>_devconfigure</b>(<i></i>)
 <p>
 Funktion zum ueberschreiben von abgeleiteten Klassen.
-</p><a NAME="Device.auto_refresh" ID="Device.auto_refresh"></a>
+</p><a NAME="Device.autorefresh" ID="Device.autorefresh"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
-Device.auto_refresh</h3>
-<b>auto_refresh</b>(<i>remove=False</i>)
+Device.autorefresh</h3>
+<b>autorefresh</b>(<i>remove=False</i>)
 <p>
-Registriert ein Device fuer die automatische Synchronisierung.
+Registriert dieses Device fuer die automatische Synchronisierung.
 </p><dl>
 <dt><i>remove</i></dt>
 <dd>
@@ -551,7 +549,7 @@ bool() True entfernt Device aus Synchronisierung
 Device.get_allios</h3>
 <b>get_allios</b>(<i></i>)
 <p>
-Gibt eine Liste aller Inputs und Outputs zurueck.
+Gibt eine Liste aller Inputs und Outputs zurueck, keine MEMs.
 </p><dl>
 <dt>Returns:</dt>
 <dd>

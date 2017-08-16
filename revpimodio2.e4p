@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project revpimodio2 -->
-<!-- Saved: 2017-08-15, 08:04:54 -->
+<!-- Saved: 2017-08-16, 17:05:08 -->
 <!-- Copyright (C) 2017 Sven Sager, akira@narux.de -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -25,6 +25,7 @@
     <Source>test/test_dio_while2.py</Source>
     <Source>test/test_dio_mainloop.py</Source>
     <Source>test/test_dio_cycleloop.py</Source>
+    <Source>revpimodio2/net.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
@@ -173,6 +174,7 @@
             <value>
               <list>
                 <string>setup.py</string>
+                <string>net.py</string>
               </list>
             </value>
             <key>
@@ -219,6 +221,7 @@
             <value>
               <list>
                 <string>setup.py</string>
+                <string>net.py</string>
               </list>
             </value>
             <key>

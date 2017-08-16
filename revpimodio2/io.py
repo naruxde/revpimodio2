@@ -46,7 +46,7 @@ class IOList(object):
         object.__delattr__(self, key)
 
     def __getattr__(self, key):
-        """Verwaltet geloeschte IOs.
+        """Verwaltet geloeschte IOs (Attribute, die nicht existieren).
         @param key Wert eines alten IOs
         @return Alten IO, wenn in Ref-Listen"""
         if key in self.__dict_iorefname:
@@ -65,6 +65,11 @@ class IOList(object):
                 return self.__dict_iobyte[key]
             else:
                 raise KeyError("byte '{}' does not exist".format(key))
+        elif type(key) == slice:
+            return [
+                self.__dict_iobyte[int_io]
+                for int_io in range(key.start, key.stop)
+            ]
         else:
             return getattr(self, key)
 
@@ -105,12 +110,11 @@ class IOList(object):
                 "_IOList__dict_iorefbyte"
                 ]:
             object.__setattr__(self, key, value)
-
         else:
             # Setzt Wert bei Zuweisung
             getattr(self, key).value = value
 
-    def __replace_oldio_with_newio(self, io):
+    def __private_replace_oldio_with_newio(self, io):
         """Ersetzt bestehende IOs durch den neu Registrierten.
         @param io Neuer IO der eingefuegt werden soll"""
         for i in range(io.slc_address.start, io.slc_address.stop):
@@ -125,7 +129,6 @@ class IOList(object):
                                     io._bitaddress, oldio._name
                                 )
                             )
-
                     else:
                         # Bereits überschriebene bytes() sind ungültig
                         raise MemoryError(
@@ -133,7 +136,6 @@ class IOList(object):
                                 io._name, oldio._name
                             )
                         )
-
                 elif oldio is not None:
                     # IOs im Speicherbereich des neuen IO merken
                     if io._bitaddress >= 0:
@@ -144,7 +146,7 @@ class IOList(object):
                     # ios aus listen entfernen
                     delattr(self, oldio.name)
 
-    def _register_new_io_object(self, new_io):
+    def _private_register_new_io_object(self, new_io):
         """Registriert neues IO Objekt unabhaenging von __setattr__.
         @param new_io Neues IO Objekt"""
         if issubclass(type(new_io), IOBase):
@@ -156,7 +158,7 @@ class IOList(object):
                 )
 
             if type(new_io) is StructIO:
-                self.__replace_oldio_with_newio(new_io)
+                self.__private_replace_oldio_with_newio(new_io)
 
             object.__setattr__(self, new_io.name, new_io)
 
@@ -181,6 +183,10 @@ class IOList(object):
         print(self.__dict_iorefname)
         print(self.__dict_iorefbyte)
 
+    def _getdict(self):
+        # NOTE: Nur Debugging
+        return self.__dict_iobyte.copy()
+
 
 class IOBase(object):
 
@@ -196,13 +202,14 @@ class IOBase(object):
 
     """
 
-    def __init__(self, parentdevice, valuelist, iotype, byteorder):
+    def __init__(self, parentdevice, valuelist, iotype, byteorder, signed):
         """Instantiierung der IOBase()-Klasse.
 
         @param parentdevice Parentdevice auf dem der IO liegt
         @param valuelist Datenliste fuer Instantiierung
         @param iotype IOType() Wert
         @param byteorder Byteorder 'little' / 'big' fuer int() Berechnung
+        @param sigend Intberechnung mit Vorzeichen durchfuehren
 
         """
         self._parentdevice = parentdevice
@@ -217,7 +224,7 @@ class IOBase(object):
         self._byteorder = byteorder
         self._iotype = iotype
         self._name = valuelist[0]
-        self._signed = False
+        self._signed = signed
         self.bmk = valuelist[6]
 
         int_startaddress = int(valuelist[3])
@@ -274,22 +281,22 @@ class IOBase(object):
         @return Namen des IOs"""
         return self._name
 
+    def _get_address(self):
+        """Gibt die absolute Byteadresse im Prozessabbild zurueck.
+        @return Absolute Byteadresse"""
+        return self._parentdevice.offset + self.slc_address.start
+
     def _get_byteorder(self):
         """Gibt konfigurierte Byteorder zurueck.
         @return str() Byteorder"""
         return self._byteorder
 
-    def get_address(self):
-        """Gibt die absolute Byteadresse im Prozessabbild zurueck.
-        @return Absolute Byteadresse"""
-        return self._parentdevice.offset + self.slc_address.start
-
-    def get_length(self):
+    def _get_length(self):
         """Gibt die Bytelaenge des IO zurueck.
         @return Bytelaenge des IO"""
         return self._length
 
-    def get_name(self):
+    def _get_name(self):
         """Gibt den Namen des IOs zurueck.
         @return IO Name"""
         return self._name
@@ -384,12 +391,10 @@ class IOBase(object):
         io_new = StructIO(
             self,
             name,
-            self._iotype,
-            kwargs.get("byteorder", "little"),
             frm,
             **kwargs
         )
-        self._parentdevice._modio.io._register_new_io_object(io_new)
+        self._parentdevice._modio.io._private_register_new_io_object(io_new)
 
         # Optional Event eintragen
         reg_event = kwargs.get("event", None)
@@ -473,7 +478,7 @@ class IOBase(object):
         """Wartet auf Wertaenderung eines IOs.
 
         Die Wertaenderung wird immer uerberprueft, wenn fuer Devices
-        in Devicelist.auto_refresh() neue Daten gelesen wurden.
+        mit aktiviertem autorefresh neue Daten gelesen wurden.
 
         Bei Wertaenderung, wird das Warten mit 0 als Rueckgabewert beendet.
 
@@ -493,7 +498,7 @@ class IOBase(object):
 
         Der Timeoutwert bricht beim Erreichen das Warten sofort mit
         Wert 2 Rueckgabewert ab. (Das Timeout wird ueber die Zykluszeit
-        der auto_refresh Funktion berechnet, entspricht also nicht exact den
+        der autorefresh Funktion berechnet, entspricht also nicht exact den
         angegeben Millisekunden! Es wird immer nach oben gerundet!)
 
         @param edge Flanke RISING, FALLING, BOTH bei der mit True beendet wird
@@ -510,10 +515,10 @@ class IOBase(object):
                 Wert 100: Devicelist.exit() wurde aufgerufen
 
         """
-        # Prüfen ob Device in auto_refresh ist
+        # Prüfen ob Device in autorefresh ist
         if not self._parentdevice._selfupdate:
             raise RuntimeError(
-                "auto_refresh is not activated for device '{}|{}' - there "
+                "autorefresh is not activated for device '{}|{}' - there "
                 "will never be new data".format(
                     self._parentdevice.position, self._parentdevice.name
                 )
@@ -570,9 +575,10 @@ class IOBase(object):
         # Timeout abgelaufen
         return 2
 
-    address = property(get_address)
-    length = property(get_length)
-    name = property(get_name)
+    address = property(_get_address)
+    byteorder = property(_get_byteorder)
+    length = property(_get_length)
+    name = property(_get_name)
     value = property(get_value, set_value)
 
 
@@ -651,29 +657,28 @@ class StructIO(IOBase):
 
     """
 
-    def __init__(self, parentio, name, iotype, byteorder, frm, **kwargs):
+    def __init__(self, parentio, name, frm, **kwargs):
         """Erstellt einen IO mit struct-Formatierung.
 
         @param parentio ParentIO Objekt, welches ersetzt wird
         @param name Name des neuen IO
-        @param iotype IOType() Wert
-        @param byteorder Byteorder 'little' / 'big' fuer int() Berechnung
         @param frm struct() formatierung (1 Zeichen)
         @param kwargs Weitere Parameter:
             - bmk: Bezeichnung fuer Output
             - bit: Registriert Outputs als bool() am angegebenen Bit im Byte
+            - byteorder: Byteorder fuer den Input, Standardwert=little
             - defaultvalue: Standardwert fuer Output, Standard ist 0
 
         """
         if len(frm) == 1:
             # Byteorder prüfen und übernehmen
+            byteorder = kwargs.get("byteorder", "little")
             if not (byteorder == "little" or byteorder == "big"):
                 raise ValueError("byteorder must be 'little' or 'big'")
             bofrm = "<" if byteorder == "little" else ">"
 
             bitaddress = "" if frm != "?" else str(kwargs.get("bit", 0))
-            if bitaddress == "" or \
-                    (int(bitaddress) >= 0 and int(bitaddress) < 8):
+            if bitaddress == "" or (0 <= int(bitaddress) < 8):
 
                 bitlength = "1" if bitaddress.isnumeric() else \
                     struct.calcsize(bofrm + frm) * 8
@@ -698,18 +703,30 @@ class StructIO(IOBase):
             raise AttributeError("parameter frm has to be a single sign")
 
         # Basisklasse instantiieren
-        super().__init__(parentio._parentdevice, valuelist, iotype, byteorder)
+        # parentdevice, valuelist, iotype, byteorder, signed
+        super().__init__(
+            parentio._parentdevice,
+            valuelist,
+            parentio._iotype,
+            byteorder,
+            frm == frm.lower()
+        )
         self.frm = frm
 
         # Platz für neuen IO prüfen
         if not (self.slc_address.start >=
-                parentio._parentdevice._dict_slc[iotype].start and
+                parentio._parentdevice._dict_slc[parentio._iotype].start and
                 self.slc_address.stop <=
-                parentio._parentdevice._dict_slc[iotype].stop):
+                parentio._parentdevice._dict_slc[parentio._iotype].stop):
 
             raise BufferError(
                 "registered value does not fit process image scope"
             )
+
+    def _get_signed(self):
+        """Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.
+        @return True, wenn Vorzeichenbehaftet"""
+        return self._signed
 
     def get_structvalue(self):
         """Gibt den Wert mit struct Formatierung zurueck.
@@ -727,7 +744,7 @@ class StructIO(IOBase):
         else:
             self.set_value(struct.pack(self.frm, value))
 
-    byteorder = property(IOBase._get_byteorder)
+    signed = property(_get_signed)
     value = property(get_structvalue, set_structvalue)
 
 

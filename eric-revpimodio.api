@@ -32,7 +32,7 @@ revpimodio2.device.Core.temperatur?4()
 revpimodio2.device.Core.unconfdevice?4()
 revpimodio2.device.Device._buildio?5(dict_io, iotype)
 revpimodio2.device.Device._devconfigure?5()
-revpimodio2.device.Device.auto_refresh?4(remove=False)
+revpimodio2.device.Device.autorefresh?4(remove=False)
 revpimodio2.device.Device.get_allios?4()
 revpimodio2.device.Device.get_inps?4()
 revpimodio2.device.Device.get_mems?4()
@@ -52,18 +52,24 @@ revpimodio2.helper.Cycletools?1()
 revpimodio2.helper.EventCallback.run?4()
 revpimodio2.helper.EventCallback.stop?4()
 revpimodio2.helper.EventCallback?1(func, name, value)
+revpimodio2.helper.ProcimgWriter._get_ioerrors?5()
 revpimodio2.helper.ProcimgWriter._gotioerror?5()
+revpimodio2.helper.ProcimgWriter.get_maxioerrors?4()
 revpimodio2.helper.ProcimgWriter.get_refresh?4()
+revpimodio2.helper.ProcimgWriter.ioerrors?7
+revpimodio2.helper.ProcimgWriter.maxioerrors?7
 revpimodio2.helper.ProcimgWriter.refresh?7
 revpimodio2.helper.ProcimgWriter.run?4()
+revpimodio2.helper.ProcimgWriter.set_maxioerrors?4(value)
 revpimodio2.helper.ProcimgWriter.set_refresh?4(value)
 revpimodio2.helper.ProcimgWriter.stop?4()
 revpimodio2.helper.ProcimgWriter?1(parentmodio)
+revpimodio2.io.IOBase._get_address?5()
 revpimodio2.io.IOBase._get_byteorder?5()
+revpimodio2.io.IOBase._get_length?5()
+revpimodio2.io.IOBase._get_name?5()
 revpimodio2.io.IOBase.address?7
-revpimodio2.io.IOBase.get_address?4()
-revpimodio2.io.IOBase.get_length?4()
-revpimodio2.io.IOBase.get_name?4()
+revpimodio2.io.IOBase.byteorder?7
 revpimodio2.io.IOBase.get_value?4()
 revpimodio2.io.IOBase.length?7
 revpimodio2.io.IOBase.name?7
@@ -73,8 +79,9 @@ revpimodio2.io.IOBase.set_value?4(value)
 revpimodio2.io.IOBase.unreg_event?4(func=None, edge=None)
 revpimodio2.io.IOBase.value?7
 revpimodio2.io.IOBase.wait?4(edge=BOTH, exitevent=None, okvalue=None, timeout=0)
-revpimodio2.io.IOBase?1(parentdevice, valuelist, iotype, byteorder)
-revpimodio2.io.IOList._register_new_io_object?5(new_io)
+revpimodio2.io.IOBase?1(parentdevice, valuelist, iotype, byteorder, signed)
+revpimodio2.io.IOList._getdict?5()
+revpimodio2.io.IOList._private_register_new_io_object?5(new_io)
 revpimodio2.io.IOList._testme?5()
 revpimodio2.io.IOList?1()
 revpimodio2.io.IntIO._get_signed?5()
@@ -85,22 +92,26 @@ revpimodio2.io.IntIO.get_int?4()
 revpimodio2.io.IntIO.set_int?4(value)
 revpimodio2.io.IntIO.signed?7
 revpimodio2.io.IntIO.value?7
-revpimodio2.io.StructIO.byteorder?7
+revpimodio2.io.StructIO._get_signed?5()
 revpimodio2.io.StructIO.get_structvalue?4()
 revpimodio2.io.StructIO.set_structvalue?4(value)
+revpimodio2.io.StructIO.signed?7
 revpimodio2.io.StructIO.value?7
-revpimodio2.io.StructIO?1(parentio, name, iotype, byteorder, frm, **kwargs)
+revpimodio2.io.StructIO?1(parentio, name, frm, **kwargs)
 revpimodio2.modio.RevPiModIO._configure?5()
 revpimodio2.modio.RevPiModIO._create_myfh?5()
 revpimodio2.modio.RevPiModIO._get_configrsc?5()
 revpimodio2.modio.RevPiModIO._get_cycletime?5()
+revpimodio2.modio.RevPiModIO._get_ioerrors?5()
 revpimodio2.modio.RevPiModIO._get_length?5()
+revpimodio2.modio.RevPiModIO._get_maxioerrors?5()
 revpimodio2.modio.RevPiModIO._get_monitoring?5()
 revpimodio2.modio.RevPiModIO._get_procimg?5()
 revpimodio2.modio.RevPiModIO._get_simulator?5()
+revpimodio2.modio.RevPiModIO._gotioerror?5(action)
 revpimodio2.modio.RevPiModIO._set_cycletime?5(milliseconds)
-revpimodio2.modio.RevPiModIO.auto_refresh_maxioerrors?4(value=None)
-revpimodio2.modio.RevPiModIO.auto_refresh_resetioerrors?4()
+revpimodio2.modio.RevPiModIO._set_maxioerrors?5(value)
+revpimodio2.modio.RevPiModIO.autorefresh_all?4()
 revpimodio2.modio.RevPiModIO.cleanup?4()
 revpimodio2.modio.RevPiModIO.configrsc?7
 revpimodio2.modio.RevPiModIO.cycleloop?4(func, cycletime=50)
@@ -108,11 +119,14 @@ revpimodio2.modio.RevPiModIO.cycletime?7
 revpimodio2.modio.RevPiModIO.exit?4(full=True)
 revpimodio2.modio.RevPiModIO.get_jconfigrsc?4()
 revpimodio2.modio.RevPiModIO.handlesignalend?4(cleanupfunc=None)
+revpimodio2.modio.RevPiModIO.ioerrors?7
 revpimodio2.modio.RevPiModIO.length?7
 revpimodio2.modio.RevPiModIO.mainloop?4(freeze=False, blocking=True)
+revpimodio2.modio.RevPiModIO.maxioerrors?7
 revpimodio2.modio.RevPiModIO.monitoring?7
 revpimodio2.modio.RevPiModIO.procimg?7
 revpimodio2.modio.RevPiModIO.readprocimg?4(force=False, device=None)
+revpimodio2.modio.RevPiModIO.resetioerrors?4()
 revpimodio2.modio.RevPiModIO.setdefaultvalues?4(force=False, device=None)
 revpimodio2.modio.RevPiModIO.simulator?7
 revpimodio2.modio.RevPiModIO.syncoutputs?4(force=False, device=None)

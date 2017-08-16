@@ -37,7 +37,7 @@ class RevPiModIO(object):
         """Instantiiert die Grundfunktionen.
 
         @param kwargs Weitere Parameter:
-            - auto_refresh: Wenn True, alle Devices zu auto_refresh hinzufuegen
+            - autorefresh: Wenn True, alle Devices zu autorefresh hinzufuegen
             - configrsc: Pfad zur piCtory Konfigurationsdatei
             - procimg: Pfad zum Prozessabbild
             - monitoring: In- und Outputs werden gelesen, niemals geschrieben
@@ -45,7 +45,7 @@ class RevPiModIO(object):
             - syncoutputs: Aktuell gesetzte Outputs vom Prozessabbild einlesen
 
         """
-        self._auto_refresh = kwargs.get("auto_refresh", False)
+        self._autorefresh = kwargs.get("autorefresh", False)
         self._configrsc = kwargs.get("configrsc", None)
         self._monitoring = kwargs.get("monitoring", False)
         self._procimg = kwargs.get("procimg", "/dev/piControl0")
@@ -59,10 +59,12 @@ class RevPiModIO(object):
         self._buffedwrite = False
         self._exit = Event()
         self._imgwriter = None
+        self._ioerror = 0
         self._length = 0
         self._looprunning = False
         self._lst_devselect = []
         self._lst_refresh = []
+        self._maxioerrors = 0
         self._myfh = self._create_myfh()
         self._th_mainloop = None
         self._waitexit = Event()
@@ -209,10 +211,9 @@ class RevPiModIO(object):
         if self._syncoutputs:
             self.syncoutputs(force=True)
 
-        # Optional ins auto_refresh aufnehmen
-        if self._auto_refresh:
-            for dev in self.device:
-                dev.auto_refresh()
+        # Optional ins autorefresh aufnehmen
+        if self._autorefresh:
+            self.autorefresh_all()
 
         # Summary Klasse instantiieren
         self.summary = summarymodule.Summary(jconfigrsc["Summary"])
@@ -233,10 +234,20 @@ class RevPiModIO(object):
         @return Millisekunden"""
         return self._imgwriter.refresh
 
+    def _get_ioerrors(self):
+        """Getter function.
+        @return Aktuelle Anzahl gezaehlter Fehler"""
+        return self._ioerror
+
     def _get_length(self):
         """Getter function.
         @return Laenge in Bytes der Devices"""
         return self._length
+
+    def _get_maxioerrors(self):
+        """Getter function.
+        @return Anzahl erlaubte Fehler"""
+        return self._maxioerrors
 
     def _get_monitoring(self):
         """Getter function.
@@ -253,26 +264,43 @@ class RevPiModIO(object):
         @return True, wenn als Simulator gestartet"""
         return self._simulator
 
+    def _gotioerror(self, action):
+        """IOError Verwaltung fuer Prozessabbildzugriff."""
+        self._ioerror += 1
+        if self._maxioerrors != 0 and self._ioerror >= self._maxioerrors:
+            raise RuntimeError(
+                "reach max io error count {} on process image".format(
+                    self._maxioerrors
+                )
+            )
+        warnings.warn(
+            "got io error during {} and count {} errors now".format(
+                self._ioerror, self._ioerror
+            ),
+            RuntimeWarning
+        )
+
     def _set_cycletime(self, milliseconds):
         """Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.
         @param milliseconds int() in Millisekunden"""
         self._imgwriter.refresh = milliseconds
 
-    def auto_refresh_maxioerrors(self, value=None):
-        """Maximale IO Fehler fuer auto_refresh.
-        @param value Setzt maximale Anzahl bis exception ausgeloest wird
-        @return Maximale Anzahl bis exception ausgeloest wird"""
-        if value is None:
-            return self._imgwriter.maxioerrors
-        elif type(value) == int and value >= 0:
+    def _set_maxioerrors(self, value):
+        """Setzt Anzahl der maximal erlaubten Fehler bei Prozessabbildzugriff.
+        @param value Anzahl erlaubte Fehler"""
+        if type(value) == int and value >= 0:
+            self._maxioerrors = value
             self._imgwriter.maxioerrors = value
+        else:
+            raise ValueError("value must be 0 or a positive integer")
 
-    def auto_refresh_resetioerrors(self):
-        """Setzt aktuellen IOError-Zaehler auf 0 zurueck."""
-        self._imgwriter.maxioerrors = 0
+    def autorefresh_all(self):
+        """Setzt alle Devices in autorefresh Funktion."""
+        for dev in self.device:
+            dev.autorefresh()
 
     def cleanup(self):
-        """Beendet auto_refresh und alle Threads."""
+        """Beendet autorefresh und alle Threads."""
         self.exit(full=True)
         self._myfh.close()
         self.app = None
@@ -297,15 +325,14 @@ class RevPiModIO(object):
         revpimodio.exit().
 
         HINWEIS: Die Aktualisierungszeit und die Laufzeit der Funktion duerfen
-        die eingestellte auto_refresh Zeit, bzw. uebergebene cycletime nicht
+        die eingestellte autorefresh Zeit, bzw. uebergebene cycletime nicht
         ueberschreiten!
 
-        Ueber den Parameter cycletime kann die Aktualisierungsrate fuer das
-        Prozessabbild gesetzt werden (selbe Funktion wie
-        set_refreshtime(milliseconds)).
+        Ueber das Attribut cycletime kann die Aktualisierungsrate fuer das
+        Prozessabbild gesetzt werden.
 
         @param func Funktion, die ausgefuehrt werden soll
-        @param cycletime auto_refresh Wert in Millisekunden
+        @param cycletime autorefresh Wert in Millisekunden
         @return None
 
         """
@@ -315,9 +342,9 @@ class RevPiModIO(object):
                 "can not start multiple loops mainloop/cycleloop"
             )
 
-        # Prüfen ob Devices in auto_refresh sind
+        # Prüfen ob Devices in autorefresh sind
         if len(self._lst_refresh) == 0:
-            raise RuntimeError("no device with auto_refresh activated")
+            raise RuntimeError("no device with autorefresh activated")
 
         # Prüfen ob Funktion callable ist
         if not callable(func):
@@ -337,18 +364,18 @@ class RevPiModIO(object):
             # Auf neue Daten warten und nur ausführen wenn set()
             if not self._imgwriter.newdata.wait(2.5):
                 if not self._exit.is_set() and not self._imgwriter.is_alive():
-                    raise RuntimeError("auto_refresh thread not running")
+                    raise RuntimeError("autorefresh thread not running")
                 continue
             self._imgwriter.newdata.clear()
 
-            # Vor Aufruf der Funktion auto_refresh sperren
+            # Vor Aufruf der Funktion autorefresh sperren
             self._imgwriter.lck_refresh.acquire()
 
             # Funktion aufrufen und auswerten
             ec = func(cycleinfo)
             cycleinfo._docycle()
 
-            # auto_refresh freigeben
+            # autorefresh freigeben
             self._imgwriter.lck_refresh.release()
 
         # Cycleloop beenden
@@ -357,16 +384,16 @@ class RevPiModIO(object):
         return ec
 
     def exit(self, full=True):
-        """Beendet mainloop() und optional auto_refresh.
+        """Beendet mainloop() und optional autorefresh.
 
         Wenn sich das Programm im mainloop() befindet, wird durch Aufruf
         von exit() die Kontrolle wieder an das Hauptprogramm zurueckgegeben.
 
         Der Parameter full ist mit True vorbelegt und entfernt alle Devices aus
-        dem auto_refresh. Der Thread fuer die Prozessabbildsynchronisierung
+        dem autorefresh. Der Thread fuer die Prozessabbildsynchronisierung
         wird dann gestoppt und das Programm kann sauber beendet werden.
 
-        @param full Entfernt auch alle Devices aus auto_refresh"""
+        @param full Entfernt auch alle Devices aus autorefresh"""
         self._exit.set()
         self._waitexit.set()
         if full:
@@ -469,9 +496,9 @@ class RevPiModIO(object):
                 "can not start multiple loops mainloop/cycleloop"
             )
 
-        # Prüfen ob Devices in auto_refresh sind
+        # Prüfen ob Devices in autorefresh sind
         if len(self._lst_refresh) == 0:
-            raise RuntimeError("no device with auto_refresh activated")
+            raise RuntimeError("no device with autorefresh activated")
 
         # Thread erstellen, wenn nicht blockieren soll
         if not blocking:
@@ -498,7 +525,7 @@ class RevPiModIO(object):
             # Auf neue Daten warten und nur ausführen wenn set()
             if not self._imgwriter.newdata.wait(2.5):
                 if not self._exit.is_set() and not self._imgwriter.is_alive():
-                    raise RuntimeError("auto_refresh thread not running")
+                    raise RuntimeError("autorefresh thread not running")
                 continue
 
             self._imgwriter.newdata.clear()
@@ -593,7 +620,7 @@ class RevPiModIO(object):
             if dev._selfupdate:
                 raise RuntimeError(
                     "can not read process image, while device '{}|{}'"
-                    "is in auto_refresh mode".format(dev.position, dev.name)
+                    "is in autorefresh mode".format(dev.position, dev.name)
                 )
             mylist = [dev]
 
@@ -602,10 +629,7 @@ class RevPiModIO(object):
             self._myfh.seek(0)
             bytesbuff = self._myfh.read(self._length)
         except IOError:
-            warnings.warn(
-                "read error on process image '{}'".format(self.myfh.name),
-                RuntimeWarning
-            )
+            self._gotioerror("read")
             return False
 
         for dev in mylist:
@@ -627,6 +651,11 @@ class RevPiModIO(object):
                 dev._filelock.release()
 
         return True
+
+    def resetioerrors(self):
+        """Setzt aktuellen IOError-Zaehler auf 0 zurueck."""
+        self._ioerror = 0
+        self._imgwriter._ioerror = 0
 
     def setdefaultvalues(self, force=False, device=None):
         """Alle Outputbuffer werden auf die piCtory default Werte gesetzt.
@@ -667,7 +696,7 @@ class RevPiModIO(object):
             if dev._selfupdate:
                 raise RuntimeError(
                     "can not sync process image, while device '{}|{}'"
-                    "is in auto_refresh mode".format(dev.position, dev.name)
+                    "is in autorefresh mode".format(dev.position, dev.name)
                 )
             mylist = [dev]
 
@@ -675,10 +704,7 @@ class RevPiModIO(object):
             self._myfh.seek(0)
             bytesbuff = self._myfh.read(self._length)
         except IOError:
-            warnings.warn(
-                "read error on process image '{}'".format(self._myfh.name),
-                RuntimeWarning
-            )
+            self._gotioerror("read")
             return False
 
         for dev in mylist:
@@ -731,11 +757,7 @@ class RevPiModIO(object):
             if self._buffedwrite:
                 self._myfh.flush()
         except IOError:
-            warnings.warn(
-                "write error on process image '{}'"
-                "".format(self._myfh.name),
-                RuntimeWarning
-            )
+            self._gotioerror("write")
             workokay = False
 
         dev._filelock.release()
@@ -764,7 +786,7 @@ class RevPiModIO(object):
             if dev._selfupdate:
                 raise RuntimeError(
                     "can not write process image, while device '{}|{}'"
-                    "is in auto_refresh mode".format(dev.position, dev.name)
+                    "is in autorefresh mode".format(dev.position, dev.name)
                 )
             mylist = [dev]
 
@@ -789,17 +811,15 @@ class RevPiModIO(object):
                 workokay = False
 
         if not workokay:
-            warnings.warn(
-                "write error on process image '{}'"
-                "".format(self._myfh.name),
-                RuntimeWarning
-            )
+            self._gotioerror("write")
 
         return workokay
 
     configrsc = property(_get_configrsc)
     cycletime = property(_get_cycletime, _set_cycletime)
+    ioerrors = property(_get_ioerrors)
     length = property(_get_length)
+    maxioerrors = property(_get_maxioerrors, _set_maxioerrors)
     monitoring = property(_get_monitoring)
     procimg = property(_get_procimg)
     simulator = property(_get_simulator)

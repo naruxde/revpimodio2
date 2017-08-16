@@ -54,7 +54,7 @@ object
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>configrsc</td></tr><tr><td>cycletime</td></tr><tr><td>length</td></tr><tr><td>monitoring</td></tr><tr><td>procimg</td></tr><tr><td>simulator</td></tr>
+<tr><td>configrsc</td></tr><tr><td>cycletime</td></tr><tr><td>ioerrors</td></tr><tr><td>length</td></tr><tr><td>maxioerrors</td></tr><tr><td>monitoring</td></tr><tr><td>procimg</td></tr><tr><td>simulator</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -86,7 +86,13 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#RevPiModIO._get_cycletime">_get_cycletime</a></td>
 <td>Gibt Aktualisierungsrate in ms der Prozessabbildsynchronisierung aus.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#RevPiModIO._get_ioerrors">_get_ioerrors</a></td>
+<td>Getter function.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO._get_length">_get_length</a></td>
+<td>Getter function.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#RevPiModIO._get_maxioerrors">_get_maxioerrors</a></td>
 <td>Getter function.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO._get_monitoring">_get_monitoring</a></td>
@@ -98,23 +104,26 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#RevPiModIO._get_simulator">_get_simulator</a></td>
 <td>Getter function.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#RevPiModIO._gotioerror">_gotioerror</a></td>
+<td>IOError Verwaltung fuer Prozessabbildzugriff.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO._set_cycletime">_set_cycletime</a></td>
 <td>Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.</td>
 </tr><tr>
-<td><a style="color:#0000FF" href="#RevPiModIO.auto_refresh_maxioerrors">auto_refresh_maxioerrors</a></td>
-<td>Maximale IO Fehler fuer auto_refresh.</td>
+<td><a style="color:#0000FF" href="#RevPiModIO._set_maxioerrors">_set_maxioerrors</a></td>
+<td>Setzt Anzahl der maximal erlaubten Fehler bei Prozessabbildzugriff.</td>
 </tr><tr>
-<td><a style="color:#0000FF" href="#RevPiModIO.auto_refresh_resetioerrors">auto_refresh_resetioerrors</a></td>
-<td>Setzt aktuellen IOError-Zaehler auf 0 zurueck.</td>
+<td><a style="color:#0000FF" href="#RevPiModIO.autorefresh_all">autorefresh_all</a></td>
+<td>Setzt alle Devices in autorefresh Funktion.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.cleanup">cleanup</a></td>
-<td>Beendet auto_refresh und alle Threads.</td>
+<td>Beendet autorefresh und alle Threads.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.cycleloop">cycleloop</a></td>
 <td>Startet den Cycleloop.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.exit">exit</a></td>
-<td>Beendet mainloop() und optional auto_refresh.</td>
+<td>Beendet mainloop() und optional autorefresh.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.get_jconfigrsc">get_jconfigrsc</a></td>
 <td>Laed die piCotry Konfiguration und erstellt ein dict().</td>
@@ -127,6 +136,9 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.readprocimg">readprocimg</a></td>
 <td>Einlesen aller Inputs aller/eines Devices vom Prozessabbild.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#RevPiModIO.resetioerrors">resetioerrors</a></td>
+<td>Setzt aktuellen IOError-Zaehler auf 0 zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.setdefaultvalues">setdefaultvalues</a></td>
 <td>Alle Outputbuffer werden auf die piCtory default Werte gesetzt.</td>
@@ -156,7 +168,7 @@ Instantiiert die Grundfunktionen.
 <dt><i>kwargs</i></dt>
 <dd>
 Weitere Parameter:
-            - auto_refresh: Wenn True, alle Devices zu auto_refresh hinzufuegen
+            - autorefresh: Wenn True, alle Devices zu autorefresh hinzufuegen
             - configrsc: Pfad zur piCtory Konfigurationsdatei
             - procimg: Pfad zum Prozessabbild
             - monitoring: In- und Outputs werden gelesen, niemals geschrieben
@@ -218,6 +230,17 @@ Gibt Aktualisierungsrate in ms der Prozessabbildsynchronisierung aus.
 <dd>
 Millisekunden
 </dd>
+</dl><a NAME="RevPiModIO._get_ioerrors" ID="RevPiModIO._get_ioerrors"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiModIO._get_ioerrors</h3>
+<b>_get_ioerrors</b>(<i></i>)
+<p>
+Getter function.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Aktuelle Anzahl gezaehlter Fehler
+</dd>
 </dl><a NAME="RevPiModIO._get_length" ID="RevPiModIO._get_length"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO._get_length</h3>
@@ -228,6 +251,17 @@ Getter function.
 <dt>Returns:</dt>
 <dd>
 Laenge in Bytes der Devices
+</dd>
+</dl><a NAME="RevPiModIO._get_maxioerrors" ID="RevPiModIO._get_maxioerrors"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiModIO._get_maxioerrors</h3>
+<b>_get_maxioerrors</b>(<i></i>)
+<p>
+Getter function.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Anzahl erlaubte Fehler
 </dd>
 </dl><a NAME="RevPiModIO._get_monitoring" ID="RevPiModIO._get_monitoring"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -262,7 +296,13 @@ Getter function.
 <dd>
 True, wenn als Simulator gestartet
 </dd>
-</dl><a NAME="RevPiModIO._set_cycletime" ID="RevPiModIO._set_cycletime"></a>
+</dl><a NAME="RevPiModIO._gotioerror" ID="RevPiModIO._gotioerror"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiModIO._gotioerror</h3>
+<b>_gotioerror</b>(<i>action</i>)
+<p>
+IOError Verwaltung fuer Prozessabbildzugriff.
+</p><a NAME="RevPiModIO._set_cycletime" ID="RevPiModIO._set_cycletime"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO._set_cycletime</h3>
 <b>_set_cycletime</b>(<i>milliseconds</i>)
@@ -273,34 +313,29 @@ Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.
 <dd>
 int() in Millisekunden
 </dd>
-</dl><a NAME="RevPiModIO.auto_refresh_maxioerrors" ID="RevPiModIO.auto_refresh_maxioerrors"></a>
+</dl><a NAME="RevPiModIO._set_maxioerrors" ID="RevPiModIO._set_maxioerrors"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
-RevPiModIO.auto_refresh_maxioerrors</h3>
-<b>auto_refresh_maxioerrors</b>(<i>value=None</i>)
+RevPiModIO._set_maxioerrors</h3>
+<b>_set_maxioerrors</b>(<i>value</i>)
 <p>
-Maximale IO Fehler fuer auto_refresh.
+Setzt Anzahl der maximal erlaubten Fehler bei Prozessabbildzugriff.
 </p><dl>
 <dt><i>value</i></dt>
 <dd>
-Setzt maximale Anzahl bis exception ausgeloest wird
+Anzahl erlaubte Fehler
 </dd>
-</dl><dl>
-<dt>Returns:</dt>
-<dd>
-Maximale Anzahl bis exception ausgeloest wird
-</dd>
-</dl><a NAME="RevPiModIO.auto_refresh_resetioerrors" ID="RevPiModIO.auto_refresh_resetioerrors"></a>
+</dl><a NAME="RevPiModIO.autorefresh_all" ID="RevPiModIO.autorefresh_all"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
-RevPiModIO.auto_refresh_resetioerrors</h3>
-<b>auto_refresh_resetioerrors</b>(<i></i>)
+RevPiModIO.autorefresh_all</h3>
+<b>autorefresh_all</b>(<i></i>)
 <p>
-Setzt aktuellen IOError-Zaehler auf 0 zurueck.
+Setzt alle Devices in autorefresh Funktion.
 </p><a NAME="RevPiModIO.cleanup" ID="RevPiModIO.cleanup"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO.cleanup</h3>
 <b>cleanup</b>(<i></i>)
 <p>
-Beendet auto_refresh und alle Threads.
+Beendet autorefresh und alle Threads.
 </p><a NAME="RevPiModIO.cycleloop" ID="RevPiModIO.cycleloop"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO.cycleloop</h3>
@@ -321,19 +356,18 @@ Startet den Cycleloop.
         revpimodio.exit().
 </p><p>
         HINWEIS: Die Aktualisierungszeit und die Laufzeit der Funktion duerfen
-        die eingestellte auto_refresh Zeit, bzw. uebergebene cycletime nicht
+        die eingestellte autorefresh Zeit, bzw. uebergebene cycletime nicht
         ueberschreiten!
 </p><p>
-        Ueber den Parameter cycletime kann die Aktualisierungsrate fuer das
-        Prozessabbild gesetzt werden (selbe Funktion wie
-        set_refreshtime(milliseconds)).
+        Ueber das Attribut cycletime kann die Aktualisierungsrate fuer das
+        Prozessabbild gesetzt werden.
 </p><dl>
 <dt><i>func</i></dt>
 <dd>
 Funktion, die ausgefuehrt werden soll
 </dd><dt><i>cycletime</i></dt>
 <dd>
-auto_refresh Wert in Millisekunden
+autorefresh Wert in Millisekunden
 </dd>
 </dl><dl>
 <dt>Returns:</dt>
@@ -345,18 +379,18 @@ None
 RevPiModIO.exit</h3>
 <b>exit</b>(<i>full=True</i>)
 <p>
-Beendet mainloop() und optional auto_refresh.
+Beendet mainloop() und optional autorefresh.
 </p><p>
         Wenn sich das Programm im mainloop() befindet, wird durch Aufruf
         von exit() die Kontrolle wieder an das Hauptprogramm zurueckgegeben.
 </p><p>
         Der Parameter full ist mit True vorbelegt und entfernt alle Devices aus
-        dem auto_refresh. Der Thread fuer die Prozessabbildsynchronisierung
+        dem autorefresh. Der Thread fuer die Prozessabbildsynchronisierung
         wird dann gestoppt und das Programm kann sauber beendet werden.
 </p><dl>
 <dt><i>full</i></dt>
 <dd>
-Entfernt auch alle Devices aus auto_refresh
+Entfernt auch alle Devices aus autorefresh
 </dd>
 </dl><a NAME="RevPiModIO.get_jconfigrsc" ID="RevPiModIO.get_jconfigrsc"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -452,7 +486,13 @@ nur auf einzelnes Device anwenden
 <dd>
 True, wenn Arbeiten an allen Devices erfolgreich waren
 </dd>
-</dl><a NAME="RevPiModIO.setdefaultvalues" ID="RevPiModIO.setdefaultvalues"></a>
+</dl><a NAME="RevPiModIO.resetioerrors" ID="RevPiModIO.resetioerrors"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiModIO.resetioerrors</h3>
+<b>resetioerrors</b>(<i></i>)
+<p>
+Setzt aktuellen IOError-Zaehler auf 0 zurueck.
+</p><a NAME="RevPiModIO.setdefaultvalues" ID="RevPiModIO.setdefaultvalues"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO.setdefaultvalues</h3>
 <b>setdefaultvalues</b>(<i>force=False, device=None</i>)

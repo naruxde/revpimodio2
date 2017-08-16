@@ -318,7 +318,7 @@ Thread
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>refresh</td></tr>
+<tr><td>ioerrors</td></tr><tr><td>maxioerrors</td></tr><tr><td>refresh</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -332,14 +332,23 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#ProcimgWriter.__init__">ProcimgWriter</a></td>
 <td>Init ProcimgWriter class.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#ProcimgWriter._get_ioerrors">_get_ioerrors</a></td>
+<td>Ruft aktuelle Anzahl der Fehler ab.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#ProcimgWriter._gotioerror">_gotioerror</a></td>
-<td>IOError Verwaltung fuer auto_refresh.</td>
+<td>IOError Verwaltung fuer autorefresh.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#ProcimgWriter.get_maxioerrors">get_maxioerrors</a></td>
+<td>Gibt die Anzahl der maximal erlaubten Fehler zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#ProcimgWriter.get_refresh">get_refresh</a></td>
 <td>Gibt Zykluszeit zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#ProcimgWriter.run">run</a></td>
 <td>Startet die automatische Prozessabbildsynchronisierung.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#ProcimgWriter.set_maxioerrors">set_maxioerrors</a></td>
+<td>Setzt die Anzahl der maximal erlaubten Fehler.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#ProcimgWriter.set_refresh">set_refresh</a></td>
 <td>Setzt die Zykluszeit in Millisekunden.</td>
@@ -364,13 +373,35 @@ Init ProcimgWriter class.
 <dd>
 Parent Object
 </dd>
+</dl><a NAME="ProcimgWriter._get_ioerrors" ID="ProcimgWriter._get_ioerrors"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+ProcimgWriter._get_ioerrors</h3>
+<b>_get_ioerrors</b>(<i></i>)
+<p>
+Ruft aktuelle Anzahl der Fehler ab.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Aktuelle Fehleranzahl
+</dd>
 </dl><a NAME="ProcimgWriter._gotioerror" ID="ProcimgWriter._gotioerror"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 ProcimgWriter._gotioerror</h3>
 <b>_gotioerror</b>(<i></i>)
 <p>
-IOError Verwaltung fuer auto_refresh.
-</p><a NAME="ProcimgWriter.get_refresh" ID="ProcimgWriter.get_refresh"></a>
+IOError Verwaltung fuer autorefresh.
+</p><a NAME="ProcimgWriter.get_maxioerrors" ID="ProcimgWriter.get_maxioerrors"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+ProcimgWriter.get_maxioerrors</h3>
+<b>get_maxioerrors</b>(<i></i>)
+<p>
+Gibt die Anzahl der maximal erlaubten Fehler zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Anzahl erlaubte Fehler
+</dd>
+</dl><a NAME="ProcimgWriter.get_refresh" ID="ProcimgWriter.get_refresh"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 ProcimgWriter.get_refresh</h3>
 <b>get_refresh</b>(<i></i>)
@@ -387,7 +418,18 @@ ProcimgWriter.run</h3>
 <b>run</b>(<i></i>)
 <p>
 Startet die automatische Prozessabbildsynchronisierung.
-</p><a NAME="ProcimgWriter.set_refresh" ID="ProcimgWriter.set_refresh"></a>
+</p><a NAME="ProcimgWriter.set_maxioerrors" ID="ProcimgWriter.set_maxioerrors"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+ProcimgWriter.set_maxioerrors</h3>
+<b>set_maxioerrors</b>(<i>value</i>)
+<p>
+Setzt die Anzahl der maximal erlaubten Fehler.
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+Anzahl erlaubte Fehler
+</dd>
+</dl><a NAME="ProcimgWriter.set_refresh" ID="ProcimgWriter.set_refresh"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 ProcimgWriter.set_refresh</h3>
 <b>set_refresh</b>(<i>value</i>)
