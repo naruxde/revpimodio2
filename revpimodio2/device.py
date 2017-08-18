@@ -7,7 +7,6 @@
 # -*- coding: utf-8 -*-
 """Modul fuer die Verwaltung der Devices."""
 from threading import Lock
-from .__init__ import IOType
 from .helper import ProcimgWriter
 
 
@@ -99,12 +98,16 @@ class Device(object):
 
         # IOM-Objekte erstellen und Adressen in SLCs speichern
         if kwargs.get("simulator", False):
-            self.slc_inp = self._buildio(dict_device.pop("out"), IOType.INP)
-            self.slc_out = self._buildio(dict_device.pop("inp"), IOType.OUT)
+            self.slc_inp = self._buildio(
+                dict_device.pop("out"), iomodule.Type.INP)
+            self.slc_out = self._buildio(
+                dict_device.pop("inp"), iomodule.Type.OUT)
         else:
-            self.slc_inp = self._buildio(dict_device.pop("inp"), IOType.INP)
-            self.slc_out = self._buildio(dict_device.pop("out"), IOType.OUT)
-        self.slc_mem = self._buildio(dict_device.pop("mem"), IOType.MEM)
+            self.slc_inp = self._buildio(
+                dict_device.pop("inp"), iomodule.Type.INP)
+            self.slc_out = self._buildio(
+                dict_device.pop("out"), iomodule.Type.OUT)
+        self.slc_mem = self._buildio(dict_device.pop("mem"), iomodule.Type.MEM)
 
         # SLCs mit offset berechnen
         self.slc_devoff = slice(self.offset, self.offset + self._length)
@@ -174,7 +177,7 @@ class Device(object):
         """Erstellt aus der piCtory-Liste die IOs fuer dieses Device.
 
         @param dict_io dict()-Objekt aus piCtory Konfiguration
-        @param iotype IOType() Wert
+        @param iotype io.Type() Wert
         @return slice()-Objekt mit Start und Stop Position dieser IOs
 
         """
@@ -267,7 +270,7 @@ class Device(object):
             lst_return += lst_io
         return lst_return
 
-    def get_inps(self):
+    def get_inputs(self):
         """Gibt eine Liste aller Inputs zurueck.
         @return list() Inputs"""
         lst_return = []
@@ -275,7 +278,7 @@ class Device(object):
             lst_return += lst_io
         return lst_return
 
-    def get_outs(self):
+    def get_outputs(self):
         """Gibt eine Liste aller Outputs zurueck.
         @return list() Outputs"""
         lst_return = []
@@ -283,7 +286,7 @@ class Device(object):
             lst_return += lst_io
         return lst_return
 
-    def get_mems(self):
+    def get_memmories(self):
         """Gibt eine Liste aller mems zurueck.
         @return list() Mems"""
         lst_return = []
@@ -537,9 +540,9 @@ class Gateway(Device):
         super().__init__(parent, dict_device, **kwargs)
 
         self._dict_slc = {
-            IOType.INP: self.slc_inp,
-            IOType.OUT: self.slc_out,
-            IOType.MEM: self.slc_mem
+            iomodule.Type.INP: self.slc_inp,
+            iomodule.Type.OUT: self.slc_out,
+            iomodule.Type.MEM: self.slc_mem
         }
 
     def get_rawbytes(self):

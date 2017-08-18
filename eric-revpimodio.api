@@ -1,9 +1,6 @@
 revpimodio2.BOTH?7
 revpimodio2.FALLING?7
 revpimodio2.GREEN?7
-revpimodio2.IOType.INP?7
-revpimodio2.IOType.MEM?7
-revpimodio2.IOType.OUT?7
 revpimodio2.OFF?7
 revpimodio2.RED?7
 revpimodio2.RISING?7
@@ -34,9 +31,9 @@ revpimodio2.device.Device._buildio?5(dict_io, iotype)
 revpimodio2.device.Device._devconfigure?5()
 revpimodio2.device.Device.autorefresh?4(remove=False)
 revpimodio2.device.Device.get_allios?4()
-revpimodio2.device.Device.get_inps?4()
-revpimodio2.device.Device.get_mems?4()
-revpimodio2.device.Device.get_outs?4()
+revpimodio2.device.Device.get_inputs?4()
+revpimodio2.device.Device.get_memmories?4()
+revpimodio2.device.Device.get_outputs?4()
 revpimodio2.device.Device?1(parentmodio, dict_device, **kwargs)
 revpimodio2.device.DeviceList?1()
 revpimodio2.device.Gateway.get_rawbytes?4()
@@ -66,6 +63,7 @@ revpimodio2.helper.ProcimgWriter.stop?4()
 revpimodio2.helper.ProcimgWriter?1(parentmodio)
 revpimodio2.io.IOBase._get_address?5()
 revpimodio2.io.IOBase._get_byteorder?5()
+revpimodio2.io.IOBase._get_iotype?5()
 revpimodio2.io.IOBase._get_length?5()
 revpimodio2.io.IOBase._get_name?5()
 revpimodio2.io.IOBase.address?7
@@ -76,6 +74,7 @@ revpimodio2.io.IOBase.name?7
 revpimodio2.io.IOBase.reg_event?4(func, edge=BOTH, as_thread=False)
 revpimodio2.io.IOBase.replace_io?4(name, frm, **kwargs)
 revpimodio2.io.IOBase.set_value?4(value)
+revpimodio2.io.IOBase.type?7
 revpimodio2.io.IOBase.unreg_event?4(func=None, edge=None)
 revpimodio2.io.IOBase.value?7
 revpimodio2.io.IOBase.wait?4(edge=BOTH, exitevent=None, okvalue=None, timeout=0)
@@ -98,6 +97,9 @@ revpimodio2.io.StructIO.set_structvalue?4(value)
 revpimodio2.io.StructIO.signed?7
 revpimodio2.io.StructIO.value?7
 revpimodio2.io.StructIO?1(parentio, name, frm, **kwargs)
+revpimodio2.io.Type.INP?7
+revpimodio2.io.Type.MEM?7
+revpimodio2.io.Type.OUT?7
 revpimodio2.modio.RevPiModIO._configure?5()
 revpimodio2.modio.RevPiModIO._create_myfh?5()
 revpimodio2.modio.RevPiModIO._get_configrsc?5()

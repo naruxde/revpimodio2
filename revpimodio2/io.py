@@ -8,7 +8,16 @@
 """RevPiModIO Modul fuer die Verwaltung der IOs."""
 import struct
 from threading import Event
-from .__init__ import RISING, FALLING, BOTH, IOType
+from .__init__ import RISING, FALLING, BOTH
+
+
+class Type(object):
+
+    """IO Typen."""
+
+    INP = 300
+    OUT = 301
+    MEM = 302
 
 
 class IOList(object):
@@ -207,7 +216,7 @@ class IOBase(object):
 
         @param parentdevice Parentdevice auf dem der IO liegt
         @param valuelist Datenliste fuer Instantiierung
-        @param iotype IOType() Wert
+        @param iotype io.Type() Wert
         @param byteorder Byteorder 'little' / 'big' fuer int() Berechnung
         @param sigend Intberechnung mit Vorzeichen durchfuehren
 
@@ -290,6 +299,11 @@ class IOBase(object):
         """Gibt konfigurierte Byteorder zurueck.
         @return str() Byteorder"""
         return self._byteorder
+
+    def _get_iotype(self):
+        """Gibt io.Type zurueck.
+        @return int() io.Type"""
+        return self._iotype
 
     def _get_length(self):
         """Gibt die Bytelaenge des IO zurueck.
@@ -400,13 +414,13 @@ class IOBase(object):
         reg_event = kwargs.get("event", None)
         if reg_event is not None:
             as_thread = kwargs.get("as_thread", False)
-            edge = kwargs.get("edge", None)
+            edge = kwargs.get("edge", BOTH)
             io_new.reg_event(reg_event, as_thread=as_thread, edge=edge)
 
     def set_value(self, value):
         """Setzt den Wert des IOs mit bytes() oder bool().
         @param value IO-Wert als bytes() oder bool()"""
-        if self._iotype == IOType.OUT:
+        if self._iotype == Type.OUT:
             if self._bitaddress >= 0:
                 # Versuchen egal welchen Typ in Bool zu konvertieren
                 value = bool(value)
@@ -437,18 +451,25 @@ class IOBase(object):
                             value
                     else:
                         raise ValueError(
-                            "requires a bytes() object of length {}, but"
-                            " {} was given".format(self._length, len(value))
+                            "'{}' requires a bytes() object of length {}, but "
+                            "{} was given".format(
+                                self._name, self._length, len(value)
+                            )
                         )
                 else:
                     raise ValueError(
-                        "requires a bytes() object, not {}".format(type(value))
+                        "'{}' requires a bytes() object, not {}"
+                        "".format(self._name, type(value))
                     )
 
-        elif self._iotype == IOType.INP:
-            raise AttributeError("can not write to input")
-        elif self._iotype == IOType.MEM:
-            raise AttributeError("can not write to memory")
+        elif self._iotype == Type.INP:
+            raise AttributeError(
+                "can not write to input '{}'".format(self._name)
+            )
+        elif self._iotype == Type.MEM:
+            raise AttributeError(
+                "can not write to memory '{}'".format(self._name)
+            )
 
     def unreg_event(self, func=None, edge=None):
         """Entfernt ein Event aus der Eventueberwachung.
@@ -579,6 +600,7 @@ class IOBase(object):
     byteorder = property(_get_byteorder)
     length = property(_get_length)
     name = property(_get_name)
+    type = property(_get_iotype)
     value = property(get_value, set_value)
 
 
@@ -638,7 +660,8 @@ class IntIO(IOBase):
             ))
         else:
             raise ValueError(
-                "need an int() value, but {} was given".format(type(value))
+                "'{}' need an int() value, but {} was given"
+                "".format(self._name, type(value))
             )
 
     byteorder = property(IOBase._get_byteorder, _set_byteorder)

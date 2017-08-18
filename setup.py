@@ -9,7 +9,8 @@ from distutils.core import setup
 setup(
     author="Sven Sager",
     author_email="akira@narux.de",
-    url="https://revpimodio.org",
+    url="https://revpimodio.org/",
+    download_url="https://revpimodio.org/quellen/",
     maintainer="Sven Sager",
     maintainer_email="akira@revpimodio.org",
 
@@ -17,7 +18,7 @@ setup(
     name="revpimodio2",
     version="2.0.0",
 
-    py_modules=["revpimodio2"],
+    packages=["revpimodio2"],
 
     description="Python3 Programmierung für Kunbus RevolutionPi",
     long_description=""
@@ -32,8 +33,11 @@ setup(
     "zugegriffen werden.",
 
     classifiers=[
+        "Environment :: Console",
         "License :: OSI Approved :: "
         "GNU Lesser General Public License v3 (LGPLv3)",
+        "Operating System :: MacOS :: MacOS X",
+        "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python :: 3",
         "Topic :: Software Development :: Libraries :: Python Modules"

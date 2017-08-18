@@ -29,6 +29,9 @@ Classes</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#StructIO">StructIO</a></td>
 <td>Klasse fuer den Zugriff auf Daten ueber ein definierten struct().</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Type">Type</a></td>
+<td>IO Typen.</td>
 </tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -58,7 +61,7 @@ object
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>address</td></tr><tr><td>byteorder</td></tr><tr><td>length</td></tr><tr><td>name</td></tr><tr><td>value</td></tr>
+<tr><td>address</td></tr><tr><td>byteorder</td></tr><tr><td>length</td></tr><tr><td>name</td></tr><tr><td>type</td></tr><tr><td>value</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -86,6 +89,9 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase._get_byteorder">_get_byteorder</a></td>
 <td>Gibt konfigurierte Byteorder zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IOBase._get_iotype">_get_iotype</a></td>
+<td>Gibt io.Type zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase._get_length">_get_length</a></td>
 <td>Gibt die Bytelaenge des IO zurueck.</td>
@@ -132,7 +138,7 @@ Parentdevice auf dem der IO liegt
 Datenliste fuer Instantiierung
 </dd><dt><i>iotype</i></dt>
 <dd>
-IOType() Wert
+io.Type() Wert
 </dd><dt><i>byteorder</i></dt>
 <dd>
 Byteorder 'little' / 'big' fuer int() Berechnung
@@ -194,6 +200,17 @@ Gibt konfigurierte Byteorder zurueck.
 <dt>Returns:</dt>
 <dd>
 str() Byteorder
+</dd>
+</dl><a NAME="IOBase._get_iotype" ID="IOBase._get_iotype"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase._get_iotype</h3>
+<b>_get_iotype</b>(<i></i>)
+<p>
+Gibt io.Type zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+int() io.Type
 </dd>
 </dl><a NAME="IOBase._get_length" ID="IOBase._get_length"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -791,6 +808,37 @@ Setzt den Wert mit struct Formatierung.
 Wert vom Typ der struct-Formatierung
 </dd>
 </dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="Type" ID="Type"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">Type</h2>
+<p>
+IO Typen.
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+object
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>INP</td></tr><tr><td>MEM</td></tr><tr><td>OUT</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+
 <div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
 <hr />
 </body></html>

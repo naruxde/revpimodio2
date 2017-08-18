@@ -152,7 +152,7 @@ class RevPiModIO(object):
 
                 # Für RS485 errors defaults laden und schreiben
                 # NOTE: Soll das wirklich gemacht werden?
-                for io in dev_new.get_outs():
+                for io in dev_new.get_outputs():
                     io.set_value(io.defaultvalue)
                 if not self._monitoring:
                     self.writeprocimg(True, dev_new)
@@ -676,7 +676,7 @@ class RevPiModIO(object):
 
         for dev in mylist:
             if (force or dev.autoupdate):
-                for io in dev.get_outs():
+                for io in dev.get_outputs():
                     io.set_value(io.defaultvalue)
 
     def syncoutputs(self, force=False, device=None):
@@ -747,7 +747,7 @@ class RevPiModIO(object):
         workokay = True
         dev._filelock.acquire()
 
-        for io in dev.get_inps():
+        for io in dev.get_inputs():
             dev._ba_devdata[io.slc_address] = io.defaultvalue
 
         # Outpus auf Bus schreiben
