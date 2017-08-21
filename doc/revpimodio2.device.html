@@ -66,11 +66,26 @@ Class Methods</h3>
 Methods</h3>
 <table>
 <tr>
+<td><a style="color:#0000FF" href="#Core.__errorlimit">__errorlimit</a></td>
+<td>Verwaltet das Lesen und Schreiben der ErrorLimits.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Core._devconfigure">_devconfigure</a></td>
 <td>Core-Klasse vorbereiten.</td>
 </tr><tr>
-<td><a style="color:#0000FF" href="#Core._errorlimit">_errorlimit</a></td>
-<td>Verwaltet das Lesen und Schreiben der ErrorLimits.</td>
+<td><a style="color:#0000FF" href="#Core._get_leda1">_get_leda1</a></td>
+<td>Gibt den Zustand der LED A1 vom core zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Core._get_leda2">_get_leda2</a></td>
+<td>Gibt den Zustand der LED A2 vom core zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Core._get_status">_get_status</a></td>
+<td>Gibt den RevPi Core Status zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Core._set_leda1">_set_leda1</a></td>
+<td>Setzt den Zustand der LED A1 vom core.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Core._set_leda2">_set_leda2</a></td>
+<td>Setzt den Zustand der LED A2 vom core.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core.errorlimit1">errorlimit1</a></td>
 <td>Setzt RS485 ErrorLimit1 auf neuen Wert.</td>
@@ -80,15 +95,6 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core.frequency">frequency</a></td>
 <td>Gibt CPU Taktfrequenz zurueck.</td>
-</tr><tr>
-<td><a style="color:#0000FF" href="#Core.get_leda1">get_leda1</a></td>
-<td>Gibt den Zustand der LED A1 vom core zurueck.</td>
-</tr><tr>
-<td><a style="color:#0000FF" href="#Core.get_leda2">get_leda2</a></td>
-<td>Gibt den Zustand der LED A2 vom core zurueck.</td>
-</tr><tr>
-<td><a style="color:#0000FF" href="#Core.get_status">get_status</a></td>
-<td>Gibt den RevPi Core Status zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core.iocycle">iocycle</a></td>
 <td>Gibt Zykluszeit der Prozessabbildsynchronisierung zurueck.</td>
@@ -111,12 +117,6 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#Core.rightgate">rightgate</a></td>
 <td>Statusbit rechts vom RevPi ist ein piGate Modul angeschlossen.</td>
 </tr><tr>
-<td><a style="color:#0000FF" href="#Core.set_leda1">set_leda1</a></td>
-<td>Setzt den Zustand der LED A1 vom core.</td>
-</tr><tr>
-<td><a style="color:#0000FF" href="#Core.set_leda2">set_leda2</a></td>
-<td>Setzt den Zustand der LED A2 vom core.</td>
-</tr><tr>
 <td><a style="color:#0000FF" href="#Core.temperatur">temperatur</a></td>
 <td>Gibt CPU-Temperatur zurueck.</td>
 </tr><tr>
@@ -129,16 +129,10 @@ Static Methods</h3>
 <table>
 <tr><td>None</td></tr>
 </table>
-<a NAME="Core._devconfigure" ID="Core._devconfigure"></a>
+<a NAME="Core.__errorlimit" ID="Core.__errorlimit"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
-Core._devconfigure</h3>
-<b>_devconfigure</b>(<i></i>)
-<p>
-Core-Klasse vorbereiten.
-</p><a NAME="Core._errorlimit" ID="Core._errorlimit"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-Core._errorlimit</h3>
-<b>_errorlimit</b>(<i>io_id, errorlimit</i>)
+Core.__errorlimit</h3>
+<b>__errorlimit</b>(<i>io_id, errorlimit</i>)
 <p>
 Verwaltet das Lesen und Schreiben der ErrorLimits.
 </p><dl>
@@ -150,6 +144,67 @@ Index des IOs fuer ErrorLimit
 <dt>Returns:</dt>
 <dd>
 Aktuellen ErrorLimit oder None wenn nicht verfuegbar
+</dd>
+</dl><a NAME="Core._devconfigure" ID="Core._devconfigure"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Core._devconfigure</h3>
+<b>_devconfigure</b>(<i></i>)
+<p>
+Core-Klasse vorbereiten.
+</p><a NAME="Core._get_leda1" ID="Core._get_leda1"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Core._get_leda1</h3>
+<b>_get_leda1</b>(<i></i>)
+<p>
+Gibt den Zustand der LED A1 vom core zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+0=aus, 1=gruen, 2=rot
+</dd>
+</dl><a NAME="Core._get_leda2" ID="Core._get_leda2"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Core._get_leda2</h3>
+<b>_get_leda2</b>(<i></i>)
+<p>
+Gibt den Zustand der LED A2 vom core zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+0=aus, 1=gruen, 2=rot
+</dd>
+</dl><a NAME="Core._get_status" ID="Core._get_status"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Core._get_status</h3>
+<b>_get_status</b>(<i></i>)
+<p>
+Gibt den RevPi Core Status zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Status als int()
+</dd>
+</dl><a NAME="Core._set_leda1" ID="Core._set_leda1"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Core._set_leda1</h3>
+<b>_set_leda1</b>(<i>value</i>)
+<p>
+Setzt den Zustand der LED A1 vom core.
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+0=aus, 1=gruen, 2=rot
+</dd>
+</dl><a NAME="Core._set_leda2" ID="Core._set_leda2"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Core._set_leda2</h3>
+<b>_set_leda2</b>(<i>value</i>)
+<p>
+Setzt den Zustand der LED A2 vom core.
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+0=aus, 1=gruen, 2=rot
 </dd>
 </dl><a NAME="Core.errorlimit1" ID="Core.errorlimit1"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -183,39 +238,6 @@ Gibt CPU Taktfrequenz zurueck.
 <dt>Returns:</dt>
 <dd>
 CPU Taktfrequenz in MHz
-</dd>
-</dl><a NAME="Core.get_leda1" ID="Core.get_leda1"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-Core.get_leda1</h3>
-<b>get_leda1</b>(<i></i>)
-<p>
-Gibt den Zustand der LED A1 vom core zurueck.
-</p><dl>
-<dt>Returns:</dt>
-<dd>
-0=aus, 1=gruen, 2=rot
-</dd>
-</dl><a NAME="Core.get_leda2" ID="Core.get_leda2"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-Core.get_leda2</h3>
-<b>get_leda2</b>(<i></i>)
-<p>
-Gibt den Zustand der LED A2 vom core zurueck.
-</p><dl>
-<dt>Returns:</dt>
-<dd>
-0=aus, 1=gruen, 2=rot
-</dd>
-</dl><a NAME="Core.get_status" ID="Core.get_status"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-Core.get_status</h3>
-<b>get_status</b>(<i></i>)
-<p>
-Gibt den RevPi Core Status zurueck.
-</p><dl>
-<dt>Returns:</dt>
-<dd>
-Status als int()
 </dd>
 </dl><a NAME="Core.iocycle" ID="Core.iocycle"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -293,28 +315,6 @@ Statusbit rechts vom RevPi ist ein piGate Modul angeschlossen.
 <dt>Returns:</dt>
 <dd>
 True, wenn piGate rechts existiert
-</dd>
-</dl><a NAME="Core.set_leda1" ID="Core.set_leda1"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-Core.set_leda1</h3>
-<b>set_leda1</b>(<i>value</i>)
-<p>
-Setzt den Zustand der LED A1 vom core.
-</p><dl>
-<dt><i>value</i></dt>
-<dd>
-0=aus, 1=gruen, 2=rot
-</dd>
-</dl><a NAME="Core.set_leda2" ID="Core.set_leda2"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-Core.set_leda2</h3>
-<b>set_leda2</b>(<i>value</i>)
-<p>
-Setzt den Zustand der LED A2 vom core.
-</p><dl>
-<dt><i>value</i></dt>
-<dd>
-0=aus, 1=gruen, 2=rot
 </dd>
 </dl><a NAME="Core.temperatur" ID="Core.temperatur"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -410,6 +410,18 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Device.get_outputs">get_outputs</a></td>
 <td>Gibt eine Liste aller Outputs zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Device.readprocimg">readprocimg</a></td>
+<td>Alle Inputs fuer dieses Device vom Prozessabbild einlesen.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Device.setdefaultvalues">setdefaultvalues</a></td>
+<td>Alle Outputbuffer fuer dieses Device auf default Werte setzen.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Device.syncoutputs">syncoutputs</a></td>
+<td>Lesen aller Outputs im Prozessabbild fuer dieses Device.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Device.writeprocimg">writeprocimg</a></td>
+<td>Schreiben aller Outputs dieses Devices ins Prozessabbild.</td>
 </tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -420,7 +432,7 @@ Static Methods</h3>
 <a NAME="Device.__init__" ID="Device.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Device (Constructor)</h3>
-<b>Device</b>(<i>parentmodio, dict_device, **kwargs</i>)
+<b>Device</b>(<i>parentmodio, dict_device, simulator=False</i>)
 <p>
 Instantiierung der Device()-Klasse.
 </p><dl>
@@ -430,12 +442,9 @@ RevpiModIO parent object
 </dd><dt><i>dict_device</i></dt>
 <dd>
 dict() fuer dieses Device aus piCotry Konfiguration
-</dd><dt><i>kwargs</i></dt>
+</dd><dt><i>simulator:</i></dt>
 <dd>
-Weitere Parameter:
-            - autoupdate: Wenn True fuehrt dieses Device Arbeiten am
-              Prozessabbild bei Aufruf der read- writeprocimg Funktionen aus
-            - simulator: Laed das Modul als Simulator und vertauscht IOs
+Laed das Modul als Simulator und vertauscht IOs
 </dd>
 </dl><a NAME="Device.__bytes__" ID="Device.__bytes__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -536,13 +545,13 @@ Funktion zum ueberschreiben von abgeleiteten Klassen.
 </p><a NAME="Device.autorefresh" ID="Device.autorefresh"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Device.autorefresh</h3>
-<b>autorefresh</b>(<i>remove=False</i>)
+<b>autorefresh</b>(<i>activate=True</i>)
 <p>
 Registriert dieses Device fuer die automatische Synchronisierung.
 </p><dl>
-<dt><i>remove</i></dt>
+<dt><i>activate</i></dt>
 <dd>
-bool() True entfernt Device aus Synchronisierung
+Default True fuegt Device zur Synchronisierung hinzu
 </dd>
 </dl><a NAME="Device.get_allios" ID="Device.get_allios"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -588,6 +597,50 @@ Gibt eine Liste aller Outputs zurueck.
 <dd>
 list() Outputs
 </dd>
+</dl><a NAME="Device.readprocimg" ID="Device.readprocimg"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Device.readprocimg</h3>
+<b>readprocimg</b>(<i></i>)
+<p>
+Alle Inputs fuer dieses Device vom Prozessabbild einlesen.
+</p><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" href="revpimodio2.modio.html#RevPiModIO.readprocimg">RevPiModIO.readprocimg()</a>
+</dd>
+</dl><a NAME="Device.setdefaultvalues" ID="Device.setdefaultvalues"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Device.setdefaultvalues</h3>
+<b>setdefaultvalues</b>(<i></i>)
+<p>
+Alle Outputbuffer fuer dieses Device auf default Werte setzen.
+</p><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" href="revpimodio2.modio.html#RevPiModIO.setdefaultvalues">RevPiModIO.setdefaultvalues()</a>
+</dd>
+</dl><a NAME="Device.syncoutputs" ID="Device.syncoutputs"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Device.syncoutputs</h3>
+<b>syncoutputs</b>(<i></i>)
+<p>
+Lesen aller Outputs im Prozessabbild fuer dieses Device.
+</p><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" href="revpimodio2.modio.html#RevPiModIO.syncoutputs">RevPiModIO.syncoutputs()</a>
+</dd>
+</dl><a NAME="Device.writeprocimg" ID="Device.writeprocimg"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Device.writeprocimg</h3>
+<b>writeprocimg</b>(<i></i>)
+<p>
+Schreiben aller Outputs dieses Devices ins Prozessabbild.
+</p><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" href="revpimodio2.modio.html#RevPiModIO.writeprocimg">RevPiModIO.writeprocimg()</a>
+</dd>
 </dl>
 <div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
 <hr /><hr />
@@ -618,6 +671,12 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#DeviceList.__contains__">__contains__</a></td>
 <td>Prueft ob Device existiert.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#DeviceList.__delattr__">__delattr__</a></td>
+<td>Entfernt angegebenes Device.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#DeviceList.__delitem__">__delitem__</a></td>
+<td>Entfernt Device an angegebener Position.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#DeviceList.__getitem__">__getitem__</a></td>
 <td>Gibt angegebenes Device zurueck.</td>
@@ -658,6 +717,28 @@ DeviceName str() / Positionsnummer int()
 <dt>Returns:</dt>
 <dd>
 True, wenn Device vorhanden
+</dd>
+</dl><a NAME="DeviceList.__delattr__" ID="DeviceList.__delattr__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+DeviceList.__delattr__</h3>
+<b>__delattr__</b>(<i>key</i>)
+<p>
+Entfernt angegebenes Device.
+</p><dl>
+<dt><i>key</i></dt>
+<dd>
+Device zum entfernen
+</dd>
+</dl><a NAME="DeviceList.__delitem__" ID="DeviceList.__delitem__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+DeviceList.__delitem__</h3>
+<b>__delitem__</b>(<i>key</i>)
+<p>
+Entfernt Device an angegebener Position.
+</p><dl>
+<dt><i>key</i></dt>
+<dd>
+Deviceposition zum entfernen
 </dd>
 </dl><a NAME="DeviceList.__getitem__" ID="DeviceList.__getitem__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -716,12 +797,16 @@ Attributobjekt
 Klasse fuer die RevPi Gateway-Devices.
 </p><p>
     Stellt neben den Funktionen von RevPiDevice weitere Funktionen fuer die
-    Gateways bereit. Es koennen ueber die reg_*-Funktionen eigene IOs definiert
-    werden, die ein RevPiStructIO-Objekt abbilden.
+    Gateways bereit. IOs auf diesem Device stellen die replace_io Funktion
+    zur verfuegung, ueber die eigene IOs definiert werden, die ein
+    RevPiStructIO-Objekt abbilden.
     Dieser IO-Typ kann Werte ueber mehrere Bytes verarbeiten und zurueckgeben.
-</p><p>
-
-</p>
+</p><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" href="revpimodio2.io.html#IOBase.replace_io">replace_io(name, frm, **kwargs)</a>
+</dd>
+</dl>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Derived from</h3>
 Device
@@ -740,7 +825,7 @@ Methods</h3>
 <table>
 <tr>
 <td><a style="color:#0000FF" href="#Gateway.__init__">Gateway</a></td>
-<td>Erweitert RevPiDevice um reg_*-Funktionen.</td>
+<td>Erweitert Device-Klasse um get_rawbytes-Funktionen.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Gateway.get_rawbytes">get_rawbytes</a></td>
 <td>Gibt die Bytes aus, die dieses Device verwendet.</td>
@@ -754,13 +839,13 @@ Static Methods</h3>
 <a NAME="Gateway.__init__" ID="Gateway.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Gateway (Constructor)</h3>
-<b>Gateway</b>(<i>parent, dict_device, **kwargs</i>)
+<b>Gateway</b>(<i>parent, dict_device, simulator=False</i>)
 <p>
-Erweitert RevPiDevice um reg_*-Funktionen.
+Erweitert Device-Klasse um get_rawbytes-Funktionen.
 </p><dl>
 <dt><b>See Also:</b></dt>
 <dd>
-<a style="color:#0000FF" href="#RevPiDevice.__init__">RevPiDevice.__init__(...)</a>
+<a style="color:#0000FF" href="#Device.__init__">Device.__init__(...)</a>
 </dd>
 </dl><a NAME="Gateway.get_rawbytes" ID="Gateway.get_rawbytes"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -781,14 +866,14 @@ bytes() des Devices
 <p>
 Klasse fuer die RevPi Virtual-Devices.
 </p><p>
-    Stellt die selben Funktionen wie RevPiGateway zur Verfuegung. Es koennen
+    Stellt die selben Funktionen wie Gateway zur Verfuegung. Es koennen
     ueber die reg_*-Funktionen eigene IOs definiert werden, die ein
     RevPiStructIO-Objekt abbilden.
     Dieser IO-Typ kann Werte ueber mehrere Bytes verarbeiten und zurueckgeben.
 </p><dl>
 <dt><b>See Also:</b></dt>
 <dd>
-<a style="color:#0000FF" href="#RevPiGateway">RevPiGateway</a>
+<a style="color:#0000FF" href="#Gateway">Gateway</a>
 </dd>
 </dl>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -807,14 +892,34 @@ Class Methods</h3>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Methods</h3>
 <table>
-<tr><td>None</td></tr>
+<tr>
+<td><a style="color:#0000FF" href="#Virtual.writeinputdefaults">writeinputdefaults</a></td>
+<td>Schreibt fuer ein virtuelles Device piCtory Defaultinputwerte.</td>
+</tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Static Methods</h3>
 <table>
 <tr><td>None</td></tr>
 </table>
-
+<a NAME="Virtual.writeinputdefaults" ID="Virtual.writeinputdefaults"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Virtual.writeinputdefaults</h3>
+<b>writeinputdefaults</b>(<i></i>)
+<p>
+Schreibt fuer ein virtuelles Device piCtory Defaultinputwerte.
+</p><p>
+        Sollten in piCtory Defaultwerte fuer Inputs eines virtuellen Devices
+        angegeben sein, werden diese nur beim Systemstart oder einem piControl
+        Reset gesetzt. Sollte danach das Prozessabbild mit NULL ueberschrieben,
+        gehen diese Werte verloren.
+        Diese Funktion kann nur auf virtuelle Devices angewendet werden!
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn Arbeiten am virtuellen Device erfolgreich waren
+</dd>
+</dl>
 <div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
 <hr />
 </body></html>

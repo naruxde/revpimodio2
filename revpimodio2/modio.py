@@ -65,7 +65,6 @@ class RevPiModIO(object):
         self._lst_devselect = []
         self._lst_refresh = []
         self._maxioerrors = 0
-        self._myfh = self._create_myfh()
         self._th_mainloop = None
         self._waitexit = Event()
 
@@ -78,6 +77,9 @@ class RevPiModIO(object):
         self.io = None
         self.summary = None
 
+        # Filehandler öffnen
+        self._myfh = self._create_myfh()
+
         # Nur Konfigurieren, wenn nicht vererbt
         if type(self) == RevPiModIO:
             self._configure()
@@ -85,7 +87,8 @@ class RevPiModIO(object):
     def __del__(self):
         """Zerstoert alle Klassen um aufzuraeumen."""
         self.exit(full=True)
-        self._myfh.close()
+        if hasattr(self, "_myfh"):
+            self._myfh.close()
 
     def __evt_exit(self, signum, sigframe):
         """Eventhandler fuer Programmende.
@@ -139,7 +142,6 @@ class RevPiModIO(object):
             # Bei VDev in alter piCtory Version, Position eindeutig machen
             if device["position"] == "adap.":
                 device["position"] = -1
-                # NOTE: Testen mit alter piCtory Version
                 while device["position"] in self.device:
                     device["position"] -= 1
 
@@ -155,7 +157,7 @@ class RevPiModIO(object):
                 for io in dev_new.get_outputs():
                     io.set_value(io.defaultvalue)
                 if not self._monitoring:
-                    self.writeprocimg(True, dev_new)
+                    self.writeprocimg(dev_new)
 
             elif device["type"] == "LEFT_RIGHT":
                 # IOs
@@ -209,7 +211,7 @@ class RevPiModIO(object):
 
         # Aktuellen Outputstatus von procimg einlesen
         if self._syncoutputs:
-            self.syncoutputs(force=True)
+            self.syncoutputs()
 
         # Optional ins autorefresh aufnehmen
         if self._autorefresh:
@@ -237,7 +239,10 @@ class RevPiModIO(object):
     def _get_ioerrors(self):
         """Getter function.
         @return Aktuelle Anzahl gezaehlter Fehler"""
-        return self._ioerror
+        if self._looprunning:
+            return self._imgwriter._ioerror
+        else:
+            return self._ioerror
 
     def _get_length(self):
         """Getter function.
@@ -397,14 +402,14 @@ class RevPiModIO(object):
         self._exit.set()
         self._waitexit.set()
         if full:
-            if self._imgwriter.is_alive():
+            if self._imgwriter is not None and self._imgwriter.is_alive():
                 self._imgwriter.stop()
                 self._imgwriter.join(self._imgwriter._refresh)
             while len(self._lst_refresh) > 0:
                 dev = self._lst_refresh.pop()
                 dev._selfupdate = False
                 if not self._monitoring:
-                    self.writeprocimg(True, dev)
+                    self.writeprocimg(dev)
         self._looprunning = False
 
     def get_jconfigrsc(self):
@@ -541,17 +546,17 @@ class RevPiModIO(object):
 
                 for io_event in dev._dict_events:
 
-                    if dev._ba_datacp[io_event.slc_address] == \
-                            dev._ba_devdata[io_event.slc_address]:
+                    if dev._ba_datacp[io_event._slc_address] == \
+                            dev._ba_devdata[io_event._slc_address]:
                         continue
 
                     if io_event._bitaddress >= 0:
                         boolcp = bool(int.from_bytes(
-                            dev._ba_datacp[io_event.slc_address],
+                            dev._ba_datacp[io_event._slc_address],
                             byteorder=io_event._byteorder
                         ) & 1 << io_event._bitaddress)
                         boolor = bool(int.from_bytes(
-                            dev._ba_devdata[io_event.slc_address],
+                            dev._ba_devdata[io_event._slc_address],
                             byteorder=io_event._byteorder
                         ) & 1 << io_event._bitaddress)
 
@@ -603,10 +608,11 @@ class RevPiModIO(object):
         # Mainloop verlassen
         self._looprunning = False
 
-    def readprocimg(self, force=False, device=None):
+    def readprocimg(self, device=None):
         """Einlesen aller Inputs aller/eines Devices vom Prozessabbild.
 
-        @param force auch Devices mit autoupdate=False
+        Devices mit aktiverem autorefresh werden ausgenommen!
+
         @param device nur auf einzelnes Device anwenden
         @return True, wenn Arbeiten an allen Devices erfolgreich waren
 
@@ -633,20 +639,20 @@ class RevPiModIO(object):
             return False
 
         for dev in mylist:
-            if (force or dev.autoupdate) and not dev._selfupdate:
+            if not dev._selfupdate:
 
                 # FileHandler sperren
                 dev._filelock.acquire()
 
                 if self._monitoring:
                     # Alles vom Bus einlesen
-                    dev._ba_devdata[:] = bytesbuff[dev.slc_devoff]
+                    dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
                 else:
                     # Inputs vom Bus einlesen
-                    dev._ba_devdata[dev.slc_inp] = bytesbuff[dev.slc_inpoff]
+                    dev._ba_devdata[dev._slc_inp] = bytesbuff[dev._slc_inpoff]
 
                     # Mems vom Bus lesen
-                    dev._ba_devdata[dev.slc_mem] = bytesbuff[dev.slc_memoff]
+                    dev._ba_devdata[dev._slc_mem] = bytesbuff[dev._slc_memoff]
 
                 dev._filelock.release()
 
@@ -657,9 +663,8 @@ class RevPiModIO(object):
         self._ioerror = 0
         self._imgwriter._ioerror = 0
 
-    def setdefaultvalues(self, force=False, device=None):
+    def setdefaultvalues(self, device=None):
         """Alle Outputbuffer werden auf die piCtory default Werte gesetzt.
-        @param force auch Devices mit autoupdate=False
         @param device nur auf einzelnes Device anwenden"""
         if self._monitoring:
             raise RuntimeError(
@@ -675,14 +680,14 @@ class RevPiModIO(object):
             mylist = [dev]
 
         for dev in mylist:
-            if (force or dev.autoupdate):
-                for io in dev.get_outputs():
-                    io.set_value(io.defaultvalue)
+            for io in dev.get_outputs():
+                io.set_value(io.defaultvalue)
 
-    def syncoutputs(self, force=False, device=None):
+    def syncoutputs(self, device=None):
         """Lesen aller aktuell gesetzten Outputs im Prozessabbild.
 
-        @param force auch Devices mit autoupdate=False
+        Devices mit aktiverem autorefresh werden ausgenommen!
+
         @param device nur auf einzelnes Device anwenden
         @return True, wenn Arbeiten an allen Devices erfolgreich waren
 
@@ -708,65 +713,18 @@ class RevPiModIO(object):
             return False
 
         for dev in mylist:
-            if (force or dev.autoupdate) and not dev._selfupdate:
+            if not dev._selfupdate:
                 dev._filelock.acquire()
-                # Outputs vom Bus einlesen
-                dev._ba_devdata[dev.slc_out] = bytesbuff[dev.slc_outoff]
+                dev._ba_devdata[dev._slc_out] = bytesbuff[dev._slc_outoff]
                 dev._filelock.release()
+
         return True
 
-    def writedefaultinputs(self, virtual_device):
-        """Schreibt fuer ein virtuelles Device piCtory Defaultinputwerte.
-
-        Sollten in piCtory Defaultwerte fuer Inputs eines virtuellen Devices
-        angegeben sein, werden diese nur beim Systemstart oder einem piControl
-        Reset gesetzt. Sollte danach das Prozessabbild mit NULL ueberschrieben,
-        gehen diese Werte verloren.
-        Diese Funktion kann nur auf virtuelle Devices angewendet werden!
-
-        @param virtual_device Virtuelles Device fuer Wiederherstellung
-        @return True, wenn Arbeiten am virtuellen Device erfolgreich waren
-
-        """
-        if self._monitoring:
-            raise RuntimeError(
-                "can not write process image, while system is in monitoring "
-                "mode"
-            )
-
-        # Device suchen
-        dev = virtual_device if issubclass(type(virtual_device), devicemodule.Device) \
-            else self.__getitem__(virtual_device)
-
-        # Prüfen ob es ein virtuelles Device ist
-        if not issubclass(type(dev), devicemodule.Virtual):
-            raise RuntimeError(
-                "this function can be used for virtual devices only"
-            )
-
-        workokay = True
-        dev._filelock.acquire()
-
-        for io in dev.get_inputs():
-            dev._ba_devdata[io.slc_address] = io.defaultvalue
-
-        # Outpus auf Bus schreiben
-        try:
-            self._myfh.seek(dev.slc_inpoff.start)
-            self._myfh.write(dev._ba_devdata[dev.slc_inp])
-            if self._buffedwrite:
-                self._myfh.flush()
-        except IOError:
-            self._gotioerror("write")
-            workokay = False
-
-        dev._filelock.release()
-        return workokay
-
-    def writeprocimg(self, force=False, device=None):
+    def writeprocimg(self, device=None):
         """Schreiben aller Outputs aller Devices ins Prozessabbild.
 
-        @param force auch Devices mit autoupdate=False
+        Devices mit aktiverem autorefresh werden ausgenommen!
+
         @param device nur auf einzelnes Device anwenden
         @return True, wenn Arbeiten an allen Devices erfolgreich waren
 
@@ -792,13 +750,13 @@ class RevPiModIO(object):
 
         workokay = True
         for dev in mylist:
-            if (force or dev.autoupdate) and not dev._selfupdate:
+            if not dev._selfupdate:
                 dev._filelock.acquire()
 
                 # Outpus auf Bus schreiben
                 try:
-                    self._myfh.seek(dev.slc_outoff.start)
-                    self._myfh.write(dev._ba_devdata[dev.slc_out])
+                    self._myfh.seek(dev._slc_outoff.start)
+                    self._myfh.write(dev._ba_devdata[dev._slc_out])
                 except IOError:
                     workokay = False
 

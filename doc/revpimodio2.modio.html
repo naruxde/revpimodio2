@@ -146,9 +146,6 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#RevPiModIO.syncoutputs">syncoutputs</a></td>
 <td>Lesen aller aktuell gesetzten Outputs im Prozessabbild.</td>
 </tr><tr>
-<td><a style="color:#0000FF" href="#RevPiModIO.writedefaultinputs">writedefaultinputs</a></td>
-<td>Schreibt fuer ein virtuelles Device piCtory Defaultinputwerte.</td>
-</tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.writeprocimg">writeprocimg</a></td>
 <td>Schreiben aller Outputs aller Devices ins Prozessabbild.</td>
 </tr>
@@ -470,14 +467,13 @@ None
 </dl><a NAME="RevPiModIO.readprocimg" ID="RevPiModIO.readprocimg"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO.readprocimg</h3>
-<b>readprocimg</b>(<i>force=False, device=None</i>)
+<b>readprocimg</b>(<i>device=None</i>)
 <p>
 Einlesen aller Inputs aller/eines Devices vom Prozessabbild.
+</p><p>
+        Devices mit aktiverem autorefresh werden ausgenommen!
 </p><dl>
-<dt><i>force</i></dt>
-<dd>
-auch Devices mit autoupdate=False
-</dd><dt><i>device</i></dt>
+<dt><i>device</i></dt>
 <dd>
 nur auf einzelnes Device anwenden
 </dd>
@@ -495,28 +491,24 @@ Setzt aktuellen IOError-Zaehler auf 0 zurueck.
 </p><a NAME="RevPiModIO.setdefaultvalues" ID="RevPiModIO.setdefaultvalues"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO.setdefaultvalues</h3>
-<b>setdefaultvalues</b>(<i>force=False, device=None</i>)
+<b>setdefaultvalues</b>(<i>device=None</i>)
 <p>
 Alle Outputbuffer werden auf die piCtory default Werte gesetzt.
 </p><dl>
-<dt><i>force</i></dt>
-<dd>
-auch Devices mit autoupdate=False
-</dd><dt><i>device</i></dt>
+<dt><i>device</i></dt>
 <dd>
 nur auf einzelnes Device anwenden
 </dd>
 </dl><a NAME="RevPiModIO.syncoutputs" ID="RevPiModIO.syncoutputs"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO.syncoutputs</h3>
-<b>syncoutputs</b>(<i>force=False, device=None</i>)
+<b>syncoutputs</b>(<i>device=None</i>)
 <p>
 Lesen aller aktuell gesetzten Outputs im Prozessabbild.
+</p><p>
+        Devices mit aktiverem autorefresh werden ausgenommen!
 </p><dl>
-<dt><i>force</i></dt>
-<dd>
-auch Devices mit autoupdate=False
-</dd><dt><i>device</i></dt>
+<dt><i>device</i></dt>
 <dd>
 nur auf einzelnes Device anwenden
 </dd>
@@ -525,39 +517,16 @@ nur auf einzelnes Device anwenden
 <dd>
 True, wenn Arbeiten an allen Devices erfolgreich waren
 </dd>
-</dl><a NAME="RevPiModIO.writedefaultinputs" ID="RevPiModIO.writedefaultinputs"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-RevPiModIO.writedefaultinputs</h3>
-<b>writedefaultinputs</b>(<i>virtual_device</i>)
-<p>
-Schreibt fuer ein virtuelles Device piCtory Defaultinputwerte.
-</p><p>
-        Sollten in piCtory Defaultwerte fuer Inputs eines virtuellen Devices
-        angegeben sein, werden diese nur beim Systemstart oder einem piControl
-        Reset gesetzt. Sollte danach das Prozessabbild mit NULL ueberschrieben,
-        gehen diese Werte verloren.
-        Diese Funktion kann nur auf virtuelle Devices angewendet werden!
-</p><dl>
-<dt><i>virtual_device</i></dt>
-<dd>
-Virtuelles Device fuer Wiederherstellung
-</dd>
-</dl><dl>
-<dt>Returns:</dt>
-<dd>
-True, wenn Arbeiten am virtuellen Device erfolgreich waren
-</dd>
 </dl><a NAME="RevPiModIO.writeprocimg" ID="RevPiModIO.writeprocimg"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO.writeprocimg</h3>
-<b>writeprocimg</b>(<i>force=False, device=None</i>)
+<b>writeprocimg</b>(<i>device=None</i>)
 <p>
 Schreiben aller Outputs aller Devices ins Prozessabbild.
+</p><p>
+        Devices mit aktiverem autorefresh werden ausgenommen!
 </p><dl>
-<dt><i>force</i></dt>
-<dd>
-auch Devices mit autoupdate=False
-</dd><dt><i>device</i></dt>
+<dt><i>device</i></dt>
 <dd>
 nur auf einzelnes Device anwenden
 </dd>

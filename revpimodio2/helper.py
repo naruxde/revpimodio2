@@ -296,17 +296,17 @@ class ProcimgWriter(Thread):
                 # Inputs und Outputs in Puffer
                 for dev in self._modio._lst_refresh:
                     dev._filelock.acquire()
-                    dev._ba_devdata[:] = bytesbuff[dev.slc_devoff]
+                    dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
                     dev._filelock.release()
             else:
                 # Inputs in Puffer, Outputs in Prozessabbild
                 ioerr = False
                 for dev in self._modio._lst_refresh:
                     dev._filelock.acquire()
-                    dev._ba_devdata[dev.slc_inp] = bytesbuff[dev.slc_inpoff]
+                    dev._ba_devdata[dev._slc_inp] = bytesbuff[dev._slc_inpoff]
                     try:
-                        fh.seek(dev.slc_outoff.start)
-                        fh.write(dev._ba_devdata[dev.slc_out])
+                        fh.seek(dev._slc_outoff.start)
+                        fh.write(dev._ba_devdata[dev._slc_out])
                     except IOError:
                         ioerr = True
                     finally:

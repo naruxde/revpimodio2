@@ -29,11 +29,31 @@ class DeviceList(object):
         else:
             return key in self.__dict_position.values()
 
+    def __delattr__(self, key):
+        """Entfernt angegebenes Device.
+        @param key Device zum entfernen"""
+        dev_del = getattr(self, key)
+
+        # Reinigungsjobs
+        dev_del.autorefresh(False)
+        for io in dev_del:
+            delattr(dev_del._modio.io, io.name)
+
+        del self.__dict_position[dev_del.position]
+        object.__delattr__(self, key)
+
+    def __delitem__(self, key):
+        """Entfernt Device an angegebener Position.
+        @param key Deviceposition zum entfernen"""
+        self.__delattr__(self[key].name)
+
     def __getitem__(self, key):
         """Gibt angegebenes Device zurueck.
         @param key DeviceName str() / Positionsnummer int()
         @return Gefundenes Device()-Objekt"""
         if type(key) == int:
+            if key not in self.__dict_position:
+                raise KeyError("no device on position {}".format(key))
             return self.__dict_position[key]
         else:
             return getattr(self, key)
@@ -70,15 +90,12 @@ class Device(object):
 
     """
 
-    def __init__(self, parentmodio, dict_device, **kwargs):
+    def __init__(self, parentmodio, dict_device, simulator=False):
         """Instantiierung der Device()-Klasse.
 
         @param parent RevpiModIO parent object
         @param dict_device dict() fuer dieses Device aus piCotry Konfiguration
-        @param kwargs Weitere Parameter:
-            - autoupdate: Wenn True fuehrt dieses Device Arbeiten am
-              Prozessabbild bei Aufruf der read- writeprocimg Funktionen aus
-            - simulator: Laed das Modul als Simulator und vertauscht IOs
+        @param simulator: Laed das Modul als Simulator und vertauscht IOs
 
         """
         self._modio = parentmodio
@@ -88,8 +105,6 @@ class Device(object):
         self._length = 0
         self._selfupdate = False
 
-        self.autoupdate = kwargs.get("autoupdate", True)
-
         # Wertzuweisung aus dict_device
         self.name = dict_device.pop("name")
         self.offset = int(dict_device.pop("offset"))
@@ -97,32 +112,33 @@ class Device(object):
         self.producttype = int(dict_device.pop("productType"))
 
         # IOM-Objekte erstellen und Adressen in SLCs speichern
-        if kwargs.get("simulator", False):
-            self.slc_inp = self._buildio(
+        if simulator:
+            self._slc_inp = self._buildio(
                 dict_device.pop("out"), iomodule.Type.INP)
-            self.slc_out = self._buildio(
+            self._slc_out = self._buildio(
                 dict_device.pop("inp"), iomodule.Type.OUT)
         else:
-            self.slc_inp = self._buildio(
+            self._slc_inp = self._buildio(
                 dict_device.pop("inp"), iomodule.Type.INP)
-            self.slc_out = self._buildio(
+            self._slc_out = self._buildio(
                 dict_device.pop("out"), iomodule.Type.OUT)
-        self.slc_mem = self._buildio(dict_device.pop("mem"), iomodule.Type.MEM)
+        self._slc_mem = self._buildio(
+            dict_device.pop("mem"), iomodule.Type.MEM
+        )
 
         # SLCs mit offset berechnen
-        self.slc_devoff = slice(self.offset, self.offset + self._length)
-        self.slc_inpoff = slice(
-            self.slc_inp.start + self.offset, self.slc_inp.stop + self.offset
+        self._slc_devoff = slice(self.offset, self.offset + self._length)
+        self._slc_inpoff = slice(
+            self._slc_inp.start + self.offset, self._slc_inp.stop + self.offset
         )
-        self.slc_outoff = slice(
-            self.slc_out.start + self.offset, self.slc_out.stop + self.offset
+        self._slc_outoff = slice(
+            self._slc_out.start + self.offset, self._slc_out.stop + self.offset
         )
-        self.slc_memoff = slice(
-            self.slc_mem.start + self.offset, self.slc_mem.stop + self.offset
+        self._slc_memoff = slice(
+            self._slc_mem.start + self.offset, self._slc_mem.stop + self.offset
         )
 
         # Neues bytearray und Kopie für mainloop anlegen
-        # NOTE: Testen
         self._ba_devdata = bytearray(self._length)
         self._ba_datacp = bytearray()
 
@@ -142,12 +158,14 @@ class Device(object):
         @param key IO-Name str() / IO-Bytenummer int()
         @return True, wenn device vorhanden"""
         if type(key) == str:
-            return hasattr(self._modio.io, key) \
+            return key in self._modio.io \
                 and getattr(self._modio.io, key)._parentdevice == self
         elif type(key) == int:
-            return key in self._modio.io \
-                and len(self._modio.io[key]) > 0 \
-                and self._modio.io[key][0]._parentdevice == self
+            if key in self._modio.io:
+                for io in self._modio.io[key]:
+                    if io is not None and io._parentdevice == self:
+                        return True
+            return False
         else:
             return key._parentdevice == self
 
@@ -159,7 +177,7 @@ class Device(object):
     def __iter__(self):
         """Gibt Iterator aller IOs zurueck.
         @return iter() aller IOs"""
-        for lst_io in self._modio.io[self.slc_devoff]:
+        for lst_io in self._modio.io[self._slc_devoff]:
             for io in lst_io:
                 yield io
 
@@ -207,10 +225,10 @@ class Device(object):
             self._length += io_new._length
 
             # Kleinste und größte Speicheradresse ermitteln
-            if io_new.slc_address.start < int_min:
-                int_min = io_new.slc_address.start
-            if io_new.slc_address.stop > int_max:
-                int_max = io_new.slc_address.stop
+            if io_new._slc_address.start < int_min:
+                int_min = io_new._slc_address.start
+            if io_new._slc_address.stop > int_max:
+                int_max = io_new._slc_address.stop
 
         return slice(int_min, int_max)
 
@@ -218,13 +236,13 @@ class Device(object):
         """Funktion zum ueberschreiben von abgeleiteten Klassen."""
         pass
 
-    def autorefresh(self, remove=False):
+    def autorefresh(self, activate=True):
         """Registriert dieses Device fuer die automatische Synchronisierung.
-        @param remove bool() True entfernt Device aus Synchronisierung"""
-        if not remove and self not in self._modio._lst_refresh:
+        @param activate Default True fuegt Device zur Synchronisierung hinzu"""
+        if activate and self not in self._modio._lst_refresh:
 
             # Daten bei Aufnahme direkt einlesen!
-            self._modio.readprocimg(True, self)
+            self._modio.readprocimg(self)
 
             # Datenkopie anlegen
             self._filelock.acquire()
@@ -247,7 +265,7 @@ class Device(object):
                 self._modio._imgwriter.refresh = imgrefresh
                 self._modio._imgwriter.start()
 
-        elif remove and self in self._modio._lst_refresh:
+        elif not activate and self in self._modio._lst_refresh:
             # Sicher aus Liste entfernen
             with self._modio._imgwriter.lck_refresh:
                 self._modio._lst_refresh.remove(self)
@@ -259,14 +277,14 @@ class Device(object):
 
             # Daten beim Entfernen noch einmal schreiben
             if not self._modio._monitoring:
-                self._modio.writeprocimg(True, self)
+                self._modio.writeprocimg(self)
 
     def get_allios(self):
         """Gibt eine Liste aller Inputs und Outputs zurueck, keine MEMs.
         @return list() Input und Output, keine MEMs"""
         lst_return = []
         for lst_io in self._modio.io[
-                self.slc_inpoff.start:self.slc_outoff.stop]:
+                self._slc_inpoff.start:self._slc_outoff.stop]:
             lst_return += lst_io
         return lst_return
 
@@ -274,7 +292,7 @@ class Device(object):
         """Gibt eine Liste aller Inputs zurueck.
         @return list() Inputs"""
         lst_return = []
-        for lst_io in self._modio.io[self.slc_inpoff]:
+        for lst_io in self._modio.io[self._slc_inpoff]:
             lst_return += lst_io
         return lst_return
 
@@ -282,7 +300,7 @@ class Device(object):
         """Gibt eine Liste aller Outputs zurueck.
         @return list() Outputs"""
         lst_return = []
-        for lst_io in self._modio.io[self.slc_outoff]:
+        for lst_io in self._modio.io[self._slc_outoff]:
             lst_return += lst_io
         return lst_return
 
@@ -290,9 +308,33 @@ class Device(object):
         """Gibt eine Liste aller mems zurueck.
         @return list() Mems"""
         lst_return = []
-        for lst_io in self._modio.io[self.slc_memoff]:
+        for lst_io in self._modio.io[self._slc_memoff]:
             lst_return += lst_io
         return lst_return
+
+    def readprocimg(self):
+        """Alle Inputs fuer dieses Device vom Prozessabbild einlesen.
+        @see revpimodio2.modio#RevPiModIO.readprocimg
+        RevPiModIO.readprocimg()"""
+        self._modio.readprocimg(self)
+
+    def setdefaultvalues(self):
+        """Alle Outputbuffer fuer dieses Device auf default Werte setzen.
+        @see revpimodio2.modio#RevPiModIO.setdefaultvalues
+        RevPiModIO.setdefaultvalues()"""
+        self._modio.setdefaultvalues(self)
+
+    def syncoutputs(self):
+        """Lesen aller Outputs im Prozessabbild fuer dieses Device.
+        @see revpimodio2.modio#RevPiModIO.syncoutputs
+        RevPiModIO.syncoutputs()"""
+        self._modio.syncoutputs(self)
+
+    def writeprocimg(self):
+        """Schreiben aller Outputs dieses Devices ins Prozessabbild.
+        @see revpimodio2.modio#RevPiModIO.writeprocimg
+        RevPiModIO.writeprocimg()"""
+        self._modio.writeprocimg(self)
 
 
 class Core(Device):
@@ -314,9 +356,9 @@ class Core(Device):
         self._ioerrorlimit2 = None
 
         # Eigene IO-Liste aufbauen
-        self._lst_io = [x for x in self.__iter__()]
+        self.__lst_io = [x for x in self.__iter__()]
 
-        int_lenio = len(self._lst_io)
+        int_lenio = len(self.__lst_io)
         if int_lenio == 6:
             # Core 1.1
             self._iocycle = 1
@@ -334,87 +376,87 @@ class Core(Device):
             self._ioerrorlimit1 = 6
             self._ioerrorlimit2 = 7
 
-    def _errorlimit(self, io_id, errorlimit):
+    def __errorlimit(self, io_id, errorlimit):
         """Verwaltet das Lesen und Schreiben der ErrorLimits.
         @param io_id Index des IOs fuer ErrorLimit
         @return Aktuellen ErrorLimit oder None wenn nicht verfuegbar"""
         if errorlimit is None:
             return None if io_id is None else int.from_bytes(
-                self._lst_io[io_id].get_value(),
-                byteorder=self._lst_io[io_id]._byteorder
+                self.__lst_io[io_id].get_value(),
+                byteorder=self.__lst_io[io_id]._byteorder
             )
         else:
             if 0 <= errorlimit <= 65535:
-                self._lst_io[io_id].set_value(errorlimit.to_bytes(
-                    2, byteorder=self._lst_io[io_id]._byteorder
+                self.__lst_io[io_id].set_value(errorlimit.to_bytes(
+                    2, byteorder=self.__lst_io[io_id]._byteorder
                 ))
             else:
                 raise ValueError(
                     "errorlimit value int() must be between 0 and 65535"
                 )
 
-    def get_status(self):
+    def _get_status(self):
         """Gibt den RevPi Core Status zurueck.
         @return Status als int()"""
         return int.from_bytes(
-            self._lst_io[0].get_value(), byteorder=self._lst_io[0]._byteorder
+            self.__lst_io[0].get_value(), byteorder=self.__lst_io[0]._byteorder
         )
 
-    def get_leda1(self):
+    def _get_leda1(self):
         """Gibt den Zustand der LED A1 vom core zurueck.
         @return 0=aus, 1=gruen, 2=rot"""
         int_led = int.from_bytes(
-            self._lst_io[self._ioled].get_value(),
-            byteorder=self._lst_io[self._ioled]._byteorder
+            self.__lst_io[self._ioled].get_value(),
+            byteorder=self.__lst_io[self._ioled]._byteorder
         )
         led = int_led & 1
         led += int_led & 2
         return led
 
-    def get_leda2(self):
+    def _get_leda2(self):
         """Gibt den Zustand der LED A2 vom core zurueck.
         @return 0=aus, 1=gruen, 2=rot"""
         int_led = int.from_bytes(
-            self._lst_io[self._ioled].get_value(),
-            byteorder=self._lst_io[self._ioled]._byteorder
+            self.__lst_io[self._ioled].get_value(),
+            byteorder=self.__lst_io[self._ioled]._byteorder
         )
         led = 1 if bool(int_led & 4) else 0
         led = led + 2 if bool(int_led & 8) else led
         return led
 
-    def set_leda1(self, value):
+    def _set_leda1(self, value):
         """Setzt den Zustand der LED A1 vom core.
         @param value 0=aus, 1=gruen, 2=rot"""
         if 0 <= value <= 3:
-            int_led = (self.get_leda2() << 2) + value
-            self._lst_io[self._ioled].set_value(int_led.to_bytes(
-                length=1, byteorder=self._lst_io[self._ioled]._byteorder
+            int_led = (self._get_leda2() << 2) + value
+            self.__lst_io[self._ioled].set_value(int_led.to_bytes(
+                length=1, byteorder=self.__lst_io[self._ioled]._byteorder
             ))
         else:
             raise ValueError("led status int() must be between 0 and 3")
 
-    def set_leda2(self, value):
+    def _set_leda2(self, value):
         """Setzt den Zustand der LED A2 vom core.
         @param value 0=aus, 1=gruen, 2=rot"""
         if 0 <= value <= 3:
-            int_led = (value << 2) + self.get_leda1()
-            self._lst_io[self._ioled].set_value(int_led.to_bytes(
-                length=1, byteorder=self._lst_io[self._ioled]._byteorder
+            int_led = (value << 2) + self._get_leda1()
+            self.__lst_io[self._ioled].set_value(int_led.to_bytes(
+                length=1, byteorder=self.__lst_io[self._ioled]._byteorder
             ))
         else:
             raise ValueError("led status int() must be between 0 and 3")
 
-    A1 = property(get_leda1, set_leda1)
-    A2 = property(get_leda2, set_leda2)
-    status = property(get_status)
+    A1 = property(_get_leda1, _set_leda1)
+    A2 = property(_get_leda2, _set_leda2)
+    status = property(_get_status)
 
     @property
     def picontrolrunning(self):
         """Statusbit fuer piControl-Treiber laeuft.
         @return True, wenn Treiber laeuft"""
         return bool(int.from_bytes(
-            self._lst_io[0].get_value(),
-            byteorder=self._lst_io[0]._byteorder
+            self.__lst_io[0].get_value(),
+            byteorder=self.__lst_io[0]._byteorder
         ) & 1)
 
     @property
@@ -422,8 +464,8 @@ class Core(Device):
         """Statusbit fuer ein IO-Modul nicht mit PiCtory konfiguriert.
         @return True, wenn IO Modul nicht konfiguriert"""
         return bool(int.from_bytes(
-            self._lst_io[0].get_value(),
-            byteorder=self._lst_io[0]._byteorder
+            self.__lst_io[0].get_value(),
+            byteorder=self.__lst_io[0]._byteorder
         ) & 2)
 
     @property
@@ -431,8 +473,8 @@ class Core(Device):
         """Statusbit fuer ein IO-Modul fehlt oder piGate konfiguriert.
         @return True, wenn IO-Modul fehlt oder piGate konfiguriert"""
         return bool(int.from_bytes(
-            self._lst_io[0].get_value(),
-            byteorder=self._lst_io[0]._byteorder
+            self.__lst_io[0].get_value(),
+            byteorder=self.__lst_io[0]._byteorder
         ) & 4)
 
     @property
@@ -440,8 +482,8 @@ class Core(Device):
         """Statusbit Modul belegt mehr oder weniger Speicher als konfiguriert.
         @return True, wenn falscher Speicher belegt ist"""
         return bool(int.from_bytes(
-            self._lst_io[0].get_value(),
-            byteorder=self._lst_io[0]._byteorder
+            self.__lst_io[0].get_value(),
+            byteorder=self.__lst_io[0]._byteorder
         ) & 8)
 
     @property
@@ -449,8 +491,8 @@ class Core(Device):
         """Statusbit links vom RevPi ist ein piGate Modul angeschlossen.
         @return True, wenn piGate links existiert"""
         return bool(int.from_bytes(
-            self._lst_io[0].get_value(),
-            byteorder=self._lst_io[0]._byteorder
+            self.__lst_io[0].get_value(),
+            byteorder=self.__lst_io[0]._byteorder
         ) & 16)
 
     @property
@@ -458,8 +500,8 @@ class Core(Device):
         """Statusbit rechts vom RevPi ist ein piGate Modul angeschlossen.
         @return True, wenn piGate rechts existiert"""
         return bool(int.from_bytes(
-            self._lst_io[0].get_value(),
-            byteorder=self._lst_io[0]._byteorder
+            self.__lst_io[0].get_value(),
+            byteorder=self.__lst_io[0]._byteorder
         ) & 32)
 
     @property
@@ -467,8 +509,8 @@ class Core(Device):
         """Gibt Zykluszeit der Prozessabbildsynchronisierung zurueck.
         @return Zykluszeit in ms"""
         return None if self._iocycle is None else int.from_bytes(
-            self._lst_io[self._iocycle].get_value(),
-            byteorder=self._lst_io[self._iocycle]._byteorder
+            self.__lst_io[self._iocycle].get_value(),
+            byteorder=self.__lst_io[self._iocycle]._byteorder
         )
 
     @property
@@ -476,8 +518,8 @@ class Core(Device):
         """Gibt CPU-Temperatur zurueck.
         @return CPU-Temperatur in Celsius"""
         return None if self._iotemperatur is None else int.from_bytes(
-            self._lst_io[self._iotemperatur].get_value(),
-            byteorder=self._lst_io[self._iotemperatur]._byteorder
+            self.__lst_io[self._iotemperatur].get_value(),
+            byteorder=self.__lst_io[self._iotemperatur]._byteorder
         )
 
     @property
@@ -485,8 +527,8 @@ class Core(Device):
         """Gibt CPU Taktfrequenz zurueck.
         @return CPU Taktfrequenz in MHz"""
         return None if self._iofrequency is None else int.from_bytes(
-            self._lst_io[self._iofrequency].get_value(),
-            byteorder=self._lst_io[self._iofrequency]._byteorder
+            self.__lst_io[self._iofrequency].get_value(),
+            byteorder=self.__lst_io[self._iofrequency]._byteorder
         ) * 10
 
     @property
@@ -494,33 +536,33 @@ class Core(Device):
         """Gibt Fehleranzahl auf RS485 piBridge Bus zurueck.
         @return Fehleranzahl der piBridge"""
         return None if self._ioerrorcnt is None else int.from_bytes(
-            self._lst_io[self._ioerrorcnt].get_value(),
-            byteorder=self._lst_io[self._ioerrorcnt]._byteorder
+            self.__lst_io[self._ioerrorcnt].get_value(),
+            byteorder=self.__lst_io[self._ioerrorcnt]._byteorder
         )
 
     @property
     def errorlimit1(self):
         """Gibt RS485 ErrorLimit1 Wert zurueck.
         @return Aktueller Wert fuer ErrorLimit1"""
-        return self._errorlimit(self._ioerrorlimit1, None)
+        return self.__errorlimit(self._ioerrorlimit1, None)
 
     @errorlimit1.setter
     def errorlimit1(self, value):
         """Setzt RS485 ErrorLimit1 auf neuen Wert.
         @param value Neuer ErrorLimit1 Wert"""
-        self._errorlimit(self._ioerrorlimit1, value)
+        self.__errorlimit(self._ioerrorlimit1, value)
 
     @property
     def errorlimit2(self):
         """Gibt RS485 ErrorLimit2 Wert zurueck.
         @return Aktueller Wert fuer ErrorLimit2"""
-        return self._errorlimit(self._ioerrorlimit2, None)
+        return self.__errorlimit(self._ioerrorlimit2, None)
 
     @errorlimit2.setter
     def errorlimit2(self, value):
         """Setzt RS485 ErrorLimit2 auf neuen Wert.
         @param value Neuer ErrorLimit2 Wert"""
-        self._errorlimit(self._ioerrorlimit2, value)
+        self.__errorlimit(self._ioerrorlimit2, value)
 
 
 class Gateway(Device):
@@ -528,21 +570,23 @@ class Gateway(Device):
     """Klasse fuer die RevPi Gateway-Devices.
 
     Stellt neben den Funktionen von RevPiDevice weitere Funktionen fuer die
-    Gateways bereit. Es koennen ueber die reg_*-Funktionen eigene IOs definiert
-    werden, die ein RevPiStructIO-Objekt abbilden.
+    Gateways bereit. IOs auf diesem Device stellen die replace_io Funktion
+    zur verfuegung, ueber die eigene IOs definiert werden, die ein
+    RevPiStructIO-Objekt abbilden.
     Dieser IO-Typ kann Werte ueber mehrere Bytes verarbeiten und zurueckgeben.
+    @see revpimodio2.io#IOBase.replace_io replace_io(name, frm, **kwargs)
 
     """
 
-    def __init__(self, parent, dict_device, **kwargs):
-        """Erweitert RevPiDevice um reg_*-Funktionen.
-        @see #RevPiDevice.__init__ RevPiDevice.__init__(...)"""
-        super().__init__(parent, dict_device, **kwargs)
+    def __init__(self, parent, dict_device, simulator=False):
+        """Erweitert Device-Klasse um get_rawbytes-Funktionen.
+        @see #Device.__init__ Device.__init__(...)"""
+        super().__init__(parent, dict_device, simulator)
 
         self._dict_slc = {
-            iomodule.Type.INP: self.slc_inp,
-            iomodule.Type.OUT: self.slc_out,
-            iomodule.Type.MEM: self.slc_mem
+            iomodule.Type.INP: self._slc_inp,
+            iomodule.Type.OUT: self._slc_out,
+            iomodule.Type.MEM: self._slc_mem
         }
 
     def get_rawbytes(self):
@@ -555,15 +599,50 @@ class Virtual(Gateway):
 
     """Klasse fuer die RevPi Virtual-Devices.
 
-    Stellt die selben Funktionen wie RevPiGateway zur Verfuegung. Es koennen
+    Stellt die selben Funktionen wie Gateway zur Verfuegung. Es koennen
     ueber die reg_*-Funktionen eigene IOs definiert werden, die ein
     RevPiStructIO-Objekt abbilden.
     Dieser IO-Typ kann Werte ueber mehrere Bytes verarbeiten und zurueckgeben.
-    @see #RevPiGateway RevPiGateway
+    @see #Gateway Gateway
 
     """
 
-    pass
+    def writeinputdefaults(self):
+        """Schreibt fuer ein virtuelles Device piCtory Defaultinputwerte.
+
+        Sollten in piCtory Defaultwerte fuer Inputs eines virtuellen Devices
+        angegeben sein, werden diese nur beim Systemstart oder einem piControl
+        Reset gesetzt. Sollte danach das Prozessabbild mit NULL ueberschrieben,
+        gehen diese Werte verloren.
+        Diese Funktion kann nur auf virtuelle Devices angewendet werden!
+
+        @return True, wenn Arbeiten am virtuellen Device erfolgreich waren
+
+        """
+        if self._modio._monitoring:
+            raise RuntimeError(
+                "can not write process image, while system is in monitoring "
+                "mode"
+            )
+
+        workokay = True
+        self._filelock.acquire()
+
+        for io in self.get_inputs():
+            self._ba_devdata[io._slc_address] = io.defaultvalue
+
+        # Outpus auf Bus schreiben
+        try:
+            self._modio._myfh.seek(self._slc_inpoff.start)
+            self._modio._myfh.write(self._ba_devdata[self._slc_inp])
+            if self._modio._buffedwrite:
+                self._modio._myfh.flush()
+        except IOError:
+            self._modio._gotioerror("write")
+            workokay = False
+
+        self._filelock.release()
+        return workokay
 
 
 # Nachträglicher Import

@@ -27,7 +27,6 @@ class IOList(object):
     def __init__(self):
         """Init IOList class."""
         self.__dict_iobyte = {k: [] for k in range(4096)}
-        self.__dict_iorefbyte = {}
         self.__dict_iorefname = {}
 
     def __contains__(self, key):
@@ -38,42 +37,53 @@ class IOList(object):
             return key in self.__dict_iobyte \
                 and len(self.__dict_iobyte[key]) > 0
         else:
-            return hasattr(self, key)
+            return hasattr(self, key) and type(getattr(self, key)) != DeadIO
 
     def __delattr__(self, key):
         """Entfernt angegebenen IO.
         @param key IO zum entfernen"""
-        # TODO: Prüfen ob auch Bit sein kann
-
-        io_del = getattr(self, key)
+        io_del = object.__getattribute__(self, key)
 
         # Alte Events vom Device löschen
         io_del.unreg_event()
 
         # IO aus Byteliste und Attributen entfernen
-        self.__dict_iobyte[io_del.address].remove(io_del)
+        if io_del._bitaddress < 0:
+            self.__dict_iobyte[io_del.address].remove(io_del)
+        else:
+            self.__dict_iobyte[io_del.address][io_del._bitaddress] = None
+            if self.__dict_iobyte[io_del.address] == \
+                    [None, None, None, None, None, None, None, None]:
+                self.__dict_iobyte[io_del.address] = []
+
         object.__delattr__(self, key)
 
     def __getattr__(self, key):
         """Verwaltet geloeschte IOs (Attribute, die nicht existieren).
-        @param key Wert eines alten IOs
+        @param key Name oder Byte eines alten IOs
         @return Alten IO, wenn in Ref-Listen"""
         if key in self.__dict_iorefname:
             return self.__dict_iorefname[key]
-        elif key in self.__dict_iorefbyte:
-            return self.__dict_iorefbyte[key]
         else:
             raise AttributeError("can not find io '{}'".format(key))
 
     def __getitem__(self, key):
         """Ruft angegebenen IO ab.
-        @param key IO Name oder Byte
-        @return IO Object"""
+
+        Wenn der Key <class 'str'> ist, wird ein einzelner IO geliefert. Wird
+        der Key als <class 'int'> uebergeben, wird eine <class 'list'>
+        geliefert mit 0, 1 oder 8 Eintraegen.
+        Wird als Key <class 'slice'> gegeben, werden die Listen in einer Liste
+        zurueckgegeben.
+
+        @param key IO Name als <class 'str> oder Byte als <class 'int'>.
+        @return IO Objekt oder Liste der IOs
+
+        """
         if type(key) == int:
-            if key in self.__dict_iobyte:
-                return self.__dict_iobyte[key]
-            else:
+            if key not in self.__dict_iobyte:
                 raise KeyError("byte '{}' does not exist".format(key))
+            return self.__dict_iobyte[key]
         elif type(key) == slice:
             return [
                 self.__dict_iobyte[int_io]
@@ -87,25 +97,37 @@ class IOList(object):
         @return Iterator aller IOs"""
         for int_io in sorted(self.__dict_iobyte):
             for io in self.__dict_iobyte[int_io]:
-                yield io
+                if io is not None:
+                    yield io
+
+    def __len__(self):
+        """Gibt die Anzahl aller IOs zurueck.
+        @return Anzahl aller IOs"""
+        int_ios = 0
+        for int_io in self.__dict_iobyte:
+            for io in self.__dict_iobyte[int_io]:
+                if io is not None:
+                    int_ios += 1
+        return int_ios
 
     def __setitem__(self, key, value):
         """Setzt IO Wert.
         @param key IO Name oder Byte
         @param value Wert, auf den der IO gesetzt wird"""
         if type(key) == int:
-            if key in self.__dict_iobyte:
-                if len(self.__dict_iobyte[key]) == 1:
-                    self.__dict_iobyte[key][0].value = value
-                elif len(self.__dict_iobyte[key]) == 0:
-                    raise KeyError("byte '{}' contains no input".format(key))
-                else:
-                    raise KeyError(
-                        "byte '{}' contains more than one bit-input"
-                        "".format(key)
-                    )
+            if key not in self.__dict_iobyte:
+                raise KeyError(
+                    "byte '{}' does not contain io object".format(key)
+                )
+
+            if len(self.__dict_iobyte[key]) == 1:
+                self.__dict_iobyte[key][0].value = value
+            elif len(self.__dict_iobyte[key]) == 0:
+                raise KeyError("byte '{}' contains no input".format(key))
             else:
-                raise KeyError("byte '{}' does not exist".format(key))
+                raise KeyError(
+                    "byte '{}' contains more than one bit-input".format(key)
+                )
         else:
             getattr(self, key).value = value
 
@@ -115,8 +137,7 @@ class IOList(object):
         @param value Wert, auf den der IO gesetzt wird"""
         if key in [
                 "_IOList__dict_iobyte",
-                "_IOList__dict_iorefname",
-                "_IOList__dict_iorefbyte"
+                "_IOList__dict_iorefname"
                 ]:
             object.__setattr__(self, key, value)
         else:
@@ -126,8 +147,9 @@ class IOList(object):
     def __private_replace_oldio_with_newio(self, io):
         """Ersetzt bestehende IOs durch den neu Registrierten.
         @param io Neuer IO der eingefuegt werden soll"""
-        for i in range(io.slc_address.start, io.slc_address.stop):
-            for oldio in self.__dict_iobyte[i + io._parentdevice.offset]:
+        int_length = 1 if io._length == 0 else io._length
+        for i in range(io.address, io.address + int_length):
+            for oldio in self.__dict_iobyte[i]:
 
                 if type(oldio) == StructIO:
                     # Hier gibt es schon einen neuen IO
@@ -149,8 +171,7 @@ class IOList(object):
                     # IOs im Speicherbereich des neuen IO merken
                     if io._bitaddress >= 0:
                         # ios für ref bei bitaddress speichern
-                        self.__dict_iorefbyte[oldio.slc_address.start] = oldio
-                        self.__dict_iorefname[oldio.name] = oldio
+                        self.__dict_iorefname[oldio.name] = DeadIO(oldio)
 
                     # ios aus listen entfernen
                     delattr(self, oldio.name)
@@ -171,7 +192,7 @@ class IOList(object):
 
             object.__setattr__(self, new_io.name, new_io)
 
-            # Bytedict erstellen für Adresszugriff
+            # Bytedict für Adresszugriff anpassen
             if new_io._bitaddress < 0:
                 self.__dict_iobyte[new_io.address].append(new_io)
             else:
@@ -182,7 +203,7 @@ class IOList(object):
                     ]
                 self.__dict_iobyte[new_io.address][new_io._bitaddress] = new_io
         else:
-            raise AttributeError("io must be IOBase or sub class")
+            raise AttributeError("io must be <class 'IOBase'> or sub class")
 
     def _testme(self):
         # NOTE: Nur Debugging
@@ -190,11 +211,25 @@ class IOList(object):
             if len(self.__dict_iobyte[x]) > 0:
                 print(x, self.__dict_iobyte[x])
         print(self.__dict_iorefname)
-        print(self.__dict_iorefbyte)
 
     def _getdict(self):
         # NOTE: Nur Debugging
         return self.__dict_iobyte.copy()
+
+
+class DeadIO(object):
+
+    """Klasse, mit der ersetzte IOs verwaltet werden."""
+
+    def __init__(self, deadio):
+        """Instantiierung der DeadIO()-Klasse.
+        @param deadio IO, der ersetzt wurde"""
+        self.__deadio = deadio
+
+    def replace_io(self, name, frm, **kwargs):
+        """Stellt Funktion fuer weiter Bit-Ersetzungen bereit.
+        @see #IOBase.replace_io replace_io(...)"""
+        self.__deadio.replace_io(name, frm, **kwargs)
 
 
 class IOBase(object):
@@ -238,7 +273,7 @@ class IOBase(object):
 
         int_startaddress = int(valuelist[3])
         if self._bitaddress == -1:
-            self.slc_address = slice(
+            self._slc_address = slice(
                 int_startaddress, int_startaddress + self._length
             )
             # Defaultvalue aus Zahl in Bytes umrechnen
@@ -262,7 +297,7 @@ class IOBase(object):
         else:
             # Höhere Bits als 7 auf nächste Bytes umbrechen
             int_startaddress += int((int(valuelist[7]) % 16) / 8)
-            self.slc_address = slice(
+            self._slc_address = slice(
                 int_startaddress, int_startaddress + 1
             )
             self.defaultvalue = bool(int(valuelist[1]))
@@ -277,13 +312,13 @@ class IOBase(object):
         @return IO-Wert als bytes()"""
         if self._bitaddress >= 0:
             int_byte = int.from_bytes(
-                self._parentdevice._ba_devdata[self.slc_address],
+                self._parentdevice._ba_devdata[self._slc_address],
                 byteorder=self._byteorder
             )
             return b'\x01' if bool(int_byte & 1 << self._bitaddress) \
                 else b'\x00'
         else:
-            return bytes(self._parentdevice._ba_devdata[self.slc_address])
+            return bytes(self._parentdevice._ba_devdata[self._slc_address])
 
     def __str__(self):
         """str()-wert der Klasse.
@@ -293,7 +328,7 @@ class IOBase(object):
     def _get_address(self):
         """Gibt die absolute Byteadresse im Prozessabbild zurueck.
         @return Absolute Byteadresse"""
-        return self._parentdevice.offset + self.slc_address.start
+        return self._parentdevice.offset + self._slc_address.start
 
     def _get_byteorder(self):
         """Gibt konfigurierte Byteorder zurueck.
@@ -320,13 +355,13 @@ class IOBase(object):
         @return IO-Wert"""
         if self._bitaddress >= 0:
             int_byte = int.from_bytes(
-                self._parentdevice._ba_devdata[self.slc_address],
+                self._parentdevice._ba_devdata[self._slc_address],
                 byteorder=self._byteorder
             )
             return bool(int_byte & 1 << self._bitaddress)
 
         else:
-            return bytes(self._parentdevice._ba_devdata[self.slc_address])
+            return bytes(self._parentdevice._ba_devdata[self._slc_address])
 
     def reg_event(self, func, edge=BOTH, as_thread=False):
         """Registriert ein Event bei der Eventueberwachung.
@@ -413,9 +448,11 @@ class IOBase(object):
         # Optional Event eintragen
         reg_event = kwargs.get("event", None)
         if reg_event is not None:
-            as_thread = kwargs.get("as_thread", False)
-            edge = kwargs.get("edge", BOTH)
-            io_new.reg_event(reg_event, as_thread=as_thread, edge=edge)
+            io_new.reg_event(
+                reg_event,
+                as_thread=kwargs.get("as_thread", False),
+                edge=kwargs.get("edge", BOTH)
+            )
 
     def set_value(self, value):
         """Setzt den Wert des IOs mit bytes() oder bool().
@@ -426,7 +463,7 @@ class IOBase(object):
                 value = bool(value)
 
                 # ganzes Byte laden
-                byte_buff = self._parentdevice._ba_devdata[self.slc_address]
+                byte_buff = self._parentdevice._ba_devdata[self._slc_address]
 
                 # Bytes in integer umwandeln
                 int_len = len(byte_buff)
@@ -441,31 +478,37 @@ class IOBase(object):
                         int_byte -= int_bit
 
                     # Zurückschreiben wenn verändert
-                    self._parentdevice._ba_devdata[self.slc_address] = \
+                    self._parentdevice._ba_devdata[self._slc_address] = \
                         int_byte.to_bytes(int_len, byteorder=self._byteorder)
 
             else:
                 if type(value) == bytes:
                     if self._length == len(value):
-                        self._parentdevice._ba_devdata[self.slc_address] = \
+                        self._parentdevice._ba_devdata[self._slc_address] = \
                             value
                     else:
                         raise ValueError(
-                            "'{}' requires a bytes() object of length {}, but "
-                            "{} was given".format(
+                            "'{}' requires a <class 'bytes'> object of length "
+                            "{}, but {} was given".format(
                                 self._name, self._length, len(value)
                             )
                         )
                 else:
                     raise ValueError(
-                        "'{}' requires a bytes() object, not {}"
+                        "'{}' requires a <class 'bytes'> object, not {}"
                         "".format(self._name, type(value))
                     )
 
         elif self._iotype == Type.INP:
-            raise AttributeError(
-                "can not write to input '{}'".format(self._name)
-            )
+            if self._parentdevice._modio._simulator:
+                raise AttributeError(
+                    "can not write to output '{}' in simulator mode"
+                    "".format(self._name)
+                )
+            else:
+                raise AttributeError(
+                    "can not write to input '{}'".format(self._name)
+                )
         elif self._iotype == Type.MEM:
             raise AttributeError(
                 "can not write to memory '{}'".format(self._name)
@@ -582,8 +625,7 @@ class IOBase(object):
                     flt_timecount += \
                         self._parentdevice._modio._imgwriter._refresh
             elif bool_timecount:
-                # TODO: Prüfen
-                flt_timecount += 1
+                flt_timecount += 2.5
 
         # Abbruchevent wurde gesetzt
         if exitevent.is_set():
@@ -637,14 +679,14 @@ class IntIO(IOBase):
         """Left fest, ob der Wert Vorzeichenbehaftet behandelt werden soll.
         @param value True, wenn mit Vorzeichen behandel"""
         if type(value) != bool:
-            raise ValueError("signed must be bool() True or False")
+            raise ValueError("signed must be <class 'bool'> True or False")
         self._signed = value
 
     def get_int(self):
         """Gibt IO als int() Wert zurueck mit Beachtung byteorder/signed.
         @return int() Wert"""
         return int.from_bytes(
-            self._parentdevice._ba_devdata[self.slc_address],
+            self._parentdevice._ba_devdata[self._slc_address],
             byteorder=self._byteorder,
             signed=self._signed
         )
@@ -660,7 +702,7 @@ class IntIO(IOBase):
             ))
         else:
             raise ValueError(
-                "'{}' need an int() value, but {} was given"
+                "'{}' need a <class 'int'> value, but {} was given"
                 "".format(self._name, type(value))
             )
 
@@ -711,9 +753,9 @@ class StructIO(IOBase):
                     name,
                     kwargs.get("defaultvalue", 0),
                     bitlength,
-                    parentio.slc_address.start,
+                    parentio._slc_address.start,
                     False,
-                    str(parentio.slc_address.start).rjust(4, "0"),
+                    str(parentio._slc_address.start).rjust(4, "0"),
                     kwargs.get("bmk", ""),
                     bitaddress
                 ]
@@ -734,17 +776,22 @@ class StructIO(IOBase):
             byteorder,
             frm == frm.lower()
         )
-        self.frm = frm
+        self.__frm = bofrm + frm
 
         # Platz für neuen IO prüfen
-        if not (self.slc_address.start >=
+        if not (self._slc_address.start >=
                 parentio._parentdevice._dict_slc[parentio._iotype].start and
-                self.slc_address.stop <=
+                self._slc_address.stop <=
                 parentio._parentdevice._dict_slc[parentio._iotype].stop):
 
             raise BufferError(
                 "registered value does not fit process image scope"
             )
+
+    def _get_frm(self):
+        """Ruft die struct() Formatierung ab.
+        @return struct() Formatierung"""
+        return self.__frm
 
     def _get_signed(self):
         """Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.
@@ -757,7 +804,7 @@ class StructIO(IOBase):
         if self._bitaddress >= 0:
             return self.get_value()
         else:
-            return struct.unpack(self.frm, self.get_value())[0]
+            return struct.unpack(self.__frm, self.get_value())[0]
 
     def set_structvalue(self, value):
         """Setzt den Wert mit struct Formatierung.
@@ -765,8 +812,9 @@ class StructIO(IOBase):
         if self._bitaddress >= 0:
             self.set_value(value)
         else:
-            self.set_value(struct.pack(self.frm, value))
+            self.set_value(struct.pack(self.__frm, value))
 
+    frm = property(_get_frm)
     signed = property(_get_signed)
     value = property(get_structvalue, set_structvalue)
 

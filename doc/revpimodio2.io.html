@@ -18,6 +18,9 @@ Global Attributes</h3>
 Classes</h3>
 <table>
 <tr>
+<td><a style="color:#0000FF" href="#DeadIO">DeadIO</a></td>
+<td>Klasse, mit der ersetzte IOs verwaltet werden.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#IOBase">IOBase</a></td>
 <td>Basisklasse fuer alle IO-Objekte.</td>
 </tr><tr>
@@ -39,6 +42,65 @@ Functions</h3>
 <table>
 <tr><td>None</td></tr>
 </table>
+<hr /><hr />
+<a NAME="DeadIO" ID="DeadIO"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">DeadIO</h2>
+<p>
+Klasse, mit der ersetzte IOs verwaltet werden.
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+object
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#DeadIO.__init__">DeadIO</a></td>
+<td>Instantiierung der DeadIO()-Klasse.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#DeadIO.replace_io">replace_io</a></td>
+<td>Stellt Funktion fuer weiter Bit-Ersetzungen bereit.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="DeadIO.__init__" ID="DeadIO.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+DeadIO (Constructor)</h3>
+<b>DeadIO</b>(<i>deadio</i>)
+<p>
+Instantiierung der DeadIO()-Klasse.
+</p><dl>
+<dt><i>deadio</i></dt>
+<dd>
+IO, der ersetzt wurde
+</dd>
+</dl><a NAME="DeadIO.replace_io" ID="DeadIO.replace_io"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+DeadIO.replace_io</h3>
+<b>replace_io</b>(<i>name, frm, **kwargs</i>)
+<p>
+Stellt Funktion fuer weiter Bit-Ersetzungen bereit.
+</p><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" href="#IOBase.replace_io">replace_io(...)</a>
+</dd>
+</dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
 <hr /><hr />
 <a NAME="IOBase" ID="IOBase"></a>
 <h2 style="background-color:#FFFFFF;color:#0000FF">IOBase</h2>
@@ -415,6 +477,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#IOList.__iter__">__iter__</a></td>
 <td>Gibt Iterator aller IOs zurueck.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#IOList.__len__">__len__</a></td>
+<td>Gibt die Anzahl aller IOs zurueck.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#IOList.__private_replace_oldio_with_newio">__private_replace_oldio_with_newio</a></td>
 <td>Ersetzt bestehende IOs durch den neu Registrierten.</td>
 </tr><tr>
@@ -481,7 +546,7 @@ Verwaltet geloeschte IOs (Attribute, die nicht existieren).
 </p><dl>
 <dt><i>key</i></dt>
 <dd>
-Wert eines alten IOs
+Name oder Byte eines alten IOs
 </dd>
 </dl><dl>
 <dt>Returns:</dt>
@@ -494,15 +559,21 @@ IOList.__getitem__</h3>
 <b>__getitem__</b>(<i>key</i>)
 <p>
 Ruft angegebenen IO ab.
+</p><p>
+        Wenn der Key <class 'str'> ist, wird ein einzelner IO geliefert. Wird
+        der Key als <class 'int'> uebergeben, wird eine <class 'list'>
+        geliefert mit 0, 1 oder 8 Eintraegen.
+        Wird als Key <class 'slice'> gegeben, werden die Listen in einer Liste
+        zurueckgegeben.
 </p><dl>
 <dt><i>key</i></dt>
 <dd>
-IO Name oder Byte
+IO Name als <class 'str> oder Byte als <class 'int'>.
 </dd>
 </dl><dl>
 <dt>Returns:</dt>
 <dd>
-IO Object
+IO Objekt oder Liste der IOs
 </dd>
 </dl><a NAME="IOList.__iter__" ID="IOList.__iter__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -514,6 +585,17 @@ Gibt Iterator aller IOs zurueck.
 <dt>Returns:</dt>
 <dd>
 Iterator aller IOs
+</dd>
+</dl><a NAME="IOList.__len__" ID="IOList.__len__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOList.__len__</h3>
+<b>__len__</b>(<i></i>)
+<p>
+Gibt die Anzahl aller IOs zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Anzahl aller IOs
 </dd>
 </dl><a NAME="IOList.__private_replace_oldio_with_newio" ID="IOList.__private_replace_oldio_with_newio"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -721,7 +803,7 @@ IOBase
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>signed</td></tr><tr><td>value</td></tr>
+<tr><td>frm</td></tr><tr><td>signed</td></tr><tr><td>value</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -734,6 +816,9 @@ Methods</h3>
 <tr>
 <td><a style="color:#0000FF" href="#StructIO.__init__">StructIO</a></td>
 <td>Erstellt einen IO mit struct-Formatierung.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#StructIO._get_frm">_get_frm</a></td>
+<td>Ruft die struct() Formatierung ab.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#StructIO._get_signed">_get_signed</a></td>
 <td>Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.</td>
@@ -773,6 +858,17 @@ Weitere Parameter:
             - bit: Registriert Outputs als bool() am angegebenen Bit im Byte
             - byteorder: Byteorder fuer den Input, Standardwert=little
             - defaultvalue: Standardwert fuer Output, Standard ist 0
+</dd>
+</dl><a NAME="StructIO._get_frm" ID="StructIO._get_frm"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+StructIO._get_frm</h3>
+<b>_get_frm</b>(<i></i>)
+<p>
+Ruft die struct() Formatierung ab.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+struct() Formatierung
 </dd>
 </dl><a NAME="StructIO._get_signed" ID="StructIO._get_signed"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
