@@ -419,9 +419,9 @@ class Core(Device):
         int_led = int.from_bytes(
             self.__lst_io[self._ioled].get_value(),
             byteorder=self.__lst_io[self._ioled]._byteorder
-        )
-        led = 1 if bool(int_led & 4) else 0
-        led = led + 2 if bool(int_led & 8) else led
+        ) >> 2
+        led = int_led & 1
+        led += int_led & 2
         return led
 
     def _set_leda1(self, value):

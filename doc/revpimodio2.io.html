@@ -140,9 +140,6 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#IOBase.__bool__">__bool__</a></td>
 <td>bool()-wert der Klasse.</td>
 </tr><tr>
-<td><a style="color:#0000FF" href="#IOBase.__bytes__">__bytes__</a></td>
-<td>bytes()-wert der Klasse.</td>
-</tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.__str__">__str__</a></td>
 <td>str()-wert der Klasse.</td>
 </tr><tr>
@@ -218,17 +215,6 @@ bool()-wert der Klasse.
 <dt>Returns:</dt>
 <dd>
 IO-Wert als bool(). Nur False wenn False oder 0 sonst True
-</dd>
-</dl><a NAME="IOBase.__bytes__" ID="IOBase.__bytes__"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-IOBase.__bytes__</h3>
-<b>__bytes__</b>(<i></i>)
-<p>
-bytes()-wert der Klasse.
-</p><dl>
-<dt>Returns:</dt>
-<dd>
-IO-Wert als bytes()
 </dd>
 </dl><a NAME="IOBase.__str__" ID="IOBase.__str__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -484,19 +470,10 @@ Methods</h3>
 <td>Ersetzt bestehende IOs durch den neu Registrierten.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOList.__setattr__">__setattr__</a></td>
-<td>Setzt IO Wert.</td>
-</tr><tr>
-<td><a style="color:#0000FF" href="#IOList.__setitem__">__setitem__</a></td>
-<td>Setzt IO Wert.</td>
-</tr><tr>
-<td><a style="color:#0000FF" href="#IOList._getdict">_getdict</a></td>
-<td></td>
+<td>Verbietet aus Leistungsguenden das direkte Setzen von Attributen.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOList._private_register_new_io_object">_private_register_new_io_object</a></td>
 <td>Registriert neues IO Objekt unabhaenging von __setattr__.</td>
-</tr><tr>
-<td><a style="color:#0000FF" href="#IOList._testme">_testme</a></td>
-<td></td>
 </tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -613,34 +590,8 @@ Neuer IO der eingefuegt werden soll
 IOList.__setattr__</h3>
 <b>__setattr__</b>(<i>key, value</i>)
 <p>
-Setzt IO Wert.
-</p><dl>
-<dt><i>key</i></dt>
-<dd>
-IO Name oder Byte
-</dd><dt><i>value</i></dt>
-<dd>
-Wert, auf den der IO gesetzt wird
-</dd>
-</dl><a NAME="IOList.__setitem__" ID="IOList.__setitem__"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-IOList.__setitem__</h3>
-<b>__setitem__</b>(<i>key, value</i>)
-<p>
-Setzt IO Wert.
-</p><dl>
-<dt><i>key</i></dt>
-<dd>
-IO Name oder Byte
-</dd><dt><i>value</i></dt>
-<dd>
-Wert, auf den der IO gesetzt wird
-</dd>
-</dl><a NAME="IOList._getdict" ID="IOList._getdict"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-IOList._getdict</h3>
-<b>_getdict</b>(<i></i>)
-<a NAME="IOList._private_register_new_io_object" ID="IOList._private_register_new_io_object"></a>
+Verbietet aus Leistungsguenden das direkte Setzen von Attributen.
+</p><a NAME="IOList._private_register_new_io_object" ID="IOList._private_register_new_io_object"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 IOList._private_register_new_io_object</h3>
 <b>_private_register_new_io_object</b>(<i>new_io</i>)
@@ -651,11 +602,7 @@ Registriert neues IO Objekt unabhaenging von __setattr__.
 <dd>
 Neues IO Objekt
 </dd>
-</dl><a NAME="IOList._testme" ID="IOList._testme"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-IOList._testme</h3>
-<b>_testme</b>(<i></i>)
-
+</dl>
 <div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
 <hr /><hr />
 <a NAME="IntIO" ID="IntIO"></a>

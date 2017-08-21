@@ -110,39 +110,17 @@ class IOList(object):
                     int_ios += 1
         return int_ios
 
-    def __setitem__(self, key, value):
-        """Setzt IO Wert.
-        @param key IO Name oder Byte
-        @param value Wert, auf den der IO gesetzt wird"""
-        if type(key) == int:
-            if key not in self.__dict_iobyte:
-                raise KeyError(
-                    "byte '{}' does not contain io object".format(key)
-                )
-
-            if len(self.__dict_iobyte[key]) == 1:
-                self.__dict_iobyte[key][0].value = value
-            elif len(self.__dict_iobyte[key]) == 0:
-                raise KeyError("byte '{}' contains no input".format(key))
-            else:
-                raise KeyError(
-                    "byte '{}' contains more than one bit-input".format(key)
-                )
-        else:
-            getattr(self, key).value = value
-
     def __setattr__(self, key, value):
-        """Setzt IO Wert.
-        @param key IO Name oder Byte
-        @param value Wert, auf den der IO gesetzt wird"""
+        """Verbietet aus Leistungsguenden das direkte Setzen von Attributen."""
         if key in [
                 "_IOList__dict_iobyte",
                 "_IOList__dict_iorefname"
                 ]:
             object.__setattr__(self, key, value)
         else:
-            # Setzt Wert bei Zuweisung
-            getattr(self, key).value = value
+            raise TypeError(
+                "direct assignment is not supported - use .value Attribute"
+            )
 
     def __private_replace_oldio_with_newio(self, io):
         """Ersetzt bestehende IOs durch den neu Registrierten.
@@ -204,17 +182,6 @@ class IOList(object):
                 self.__dict_iobyte[new_io.address][new_io._bitaddress] = new_io
         else:
             raise AttributeError("io must be <class 'IOBase'> or sub class")
-
-    def _testme(self):
-        # NOTE: Nur Debugging
-        for x in self.__dict_iobyte:
-            if len(self.__dict_iobyte[x]) > 0:
-                print(x, self.__dict_iobyte[x])
-        print(self.__dict_iorefname)
-
-    def _getdict(self):
-        # NOTE: Nur Debugging
-        return self.__dict_iobyte.copy()
 
 
 class DeadIO(object):
@@ -305,20 +272,14 @@ class IOBase(object):
     def __bool__(self):
         """bool()-wert der Klasse.
         @return IO-Wert als bool(). Nur False wenn False oder 0 sonst True"""
-        return bool(self.get_value())
-
-    def __bytes__(self):
-        """bytes()-wert der Klasse.
-        @return IO-Wert als bytes()"""
         if self._bitaddress >= 0:
             int_byte = int.from_bytes(
                 self._parentdevice._ba_devdata[self._slc_address],
                 byteorder=self._byteorder
             )
-            return b'\x01' if bool(int_byte & 1 << self._bitaddress) \
-                else b'\x00'
+            return bool(int_byte & 1 << self._bitaddress)
         else:
-            return bytes(self._parentdevice._ba_devdata[self._slc_address])
+            return bool(self._parentdevice._ba_devdata[self._slc_address])
 
     def __str__(self):
         """str()-wert der Klasse.
@@ -359,7 +320,6 @@ class IOBase(object):
                 byteorder=self._byteorder
             )
             return bool(int_byte & 1 << self._bitaddress)
-
         else:
             return bytes(self._parentdevice._ba_devdata[self._slc_address])
 
@@ -661,7 +621,11 @@ class IntIO(IOBase):
     def __int__(self):
         """Gibt IO als int() Wert zurueck mit Beachtung byteorder/signed.
         @return int() ohne Vorzeichen"""
-        return self.get_int()
+        return int.from_bytes(
+            self._parentdevice._ba_devdata[self._slc_address],
+            byteorder=self._byteorder,
+            signed=self._signed
+        )
 
     def _get_signed(self):
         """Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.
@@ -768,7 +732,6 @@ class StructIO(IOBase):
             raise AttributeError("parameter frm has to be a single sign")
 
         # Basisklasse instantiieren
-        # parentdevice, valuelist, iotype, byteorder, signed
         super().__init__(
             parentio._parentdevice,
             valuelist,
