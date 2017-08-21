@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project revpimodio2 -->
-<!-- Saved: 2017-08-18, 15:59:48 -->
+<!-- Saved: 2017-08-21, 17:16:10 -->
 <!-- Copyright (C) 2017 Sven Sager, akira@narux.de -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -25,7 +25,6 @@
     <Source>test/test_dio_while2.py</Source>
     <Source>test/test_dio_mainloop.py</Source>
     <Source>test/test_dio_cycleloop.py</Source>
-    <Source>revpimodio2/net.py</Source>
     <Source>test/test_net_leistung.py</Source>
   </Sources>
   <Forms/>
@@ -35,8 +34,8 @@
   <Others>
     <Other>doc</Other>
     <Other>.hgignore</Other>
-    <Other>eric-revpimodio.api</Other>
     <Other>MANIFEST.in</Other>
+    <Other>eric-revpimodio2.api</Other>
   </Others>
   <Vcs>
     <VcsType>Mercurial</VcsType>
@@ -191,7 +190,7 @@
               <string>outputFile</string>
             </key>
             <value>
-              <string>eric-revpimodio.api</string>
+              <string>eric-revpimodio2.api</string>
             </value>
             <key>
               <string>useRecursion</string>
