@@ -28,10 +28,10 @@ Classes</h3>
 <td>Basisklasse fuer direkten Zugriff auf IO Objekte.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IntIO">IntIO</a></td>
-<td>Klasse fuer den Zugriff auf die Daten mit Konvertierung in int().</td>
+<td>Klasse fuer den Zugriff auf die Daten mit Konvertierung in int.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#StructIO">StructIO</a></td>
-<td>Klasse fuer den Zugriff auf Daten ueber ein definierten struct().</td>
+<td>Klasse fuer den Zugriff auf Daten ueber ein definierten struct.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Type">Type</a></td>
 <td>IO Typen.</td>
@@ -66,7 +66,7 @@ Methods</h3>
 <table>
 <tr>
 <td><a style="color:#0000FF" href="#DeadIO.__init__">DeadIO</a></td>
-<td>Instantiierung der DeadIO()-Klasse.</td>
+<td>Instantiierung der DeadIO-Klasse.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#DeadIO.replace_io">replace_io</a></td>
 <td>Stellt Funktion fuer weiter Bit-Ersetzungen bereit.</td>
@@ -82,7 +82,7 @@ Static Methods</h3>
 DeadIO (Constructor)</h3>
 <b>DeadIO</b>(<i>deadio</i>)
 <p>
-Instantiierung der DeadIO()-Klasse.
+Instantiierung der DeadIO-Klasse.
 </p><dl>
 <dt><i>deadio</i></dt>
 <dd>
@@ -108,12 +108,13 @@ Stellt Funktion fuer weiter Bit-Ersetzungen bereit.
 Basisklasse fuer alle IO-Objekte.
 </p><p>
     Die Basisfunktionalitaet ermoeglicht das Lesen und Schreiben der Werte
-    als bytes() oder bool(). Dies entscheidet sich bei der Instantiierung.
-    Wenn eine Bittadresse angegeben wird, werden bool()-Werte erwartet
-    und zurueckgegeben, ansonsten bytes().
+    als <class bytes'> oder <class 'bool'>. Dies entscheidet sich bei der
+    Instantiierung.
+    Wenn eine Bittadresse angegeben wird, werden <class 'bool'>-Werte erwartet
+    und zurueckgegeben, ansonsten <class bytes'>.
 </p><p>
     Diese Klasse dient als Basis fuer andere IO-Klassen mit denen die Werte
-    auch als int() verwendet werden koennen.
+    auch als <class 'int'> verwendet werden koennen.
 </p><p>
 
 </p>
@@ -123,7 +124,7 @@ object
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>address</td></tr><tr><td>byteorder</td></tr><tr><td>length</td></tr><tr><td>name</td></tr><tr><td>type</td></tr><tr><td>value</td></tr>
+<tr><td>address</td></tr><tr><td>byteorder</td></tr><tr><td>defaultvalue</td></tr><tr><td>length</td></tr><tr><td>name</td></tr><tr><td>type</td></tr><tr><td>value</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -135,13 +136,13 @@ Methods</h3>
 <table>
 <tr>
 <td><a style="color:#0000FF" href="#IOBase.__init__">IOBase</a></td>
-<td>Instantiierung der IOBase()-Klasse.</td>
+<td>Instantiierung der IOBase-Klasse.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.__bool__">__bool__</a></td>
-<td>bool()-wert der Klasse.</td>
+<td><class 'bool'>-Wert der Klasse.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.__str__">__str__</a></td>
-<td>str()-wert der Klasse.</td>
+<td><class 'str'>-Wert der Klasse.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase._get_address">_get_address</a></td>
 <td>Gibt die absolute Byteadresse im Prozessabbild zurueck.</td>
@@ -158,8 +159,11 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#IOBase._get_name">_get_name</a></td>
 <td>Gibt den Namen des IOs zurueck.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.get_defaultvalue">get_defaultvalue</a></td>
+<td>Gibt die Defaultvalue von piCtory zurueck.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.get_value">get_value</a></td>
-<td>Gibt den Wert des IOs als bytes() oder bool() zurueck.</td>
+<td>Gibt den Wert des IOs zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.reg_event">reg_event</a></td>
 <td>Registriert ein Event bei der Eventueberwachung.</td>
@@ -168,7 +172,7 @@ Methods</h3>
 <td>Ersetzt bestehenden IO mit Neuem.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.set_value">set_value</a></td>
-<td>Setzt den Wert des IOs mit bytes() oder bool().</td>
+<td>Setzt den Wert des IOs.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.unreg_event">unreg_event</a></td>
 <td>Entfernt ein Event aus der Eventueberwachung.</td>
@@ -187,7 +191,7 @@ Static Methods</h3>
 IOBase (Constructor)</h3>
 <b>IOBase</b>(<i>parentdevice, valuelist, iotype, byteorder, signed</i>)
 <p>
-Instantiierung der IOBase()-Klasse.
+Instantiierung der IOBase-Klasse.
 </p><dl>
 <dt><i>parentdevice</i></dt>
 <dd>
@@ -197,10 +201,10 @@ Parentdevice auf dem der IO liegt
 Datenliste fuer Instantiierung
 </dd><dt><i>iotype</i></dt>
 <dd>
-io.Type() Wert
+<class 'Type'> Wert
 </dd><dt><i>byteorder</i></dt>
 <dd>
-Byteorder 'little' / 'big' fuer int() Berechnung
+Byteorder 'little'/'big' fuer <class 'int'> Berechnung
 </dd><dt><i>sigend</i></dt>
 <dd>
 Intberechnung mit Vorzeichen durchfuehren
@@ -210,18 +214,18 @@ Intberechnung mit Vorzeichen durchfuehren
 IOBase.__bool__</h3>
 <b>__bool__</b>(<i></i>)
 <p>
-bool()-wert der Klasse.
+<class 'bool'>-Wert der Klasse.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-IO-Wert als bool(). Nur False wenn False oder 0 sonst True
+<class 'bool'> Nur False wenn False oder 0 sonst True
 </dd>
 </dl><a NAME="IOBase.__str__" ID="IOBase.__str__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 IOBase.__str__</h3>
 <b>__str__</b>(<i></i>)
 <p>
-str()-wert der Klasse.
+<class 'str'>-Wert der Klasse.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
@@ -247,7 +251,7 @@ Gibt konfigurierte Byteorder zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-str() Byteorder
+<class 'str'> Byteorder
 </dd>
 </dl><a NAME="IOBase._get_iotype" ID="IOBase._get_iotype"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -258,7 +262,7 @@ Gibt io.Type zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-int() io.Type
+<class 'int'> io.Type
 </dd>
 </dl><a NAME="IOBase._get_length" ID="IOBase._get_length"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -282,16 +286,27 @@ Gibt den Namen des IOs zurueck.
 <dd>
 IO Name
 </dd>
+</dl><a NAME="IOBase.get_defaultvalue" ID="IOBase.get_defaultvalue"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.get_defaultvalue</h3>
+<b>get_defaultvalue</b>(<i></i>)
+<p>
+Gibt die Defaultvalue von piCtory zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Defaultvalue als <class 'byte'> oder <class 'bool'>
+</dd>
 </dl><a NAME="IOBase.get_value" ID="IOBase.get_value"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 IOBase.get_value</h3>
 <b>get_value</b>(<i></i>)
 <p>
-Gibt den Wert des IOs als bytes() oder bool() zurueck.
+Gibt den Wert des IOs zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-IO-Wert
+IO-Wert als <class 'bytes'> oder <class 'bool'>
 </dd>
 </dl><a NAME="IOBase.reg_event" ID="IOBase.reg_event"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -322,12 +337,12 @@ Ersetzt bestehenden IO mit Neuem.
 Name des neuen Inputs
 </dd><dt><i>frm</i></dt>
 <dd>
-struct() formatierung (1 Zeichen)
+struct formatierung (1 Zeichen)
 </dd><dt><i>kwargs</i></dt>
 <dd>
 Weitere Parameter:
             - bmk: Bezeichnung fuer Input
-            - bit: Registriert Input als bool() am angegebenen Bit im Byte
+            - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
             - byteorder: Byteorder fuer den Input, Standardwert=little
             - defaultvalue: Standardwert fuer Input, Standard ist 0
             - event: Funktion fuer Eventhandling registrieren
@@ -337,18 +352,18 @@ Weitere Parameter:
 </dl><dl>
 <dt><b>See Also:</b></dt>
 <dd>
-<a style="color:#0000FF" target="_blank"        href="https://docs.python.org/3/library/struct.html#format-characters"        >Python3 struct()</a>
+<a style="color:#0000FF" target="_blank"        href="https://docs.python.org/3/library/struct.html#format-characters"        >Python3 struct</a>
 </dd>
 </dl><a NAME="IOBase.set_value" ID="IOBase.set_value"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 IOBase.set_value</h3>
 <b>set_value</b>(<i>value</i>)
 <p>
-Setzt den Wert des IOs mit bytes() oder bool().
+Setzt den Wert des IOs.
 </p><dl>
 <dt><i>value</i></dt>
 <dd>
-IO-Wert als bytes() oder bool()
+IO-Wert als <class bytes'> oder <class 'bool'>
 </dd>
 </dl><a NAME="IOBase.unreg_event" ID="IOBase.unreg_event"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -376,15 +391,15 @@ Wartet auf Wertaenderung eines IOs.
 </p><p>
         Bei Wertaenderung, wird das Warten mit 0 als Rueckgabewert beendet.
 </p><p>
-        HINWEIS: Wenn ProcimgWriter() keine neuen Daten liefert, wird
+        HINWEIS: Wenn <class 'ProcimgWriter'> keine neuen Daten liefert, wird
         bis in die Ewigkeit gewartet (nicht bei Angabe von "timeout").
 </p><p>
         Wenn edge mit RISING oder FALLING angegeben wird muss diese Flanke
         ausgeloest werden. Sollte der Wert 1 sein beim Eintritt mit Flanke
         RISING, wird das Warten erst bei Aenderung von 0 auf 1 beendet.
 </p><p>
-        Als exitevent kann ein threading.Event()-Objekt uebergeben werden,
-        welches das Warten bei is_set() sofort mit 1 als Rueckgabewert
+        Als exitevent kann ein <class 'threading.Event'>-Objekt uebergeben
+        werden, welches das Warten bei is_set() sofort mit 1 als Rueckgabewert
         beendet.
 </p><p>
         Wenn der Wert okvalue an dem IO fuer das Warten anliegt, wird
@@ -400,7 +415,7 @@ Wartet auf Wertaenderung eines IOs.
 Flanke RISING, FALLING, BOTH bei der mit True beendet wird
 </dd><dt><i>exitevent</i></dt>
 <dd>
-thrading.Event() fuer vorzeitiges Beenden mit False
+<class 'thrading.Event'> fuer vorzeitiges Beenden
 </dd><dt><i>okvalue</i></dt>
 <dd>
 IO-Wert, bei dem das Warten sofort mit True beendet wird
@@ -411,7 +426,7 @@ Zeit in ms nach der mit False abgebrochen wird
 </dl><dl>
 <dt>Returns:</dt>
 <dd>
-int() erfolgreich Werte <= 0
+<class 'int'> erfolgreich Werte <= 0
             - Erfolgreich gewartet
                 Wert 0: IO hat den Wert gewechselt
                 Wert -1: okvalue stimmte mit IO ueberein
@@ -496,7 +511,7 @@ Prueft ob IO existiert.
 </p><dl>
 <dt><i>key</i></dt>
 <dd>
-IO-Name str() oder Byte int()
+IO-Name <class 'str'> oder Byte <class 'int'>
 </dd>
 </dl><dl>
 <dt>Returns:</dt>
@@ -608,12 +623,12 @@ Neues IO Objekt
 <a NAME="IntIO" ID="IntIO"></a>
 <h2 style="background-color:#FFFFFF;color:#0000FF">IntIO</h2>
 <p>
-Klasse fuer den Zugriff auf die Daten mit Konvertierung in int().
+Klasse fuer den Zugriff auf die Daten mit Konvertierung in int.
 </p><p>
-    Diese Klasse erweitert die Funktion von IOBase() um Funktionen,
-    ueber die mit int() Werten gearbeitet werden kann. Fuer die Umwandlung
-    koennen 'Byteorder' (Default 'little') und 'signed' (Default False) als
-    Parameter gesetzt werden.
+    Diese Klasse erweitert die Funktion von <class 'IOBase'> um Funktionen,
+    ueber die mit <class 'int'> Werten gearbeitet werden kann. Fuer die
+    Umwandlung koennen 'Byteorder' (Default 'little') und 'signed' (Default
+    False) als Parameter gesetzt werden.
 </p><dl>
 <dt><b>See Also:</b></dt>
 <dd>
@@ -626,7 +641,7 @@ IOBase
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>byteorder</td></tr><tr><td>signed</td></tr><tr><td>value</td></tr>
+<tr><td>byteorder</td></tr><tr><td>defaultvalue</td></tr><tr><td>signed</td></tr><tr><td>value</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -638,19 +653,22 @@ Methods</h3>
 <table>
 <tr>
 <td><a style="color:#0000FF" href="#IntIO.__int__">__int__</a></td>
-<td>Gibt IO als int() Wert zurueck mit Beachtung byteorder/signed.</td>
+<td>Gibt IO-Wert zurueck mit Beachtung byteorder/signed.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IntIO._get_signed">_get_signed</a></td>
 <td>Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IntIO._set_byteorder">_set_byteorder</a></td>
-<td>Setzt Byteorder fuer int() Umwandlung.</td>
+<td>Setzt Byteorder fuer <class 'int'> Umwandlung.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IntIO._set_signed">_set_signed</a></td>
 <td>Left fest, ob der Wert Vorzeichenbehaftet behandelt werden soll.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IntIO.get_int">get_int</a></td>
-<td>Gibt IO als int() Wert zurueck mit Beachtung byteorder/signed.</td>
+<td>Gibt IO-Wert zurueck mit Beachtung byteorder/signed.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IntIO.get_intdefaultvalue">get_intdefaultvalue</a></td>
+<td>Gibt die Defaultvalue als <class 'int'> zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IntIO.set_int">set_int</a></td>
 <td>Setzt IO mit Beachtung byteorder/signed.</td>
@@ -666,11 +684,11 @@ Static Methods</h3>
 IntIO.__int__</h3>
 <b>__int__</b>(<i></i>)
 <p>
-Gibt IO als int() Wert zurueck mit Beachtung byteorder/signed.
+Gibt IO-Wert zurueck mit Beachtung byteorder/signed.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-int() ohne Vorzeichen
+IO-Wert als <class 'int'>
 </dd>
 </dl><a NAME="IntIO._get_signed" ID="IntIO._get_signed"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -688,11 +706,11 @@ True, wenn Vorzeichenbehaftet
 IntIO._set_byteorder</h3>
 <b>_set_byteorder</b>(<i>value</i>)
 <p>
-Setzt Byteorder fuer int() Umwandlung.
+Setzt Byteorder fuer <class 'int'> Umwandlung.
 </p><dl>
 <dt><i>value</i></dt>
 <dd>
-str() 'little' or 'big'
+<class 'str'> 'little' or 'big'
 </dd>
 </dl><a NAME="IntIO._set_signed" ID="IntIO._set_signed"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -710,11 +728,22 @@ True, wenn mit Vorzeichen behandel
 IntIO.get_int</h3>
 <b>get_int</b>(<i></i>)
 <p>
-Gibt IO als int() Wert zurueck mit Beachtung byteorder/signed.
+Gibt IO-Wert zurueck mit Beachtung byteorder/signed.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-int() Wert
+IO-Wert als <class 'int'>
+</dd>
+</dl><a NAME="IntIO.get_intdefaultvalue" ID="IntIO.get_intdefaultvalue"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IntIO.get_intdefaultvalue</h3>
+<b>get_intdefaultvalue</b>(<i></i>)
+<p>
+Gibt die Defaultvalue als <class 'int'> zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+<class 'int'> Defaultvalue
 </dd>
 </dl><a NAME="IntIO.set_int" ID="IntIO.set_int"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -725,7 +754,7 @@ Setzt IO mit Beachtung byteorder/signed.
 </p><dl>
 <dt><i>value</i></dt>
 <dd>
-int()
+<class 'int'> Wert
 </dd>
 </dl>
 <div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
@@ -733,10 +762,9 @@ int()
 <a NAME="StructIO" ID="StructIO"></a>
 <h2 style="background-color:#FFFFFF;color:#0000FF">StructIO</h2>
 <p>
-Klasse fuer den Zugriff auf Daten ueber ein definierten struct().
+Klasse fuer den Zugriff auf Daten ueber ein definierten struct.
 </p><p>
-    Diese Klasse ueberschreibt get_value() und set_value() der IOBase()
-    Klasse. Sie stellt ueber struct die Werte in der gewuenschten Formatierung
+    Sie stellt ueber struct die Werte in der gewuenschten Formatierung
     bereit. Der struct-Formatwert wird bei der Instantiierung festgelegt.
 </p><dl>
 <dt><b>See Also:</b></dt>
@@ -750,7 +778,7 @@ IOBase
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>frm</td></tr><tr><td>signed</td></tr><tr><td>value</td></tr>
+<tr><td>defaultvalue</td></tr><tr><td>frm</td></tr><tr><td>signed</td></tr><tr><td>value</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -765,10 +793,13 @@ Methods</h3>
 <td>Erstellt einen IO mit struct-Formatierung.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#StructIO._get_frm">_get_frm</a></td>
-<td>Ruft die struct() Formatierung ab.</td>
+<td>Ruft die struct Formatierung ab.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#StructIO._get_signed">_get_signed</a></td>
 <td>Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#StructIO.get_structdefaultvalue">get_structdefaultvalue</a></td>
+<td>Gibt die Defaultvalue mit struct Formatierung zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#StructIO.get_structvalue">get_structvalue</a></td>
 <td>Gibt den Wert mit struct Formatierung zurueck.</td>
@@ -797,12 +828,12 @@ ParentIO Objekt, welches ersetzt wird
 Name des neuen IO
 </dd><dt><i>frm</i></dt>
 <dd>
-struct() formatierung (1 Zeichen)
+struct formatierung (1 Zeichen)
 </dd><dt><i>kwargs</i></dt>
 <dd>
 Weitere Parameter:
             - bmk: Bezeichnung fuer Output
-            - bit: Registriert Outputs als bool() am angegebenen Bit im Byte
+            - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
             - byteorder: Byteorder fuer den Input, Standardwert=little
             - defaultvalue: Standardwert fuer Output, Standard ist 0
 </dd>
@@ -811,11 +842,11 @@ Weitere Parameter:
 StructIO._get_frm</h3>
 <b>_get_frm</b>(<i></i>)
 <p>
-Ruft die struct() Formatierung ab.
+Ruft die struct Formatierung ab.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-struct() Formatierung
+struct Formatierung
 </dd>
 </dl><a NAME="StructIO._get_signed" ID="StructIO._get_signed"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -827,6 +858,17 @@ Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.
 <dt>Returns:</dt>
 <dd>
 True, wenn Vorzeichenbehaftet
+</dd>
+</dl><a NAME="StructIO.get_structdefaultvalue" ID="StructIO.get_structdefaultvalue"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+StructIO.get_structdefaultvalue</h3>
+<b>get_structdefaultvalue</b>(<i></i>)
+<p>
+Gibt die Defaultvalue mit struct Formatierung zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Defaultvalue vom Typ der struct-Formatierung
 </dd>
 </dl><a NAME="StructIO.get_structvalue" ID="StructIO.get_structvalue"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">

@@ -1,10 +1,10 @@
+# -*- coding: utf-8 -*-
 #
 # python3-RevPiModIO
 #
 # Webpage: https://revpimodio.org/
 # (c) Sven Sager, License: LGPLv3
 #
-# -*- coding: utf-8 -*-
 """Stellt alle Klassen fuer den RevolutionPi zur Verfuegung.
 
 Stellt Klassen fuer die einfache Verwendung des Revolution Pis der
@@ -24,7 +24,7 @@ __all__ = ["RevPiModIO", "RevPiModIOSelected", "RevPiModIODriver"]
 __author__ = "Sven Sager <akira@revpimodio.org>"
 __name__ = "revpimodio2"
 __package__ = "revpimodio2"
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
 # Global package values
 OFF = 0

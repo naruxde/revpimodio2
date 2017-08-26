@@ -74,6 +74,8 @@ revpimodio2.io.IOBase._get_length?5()
 revpimodio2.io.IOBase._get_name?5()
 revpimodio2.io.IOBase.address?7
 revpimodio2.io.IOBase.byteorder?7
+revpimodio2.io.IOBase.defaultvalue?7
+revpimodio2.io.IOBase.get_defaultvalue?4()
 revpimodio2.io.IOBase.get_value?4()
 revpimodio2.io.IOBase.length?7
 revpimodio2.io.IOBase.name?7
@@ -91,13 +93,17 @@ revpimodio2.io.IntIO._get_signed?5()
 revpimodio2.io.IntIO._set_byteorder?5(value)
 revpimodio2.io.IntIO._set_signed?5(value)
 revpimodio2.io.IntIO.byteorder?7
+revpimodio2.io.IntIO.defaultvalue?7
 revpimodio2.io.IntIO.get_int?4()
+revpimodio2.io.IntIO.get_intdefaultvalue?4()
 revpimodio2.io.IntIO.set_int?4(value)
 revpimodio2.io.IntIO.signed?7
 revpimodio2.io.IntIO.value?7
 revpimodio2.io.StructIO._get_frm?5()
 revpimodio2.io.StructIO._get_signed?5()
+revpimodio2.io.StructIO.defaultvalue?7
 revpimodio2.io.StructIO.frm?7
+revpimodio2.io.StructIO.get_structdefaultvalue?4()
 revpimodio2.io.StructIO.get_structvalue?4()
 revpimodio2.io.StructIO.set_structvalue?4(value)
 revpimodio2.io.StructIO.signed?7
@@ -139,7 +145,7 @@ revpimodio2.modio.RevPiModIO.setdefaultvalues?4(device=None)
 revpimodio2.modio.RevPiModIO.simulator?7
 revpimodio2.modio.RevPiModIO.syncoutputs?4(device=None)
 revpimodio2.modio.RevPiModIO.writeprocimg?4(device=None)
-revpimodio2.modio.RevPiModIO?1(**kwargs)
-revpimodio2.modio.RevPiModIODriver?1(vdev, **kwargs)
-revpimodio2.modio.RevPiModIOSelected?1(deviceselection, **kwargs)
+revpimodio2.modio.RevPiModIO?1(autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False)
+revpimodio2.modio.RevPiModIODriver?1(virtdev, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None)
+revpimodio2.modio.RevPiModIOSelected?1(deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False)
 revpimodio2.summary.Summary?1(summary)

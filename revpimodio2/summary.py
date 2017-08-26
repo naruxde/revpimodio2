@@ -1,10 +1,10 @@
+# -*- coding: utf-8 -*-
 #
 # python3-RevPiModIO
 #
 # Webpage: https://revpimodio.org/
 # (c) Sven Sager, License: LGPLv3
 #
-# -*- coding: utf-8 -*-
 """Bildet die Summary-Sektion von piCtory ab."""
 
 

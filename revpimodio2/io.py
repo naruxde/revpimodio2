@@ -1,10 +1,10 @@
+# -*- coding: utf-8 -*-
 #
 # python3-RevPiModIO
 #
 # Webpage: https://revpimodio.org/
 # (c) Sven Sager, License: LGPLv3
 #
-# -*- coding: utf-8 -*-
 """RevPiModIO Modul fuer die Verwaltung der IOs."""
 import struct
 from threading import Event
@@ -31,7 +31,7 @@ class IOList(object):
 
     def __contains__(self, key):
         """Prueft ob IO existiert.
-        @param key IO-Name str() oder Byte int()
+        @param key IO-Name <class 'str'> oder Byte <class 'int'>
         @return True, wenn IO vorhanden / Byte belegt"""
         if type(key) == int:
             return key in self.__dict_iobyte \
@@ -87,7 +87,9 @@ class IOList(object):
         elif type(key) == slice:
             return [
                 self.__dict_iobyte[int_io]
-                for int_io in range(key.start, key.stop)
+                for int_io in range(
+                    key.start, key.stop, 1 if key.step is None else key.step
+                )
             ]
         else:
             return getattr(self, key)
@@ -139,7 +141,7 @@ class IOList(object):
                                 )
                             )
                     else:
-                        # Bereits überschriebene bytes() sind ungültig
+                        # Bereits überschriebene bytes sind ungültig
                         raise MemoryError(
                             "new io '{}' overlaps memory of '{}'".format(
                                 io._name, oldio._name
@@ -189,7 +191,7 @@ class DeadIO(object):
     """Klasse, mit der ersetzte IOs verwaltet werden."""
 
     def __init__(self, deadio):
-        """Instantiierung der DeadIO()-Klasse.
+        """Instantiierung der DeadIO-Klasse.
         @param deadio IO, der ersetzt wurde"""
         self.__deadio = deadio
 
@@ -204,22 +206,23 @@ class IOBase(object):
     """Basisklasse fuer alle IO-Objekte.
 
     Die Basisfunktionalitaet ermoeglicht das Lesen und Schreiben der Werte
-    als bytes() oder bool(). Dies entscheidet sich bei der Instantiierung.
-    Wenn eine Bittadresse angegeben wird, werden bool()-Werte erwartet
-    und zurueckgegeben, ansonsten bytes().
+    als <class bytes'> oder <class 'bool'>. Dies entscheidet sich bei der
+    Instantiierung.
+    Wenn eine Bittadresse angegeben wird, werden <class 'bool'>-Werte erwartet
+    und zurueckgegeben, ansonsten <class bytes'>.
 
     Diese Klasse dient als Basis fuer andere IO-Klassen mit denen die Werte
-    auch als int() verwendet werden koennen.
+    auch als <class 'int'> verwendet werden koennen.
 
     """
 
     def __init__(self, parentdevice, valuelist, iotype, byteorder, signed):
-        """Instantiierung der IOBase()-Klasse.
+        """Instantiierung der IOBase-Klasse.
 
         @param parentdevice Parentdevice auf dem der IO liegt
         @param valuelist Datenliste fuer Instantiierung
-        @param iotype io.Type() Wert
-        @param byteorder Byteorder 'little' / 'big' fuer int() Berechnung
+        @param iotype <class 'Type'> Wert
+        @param byteorder Byteorder 'little'/'big' fuer <class 'int'> Berechnung
         @param sigend Intberechnung mit Vorzeichen durchfuehren
 
         """
@@ -244,8 +247,8 @@ class IOBase(object):
                 int_startaddress, int_startaddress + self._length
             )
             # Defaultvalue aus Zahl in Bytes umrechnen
-            if str(valuelist[1]).isnumeric():
-                self.defaultvalue = int(valuelist[1]).to_bytes(
+            if str(valuelist[1]).isdigit():
+                self._defaultvalue = int(valuelist[1]).to_bytes(
                     self._length, byteorder=self._byteorder
                 )
             else:
@@ -254,12 +257,13 @@ class IOBase(object):
                     if len(valuelist[1]) != self._length:
                         raise ValueError(
                             "given bytes for default value must have a length "
-                            "of {}".format(self._length)
+                            "of {} but {} was given"
+                            "".format(self._length, len(valuelist[1]))
                         )
                     else:
-                        self.defaultvalue = valuelist[1]
+                        self._defaultvalue = valuelist[1]
                 else:
-                    self.defaultvalue = bytes(self._length)
+                    self._defaultvalue = bytes(self._length)
 
         else:
             # Höhere Bits als 7 auf nächste Bytes umbrechen
@@ -267,11 +271,11 @@ class IOBase(object):
             self._slc_address = slice(
                 int_startaddress, int_startaddress + 1
             )
-            self.defaultvalue = bool(int(valuelist[1]))
+            self._defaultvalue = bool(int(valuelist[1]))
 
     def __bool__(self):
-        """bool()-wert der Klasse.
-        @return IO-Wert als bool(). Nur False wenn False oder 0 sonst True"""
+        """<class 'bool'>-Wert der Klasse.
+        @return <class 'bool'> Nur False wenn False oder 0 sonst True"""
         if self._bitaddress >= 0:
             int_byte = int.from_bytes(
                 self._parentdevice._ba_devdata[self._slc_address],
@@ -282,7 +286,7 @@ class IOBase(object):
             return bool(self._parentdevice._ba_devdata[self._slc_address])
 
     def __str__(self):
-        """str()-wert der Klasse.
+        """<class 'str'>-Wert der Klasse.
         @return Namen des IOs"""
         return self._name
 
@@ -293,12 +297,12 @@ class IOBase(object):
 
     def _get_byteorder(self):
         """Gibt konfigurierte Byteorder zurueck.
-        @return str() Byteorder"""
+        @return <class 'str'> Byteorder"""
         return self._byteorder
 
     def _get_iotype(self):
         """Gibt io.Type zurueck.
-        @return int() io.Type"""
+        @return <class 'int'> io.Type"""
         return self._iotype
 
     def _get_length(self):
@@ -311,9 +315,14 @@ class IOBase(object):
         @return IO Name"""
         return self._name
 
+    def get_defaultvalue(self):
+        """Gibt die Defaultvalue von piCtory zurueck.
+        @return Defaultvalue als <class 'byte'> oder <class 'bool'>"""
+        return self._defaultvalue
+
     def get_value(self):
-        """Gibt den Wert des IOs als bytes() oder bool() zurueck.
-        @return IO-Wert"""
+        """Gibt den Wert des IOs zurueck.
+        @return IO-Wert als <class 'bytes'> oder <class 'bool'>"""
         if self._bitaddress >= 0:
             int_byte = int.from_bytes(
                 self._parentdevice._ba_devdata[self._slc_address],
@@ -376,10 +385,10 @@ class IOBase(object):
         """Ersetzt bestehenden IO mit Neuem.
 
         @param name Name des neuen Inputs
-        @param frm struct() formatierung (1 Zeichen)
+        @param frm struct formatierung (1 Zeichen)
         @param kwargs Weitere Parameter:
             - bmk: Bezeichnung fuer Input
-            - bit: Registriert Input als bool() am angegebenen Bit im Byte
+            - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
             - byteorder: Byteorder fuer den Input, Standardwert=little
             - defaultvalue: Standardwert fuer Input, Standard ist 0
             - event: Funktion fuer Eventhandling registrieren
@@ -387,7 +396,7 @@ class IOBase(object):
             - edge: event-Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
         @see <a target="_blank"
         href="https://docs.python.org/3/library/struct.html#format-characters"
-        >Python3 struct()</a>
+        >Python3 struct</a>
 
         """
         if not issubclass(type(self._parentdevice), Gateway):
@@ -396,13 +405,15 @@ class IOBase(object):
                 "devices only"
             )
 
-        # StructIO erzeugen und in IO-Liste einfügen
+        # StructIO erzeugen
         io_new = StructIO(
             self,
             name,
             frm,
             **kwargs
         )
+
+        # StructIO in IO-Liste einfügen
         self._parentdevice._modio.io._private_register_new_io_object(io_new)
 
         # Optional Event eintragen
@@ -415,8 +426,8 @@ class IOBase(object):
             )
 
     def set_value(self, value):
-        """Setzt den Wert des IOs mit bytes() oder bool().
-        @param value IO-Wert als bytes() oder bool()"""
+        """Setzt den Wert des IOs.
+        @param value IO-Wert als <class bytes'> oder <class 'bool'>"""
         if self._iotype == Type.OUT:
             if self._bitaddress >= 0:
                 # Versuchen egal welchen Typ in Bool zu konvertieren
@@ -506,15 +517,15 @@ class IOBase(object):
 
         Bei Wertaenderung, wird das Warten mit 0 als Rueckgabewert beendet.
 
-        HINWEIS: Wenn ProcimgWriter() keine neuen Daten liefert, wird
+        HINWEIS: Wenn <class 'ProcimgWriter'> keine neuen Daten liefert, wird
         bis in die Ewigkeit gewartet (nicht bei Angabe von "timeout").
 
         Wenn edge mit RISING oder FALLING angegeben wird muss diese Flanke
         ausgeloest werden. Sollte der Wert 1 sein beim Eintritt mit Flanke
         RISING, wird das Warten erst bei Aenderung von 0 auf 1 beendet.
 
-        Als exitevent kann ein threading.Event()-Objekt uebergeben werden,
-        welches das Warten bei is_set() sofort mit 1 als Rueckgabewert
+        Als exitevent kann ein <class 'threading.Event'>-Objekt uebergeben
+        werden, welches das Warten bei is_set() sofort mit 1 als Rueckgabewert
         beendet.
 
         Wenn der Wert okvalue an dem IO fuer das Warten anliegt, wird
@@ -526,10 +537,10 @@ class IOBase(object):
         angegeben Millisekunden! Es wird immer nach oben gerundet!)
 
         @param edge Flanke RISING, FALLING, BOTH bei der mit True beendet wird
-        @param exitevent thrading.Event() fuer vorzeitiges Beenden mit False
+        @param exitevent <class 'thrading.Event'> fuer vorzeitiges Beenden
         @param okvalue IO-Wert, bei dem das Warten sofort mit True beendet wird
         @param timeout Zeit in ms nach der mit False abgebrochen wird
-        @return int() erfolgreich Werte <= 0
+        @return <class 'int'> erfolgreich Werte <= 0
             - Erfolgreich gewartet
                 Wert 0: IO hat den Wert gewechselt
                 Wert -1: okvalue stimmte mit IO ueberein
@@ -600,6 +611,7 @@ class IOBase(object):
 
     address = property(_get_address)
     byteorder = property(_get_byteorder)
+    defaultvalue = property(get_defaultvalue)
     length = property(_get_length)
     name = property(_get_name)
     type = property(_get_iotype)
@@ -608,19 +620,19 @@ class IOBase(object):
 
 class IntIO(IOBase):
 
-    """Klasse fuer den Zugriff auf die Daten mit Konvertierung in int().
+    """Klasse fuer den Zugriff auf die Daten mit Konvertierung in int.
 
-    Diese Klasse erweitert die Funktion von IOBase() um Funktionen,
-    ueber die mit int() Werten gearbeitet werden kann. Fuer die Umwandlung
-    koennen 'Byteorder' (Default 'little') und 'signed' (Default False) als
-    Parameter gesetzt werden.
+    Diese Klasse erweitert die Funktion von <class 'IOBase'> um Funktionen,
+    ueber die mit <class 'int'> Werten gearbeitet werden kann. Fuer die
+    Umwandlung koennen 'Byteorder' (Default 'little') und 'signed' (Default
+    False) als Parameter gesetzt werden.
     @see #IOBase IOBase
 
     """
 
     def __int__(self):
-        """Gibt IO als int() Wert zurueck mit Beachtung byteorder/signed.
-        @return int() ohne Vorzeichen"""
+        """Gibt IO-Wert zurueck mit Beachtung byteorder/signed.
+        @return IO-Wert als <class 'int'>"""
         return int.from_bytes(
             self._parentdevice._ba_devdata[self._slc_address],
             byteorder=self._byteorder,
@@ -633,11 +645,12 @@ class IntIO(IOBase):
         return self._signed
 
     def _set_byteorder(self, value):
-        """Setzt Byteorder fuer int() Umwandlung.
-        @param value str() 'little' or 'big'"""
+        """Setzt Byteorder fuer <class 'int'> Umwandlung.
+        @param value <class 'str'> 'little' or 'big'"""
         if not (value == "little" or value == "big"):
             raise ValueError("byteorder must be 'little' or 'big'")
         self._byteorder = value
+        self._defaultvalue = self._defaultvalue[::-1]
 
     def _set_signed(self, value):
         """Left fest, ob der Wert Vorzeichenbehaftet behandelt werden soll.
@@ -646,9 +659,16 @@ class IntIO(IOBase):
             raise ValueError("signed must be <class 'bool'> True or False")
         self._signed = value
 
+    def get_intdefaultvalue(self):
+        """Gibt die Defaultvalue als <class 'int'> zurueck.
+        @return <class 'int'> Defaultvalue"""
+        return int.from_bytes(
+            self._defaultvalue, byteorder=self._byteorder, signed=self._signed
+        )
+
     def get_int(self):
-        """Gibt IO als int() Wert zurueck mit Beachtung byteorder/signed.
-        @return int() Wert"""
+        """Gibt IO-Wert zurueck mit Beachtung byteorder/signed.
+        @return IO-Wert als <class 'int'>"""
         return int.from_bytes(
             self._parentdevice._ba_devdata[self._slc_address],
             byteorder=self._byteorder,
@@ -657,7 +677,7 @@ class IntIO(IOBase):
 
     def set_int(self, value):
         """Setzt IO mit Beachtung byteorder/signed.
-        @param value int()"""
+        @param value <class 'int'> Wert"""
         if type(value) == int:
             self.set_value(value.to_bytes(
                 self._length,
@@ -671,16 +691,16 @@ class IntIO(IOBase):
             )
 
     byteorder = property(IOBase._get_byteorder, _set_byteorder)
+    defaultvalue = property(get_intdefaultvalue)
     signed = property(_get_signed, _set_signed)
     value = property(get_int, set_int)
 
 
 class StructIO(IOBase):
 
-    """Klasse fuer den Zugriff auf Daten ueber ein definierten struct().
+    """Klasse fuer den Zugriff auf Daten ueber ein definierten struct.
 
-    Diese Klasse ueberschreibt get_value() und set_value() der IOBase()
-    Klasse. Sie stellt ueber struct die Werte in der gewuenschten Formatierung
+    Sie stellt ueber struct die Werte in der gewuenschten Formatierung
     bereit. Der struct-Formatwert wird bei der Instantiierung festgelegt.
     @see #IOBase IOBase
 
@@ -691,10 +711,10 @@ class StructIO(IOBase):
 
         @param parentio ParentIO Objekt, welches ersetzt wird
         @param name Name des neuen IO
-        @param frm struct() formatierung (1 Zeichen)
+        @param frm struct formatierung (1 Zeichen)
         @param kwargs Weitere Parameter:
             - bmk: Bezeichnung fuer Output
-            - bit: Registriert Outputs als bool() am angegebenen Bit im Byte
+            - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
             - byteorder: Byteorder fuer den Input, Standardwert=little
             - defaultvalue: Standardwert fuer Output, Standard ist 0
 
@@ -709,7 +729,7 @@ class StructIO(IOBase):
             bitaddress = "" if frm != "?" else str(kwargs.get("bit", 0))
             if bitaddress == "" or (0 <= int(bitaddress) < 8):
 
-                bitlength = "1" if bitaddress.isnumeric() else \
+                bitlength = "1" if bitaddress.isdigit() else \
                     struct.calcsize(bofrm + frm) * 8
 
                 # [name,default,anzbits,adressbyte,export,adressid,bmk,bitaddress]
@@ -752,14 +772,22 @@ class StructIO(IOBase):
             )
 
     def _get_frm(self):
-        """Ruft die struct() Formatierung ab.
-        @return struct() Formatierung"""
+        """Ruft die struct Formatierung ab.
+        @return struct Formatierung"""
         return self.__frm
 
     def _get_signed(self):
         """Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.
         @return True, wenn Vorzeichenbehaftet"""
         return self._signed
+
+    def get_structdefaultvalue(self):
+        """Gibt die Defaultvalue mit struct Formatierung zurueck.
+        @return Defaultvalue vom Typ der struct-Formatierung"""
+        if self._bitaddress >= 0:
+            return self._defaultvalue
+        else:
+            return struct.unpack(self.__frm, self._defaultvalue)[0]
 
     def get_structvalue(self):
         """Gibt den Wert mit struct Formatierung zurueck.
@@ -777,6 +805,7 @@ class StructIO(IOBase):
         else:
             self.set_value(struct.pack(self.__frm, value))
 
+    defaultvalue = property(get_structdefaultvalue)
     frm = property(_get_frm)
     signed = property(_get_signed)
     value = property(get_structvalue, set_structvalue)

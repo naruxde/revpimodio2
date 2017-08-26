@@ -126,7 +126,7 @@ Methods</h3>
 <td>Beendet mainloop() und optional autorefresh.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.get_jconfigrsc">get_jconfigrsc</a></td>
-<td>Laed die piCotry Konfiguration und erstellt ein dict().</td>
+<td>Laed die piCotry Konfiguration und erstellt ein <class 'dict'>.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.handlesignalend">handlesignalend</a></td>
 <td>Signalhandler fuer Programmende verwalten.</td>
@@ -158,19 +158,28 @@ Static Methods</h3>
 <a NAME="RevPiModIO.__init__" ID="RevPiModIO.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO (Constructor)</h3>
-<b>RevPiModIO</b>(<i>**kwargs</i>)
+<b>RevPiModIO</b>(<i>autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False</i>)
 <p>
 Instantiiert die Grundfunktionen.
 </p><dl>
-<dt><i>kwargs</i></dt>
+<dt><i>autorefresh</i></dt>
 <dd>
-Weitere Parameter:
-            - autorefresh: Wenn True, alle Devices zu autorefresh hinzufuegen
-            - configrsc: Pfad zur piCtory Konfigurationsdatei
-            - procimg: Pfad zum Prozessabbild
-            - monitoring: In- und Outputs werden gelesen, niemals geschrieben
-            - simulator: Laed das Modul als Simulator und vertauscht IOs
-            - syncoutputs: Aktuell gesetzte Outputs vom Prozessabbild einlesen
+Wenn True, alle Devices zu autorefresh hinzufuegen
+</dd><dt><i>monitoring</i></dt>
+<dd>
+In- und Outputs werden gelesen, niemals geschrieben
+</dd><dt><i>syncoutputs</i></dt>
+<dd>
+Aktuell gesetzte Outputs vom Prozessabbild einlesen
+</dd><dt><i>procimg</i></dt>
+<dd>
+Abweichender Pfad zum Prozessabbild
+</dd><dt><i>configrsc</i></dt>
+<dd>
+Abweichender Pfad zur piCtory Konfigurationsdatei
+</dd><dt><i>simulator</i></dt>
+<dd>
+Laed das Modul als Simulator und vertauscht IOs
 </dd>
 </dl><a NAME="RevPiModIO.__del__" ID="RevPiModIO.__del__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -308,7 +317,7 @@ Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.
 </p><dl>
 <dt><i>milliseconds</i></dt>
 <dd>
-int() in Millisekunden
+<class 'int'> in Millisekunden
 </dd>
 </dl><a NAME="RevPiModIO._set_maxioerrors" ID="RevPiModIO._set_maxioerrors"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -394,11 +403,11 @@ Entfernt auch alle Devices aus autorefresh
 RevPiModIO.get_jconfigrsc</h3>
 <b>get_jconfigrsc</b>(<i></i>)
 <p>
-Laed die piCotry Konfiguration und erstellt ein dict().
+Laed die piCotry Konfiguration und erstellt ein <class 'dict'>.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-dict() der piCtory Konfiguration
+<class 'dict'> der piCtory Konfiguration
 </dd>
 </dl><a NAME="RevPiModIO.handlesignalend" ID="RevPiModIO.handlesignalend"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -579,16 +588,16 @@ Static Methods</h3>
 <a NAME="RevPiModIODriver.__init__" ID="RevPiModIODriver.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIODriver (Constructor)</h3>
-<b>RevPiModIODriver</b>(<i>vdev, **kwargs</i>)
+<b>RevPiModIODriver</b>(<i>virtdev, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None</i>)
 <p>
 Instantiiert die Grundfunktionen.
+</p><p>
+        Parameter 'monitoring' und 'simulator' stehen hier nicht zur
+        Verfuegung, da diese automatisch gesetzt werden.
 </p><dl>
-<dt><i>vdev</i></dt>
+<dt><i>virtdev</i></dt>
 <dd>
-Virtuelles Device fuer die Verwendung / oder list()
-</dd><dt><i>kwargs</i></dt>
-<dd>
-Weitere Parameter (nicht monitoring und simulator)
+Virtuelles Device oder mehrere als <class 'list'>
 </dd>
 </dl><dl>
 <dt><b>See Also:</b></dt>
@@ -639,7 +648,7 @@ Static Methods</h3>
 <a NAME="RevPiModIOSelected.__init__" ID="RevPiModIOSelected.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIOSelected (Constructor)</h3>
-<b>RevPiModIOSelected</b>(<i>deviceselection, **kwargs</i>)
+<b>RevPiModIOSelected</b>(<i>deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False</i>)
 <p>
 Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 </p><p>
@@ -650,9 +659,6 @@ Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 <dt><i>deviceselection</i></dt>
 <dd>
 Positionsnummer oder Devicename
-</dd><dt><i>kwargs</i></dt>
-<dd>
-Weitere Parameter
 </dd>
 </dl><dl>
 <dt><b>See Also:</b></dt>

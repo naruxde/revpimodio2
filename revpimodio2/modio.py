@@ -1,10 +1,10 @@
+# -*- coding: utf-8 -*-
 #
 # python3-RevPiModIO
 #
 # Webpage: https://revpimodio.org/
 # (c) Sven Sager, License: LGPLv3
 #
-# -*- coding: utf-8 -*-
 """RevPiModIO Hauptklasse."""
 import warnings
 from json import load as jload
@@ -33,24 +33,25 @@ class RevPiModIO(object):
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(
+            self, autorefresh=False, monitoring=False, syncoutputs=True,
+            procimg=None, configrsc=None, simulator=False):
         """Instantiiert die Grundfunktionen.
 
-        @param kwargs Weitere Parameter:
-            - autorefresh: Wenn True, alle Devices zu autorefresh hinzufuegen
-            - configrsc: Pfad zur piCtory Konfigurationsdatei
-            - procimg: Pfad zum Prozessabbild
-            - monitoring: In- und Outputs werden gelesen, niemals geschrieben
-            - simulator: Laed das Modul als Simulator und vertauscht IOs
-            - syncoutputs: Aktuell gesetzte Outputs vom Prozessabbild einlesen
+        @param autorefresh Wenn True, alle Devices zu autorefresh hinzufuegen
+        @param monitoring In- und Outputs werden gelesen, niemals geschrieben
+        @param syncoutputs Aktuell gesetzte Outputs vom Prozessabbild einlesen
+        @param procimg Abweichender Pfad zum Prozessabbild
+        @param configrsc Abweichender Pfad zur piCtory Konfigurationsdatei
+        @param simulator Laed das Modul als Simulator und vertauscht IOs
 
         """
-        self._autorefresh = kwargs.get("autorefresh", False)
-        self._configrsc = kwargs.get("configrsc", None)
-        self._monitoring = kwargs.get("monitoring", False)
-        self._procimg = kwargs.get("procimg", "/dev/piControl0")
-        self._simulator = kwargs.get("simulator", False)
-        self._syncoutputs = kwargs.get("syncoutputs", True)
+        self._autorefresh = autorefresh
+        self._configrsc = configrsc
+        self._monitoring = monitoring
+        self._procimg = "/dev/piControl0" if procimg is None else procimg
+        self._simulator = simulator
+        self._syncoutputs = syncoutputs
 
         # TODO: bei simulator und procimg prüfen ob datei existiert / anlegen?
 
@@ -123,7 +124,7 @@ class RevPiModIO(object):
                 if _searchtype is None or dev["type"] == _searchtype:
                     if dev["name"] in self._lst_devselect:
                         lst_found.append(dev)
-                    elif dev["position"].isnumeric() \
+                    elif dev["position"].isdigit() \
                             and int(dev["position"]) in self._lst_devselect:
                         lst_found.append(dev)
 
@@ -151,14 +152,6 @@ class RevPiModIO(object):
                     self, device, simulator=self._simulator
                 )
                 self.core = dev_new
-
-                # Für RS485 errors defaults laden und schreiben
-                # NOTE: Soll das wirklich gemacht werden?
-                for io in dev_new.get_outputs():
-                    io.set_value(io.defaultvalue)
-                if not self._monitoring:
-                    self.writeprocimg(dev_new)
-
             elif device["type"] == "LEFT_RIGHT":
                 # IOs
                 dev_new = devicemodule.Device(
@@ -287,7 +280,7 @@ class RevPiModIO(object):
 
     def _set_cycletime(self, milliseconds):
         """Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.
-        @param milliseconds int() in Millisekunden"""
+        @param milliseconds <class 'int'> in Millisekunden"""
         self._imgwriter.refresh = milliseconds
 
     def _set_maxioerrors(self, value):
@@ -413,8 +406,8 @@ class RevPiModIO(object):
         self._looprunning = False
 
     def get_jconfigrsc(self):
-        """Laed die piCotry Konfiguration und erstellt ein dict().
-        @return dict() der piCtory Konfiguration"""
+        """Laed die piCotry Konfiguration und erstellt ein <class 'dict'>.
+        @return <class 'dict'> der piCtory Konfiguration"""
         # piCtory Konfiguration prüfen
         if self._configrsc is not None:
             if not access(self._configrsc, F_OK | R_OK):
@@ -681,7 +674,7 @@ class RevPiModIO(object):
 
         for dev in mylist:
             for io in dev.get_outputs():
-                io.set_value(io.defaultvalue)
+                io.set_value(io._defaultvalue)
 
     def syncoutputs(self, device=None):
         """Lesen aller aktuell gesetzten Outputs im Prozessabbild.
@@ -794,7 +787,9 @@ class RevPiModIOSelected(RevPiModIO):
 
     """
 
-    def __init__(self, deviceselection, **kwargs):
+    def __init__(
+            self, deviceselection, autorefresh=False, monitoring=False,
+            syncoutputs=True, procimg=None, configrsc=None, simulator=False):
         """Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 
         Der Parameter deviceselection kann eine einzelne
@@ -802,11 +797,12 @@ class RevPiModIOSelected(RevPiModIO):
         mehreren Positionen / Namen
 
         @param deviceselection Positionsnummer oder Devicename
-        @param kwargs Weitere Parameter
         @see #RevPiModIO.__init__ RevPiModIO.__init__(...)
 
         """
-        super().__init__(**kwargs)
+        super().__init__(
+            autorefresh, monitoring, syncoutputs, procimg, configrsc, simulator
+        )
 
         # Device liste erstellen
         if type(deviceselection) == list:
@@ -818,7 +814,8 @@ class RevPiModIOSelected(RevPiModIO):
         for vdev in self._lst_devselect:
             if type(vdev) != int and type(vdev) != str:
                 raise ValueError(
-                    "need device position as int() or device name as str()"
+                    "need device position as <class 'int'> or device name as "
+                    "<class 'str'>"
                 )
 
         self._configure()
@@ -854,14 +851,19 @@ class RevPiModIODriver(RevPiModIOSelected):
 
     """
 
-    def __init__(self, vdev, **kwargs):
+    def __init__(
+            self, virtdev, autorefresh=False, monitoring=False,
+            syncoutputs=True, procimg=None, configrsc=None):
         """Instantiiert die Grundfunktionen.
 
-        @param vdev Virtuelles Device fuer die Verwendung / oder list()
-        @param kwargs Weitere Parameter (nicht monitoring und simulator)
+        Parameter 'monitoring' und 'simulator' stehen hier nicht zur
+        Verfuegung, da diese automatisch gesetzt werden.
+
+        @param virtdev Virtuelles Device oder mehrere als <class 'list'>
         @see #RevPiModIO.__init__ RevPiModIO.__init__(...)
 
         """
-        kwargs["monitoring"] = False
-        kwargs["simulator"] = True
-        super().__init__(vdev, **kwargs)
+        # Parent mit monitoring=False und simulator=True laden
+        super().__init__(
+            virtdev, autorefresh, False, syncoutputs, procimg, configrsc, True
+        )

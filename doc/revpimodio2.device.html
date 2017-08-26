@@ -182,7 +182,7 @@ Gibt den RevPi Core Status zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-Status als int()
+Status als <class 'int'>
 </dd>
 </dl><a NAME="Core._set_leda1" ID="Core._set_leda1"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -370,10 +370,10 @@ Methods</h3>
 <table>
 <tr>
 <td><a style="color:#0000FF" href="#Device.__init__">Device</a></td>
-<td>Instantiierung der Device()-Klasse.</td>
+<td>Instantiierung der Device-Klasse.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Device.__bytes__">__bytes__</a></td>
-<td>Gibt alle Daten des Devices als bytes() zurueck.</td>
+<td>Gibt alle Daten des Devices als <class 'bytes'> zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Device.__contains__">__contains__</a></td>
 <td>Prueft ob IO auf diesem Device liegt.</td>
@@ -434,14 +434,14 @@ Static Methods</h3>
 Device (Constructor)</h3>
 <b>Device</b>(<i>parentmodio, dict_device, simulator=False</i>)
 <p>
-Instantiierung der Device()-Klasse.
+Instantiierung der Device-Klasse.
 </p><dl>
 <dt><i>parent</i></dt>
 <dd>
 RevpiModIO parent object
 </dd><dt><i>dict_device</i></dt>
 <dd>
-dict() fuer dieses Device aus piCotry Konfiguration
+<class 'dict'> fuer dieses Device aus piCotry
 </dd><dt><i>simulator:</i></dt>
 <dd>
 Laed das Modul als Simulator und vertauscht IOs
@@ -451,11 +451,11 @@ Laed das Modul als Simulator und vertauscht IOs
 Device.__bytes__</h3>
 <b>__bytes__</b>(<i></i>)
 <p>
-Gibt alle Daten des Devices als bytes() zurueck.
+Gibt alle Daten des Devices als <class 'bytes'> zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-Devicedaten als bytes()
+Devicedaten als <class 'bytes'>
 </dd>
 </dl><a NAME="Device.__contains__" ID="Device.__contains__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -466,7 +466,7 @@ Prueft ob IO auf diesem Device liegt.
 </p><dl>
 <dt><i>key</i></dt>
 <dd>
-IO-Name str() / IO-Bytenummer int()
+IO-Name <class 'str'> / IO-Bytenummer <class 'int'>
 </dd>
 </dl><dl>
 <dt>Returns:</dt>
@@ -493,7 +493,7 @@ Gibt Iterator aller IOs zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-iter() aller IOs
+<class 'iter'> aller IOs
 </dd>
 </dl><a NAME="Device.__len__" ID="Device.__len__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -504,7 +504,7 @@ Gibt Anzahl der Bytes zurueck, die dieses Device belegt.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-int()
+<class 'int'>
 </dd>
 </dl><a NAME="Device.__str__" ID="Device.__str__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -526,15 +526,15 @@ Erstellt aus der piCtory-Liste die IOs fuer dieses Device.
 </p><dl>
 <dt><i>dict_io</i></dt>
 <dd>
-dict()-Objekt aus piCtory Konfiguration
+<class 'dict'>-Objekt aus piCtory Konfiguration
 </dd><dt><i>iotype</i></dt>
 <dd>
-io.Type() Wert
+<class 'Type'> Wert
 </dd>
 </dl><dl>
 <dt>Returns:</dt>
 <dd>
-slice()-Objekt mit Start und Stop Position dieser IOs
+<class 'slice'> mit Start und Stop Position dieser IOs
 </dd>
 </dl><a NAME="Device._devconfigure" ID="Device._devconfigure"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -562,7 +562,7 @@ Gibt eine Liste aller Inputs und Outputs zurueck, keine MEMs.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-list() Input und Output, keine MEMs
+<class 'list'> Input und Output, keine MEMs
 </dd>
 </dl><a NAME="Device.get_inputs" ID="Device.get_inputs"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -573,7 +573,7 @@ Gibt eine Liste aller Inputs zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-list() Inputs
+<class 'list'> Inputs
 </dd>
 </dl><a NAME="Device.get_memmories" ID="Device.get_memmories"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -584,7 +584,7 @@ Gibt eine Liste aller mems zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-list() Mems
+<class 'list'> Mems
 </dd>
 </dl><a NAME="Device.get_outputs" ID="Device.get_outputs"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -595,7 +595,7 @@ Gibt eine Liste aller Outputs zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-list() Outputs
+<class 'list'> Outputs
 </dd>
 </dl><a NAME="Device.readprocimg" ID="Device.readprocimg"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -711,7 +711,7 @@ Prueft ob Device existiert.
 </p><dl>
 <dt><i>key</i></dt>
 <dd>
-DeviceName str() / Positionsnummer int()
+DeviceName <class 'str'> / Positionsnummer <class 'int'>
 </dd>
 </dl><dl>
 <dt>Returns:</dt>
@@ -749,12 +749,12 @@ Gibt angegebenes Device zurueck.
 </p><dl>
 <dt><i>key</i></dt>
 <dd>
-DeviceName str() / Positionsnummer int()
+DeviceName <class 'str'> / Positionsnummer <class 'int'>
 </dd>
 </dl><dl>
 <dt>Returns:</dt>
 <dd>
-Gefundenes Device()-Objekt
+Gefundenes <class 'Device'>-Objekt
 </dd>
 </dl><a NAME="DeviceList.__iter__" ID="DeviceList.__iter__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -765,7 +765,7 @@ Gibt Iterator aller Devices zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-iter() aller Devices
+<class 'iter'> aller Devices
 </dd>
 </dl><a NAME="DeviceList.__len__" ID="DeviceList.__len__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -856,7 +856,7 @@ Gibt die Bytes aus, die dieses Device verwendet.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
-bytes() des Devices
+<class 'bytes'> des Devices
 </dd>
 </dl>
 <div align="right"><a style="color:#0000FF" href="#top">Up</a></div>

@@ -1,10 +1,10 @@
+# -*- coding: utf-8 -*-
 #
 # python3-RevPiModIO
 #
 # Webpage: https://revpimodio.org/
 # (c) Sven Sager, License: LGPLv3
 #
-# -*- coding: utf-8 -*-
 """RevPiModIO Helperklassen und Tools."""
 import warnings
 from threading import Event, Lock, Thread
@@ -263,7 +263,7 @@ class ProcimgWriter(Thread):
 
     def get_refresh(self):
         """Gibt Zykluszeit zurueck.
-        @return int() Zykluszeit in Millisekunden"""
+        @return <class 'int'> Zykluszeit in Millisekunden"""
         return int(self._refresh * 1000)
 
     def run(self):
@@ -362,7 +362,7 @@ class ProcimgWriter(Thread):
 
     def set_refresh(self, value):
         """Setzt die Zykluszeit in Millisekunden.
-        @param value int() Millisekunden"""
+        @param value <class 'int'> Millisekunden"""
         if type(value) == int and 10 <= value <= 2000:
             waitdiff = self._refresh - self._adjwait
             self._refresh = value / 1000

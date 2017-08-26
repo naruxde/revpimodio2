@@ -1,10 +1,10 @@
+# -*- coding: utf-8 -*-
 #
 # python3-RevPiModIO
 #
 # Webpage: https://revpimodio.org/
 # (c) Sven Sager, License: LGPLv3
 #
-# -*- coding: utf-8 -*-
 """Modul fuer die Verwaltung der Devices."""
 from threading import Lock
 from .helper import ProcimgWriter
@@ -20,7 +20,7 @@ class DeviceList(object):
 
     def __contains__(self, key):
         """Prueft ob Device existiert.
-        @param key DeviceName str() / Positionsnummer int()
+        @param key DeviceName <class 'str'> / Positionsnummer <class 'int'>
         @return True, wenn Device vorhanden"""
         if type(key) == int:
             return key in self.__dict_position
@@ -49,8 +49,8 @@ class DeviceList(object):
 
     def __getitem__(self, key):
         """Gibt angegebenes Device zurueck.
-        @param key DeviceName str() / Positionsnummer int()
-        @return Gefundenes Device()-Objekt"""
+        @param key DeviceName <class 'str'> / Positionsnummer <class 'int'>
+        @return Gefundenes <class 'Device'>-Objekt"""
         if type(key) == int:
             if key not in self.__dict_position:
                 raise KeyError("no device on position {}".format(key))
@@ -60,7 +60,7 @@ class DeviceList(object):
 
     def __iter__(self):
         """Gibt Iterator aller Devices zurueck.
-        @return iter() aller Devices"""
+        @return <class 'iter'> aller Devices"""
         for dev in sorted(self.__dict_position):
             yield self.__dict_position[dev]
 
@@ -91,10 +91,10 @@ class Device(object):
     """
 
     def __init__(self, parentmodio, dict_device, simulator=False):
-        """Instantiierung der Device()-Klasse.
+        """Instantiierung der Device-Klasse.
 
         @param parent RevpiModIO parent object
-        @param dict_device dict() fuer dieses Device aus piCotry Konfiguration
+        @param dict_device <class 'dict'> fuer dieses Device aus piCotry
         @param simulator: Laed das Modul als Simulator und vertauscht IOs
 
         """
@@ -149,13 +149,13 @@ class Device(object):
         self._devconfigure()
 
     def __bytes__(self):
-        """Gibt alle Daten des Devices als bytes() zurueck.
-        @return Devicedaten als bytes()"""
+        """Gibt alle Daten des Devices als <class 'bytes'> zurueck.
+        @return Devicedaten als <class 'bytes'>"""
         return bytes(self._ba_devdata)
 
     def __contains__(self, key):
         """Prueft ob IO auf diesem Device liegt.
-        @param key IO-Name str() / IO-Bytenummer int()
+        @param key IO-Name <class 'str'> / IO-Bytenummer <class 'int'>
         @return True, wenn device vorhanden"""
         if type(key) == str:
             return key in self._modio.io \
@@ -176,14 +176,14 @@ class Device(object):
 
     def __iter__(self):
         """Gibt Iterator aller IOs zurueck.
-        @return iter() aller IOs"""
+        @return <class 'iter'> aller IOs"""
         for lst_io in self._modio.io[self._slc_devoff]:
             for io in lst_io:
                 yield io
 
     def __len__(self):
         """Gibt Anzahl der Bytes zurueck, die dieses Device belegt.
-        @return int()"""
+        @return <class 'int'>"""
         return self._length
 
     def __str__(self):
@@ -194,9 +194,9 @@ class Device(object):
     def _buildio(self, dict_io, iotype):
         """Erstellt aus der piCtory-Liste die IOs fuer dieses Device.
 
-        @param dict_io dict()-Objekt aus piCtory Konfiguration
-        @param iotype io.Type() Wert
-        @return slice()-Objekt mit Start und Stop Position dieser IOs
+        @param dict_io <class 'dict'>-Objekt aus piCtory Konfiguration
+        @param iotype <class 'Type'> Wert
+        @return <class 'slice'> mit Start und Stop Position dieser IOs
 
         """
         if len(dict_io) <= 0:
@@ -281,7 +281,7 @@ class Device(object):
 
     def get_allios(self):
         """Gibt eine Liste aller Inputs und Outputs zurueck, keine MEMs.
-        @return list() Input und Output, keine MEMs"""
+        @return <class 'list'> Input und Output, keine MEMs"""
         lst_return = []
         for lst_io in self._modio.io[
                 self._slc_inpoff.start:self._slc_outoff.stop]:
@@ -290,7 +290,7 @@ class Device(object):
 
     def get_inputs(self):
         """Gibt eine Liste aller Inputs zurueck.
-        @return list() Inputs"""
+        @return <class 'list'> Inputs"""
         lst_return = []
         for lst_io in self._modio.io[self._slc_inpoff]:
             lst_return += lst_io
@@ -298,7 +298,7 @@ class Device(object):
 
     def get_outputs(self):
         """Gibt eine Liste aller Outputs zurueck.
-        @return list() Outputs"""
+        @return <class 'list'> Outputs"""
         lst_return = []
         for lst_io in self._modio.io[self._slc_outoff]:
             lst_return += lst_io
@@ -306,7 +306,7 @@ class Device(object):
 
     def get_memmories(self):
         """Gibt eine Liste aller mems zurueck.
-        @return list() Mems"""
+        @return <class 'list'> Mems"""
         lst_return = []
         for lst_io in self._modio.io[self._slc_memoff]:
             lst_return += lst_io
@@ -376,6 +376,19 @@ class Core(Device):
             self._ioerrorlimit1 = 6
             self._ioerrorlimit2 = 7
 
+        if not self._modio._monitoring:
+            # Für RS485 errors defaults laden sollte procimg NULL sein
+            if self._ioerrorlimit1 is not None:
+                self.__lst_io[self._ioerrorlimit1].set_value(
+                    self.__lst_io[self._ioerrorlimit1].defaultvalue
+                )
+            if self._ioerrorlimit2 is not None:
+                self.__lst_io[self._ioerrorlimit2].set_value(
+                    self.__lst_io[self._ioerrorlimit2].defaultvalue
+                )
+            # RS485 errors schreiben
+            self._modio.writeprocimg(self)
+
     def __errorlimit(self, io_id, errorlimit):
         """Verwaltet das Lesen und Schreiben der ErrorLimits.
         @param io_id Index des IOs fuer ErrorLimit
@@ -392,12 +405,12 @@ class Core(Device):
                 ))
             else:
                 raise ValueError(
-                    "errorlimit value int() must be between 0 and 65535"
+                    "errorlimit value must be between 0 and 65535"
                 )
 
     def _get_status(self):
         """Gibt den RevPi Core Status zurueck.
-        @return Status als int()"""
+        @return Status als <class 'int'>"""
         return int.from_bytes(
             self.__lst_io[0].get_value(), byteorder=self.__lst_io[0]._byteorder
         )
@@ -433,7 +446,7 @@ class Core(Device):
                 length=1, byteorder=self.__lst_io[self._ioled]._byteorder
             ))
         else:
-            raise ValueError("led status int() must be between 0 and 3")
+            raise ValueError("led status must be between 0 and 3")
 
     def _set_leda2(self, value):
         """Setzt den Zustand der LED A2 vom core.
@@ -444,7 +457,7 @@ class Core(Device):
                 length=1, byteorder=self.__lst_io[self._ioled]._byteorder
             ))
         else:
-            raise ValueError("led status int() must be between 0 and 3")
+            raise ValueError("led status must be between 0 and 3")
 
     A1 = property(_get_leda1, _set_leda1)
     A2 = property(_get_leda2, _set_leda2)
@@ -591,7 +604,7 @@ class Gateway(Device):
 
     def get_rawbytes(self):
         """Gibt die Bytes aus, die dieses Device verwendet.
-        @return bytes() des Devices"""
+        @return <class 'bytes'> des Devices"""
         return bytes(self._ba_devdata)
 
 
@@ -629,7 +642,7 @@ class Virtual(Gateway):
         self._filelock.acquire()
 
         for io in self.get_inputs():
-            self._ba_devdata[io._slc_address] = io.defaultvalue
+            self._ba_devdata[io._slc_address] = io._defaultvalue
 
         # Outpus auf Bus schreiben
         try:
