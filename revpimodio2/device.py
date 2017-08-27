@@ -37,15 +37,15 @@ class DeviceList(object):
         # Reinigungsjobs
         dev_del.autorefresh(False)
         for io in dev_del:
-            delattr(dev_del._modio.io, io.name)
+            delattr(dev_del._modio.io, io._name)
 
-        del self.__dict_position[dev_del.position]
+        del self.__dict_position[dev_del._position]
         object.__delattr__(self, key)
 
     def __delitem__(self, key):
         """Entfernt Device an angegebener Position.
         @param key Deviceposition zum entfernen"""
-        self.__delattr__(self[key].name)
+        self.__delattr__(self[key]._name)
 
     def __getitem__(self, key):
         """Gibt angegebenes Device zurueck.
@@ -75,7 +75,7 @@ class DeviceList(object):
         @param value Attributobjekt"""
         if issubclass(type(value), Device):
             object.__setattr__(self, key, value)
-            self.__dict_position[value.position] = value
+            self.__dict_position[value._position] = value
         elif key == "_DeviceList__dict_position":
             object.__setattr__(self, key, value)
 
@@ -106,10 +106,10 @@ class Device(object):
         self._selfupdate = False
 
         # Wertzuweisung aus dict_device
-        self.name = dict_device.pop("name")
-        self.offset = int(dict_device.pop("offset"))
-        self.position = int(dict_device.pop("position"))
-        self.producttype = int(dict_device.pop("productType"))
+        self._name = dict_device.pop("name")
+        self._offset = int(dict_device.pop("offset"))
+        self._position = int(dict_device.pop("position"))
+        self._producttype = int(dict_device.pop("productType"))
 
         # IOM-Objekte erstellen und Adressen in SLCs speichern
         if simulator:
@@ -127,15 +127,18 @@ class Device(object):
         )
 
         # SLCs mit offset berechnen
-        self._slc_devoff = slice(self.offset, self.offset + self._length)
+        self._slc_devoff = slice(self._offset, self._offset + self._length)
         self._slc_inpoff = slice(
-            self._slc_inp.start + self.offset, self._slc_inp.stop + self.offset
+            self._slc_inp.start + self._offset,
+            self._slc_inp.stop + self._offset
         )
         self._slc_outoff = slice(
-            self._slc_out.start + self.offset, self._slc_out.stop + self.offset
+            self._slc_out.start + self._offset,
+            self._slc_out.stop + self._offset
         )
         self._slc_memoff = slice(
-            self._slc_mem.start + self.offset, self._slc_mem.stop + self.offset
+            self._slc_mem.start + self._offset,
+            self._slc_mem.stop + self._offset
         )
 
         # Neues bytearray und Kopie für mainloop anlegen
@@ -172,7 +175,7 @@ class Device(object):
     def __int__(self):
         """Gibt die Positon im RevPi Bus zurueck.
         @return Positionsnummer"""
-        return self.position
+        return self._position
 
     def __iter__(self):
         """Gibt Iterator aller IOs zurueck.
@@ -189,7 +192,7 @@ class Device(object):
     def __str__(self):
         """Gibt den Namen des Devices zurueck.
         @return Devicename"""
-        return self.name
+        return self._name
 
     def _buildio(self, dict_io, iotype):
         """Erstellt aus der piCtory-Liste die IOs fuer dieses Device.
@@ -206,7 +209,7 @@ class Device(object):
         for key in sorted(dict_io, key=lambda x: int(x)):
 
             # Neuen IO anlegen
-            if bool(dict_io[key][7]) or self.producttype == 95:
+            if bool(dict_io[key][7]) or self._producttype == 95:
                 # Bei Bitwerten oder Core RevPiIOBase verwenden
                 io_new = iomodule.IOBase(
                     self, dict_io[key], iotype, "little", False
@@ -216,7 +219,7 @@ class Device(object):
                     self, dict_io[key],
                     iotype,
                     "little",
-                    self.producttype == 103
+                    self._producttype == 103
                 )
 
             # IO registrieren
@@ -235,6 +238,16 @@ class Device(object):
     def _devconfigure(self):
         """Funktion zum ueberschreiben von abgeleiteten Klassen."""
         pass
+
+    def _get_offset(self):
+        """Gibt den Deviceoffset im Prozessabbild zurueck.
+        @return Deviceoffset"""
+        return self._offset
+
+    def _get_producttype(self):
+        """Gibt den Produkttypen des device zurueck.
+        @return Deviceprodukttyp"""
+        return self._producttype
 
     def autorefresh(self, activate=True):
         """Registriert dieses Device fuer die automatische Synchronisierung.
@@ -336,6 +349,12 @@ class Device(object):
         RevPiModIO.writeprocimg()"""
         self._modio.writeprocimg(self)
 
+    length = property(__len__)
+    name = property(__str__)
+    offset = property(_get_offset)
+    position = property(__int__)
+    producttype = property(_get_producttype)
+
 
 class Core(Device):
 
@@ -380,11 +399,11 @@ class Core(Device):
             # Für RS485 errors defaults laden sollte procimg NULL sein
             if self._ioerrorlimit1 is not None:
                 self.__lst_io[self._ioerrorlimit1].set_value(
-                    self.__lst_io[self._ioerrorlimit1].defaultvalue
+                    self.__lst_io[self._ioerrorlimit1]._defaultvalue
                 )
             if self._ioerrorlimit2 is not None:
                 self.__lst_io[self._ioerrorlimit2].set_value(
-                    self.__lst_io[self._ioerrorlimit2].defaultvalue
+                    self.__lst_io[self._ioerrorlimit2]._defaultvalue
                 )
             # RS485 errors schreiben
             self._modio.writeprocimg(self)

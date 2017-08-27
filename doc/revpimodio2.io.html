@@ -141,6 +141,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#IOBase.__bool__">__bool__</a></td>
 <td><class 'bool'>-Wert der Klasse.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.__len__">__len__</a></td>
+<td>Gibt die Bytelaenge des IO zurueck.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.__str__">__str__</a></td>
 <td><class 'str'>-Wert der Klasse.</td>
 </tr><tr>
@@ -152,12 +155,6 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase._get_iotype">_get_iotype</a></td>
 <td>Gibt io.Type zurueck.</td>
-</tr><tr>
-<td><a style="color:#0000FF" href="#IOBase._get_length">_get_length</a></td>
-<td>Gibt die Bytelaenge des IO zurueck.</td>
-</tr><tr>
-<td><a style="color:#0000FF" href="#IOBase._get_name">_get_name</a></td>
-<td>Gibt den Namen des IOs zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.get_defaultvalue">get_defaultvalue</a></td>
 <td>Gibt die Defaultvalue von piCtory zurueck.</td>
@@ -220,6 +217,17 @@ IOBase.__bool__</h3>
 <dd>
 <class 'bool'> Nur False wenn False oder 0 sonst True
 </dd>
+</dl><a NAME="IOBase.__len__" ID="IOBase.__len__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.__len__</h3>
+<b>__len__</b>(<i></i>)
+<p>
+Gibt die Bytelaenge des IO zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Bytelaenge des IO - 0 bei BITs
+</dd>
 </dl><a NAME="IOBase.__str__" ID="IOBase.__str__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 IOBase.__str__</h3>
@@ -263,28 +271,6 @@ Gibt io.Type zurueck.
 <dt>Returns:</dt>
 <dd>
 <class 'int'> io.Type
-</dd>
-</dl><a NAME="IOBase._get_length" ID="IOBase._get_length"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-IOBase._get_length</h3>
-<b>_get_length</b>(<i></i>)
-<p>
-Gibt die Bytelaenge des IO zurueck.
-</p><dl>
-<dt>Returns:</dt>
-<dd>
-Bytelaenge des IO
-</dd>
-</dl><a NAME="IOBase._get_name" ID="IOBase._get_name"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-IOBase._get_name</h3>
-<b>_get_name</b>(<i></i>)
-<p>
-Gibt den Namen des IOs zurueck.
-</p><dl>
-<dt>Returns:</dt>
-<dd>
-IO Name
 </dd>
 </dl><a NAME="IOBase.get_defaultvalue" ID="IOBase.get_defaultvalue"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -832,10 +818,10 @@ struct formatierung (1 Zeichen)
 </dd><dt><i>kwargs</i></dt>
 <dd>
 Weitere Parameter:
-            - bmk: Bezeichnung fuer Output
+            - bmk: Bezeichnung fuer IO
             - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer den Input, Standardwert=little
-            - defaultvalue: Standardwert fuer Output, Standard ist 0
+            - byteorder: Byteorder fuer IO, Standardwert vom ersetzter IO
+            - defaultvalue: Standardwert fuer IO, Standard vom ersetzter IO
 </dd>
 </dl><a NAME="StructIO._get_frm" ID="StructIO._get_frm"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">

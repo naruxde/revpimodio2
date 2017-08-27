@@ -28,11 +28,18 @@ revpimodio2.device.Core.temperatur?4()
 revpimodio2.device.Core.unconfdevice?4()
 revpimodio2.device.Device._buildio?5(dict_io, iotype)
 revpimodio2.device.Device._devconfigure?5()
+revpimodio2.device.Device._get_offset?5()
+revpimodio2.device.Device._get_producttype?5()
 revpimodio2.device.Device.autorefresh?4(activate=True)
 revpimodio2.device.Device.get_allios?4()
 revpimodio2.device.Device.get_inputs?4()
 revpimodio2.device.Device.get_memmories?4()
 revpimodio2.device.Device.get_outputs?4()
+revpimodio2.device.Device.length?7
+revpimodio2.device.Device.name?7
+revpimodio2.device.Device.offset?7
+revpimodio2.device.Device.position?7
+revpimodio2.device.Device.producttype?7
 revpimodio2.device.Device.readprocimg?4()
 revpimodio2.device.Device.setdefaultvalues?4()
 revpimodio2.device.Device.syncoutputs?4()
@@ -70,8 +77,6 @@ revpimodio2.io.DeadIO?1(deadio)
 revpimodio2.io.IOBase._get_address?5()
 revpimodio2.io.IOBase._get_byteorder?5()
 revpimodio2.io.IOBase._get_iotype?5()
-revpimodio2.io.IOBase._get_length?5()
-revpimodio2.io.IOBase._get_name?5()
 revpimodio2.io.IOBase.address?7
 revpimodio2.io.IOBase.byteorder?7
 revpimodio2.io.IOBase.defaultvalue?7

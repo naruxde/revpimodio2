@@ -177,17 +177,17 @@ class RevPiModIO(object):
 
             if dev_new is not None:
                 # Offset prüfen, muss mit Länge übereinstimmen
-                if self._length < dev_new.offset:
-                    self._length = dev_new.offset
+                if self._length < dev_new._offset:
+                    self._length = dev_new._offset
 
                 self._length += dev_new._length
 
                 # Auf doppelte Namen prüfen, da piCtory dies zulässt
-                if hasattr(self.device, dev_new.name):
-                    err_names.append(dev_new.name)
+                if hasattr(self.device, dev_new._name):
+                    err_names.append(dev_new._name)
 
                 # DeviceList für direkten Zugriff aufbauen
-                setattr(self.device, dev_new.name, dev_new)
+                setattr(self.device, dev_new._name, dev_new)
 
         # Namenszugriff zerstören, wenn doppelte Namen vorhanden sind
         for errdev in err_names:
@@ -561,13 +561,13 @@ class RevPiModIO(object):
                                     or regfunc[1] == RISING and boolor \
                                     or regfunc[1] == FALLING and not boolor:
                                 lst_fire.append(
-                                    (regfunc, io_event.name, io_event.value)
+                                    (regfunc, io_event._name, io_event.value)
                                 )
 
                     else:
                         for regfunc in dev._dict_events[io_event]:
                             lst_fire.append(
-                                (regfunc, io_event.name, io_event.value)
+                                (regfunc, io_event._name, io_event.value)
                             )
 
                 # Nach Verarbeitung aller IOs die Bytes kopieren
@@ -619,7 +619,7 @@ class RevPiModIO(object):
             if dev._selfupdate:
                 raise RuntimeError(
                     "can not read process image, while device '{}|{}'"
-                    "is in autorefresh mode".format(dev.position, dev.name)
+                    "is in autorefresh mode".format(dev._position, dev._name)
                 )
             mylist = [dev]
 
@@ -694,7 +694,7 @@ class RevPiModIO(object):
             if dev._selfupdate:
                 raise RuntimeError(
                     "can not sync process image, while device '{}|{}'"
-                    "is in autorefresh mode".format(dev.position, dev.name)
+                    "is in autorefresh mode".format(dev._position, dev._name)
                 )
             mylist = [dev]
 
@@ -737,7 +737,7 @@ class RevPiModIO(object):
             if dev._selfupdate:
                 raise RuntimeError(
                     "can not write process image, while device '{}|{}'"
-                    "is in autorefresh mode".format(dev.position, dev.name)
+                    "is in autorefresh mode".format(dev._position, dev._name)
                 )
             mylist = [dev]
 

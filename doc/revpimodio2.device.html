@@ -358,7 +358,7 @@ object
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>None</td></tr>
+<tr><td>length</td></tr><tr><td>name</td></tr><tr><td>offset</td></tr><tr><td>position</td></tr><tr><td>producttype</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -395,6 +395,12 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Device._devconfigure">_devconfigure</a></td>
 <td>Funktion zum ueberschreiben von abgeleiteten Klassen.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Device._get_offset">_get_offset</a></td>
+<td>Gibt den Deviceoffset im Prozessabbild zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Device._get_producttype">_get_producttype</a></td>
+<td>Gibt den Produkttypen des device zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Device.autorefresh">autorefresh</a></td>
 <td>Registriert dieses Device fuer die automatische Synchronisierung.</td>
@@ -542,7 +548,29 @@ Device._devconfigure</h3>
 <b>_devconfigure</b>(<i></i>)
 <p>
 Funktion zum ueberschreiben von abgeleiteten Klassen.
-</p><a NAME="Device.autorefresh" ID="Device.autorefresh"></a>
+</p><a NAME="Device._get_offset" ID="Device._get_offset"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Device._get_offset</h3>
+<b>_get_offset</b>(<i></i>)
+<p>
+Gibt den Deviceoffset im Prozessabbild zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Deviceoffset
+</dd>
+</dl><a NAME="Device._get_producttype" ID="Device._get_producttype"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Device._get_producttype</h3>
+<b>_get_producttype</b>(<i></i>)
+<p>
+Gibt den Produkttypen des device zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Deviceprodukttyp
+</dd>
+</dl><a NAME="Device.autorefresh" ID="Device.autorefresh"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Device.autorefresh</h3>
 <b>autorefresh</b>(<i>activate=True</i>)

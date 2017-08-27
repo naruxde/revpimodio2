@@ -127,8 +127,19 @@ class IOList(object):
     def __private_replace_oldio_with_newio(self, io):
         """Ersetzt bestehende IOs durch den neu Registrierten.
         @param io Neuer IO der eingefuegt werden soll"""
-        int_length = 1 if io._length == 0 else io._length
-        for i in range(io.address, io.address + int_length):
+
+        # Scanbereich festlegen
+        if io._bitaddress < 0:
+            scan_start = io.address
+            scan_stop = scan_start + (1 if io._length == 0 else io._length)
+        else:
+            scan_start = io._parentio_address
+            scan_stop = scan_start + io._parentio_length
+
+        # Defaultvalue über mehrere Bytes sammeln
+        calc_defaultvalue = b''
+
+        for i in range(scan_start, scan_stop):
             for oldio in self.__dict_iobyte[i]:
 
                 if type(oldio) == StructIO:
@@ -151,26 +162,42 @@ class IOList(object):
                     # IOs im Speicherbereich des neuen IO merken
                     if io._bitaddress >= 0:
                         # ios für ref bei bitaddress speichern
-                        self.__dict_iorefname[oldio.name] = DeadIO(oldio)
+                        self.__dict_iorefname[oldio._name] = DeadIO(oldio)
+                    else:
+                        # Defaultwert berechnen
+                        oldio.byteorder = io._byteorder
+                        if io._byteorder == "little":
+                            calc_defaultvalue += oldio._defaultvalue
+                        else:
+                            calc_defaultvalue = \
+                                oldio._defaultvalue + calc_defaultvalue
 
                     # ios aus listen entfernen
-                    delattr(self, oldio.name)
+                    delattr(self, oldio._name)
+
+        if io._defaultvalue is None:
+            if io._bitaddress < 0:
+                io._defaultvalue = calc_defaultvalue
+            else:
+                io._defaultvalue = bool(io._parentio_defaultvalue[
+                    io._parentio_address - io.address
+                ] & (1 << io._bitaddress))
 
     def _private_register_new_io_object(self, new_io):
         """Registriert neues IO Objekt unabhaenging von __setattr__.
         @param new_io Neues IO Objekt"""
         if issubclass(type(new_io), IOBase):
-            if hasattr(self, new_io.name):
+            if hasattr(self, new_io._name):
                 raise AttributeError(
                     "attribute {} already exists - can not set io".format(
-                        new_io.name
+                        new_io._name
                     )
                 )
 
             if type(new_io) is StructIO:
                 self.__private_replace_oldio_with_newio(new_io)
 
-            object.__setattr__(self, new_io.name, new_io)
+            object.__setattr__(self, new_io._name, new_io)
 
             # Bytedict für Adresszugriff anpassen
             if new_io._bitaddress < 0:
@@ -251,19 +278,20 @@ class IOBase(object):
                 self._defaultvalue = int(valuelist[1]).to_bytes(
                     self._length, byteorder=self._byteorder
                 )
-            else:
+            elif valuelist[1] is None and type(self) == StructIO:
+                self._defaultvalue = None
+            elif type(valuelist[1]) == bytes:
                 # Defaultvalue direkt von bytes übernehmen
-                if type(valuelist[1]) == bytes:
-                    if len(valuelist[1]) != self._length:
-                        raise ValueError(
-                            "given bytes for default value must have a length "
-                            "of {} but {} was given"
-                            "".format(self._length, len(valuelist[1]))
-                        )
-                    else:
-                        self._defaultvalue = valuelist[1]
+                if len(valuelist[1]) == self._length:
+                    self._defaultvalue = valuelist[1]
                 else:
-                    self._defaultvalue = bytes(self._length)
+                    raise ValueError(
+                        "given bytes for default value must have a length "
+                        "of {} but {} was given"
+                        "".format(self._length, len(valuelist[1]))
+                    )
+            else:
+                self._defaultvalue = bytes(self._length)
 
         else:
             # Höhere Bits als 7 auf nächste Bytes umbrechen
@@ -271,7 +299,8 @@ class IOBase(object):
             self._slc_address = slice(
                 int_startaddress, int_startaddress + 1
             )
-            self._defaultvalue = bool(int(valuelist[1]))
+            self._defaultvalue = None if valuelist[1] is None \
+                else bool(int(valuelist[1]))
 
     def __bool__(self):
         """<class 'bool'>-Wert der Klasse.
@@ -285,6 +314,11 @@ class IOBase(object):
         else:
             return bool(self._parentdevice._ba_devdata[self._slc_address])
 
+    def __len__(self):
+        """Gibt die Bytelaenge des IO zurueck.
+        @return Bytelaenge des IO - 0 bei BITs"""
+        return 0 if self._bitaddress > 0 else self._length
+
     def __str__(self):
         """<class 'str'>-Wert der Klasse.
         @return Namen des IOs"""
@@ -293,7 +327,7 @@ class IOBase(object):
     def _get_address(self):
         """Gibt die absolute Byteadresse im Prozessabbild zurueck.
         @return Absolute Byteadresse"""
-        return self._parentdevice.offset + self._slc_address.start
+        return self._parentdevice._offset + self._slc_address.start
 
     def _get_byteorder(self):
         """Gibt konfigurierte Byteorder zurueck.
@@ -304,16 +338,6 @@ class IOBase(object):
         """Gibt io.Type zurueck.
         @return <class 'int'> io.Type"""
         return self._iotype
-
-    def _get_length(self):
-        """Gibt die Bytelaenge des IO zurueck.
-        @return Bytelaenge des IO"""
-        return self._length
-
-    def _get_name(self):
-        """Gibt den Namen des IOs zurueck.
-        @return IO Name"""
-        return self._name
 
     def get_defaultvalue(self):
         """Gibt die Defaultvalue von piCtory zurueck.
@@ -403,6 +427,10 @@ class IOBase(object):
             raise RuntimeError(
                 "this function can be used for ios on gatway or virtual "
                 "devices only"
+            )
+        if type(self) == StructIO:
+            raise RuntimeError(
+                "this io is already a replaced one"
             )
 
         # StructIO erzeugen
@@ -555,7 +583,7 @@ class IOBase(object):
             raise RuntimeError(
                 "autorefresh is not activated for device '{}|{}' - there "
                 "will never be new data".format(
-                    self._parentdevice.position, self._parentdevice.name
+                    self._parentdevice._position, self._parentdevice._name
                 )
             )
 
@@ -612,8 +640,8 @@ class IOBase(object):
     address = property(_get_address)
     byteorder = property(_get_byteorder)
     defaultvalue = property(get_defaultvalue)
-    length = property(_get_length)
-    name = property(_get_name)
+    length = property(__len__)
+    name = property(__str__)
     type = property(_get_iotype)
     value = property(get_value, set_value)
 
@@ -649,8 +677,9 @@ class IntIO(IOBase):
         @param value <class 'str'> 'little' or 'big'"""
         if not (value == "little" or value == "big"):
             raise ValueError("byteorder must be 'little' or 'big'")
-        self._byteorder = value
-        self._defaultvalue = self._defaultvalue[::-1]
+        if self._byteorder != value:
+            self._byteorder = value
+            self._defaultvalue = self._defaultvalue[::-1]
 
     def _set_signed(self, value):
         """Left fest, ob der Wert Vorzeichenbehaftet behandelt werden soll.
@@ -713,41 +742,51 @@ class StructIO(IOBase):
         @param name Name des neuen IO
         @param frm struct formatierung (1 Zeichen)
         @param kwargs Weitere Parameter:
-            - bmk: Bezeichnung fuer Output
+            - bmk: Bezeichnung fuer IO
             - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer den Input, Standardwert=little
-            - defaultvalue: Standardwert fuer Output, Standard ist 0
+            - byteorder: Byteorder fuer IO, Standardwert vom ersetzter IO
+            - defaultvalue: Standardwert fuer IO, Standard vom ersetzter IO
 
         """
         if len(frm) == 1:
             # Byteorder prüfen und übernehmen
-            byteorder = kwargs.get("byteorder", "little")
+            byteorder = kwargs.get("byteorder", parentio._byteorder)
             if not (byteorder == "little" or byteorder == "big"):
                 raise ValueError("byteorder must be 'little' or 'big'")
             bofrm = "<" if byteorder == "little" else ">"
 
-            bitaddress = "" if frm != "?" else str(kwargs.get("bit", 0))
-            if bitaddress == "" or (0 <= int(bitaddress) < 8):
+            if frm == "?":
+                bitaddress = kwargs.get("bit", 0)
+                max_bits = parentio._length * 8
+                if not (0 <= bitaddress < max_bits):
+                    raise AttributeError(
+                        "bitaddress must be a value between 0 and {}"
+                        "".format(max_bits - 1)
+                    )
+                bitlength = 1
 
-                bitlength = "1" if bitaddress.isdigit() else \
-                    struct.calcsize(bofrm + frm) * 8
-
-                # [name,default,anzbits,adressbyte,export,adressid,bmk,bitaddress]
-                valuelist = [
-                    name,
-                    kwargs.get("defaultvalue", 0),
-                    bitlength,
-                    parentio._slc_address.start,
-                    False,
-                    str(parentio._slc_address.start).rjust(4, "0"),
-                    kwargs.get("bmk", ""),
-                    bitaddress
-                ]
-
+                # Bitweise Ersetzung erfordert diese Informationen zusätzlich
+                if parentio._byteorder == byteorder:
+                    self._parentio_defaultvalue = parentio._defaultvalue
+                else:
+                    self._parentio_defaultvalue = parentio._defaultvalue[::-1]
+                self._parentio_address = parentio.address
+                self._parentio_length = parentio._length
             else:
-                raise AttributeError(
-                    "bitaddress must be a value between 0 and 7"
-                )
+                bitaddress = ""
+                bitlength = struct.calcsize(bofrm + frm) * 8
+
+            # [name,default,anzbits,adressbyte,export,adressid,bmk,bitaddress]
+            valuelist = [
+                name,
+                kwargs.get("defaultvalue", None),
+                bitlength,
+                parentio._slc_address.start,
+                False,
+                str(parentio._slc_address.start).rjust(4, "0"),
+                kwargs.get("bmk", ""),
+                bitaddress
+            ]
         else:
             raise AttributeError("parameter frm has to be a single sign")
 
