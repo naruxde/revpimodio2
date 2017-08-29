@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project revpimodio2 -->
-<!-- Saved: 2017-08-26, 09:26:35 -->
+<!-- Saved: 2017-08-29, 18:21:17 -->
 <!-- Copyright (C) 2017 Sven Sager, akira@narux.de -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -26,7 +26,6 @@
     <Source>test/test_dio_mainloop.py</Source>
     <Source>test/test_dio_cycleloop.py</Source>
     <Source>test/test_net_leistung.py</Source>
-    <Source>revpimodio2/net.py</Source>
     <Source>test/web_cycleloop.py</Source>
     <Source>test/web_mainloop.py</Source>
   </Sources>
@@ -338,4 +337,23 @@
       </dict>
     </CheckersParams>
   </Checkers>
+  <OtherTools>
+    <OtherToolsParams>
+      <dict>
+        <key>
+          <string>CodeMetrics</string>
+        </key>
+        <value>
+          <dict>
+            <key>
+              <string>ExcludeFiles</string>
+            </key>
+            <value>
+              <string>*/test/*</string>
+            </value>
+          </dict>
+        </value>
+      </dict>
+    </OtherToolsParams>
+  </OtherTools>
 </Project>

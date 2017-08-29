@@ -281,7 +281,13 @@ class RevPiModIO(object):
     def _set_cycletime(self, milliseconds):
         """Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.
         @param milliseconds <class 'int'> in Millisekunden"""
-        self._imgwriter.refresh = milliseconds
+        if self._looprunning:
+            raise RuntimeError(
+                "can not change cycletime when cycleloop or mainloop are "
+                "running"
+            )
+        else:
+            self._imgwriter.refresh = milliseconds
 
     def _set_maxioerrors(self, value):
         """Setzt Anzahl der maximal erlaubten Fehler bei Prozessabbildzugriff.
@@ -311,7 +317,7 @@ class RevPiModIO(object):
         """Startet den Cycleloop.
 
         Der aktuelle Programmthread wird hier bis Aufruf von
-        RevPiDevicelist.exit() "gefangen". Er fuehrt nach jeder Aktualisierung
+        .exit() "gefangen". Er fuehrt nach jeder Aktualisierung
         des Prozessabbilds die uebergebene Funktion "func" aus und arbeitet sie
         ab. Waehrend der Ausfuehrung der Funktion wird das Prozessabbild nicht
         weiter aktualisiert. Die Inputs behalten bis zum Ende den aktuellen
@@ -518,6 +524,7 @@ class RevPiModIO(object):
             dev._filelock.release()
 
         lst_fire = []
+        dict_delay = {}
         while not self._exit.is_set():
 
             # Auf neue Daten warten und nur ausführen wenn set()
@@ -560,15 +567,28 @@ class RevPiModIO(object):
                             if regfunc[1] == BOTH \
                                     or regfunc[1] == RISING and boolor \
                                     or regfunc[1] == FALLING and not boolor:
+                                if regfunc[3] == 0:
+                                    lst_fire.append((
+                                        regfunc, io_event._name, io_event.value
+                                    ))
+                                else:
+                                    # Verzögertes Event in dict einfügen
+                                    dict_delay[(
+                                        regfunc, io_event._name, io_event.value
+                                    )] = int(
+                                        regfunc[3] / self._imgwriter.refresh
+                                    )
+                    else:
+                        for regfunc in dev._dict_events[io_event]:
+                            if regfunc[3] == 0:
                                 lst_fire.append(
                                     (regfunc, io_event._name, io_event.value)
                                 )
-
-                    else:
-                        for regfunc in dev._dict_events[io_event]:
-                            lst_fire.append(
-                                (regfunc, io_event._name, io_event.value)
-                            )
+                            else:
+                                # Verzögertes Event in dict einfügen
+                                dict_delay[(
+                                    regfunc, io_event._name, io_event.value
+                                )] = int(regfunc[3] / self._imgwriter.refresh)
 
                 # Nach Verarbeitung aller IOs die Bytes kopieren
                 dev._filelock.acquire()
@@ -579,20 +599,29 @@ class RevPiModIO(object):
             if not freeze:
                 self._imgwriter.lck_refresh.release()
 
+            # Verzögerte Events prüfen
+            for tup_fire in list(dict_delay.keys()):
+                if getattr(self.io, tup_fire[1]).value != tup_fire[2]:
+                    del dict_delay[tup_fire]
+                else:
+                    dict_delay[tup_fire] -= 1
+                    if dict_delay[tup_fire] <= 0:
+                        # Verzögertes Event übernehmen und löschen
+                        lst_fire.append(tup_fire)
+                        del dict_delay[tup_fire]
+
             # Erst nach Datenübernahme alle Events feuern
             while len(lst_fire) > 0:
+                # EventTuple ((func, edge, as_thread, delay), ioname, iovalue)
                 tup_fire = lst_fire.pop()
-                event_func = tup_fire[0][0]
-                passname = tup_fire[1]
-                passvalue = tup_fire[2]
                 if tup_fire[0][2]:
                     th = helpermodule.EventCallback(
-                        event_func, passname, passvalue
+                        tup_fire[0][0], tup_fire[1], tup_fire[2]
                     )
                     th.start()
                 else:
-                    # Direct callen da Prüfung in RevPiDevice.reg_event ist
-                    event_func(passname, passvalue)
+                    # Direct callen da Prüfung in io.IOBase.reg_event ist
+                    tup_fire[0][0](tup_fire[1], tup_fire[2])
 
             # Refreshsperre aufheben wenn freeze
             if freeze:

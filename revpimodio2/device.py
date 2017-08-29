@@ -317,7 +317,7 @@ class Device(object):
             lst_return += lst_io
         return lst_return
 
-    def get_memmories(self):
+    def get_memories(self):
         """Gibt eine Liste aller mems zurueck.
         @return <class 'list'> Mems"""
         lst_return = []

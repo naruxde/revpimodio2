@@ -163,7 +163,7 @@ Methods</h3>
 <td>Gibt den Wert des IOs zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.reg_event">reg_event</a></td>
-<td>Registriert ein Event bei der Eventueberwachung.</td>
+<td>Registriert fuer IO ein Event bei der Eventueberwachung.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.replace_io">replace_io</a></td>
 <td>Ersetzt bestehenden IO mit Neuem.</td>
@@ -297,13 +297,20 @@ IO-Wert als <class 'bytes'> oder <class 'bool'>
 </dl><a NAME="IOBase.reg_event" ID="IOBase.reg_event"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 IOBase.reg_event</h3>
-<b>reg_event</b>(<i>func, edge=BOTH, as_thread=False</i>)
+<b>reg_event</b>(<i>func, delay=0, edge=BOTH, as_thread=False</i>)
 <p>
-Registriert ein Event bei der Eventueberwachung.
+Registriert fuer IO ein Event bei der Eventueberwachung.
+</p><p>
+        Die uebergebene Funktion wird ausgefuehrt, wenn sich der IO Wert
+        aendert. Mit Angabe von optionalen Parametern kann das
+        Ausloeseverhalten gesteuert werden.
 </p><dl>
 <dt><i>func</i></dt>
 <dd>
 Funktion die bei Aenderung aufgerufen werden soll
+</dd><dt><i>delay</i></dt>
+<dd>
+Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
 </dd><dt><i>edge</i></dt>
 <dd>
 Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
@@ -317,23 +324,27 @@ IOBase.replace_io</h3>
 <b>replace_io</b>(<i>name, frm, **kwargs</i>)
 <p>
 Ersetzt bestehenden IO mit Neuem.
+</p><p>
+        Wenn die kwargs fuer byteorder und defaultvalue nicht angegeben werden,
+        uebernimmt das System die Daten aus dem ersetzten IO.
 </p><dl>
 <dt><i>name</i></dt>
 <dd>
 Name des neuen Inputs
 </dd><dt><i>frm</i></dt>
 <dd>
-struct formatierung (1 Zeichen)
+struct Formatierung (1 Zeichen)
 </dd><dt><i>kwargs</i></dt>
 <dd>
 Weitere Parameter:
-            - bmk: Bezeichnung fuer Input
+            - bmk: interne Bezeichnung fuer IO
             - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer den Input, Standardwert=little
-            - defaultvalue: Standardwert fuer Input, Standard ist 0
+            - byteorder: Byteorder fuer den IO, Standardwert=little
+            - defaultvalue: Standardwert fuer IO
             - event: Funktion fuer Eventhandling registrieren
+            - delay: Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
+            - edge: Event ausfuehren bei RISING, FALLING or BOTH Wertaenderung
             - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
-            - edge: event-Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
 </dd>
 </dl><dl>
 <dt><b>See Also:</b></dt>
@@ -380,7 +391,7 @@ Wartet auf Wertaenderung eines IOs.
         HINWEIS: Wenn <class 'ProcimgWriter'> keine neuen Daten liefert, wird
         bis in die Ewigkeit gewartet (nicht bei Angabe von "timeout").
 </p><p>
-        Wenn edge mit RISING oder FALLING angegeben wird muss diese Flanke
+        Wenn edge mit RISING oder FALLING angegeben wird, muss diese Flanke
         ausgeloest werden. Sollte der Wert 1 sein beim Eintritt mit Flanke
         RISING, wird das Warten erst bei Aenderung von 0 auf 1 beendet.
 </p><p>
@@ -393,21 +404,21 @@ Wartet auf Wertaenderung eines IOs.
 </p><p>
         Der Timeoutwert bricht beim Erreichen das Warten sofort mit
         Wert 2 Rueckgabewert ab. (Das Timeout wird ueber die Zykluszeit
-        der autorefresh Funktion berechnet, entspricht also nicht exact den
+        der autorefresh Funktion berechnet, entspricht also nicht exakt den
         angegeben Millisekunden! Es wird immer nach oben gerundet!)
 </p><dl>
 <dt><i>edge</i></dt>
 <dd>
-Flanke RISING, FALLING, BOTH bei der mit True beendet wird
+Flanke RISING, FALLING, BOTH die eintreten muss
 </dd><dt><i>exitevent</i></dt>
 <dd>
 <class 'thrading.Event'> fuer vorzeitiges Beenden
 </dd><dt><i>okvalue</i></dt>
 <dd>
-IO-Wert, bei dem das Warten sofort mit True beendet wird
+IO-Wert, bei dem das Warten sofort beendet wird
 </dd><dt><i>timeout</i></dt>
 <dd>
-Zeit in ms nach der mit False abgebrochen wird
+Zeit in ms nach der abgebrochen wird
 </dd>
 </dl><dl>
 <dt>Returns:</dt>
@@ -650,13 +661,13 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#IntIO._set_signed">_set_signed</a></td>
 <td>Left fest, ob der Wert Vorzeichenbehaftet behandelt werden soll.</td>
 </tr><tr>
-<td><a style="color:#0000FF" href="#IntIO.get_int">get_int</a></td>
-<td>Gibt IO-Wert zurueck mit Beachtung byteorder/signed.</td>
-</tr><tr>
 <td><a style="color:#0000FF" href="#IntIO.get_intdefaultvalue">get_intdefaultvalue</a></td>
 <td>Gibt die Defaultvalue als <class 'int'> zurueck.</td>
 </tr><tr>
-<td><a style="color:#0000FF" href="#IntIO.set_int">set_int</a></td>
+<td><a style="color:#0000FF" href="#IntIO.get_intvalue">get_intvalue</a></td>
+<td>Gibt IO-Wert zurueck mit Beachtung byteorder/signed.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IntIO.set_intvalue">set_intvalue</a></td>
 <td>Setzt IO mit Beachtung byteorder/signed.</td>
 </tr>
 </table>
@@ -709,17 +720,6 @@ Left fest, ob der Wert Vorzeichenbehaftet behandelt werden soll.
 <dd>
 True, wenn mit Vorzeichen behandel
 </dd>
-</dl><a NAME="IntIO.get_int" ID="IntIO.get_int"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-IntIO.get_int</h3>
-<b>get_int</b>(<i></i>)
-<p>
-Gibt IO-Wert zurueck mit Beachtung byteorder/signed.
-</p><dl>
-<dt>Returns:</dt>
-<dd>
-IO-Wert als <class 'int'>
-</dd>
 </dl><a NAME="IntIO.get_intdefaultvalue" ID="IntIO.get_intdefaultvalue"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 IntIO.get_intdefaultvalue</h3>
@@ -731,10 +731,21 @@ Gibt die Defaultvalue als <class 'int'> zurueck.
 <dd>
 <class 'int'> Defaultvalue
 </dd>
-</dl><a NAME="IntIO.set_int" ID="IntIO.set_int"></a>
+</dl><a NAME="IntIO.get_intvalue" ID="IntIO.get_intvalue"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
-IntIO.set_int</h3>
-<b>set_int</b>(<i>value</i>)
+IntIO.get_intvalue</h3>
+<b>get_intvalue</b>(<i></i>)
+<p>
+Gibt IO-Wert zurueck mit Beachtung byteorder/signed.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+IO-Wert als <class 'int'>
+</dd>
+</dl><a NAME="IntIO.set_intvalue" ID="IntIO.set_intvalue"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IntIO.set_intvalue</h3>
+<b>set_intvalue</b>(<i>value</i>)
 <p>
 Setzt IO mit Beachtung byteorder/signed.
 </p><dl>

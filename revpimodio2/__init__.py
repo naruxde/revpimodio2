@@ -35,3 +35,28 @@ FALLING = 32
 BOTH = 33
 
 warnings.simplefilter(action="always")
+
+
+def consttostr(value):
+    """Gibt <class 'str'> fuer Konstanten zurueck.
+
+    Diese Funktion ist erforderlich, da enum in Python 3.2 nicht existiert.
+
+    @param value Konstantenwert
+    @return <class 'str'> Name der Konstanten
+
+    """
+    if value == 0:
+        return "OFF"
+    elif value == 1:
+        return "GREEN"
+    elif value == 2:
+        return "RED"
+    elif value == 31:
+        return "RISING"
+    elif value == 32:
+        return "FALLING"
+    elif value == 33:
+        return "BOTH"
+    else:
+        return ""

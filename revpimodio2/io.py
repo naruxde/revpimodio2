@@ -8,7 +8,7 @@
 """RevPiModIO Modul fuer die Verwaltung der IOs."""
 import struct
 from threading import Event
-from .__init__ import RISING, FALLING, BOTH
+from .__init__ import RISING, FALLING, BOTH, consttostr
 
 
 class Type(object):
@@ -356,32 +356,44 @@ class IOBase(object):
         else:
             return bytes(self._parentdevice._ba_devdata[self._slc_address])
 
-    def reg_event(self, func, edge=BOTH, as_thread=False):
-        """Registriert ein Event bei der Eventueberwachung.
+    def reg_event(self, func, delay=0, edge=BOTH, as_thread=False):
+        """Registriert fuer IO ein Event bei der Eventueberwachung.
+
+        Die uebergebene Funktion wird ausgefuehrt, wenn sich der IO Wert
+        aendert. Mit Angabe von optionalen Parametern kann das
+        Ausloeseverhalten gesteuert werden.
 
         @param func Funktion die bei Aenderung aufgerufen werden soll
+        @param delay Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
         @param edge Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
         @param as_thread Bei True, Funktion als EventCallback-Thread ausfuehren
 
         """
         # Prüfen ob Funktion callable ist
         if not callable(func):
-            raise RuntimeError(
-                "registered function '{}' ist not callable".format(func)
+            raise AttributeError(
+                "registered function '{}' is not callable".format(func)
             )
-
+        if type(delay) != int or delay < 0:
+            raise AttributeError(
+                "parameter 'delay' must be greater or equal 0"
+            )
         if edge != BOTH and self._bitaddress < 0:
             raise AttributeError(
                 "parameter 'edge' can be used with bit io objects only"
             )
 
         if self not in self._parentdevice._dict_events:
-            self._parentdevice._dict_events[self] = [(func, edge, as_thread)]
+            self._parentdevice._dict_events[self] = \
+                [(func, edge, as_thread, delay)]
         else:
             # Prüfen ob Funktion schon registriert ist
             for regfunc in self._parentdevice._dict_events[self]:
+                if regfunc[0] != func:
+                    # Nächsten Eintrag testen
+                    continue
 
-                if regfunc[0] == func and edge == BOTH:
+                if edge == BOTH or regfunc[1] == BOTH:
                     if self._bitaddress < 0:
                         raise AttributeError(
                             "io '{}' with function '{}' already in list."
@@ -389,35 +401,42 @@ class IOBase(object):
                         )
                     else:
                         raise AttributeError(
-                            "io '{}' with function '{}' already in list. "
-                            "edge 'BOTH' not allowed anymore".format(
-                                self._name, func
+                            "io '{}' with function '{}' already in list with "
+                            "edge '{}' - edge '{}' not allowed anymore".format(
+                                self._name, func,
+                                consttostr(regfunc[1]), consttostr(edge)
                             )
                         )
-                elif regfunc[0] == func and regfunc[1] == edge:
+                elif regfunc[1] == edge:
                     raise AttributeError(
-                        "io '{}' with function '{}' for given edge "
-                        "already in list".format(self._name, func)
+                        "io '{}' with function '{}' for given edge '{}' "
+                        "already in list".format(
+                            self._name, func, consttostr(edge)
+                        )
                     )
-                else:
-                    self._parentdevice._dict_events[self].append(
-                        (func, edge, as_thread)
-                    )
-                    break
+
+            # Eventfunktion einfügen
+            self._parentdevice._dict_events[self].append(
+                (func, edge, as_thread, delay)
+            )
 
     def replace_io(self, name, frm, **kwargs):
         """Ersetzt bestehenden IO mit Neuem.
 
+        Wenn die kwargs fuer byteorder und defaultvalue nicht angegeben werden,
+        uebernimmt das System die Daten aus dem ersetzten IO.
+
         @param name Name des neuen Inputs
-        @param frm struct formatierung (1 Zeichen)
+        @param frm struct Formatierung (1 Zeichen)
         @param kwargs Weitere Parameter:
-            - bmk: Bezeichnung fuer Input
+            - bmk: interne Bezeichnung fuer IO
             - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer den Input, Standardwert=little
-            - defaultvalue: Standardwert fuer Input, Standard ist 0
+            - byteorder: Byteorder fuer den IO, Standardwert=little
+            - defaultvalue: Standardwert fuer IO
             - event: Funktion fuer Eventhandling registrieren
+            - delay: Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
+            - edge: Event ausfuehren bei RISING, FALLING or BOTH Wertaenderung
             - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
-            - edge: event-Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
         @see <a target="_blank"
         href="https://docs.python.org/3/library/struct.html#format-characters"
         >Python3 struct</a>
@@ -449,8 +468,9 @@ class IOBase(object):
         if reg_event is not None:
             io_new.reg_event(
                 reg_event,
-                as_thread=kwargs.get("as_thread", False),
-                edge=kwargs.get("edge", BOTH)
+                kwargs.get("delay", 0),
+                kwargs.get("edge", BOTH),
+                kwargs.get("as_thread", False)
             )
 
     def set_value(self, value):
@@ -548,7 +568,7 @@ class IOBase(object):
         HINWEIS: Wenn <class 'ProcimgWriter'> keine neuen Daten liefert, wird
         bis in die Ewigkeit gewartet (nicht bei Angabe von "timeout").
 
-        Wenn edge mit RISING oder FALLING angegeben wird muss diese Flanke
+        Wenn edge mit RISING oder FALLING angegeben wird, muss diese Flanke
         ausgeloest werden. Sollte der Wert 1 sein beim Eintritt mit Flanke
         RISING, wird das Warten erst bei Aenderung von 0 auf 1 beendet.
 
@@ -561,13 +581,13 @@ class IOBase(object):
 
         Der Timeoutwert bricht beim Erreichen das Warten sofort mit
         Wert 2 Rueckgabewert ab. (Das Timeout wird ueber die Zykluszeit
-        der autorefresh Funktion berechnet, entspricht also nicht exact den
+        der autorefresh Funktion berechnet, entspricht also nicht exakt den
         angegeben Millisekunden! Es wird immer nach oben gerundet!)
 
-        @param edge Flanke RISING, FALLING, BOTH bei der mit True beendet wird
+        @param edge Flanke RISING, FALLING, BOTH die eintreten muss
         @param exitevent <class 'thrading.Event'> fuer vorzeitiges Beenden
-        @param okvalue IO-Wert, bei dem das Warten sofort mit True beendet wird
-        @param timeout Zeit in ms nach der mit False abgebrochen wird
+        @param okvalue IO-Wert, bei dem das Warten sofort beendet wird
+        @param timeout Zeit in ms nach der abgebrochen wird
         @return <class 'int'> erfolgreich Werte <= 0
             - Erfolgreich gewartet
                 Wert 0: IO hat den Wert gewechselt
@@ -695,7 +715,7 @@ class IntIO(IOBase):
             self._defaultvalue, byteorder=self._byteorder, signed=self._signed
         )
 
-    def get_int(self):
+    def get_intvalue(self):
         """Gibt IO-Wert zurueck mit Beachtung byteorder/signed.
         @return IO-Wert als <class 'int'>"""
         return int.from_bytes(
@@ -704,7 +724,7 @@ class IntIO(IOBase):
             signed=self._signed
         )
 
-    def set_int(self, value):
+    def set_intvalue(self, value):
         """Setzt IO mit Beachtung byteorder/signed.
         @param value <class 'int'> Wert"""
         if type(value) == int:
@@ -722,7 +742,7 @@ class IntIO(IOBase):
     byteorder = property(IOBase._get_byteorder, _set_byteorder)
     defaultvalue = property(get_intdefaultvalue)
     signed = property(_get_signed, _set_signed)
-    value = property(get_int, set_int)
+    value = property(get_intvalue, set_intvalue)
 
 
 class StructIO(IOBase):
