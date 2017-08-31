@@ -345,7 +345,7 @@ Beendet autorefresh und alle Threads.
 </p><a NAME="RevPiModIO.cycleloop" ID="RevPiModIO.cycleloop"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO.cycleloop</h3>
-<b>cycleloop</b>(<i>func, cycletime=50</i>)
+<b>cycleloop</b>(<i>func, cycletime=None</i>)
 <p>
 Startet den Cycleloop.
 </p><p>
@@ -373,7 +373,8 @@ Startet den Cycleloop.
 Funktion, die ausgefuehrt werden soll
 </dd><dt><i>cycletime</i></dt>
 <dd>
-autorefresh Wert in Millisekunden
+Zykluszeit in Millisekunden, bei Nichtangabe wird
+               aktuelle .cycletime Zeit verwendet - Standardwert 50 ms
 </dd>
 </dl><dl>
 <dt>Returns:</dt>

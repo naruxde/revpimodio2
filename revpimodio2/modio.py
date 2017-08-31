@@ -8,6 +8,7 @@
 """RevPiModIO Hauptklasse."""
 import warnings
 from json import load as jload
+from math import ceil
 from os import access, F_OK, R_OK
 from signal import signal, SIG_DFL, SIGINT, SIGTERM
 from threading import Thread, Event
@@ -313,7 +314,7 @@ class RevPiModIO(object):
         self.io = None
         self.summary = None
 
-    def cycleloop(self, func, cycletime=50):
+    def cycleloop(self, func, cycletime=None):
         """Startet den Cycleloop.
 
         Der aktuelle Programmthread wird hier bis Aufruf von
@@ -336,7 +337,8 @@ class RevPiModIO(object):
         Prozessabbild gesetzt werden.
 
         @param func Funktion, die ausgefuehrt werden soll
-        @param cycletime autorefresh Wert in Millisekunden
+        @param cycletime Zykluszeit in Millisekunden, bei Nichtangabe wird
+               aktuelle .cycletime Zeit verwendet - Standardwert 50 ms
         @return None
 
         """
@@ -357,7 +359,7 @@ class RevPiModIO(object):
             )
 
         # Zykluszeit übernehmen
-        if cycletime != self._imgwriter.refresh:
+        if not (cycletime is None or cycletime == self._imgwriter.refresh):
             self._imgwriter.refresh = cycletime
 
         # Cycleloop starten
@@ -460,7 +462,7 @@ class RevPiModIO(object):
 
         """
         # Prüfen ob Funktion callable ist
-        if not callable(cleanupfunc):
+        if not (cleanupfunc is None or callable(cleanupfunc)):
             raise RuntimeError(
                 "registered function '{}' ist not callable".format(cleanupfunc)
             )
@@ -526,7 +528,6 @@ class RevPiModIO(object):
         lst_fire = []
         dict_delay = {}
         while not self._exit.is_set():
-
             # Auf neue Daten warten und nur ausführen wenn set()
             if not self._imgwriter.newdata.wait(2.5):
                 if not self._exit.is_set() and not self._imgwriter.is_alive():
@@ -573,11 +574,14 @@ class RevPiModIO(object):
                                     ))
                                 else:
                                     # Verzögertes Event in dict einfügen
-                                    dict_delay[(
+                                    tupfire = (
                                         regfunc, io_event._name, io_event.value
-                                    )] = int(
-                                        regfunc[3] / self._imgwriter.refresh
                                     )
+                                    if regfunc[4] or tupfire not in dict_delay:
+                                        dict_delay[tupfire] = ceil(
+                                            regfunc[3] /
+                                            self._imgwriter.refresh
+                                        )
                     else:
                         for regfunc in dev._dict_events[io_event]:
                             if regfunc[3] == 0:
@@ -586,9 +590,12 @@ class RevPiModIO(object):
                                 )
                             else:
                                 # Verzögertes Event in dict einfügen
-                                dict_delay[(
-                                    regfunc, io_event._name, io_event.value
-                                )] = int(regfunc[3] / self._imgwriter.refresh)
+                                if regfunc[4] or regfunc not in dict_delay:
+                                    dict_delay[(
+                                        regfunc, io_event._name, io_event.value
+                                    )] = ceil(
+                                        regfunc[3] / self._imgwriter.refresh
+                                    )
 
                 # Nach Verarbeitung aller IOs die Bytes kopieren
                 dev._filelock.acquire()
@@ -599,9 +606,13 @@ class RevPiModIO(object):
             if not freeze:
                 self._imgwriter.lck_refresh.release()
 
+            # EventTuple:
+            # ((func, edge, as_thread, delay, löschen), ioname, iovalue)
+
             # Verzögerte Events prüfen
             for tup_fire in list(dict_delay.keys()):
-                if getattr(self.io, tup_fire[1]).value != tup_fire[2]:
+                if tup_fire[0][4] \
+                        and getattr(self.io, tup_fire[1]).value != tup_fire[2]:
                     del dict_delay[tup_fire]
                 else:
                     dict_delay[tup_fire] -= 1
@@ -612,7 +623,6 @@ class RevPiModIO(object):
 
             # Erst nach Datenübernahme alle Events feuern
             while len(lst_fire) > 0:
-                # EventTuple ((func, edge, as_thread, delay), ioname, iovalue)
                 tup_fire = lst_fire.pop()
                 if tup_fire[0][2]:
                     th = helpermodule.EventCallback(

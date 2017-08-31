@@ -165,6 +165,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#IOBase.reg_event">reg_event</a></td>
 <td>Registriert fuer IO ein Event bei der Eventueberwachung.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.reg_timerevent">reg_timerevent</a></td>
+<td>Registriert fuer IO einen Timer, welcher nach delay func ausfuehrt.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.replace_io">replace_io</a></td>
 <td>Ersetzt bestehenden IO mit Neuem.</td>
 </tr><tr>
@@ -304,6 +307,9 @@ Registriert fuer IO ein Event bei der Eventueberwachung.
         Die uebergebene Funktion wird ausgefuehrt, wenn sich der IO Wert
         aendert. Mit Angabe von optionalen Parametern kann das
         Ausloeseverhalten gesteuert werden.
+</p><p>
+        HINWEIS: Die delay-Zeit muss in die .cycletime passen, ist dies nicht
+        der Fall, wird IMMER aufgerundet!
 </p><dl>
 <dt><i>func</i></dt>
 <dd>
@@ -311,6 +317,36 @@ Funktion die bei Aenderung aufgerufen werden soll
 </dd><dt><i>delay</i></dt>
 <dd>
 Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
+</dd><dt><i>edge</i></dt>
+<dd>
+Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
+</dd><dt><i>as_thread</i></dt>
+<dd>
+Bei True, Funktion als EventCallback-Thread ausfuehren
+</dd>
+</dl><a NAME="IOBase.reg_timerevent" ID="IOBase.reg_timerevent"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.reg_timerevent</h3>
+<b>reg_timerevent</b>(<i>func, delay, edge=BOTH, as_thread=False</i>)
+<p>
+Registriert fuer IO einen Timer, welcher nach delay func ausfuehrt.
+</p><p>
+        Der Timer wird gestartet, wenn sich der IO Wert aendert und fuehrt die
+        uebergebene Funktion aus - auch wenn sich der IO Wert in der
+        zwischenzeit geaendert hat. Sollte der Timer nicht abelaufen sein und
+        die Bedingugn erneut zutreffen, wird der Timer NICHT auf den delay Wert
+        zurueckgesetzt oder ein zweites Mal gestartet. Fuer dieses Verhalten
+        kann .reg_event(..., delay=wert) verwendet werden.
+</p><p>
+        HINWEIS: Die delay-Zeit muss in die .cycletime passen, ist dies nicht
+        der Fall, wird IMMER aufgerundet!
+</p><dl>
+<dt><i>func</i></dt>
+<dd>
+Funktion die bei Aenderung aufgerufen werden soll
+</dd><dt><i>delay</i></dt>
+<dd>
+Verzoegerung in ms zum Ausloesen - auch bei Wertaenderung
 </dd><dt><i>edge</i></dt>
 <dd>
 Ausfuehren bei RISING, FALLING or BOTH Wertaenderung

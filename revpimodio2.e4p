@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project revpimodio2 -->
-<!-- Saved: 2017-08-29, 18:21:17 -->
+<!-- Saved: 2017-08-31, 13:28:15 -->
 <!-- Copyright (C) 2017 Sven Sager, akira@narux.de -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -9,7 +9,7 @@
   <ProgLanguage mixed="0">Python3</ProgLanguage>
   <ProjectType>Console</ProjectType>
   <Description>Das Modul stellt alle Devices und IOs aus der piCtory Konfiguration in Python3 zur Verfügung. Es ermöglicht den direkten Zugriff auf die Werte über deren vergebenen Namen. Lese- und Schreibaktionen mit dem Prozessabbild werden von dem Modul selbst verwaltet, ohne dass sich der Programmierer um Offsets und Adressen kümmern muss. Für die Gatewaymodule wie ModbusTCP oder Profinet sind eigene 'Inputs' und 'Outputs' über einen bestimmten Adressbereich definierbar. Auf diese IOs kann mit Python3 über den Namen direkt auf die Werte zugegriffen werden.</Description>
-  <Version>2.0.1</Version>
+  <Version>2.0.2</Version>
   <Author>Sven Sager</Author>
   <Email>akira@narux.de</Email>
   <Eol index="1"/>
@@ -28,6 +28,9 @@
     <Source>test/test_net_leistung.py</Source>
     <Source>test/web_cycleloop.py</Source>
     <Source>test/web_mainloop.py</Source>
+    <Source>test/web_virtdevdriver.py</Source>
+    <Source>test/web_benniesrun.py</Source>
+    <Source>test/web_benniesrunxxl.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
@@ -349,7 +352,7 @@
               <string>ExcludeFiles</string>
             </key>
             <value>
-              <string>*/test/*</string>
+              <string>*/test/*,*/setup.py</string>
             </value>
           </dict>
         </value>

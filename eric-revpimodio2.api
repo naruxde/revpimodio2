@@ -86,6 +86,7 @@ revpimodio2.io.IOBase.get_value?4()
 revpimodio2.io.IOBase.length?7
 revpimodio2.io.IOBase.name?7
 revpimodio2.io.IOBase.reg_event?4(func, delay=0, edge=BOTH, as_thread=False)
+revpimodio2.io.IOBase.reg_timerevent?4(func, delay, edge=BOTH, as_thread=False)
 revpimodio2.io.IOBase.replace_io?4(name, frm, **kwargs)
 revpimodio2.io.IOBase.set_value?4(value)
 revpimodio2.io.IOBase.type?7
@@ -134,7 +135,7 @@ revpimodio2.modio.RevPiModIO._set_maxioerrors?5(value)
 revpimodio2.modio.RevPiModIO.autorefresh_all?4()
 revpimodio2.modio.RevPiModIO.cleanup?4()
 revpimodio2.modio.RevPiModIO.configrsc?7
-revpimodio2.modio.RevPiModIO.cycleloop?4(func, cycletime=50)
+revpimodio2.modio.RevPiModIO.cycleloop?4(func, cycletime=None)
 revpimodio2.modio.RevPiModIO.cycletime?7
 revpimodio2.modio.RevPiModIO.exit?4(full=True)
 revpimodio2.modio.RevPiModIO.get_jconfigrsc?4()

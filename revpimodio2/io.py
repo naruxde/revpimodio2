@@ -363,6 +363,9 @@ class IOBase(object):
         aendert. Mit Angabe von optionalen Parametern kann das
         Ausloeseverhalten gesteuert werden.
 
+        HINWEIS: Die delay-Zeit muss in die .cycletime passen, ist dies nicht
+        der Fall, wird IMMER aufgerundet!
+
         @param func Funktion die bei Aenderung aufgerufen werden soll
         @param delay Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
         @param edge Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
@@ -376,7 +379,7 @@ class IOBase(object):
             )
         if type(delay) != int or delay < 0:
             raise AttributeError(
-                "parameter 'delay' must be greater or equal 0"
+                "'delay' must be <class 'int'> and greater or equal 0"
             )
         if edge != BOTH and self._bitaddress < 0:
             raise AttributeError(
@@ -385,7 +388,7 @@ class IOBase(object):
 
         if self not in self._parentdevice._dict_events:
             self._parentdevice._dict_events[self] = \
-                [(func, edge, as_thread, delay)]
+                [(func, edge, as_thread, delay, True)]
         else:
             # Prüfen ob Funktion schon registriert ist
             for regfunc in self._parentdevice._dict_events[self]:
@@ -417,7 +420,77 @@ class IOBase(object):
 
             # Eventfunktion einfügen
             self._parentdevice._dict_events[self].append(
-                (func, edge, as_thread, delay)
+                (func, edge, as_thread, delay, True)
+            )
+
+    def reg_timerevent(self, func, delay, edge=BOTH, as_thread=False):
+        """Registriert fuer IO einen Timer, welcher nach delay func ausfuehrt.
+
+        Der Timer wird gestartet, wenn sich der IO Wert aendert und fuehrt die
+        uebergebene Funktion aus - auch wenn sich der IO Wert in der
+        zwischenzeit geaendert hat. Sollte der Timer nicht abelaufen sein und
+        die Bedingugn erneut zutreffen, wird der Timer NICHT auf den delay Wert
+        zurueckgesetzt oder ein zweites Mal gestartet. Fuer dieses Verhalten
+        kann .reg_event(..., delay=wert) verwendet werden.
+
+        HINWEIS: Die delay-Zeit muss in die .cycletime passen, ist dies nicht
+        der Fall, wird IMMER aufgerundet!
+
+        @param func Funktion die bei Aenderung aufgerufen werden soll
+        @param delay Verzoegerung in ms zum Ausloesen - auch bei Wertaenderung
+        @param edge Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
+        @param as_thread Bei True, Funktion als EventCallback-Thread ausfuehren
+
+        """
+        # Prüfen ob Funktion callable ist
+        if not callable(func):
+            raise AttributeError(
+                "registered function '{}' is not callable".format(func)
+            )
+        if type(delay) != int or delay < 0:
+            raise AttributeError(
+                "'delay' must be <class 'int'> and greater or equal 0"
+            )
+        if edge != BOTH and self._bitaddress < 0:
+            raise AttributeError(
+                "parameter 'edge' can be used with bit io objects only"
+            )
+
+        if self not in self._parentdevice._dict_events:
+            self._parentdevice._dict_events[self] = \
+                [(func, edge, as_thread, delay, False)]
+        else:
+            # Prüfen ob Funktion schon registriert ist
+            for regfunc in self._parentdevice._dict_events[self]:
+                if regfunc[0] != func:
+                    # Nächsten Eintrag testen
+                    continue
+
+                if edge == BOTH or regfunc[1] == BOTH:
+                    if self._bitaddress < 0:
+                        raise AttributeError(
+                            "io '{}' with function '{}' already in list."
+                            "".format(self._name, func)
+                        )
+                    else:
+                        raise AttributeError(
+                            "io '{}' with function '{}' already in list with "
+                            "edge '{}' - edge '{}' not allowed anymore".format(
+                                self._name, func,
+                                consttostr(regfunc[1]), consttostr(edge)
+                            )
+                        )
+                elif regfunc[1] == edge:
+                    raise AttributeError(
+                        "io '{}' with function '{}' for given edge '{}' "
+                        "already in list".format(
+                            self._name, func, consttostr(edge)
+                        )
+                    )
+
+            # Eventfunktion einfügen
+            self._parentdevice._dict_events[self].append(
+                (func, edge, as_thread, delay, False)
             )
 
     def replace_io(self, name, frm, **kwargs):

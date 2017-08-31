@@ -24,7 +24,7 @@ __all__ = ["RevPiModIO", "RevPiModIOSelected", "RevPiModIODriver"]
 __author__ = "Sven Sager <akira@revpimodio.org>"
 __name__ = "revpimodio2"
 __package__ = "revpimodio2"
-__version__ = "2.0.1"
+__version__ = "2.0.2"
 
 # Global package values
 OFF = 0
