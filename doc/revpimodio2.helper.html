@@ -82,20 +82,38 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#Cycletools._docycle">_docycle</a></td>
 <td>Zyklusarbeiten.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#Cycletools.get_tof">get_tof</a></td>
+<td>Wert der Ausschaltverzoegerung.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Cycletools.get_tofc">get_tofc</a></td>
 <td>Wert der Ausschaltverzoegerung.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Cycletools.get_ton">get_ton</a></td>
+<td>Einschaltverzoegerung.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Cycletools.get_tonc">get_tonc</a></td>
 <td>Einschaltverzoegerung.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#Cycletools.get_tp">get_tp</a></td>
+<td>Impulstimer.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Cycletools.get_tpc">get_tpc</a></td>
 <td>Impulstimer.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Cycletools.set_tof">set_tof</a></td>
+<td>Startet bei Aufruf einen ausschaltverzoegerten Timer.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Cycletools.set_tofc">set_tofc</a></td>
 <td>Startet bei Aufruf einen ausschaltverzoegerten Timer.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#Cycletools.set_ton">set_ton</a></td>
+<td>Startet einen einschaltverzoegerten Timer.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Cycletools.set_tonc">set_tonc</a></td>
 <td>Startet einen einschaltverzoegerten Timer.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Cycletools.set_tp">set_tp</a></td>
+<td>Startet einen Impuls Timer.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Cycletools.set_tpc">set_tpc</a></td>
 <td>Startet einen Impuls Timer.</td>
@@ -109,7 +127,7 @@ Static Methods</h3>
 <a NAME="Cycletools.__init__" ID="Cycletools.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Cycletools (Constructor)</h3>
-<b>Cycletools</b>(<i></i>)
+<b>Cycletools</b>(<i>cycletime</i>)
 <p>
 Init Cycletools class.
 </p><a NAME="Cycletools._docycle" ID="Cycletools._docycle"></a>
@@ -118,7 +136,23 @@ Cycletools._docycle</h3>
 <b>_docycle</b>(<i></i>)
 <p>
 Zyklusarbeiten.
-</p><a NAME="Cycletools.get_tofc" ID="Cycletools.get_tofc"></a>
+</p><a NAME="Cycletools.get_tof" ID="Cycletools.get_tof"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools.get_tof</h3>
+<b>get_tof</b>(<i>name</i>)
+<p>
+Wert der Ausschaltverzoegerung.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Eindeutiger Name des Timers
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+Wert <class 'bool'> der Ausschaltverzoegerung
+</dd>
+</dl><a NAME="Cycletools.get_tofc" ID="Cycletools.get_tofc"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Cycletools.get_tofc</h3>
 <b>get_tofc</b>(<i>name</i>)
@@ -132,7 +166,23 @@ Eindeutiger Name des Timers
 </dl><dl>
 <dt>Returns:</dt>
 <dd>
-Wert der Ausschaltverzoegerung
+Wert <class 'bool'> der Ausschaltverzoegerung
+</dd>
+</dl><a NAME="Cycletools.get_ton" ID="Cycletools.get_ton"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools.get_ton</h3>
+<b>get_ton</b>(<i>name</i>)
+<p>
+Einschaltverzoegerung.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Eindeutiger Name des Timers
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+Wert <class 'bool'> der Einschaltverzoegerung
 </dd>
 </dl><a NAME="Cycletools.get_tonc" ID="Cycletools.get_tonc"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -148,7 +198,23 @@ Eindeutiger Name des Timers
 </dl><dl>
 <dt>Returns:</dt>
 <dd>
-Wert der Einschaltverzoegerung
+Wert <class 'bool'> der Einschaltverzoegerung
+</dd>
+</dl><a NAME="Cycletools.get_tp" ID="Cycletools.get_tp"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools.get_tp</h3>
+<b>get_tp</b>(<i>name</i>)
+<p>
+Impulstimer.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Eindeutiger Name des Timers
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+Wert <class 'bool'> des Impulses
 </dd>
 </dl><a NAME="Cycletools.get_tpc" ID="Cycletools.get_tpc"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -164,7 +230,21 @@ Eindeutiger Name des Timers
 </dl><dl>
 <dt>Returns:</dt>
 <dd>
-Wert der des Impulses
+Wert <class 'bool'> des Impulses
+</dd>
+</dl><a NAME="Cycletools.set_tof" ID="Cycletools.set_tof"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools.set_tof</h3>
+<b>set_tof</b>(<i>name, milliseconds</i>)
+<p>
+Startet bei Aufruf einen ausschaltverzoegerten Timer.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Eindeutiger Name fuer Zugriff auf Timer
+</dd><dt><i>milliseconds</i></dt>
+<dd>
+Verzoegerung in Millisekunden
 </dd>
 </dl><a NAME="Cycletools.set_tofc" ID="Cycletools.set_tofc"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -180,6 +260,20 @@ Eindeutiger Name fuer Zugriff auf Timer
 <dd>
 Zyklusanzahl, der Verzoegerung wenn nicht neu gestartet
 </dd>
+</dl><a NAME="Cycletools.set_ton" ID="Cycletools.set_ton"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools.set_ton</h3>
+<b>set_ton</b>(<i>name, milliseconds</i>)
+<p>
+Startet einen einschaltverzoegerten Timer.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Eindeutiger Name fuer Zugriff auf Timer
+</dd><dt><i>milliseconds</i></dt>
+<dd>
+Millisekunden, der Verzoegerung wenn neu gestartet
+</dd>
 </dl><a NAME="Cycletools.set_tonc" ID="Cycletools.set_tonc"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Cycletools.set_tonc</h3>
@@ -193,6 +287,20 @@ Eindeutiger Name fuer Zugriff auf Timer
 </dd><dt><i>cycles</i></dt>
 <dd>
 Zyklusanzahl, der Verzoegerung wenn neu gestartet
+</dd>
+</dl><a NAME="Cycletools.set_tp" ID="Cycletools.set_tp"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Cycletools.set_tp</h3>
+<b>set_tp</b>(<i>name, milliseconds</i>)
+<p>
+Startet einen Impuls Timer.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Eindeutiger Name fuer Zugriff auf Timer
+</dd><dt><i>milliseconds</i></dt>
+<dd>
+Millisekunden, die der Impuls anstehen soll
 </dd>
 </dl><a NAME="Cycletools.set_tpc" ID="Cycletools.set_tpc"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">

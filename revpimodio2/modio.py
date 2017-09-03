@@ -364,7 +364,7 @@ class RevPiModIO(object):
 
         # Cycleloop starten
         self._looprunning = True
-        cycleinfo = helpermodule.Cycletools()
+        cycleinfo = helpermodule.Cycletools(self._imgwriter.refresh)
         ec = None
         while ec is None and not self._exit.is_set():
             # Auf neue Daten warten und nur ausführen wenn set()
@@ -708,7 +708,7 @@ class RevPiModIO(object):
             mylist = self.device
         else:
             dev = device if issubclass(type(device), devicemodule.Device) \
-                else self.__getitem__(device)
+                else self.device.__getitem__(device)
             mylist = [dev]
 
         for dev in mylist:
@@ -728,7 +728,7 @@ class RevPiModIO(object):
             mylist = self.device
         else:
             dev = device if issubclass(type(device), devicemodule.Device) \
-                else self.__getitem__(device)
+                else self.device.__getitem__(device)
 
             if dev._selfupdate:
                 raise RuntimeError(
@@ -771,7 +771,7 @@ class RevPiModIO(object):
             mylist = self.device
         else:
             dev = device if issubclass(type(device), devicemodule.Device) \
-                else self.__getitem__(device)
+                else self.device.__getitem__(device)
 
             if dev._selfupdate:
                 raise RuntimeError(

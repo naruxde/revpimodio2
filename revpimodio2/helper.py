@@ -7,6 +7,7 @@
 #
 """RevPiModIO Helperklassen und Tools."""
 import warnings
+from math import ceil
 from threading import Event, Lock, Thread
 from timeit import default_timer
 
@@ -84,9 +85,10 @@ class Cycletools():
 
     """
 
-    def __init__(self):
+    def __init__(self, cycletime):
         """Init Cycletools class."""
         self.__cycle = 0
+        self.__cycletime = cycletime
         self.__ucycle = 0
         self.__dict_ton = {}
         self.__dict_tof = {}
@@ -160,11 +162,26 @@ class Cycletools():
             self.flag5c = not self.flag5c
             self.__cycle = 0
 
+    def get_tof(self, name):
+        """Wert der Ausschaltverzoegerung.
+        @param name Eindeutiger Name des Timers
+        @return Wert <class 'bool'> der Ausschaltverzoegerung"""
+        return self.__dict_tof.get(name, 0) > 0
+
     def get_tofc(self, name):
         """Wert der Ausschaltverzoegerung.
         @param name Eindeutiger Name des Timers
-        @return Wert der Ausschaltverzoegerung"""
+        @return Wert <class 'bool'> der Ausschaltverzoegerung"""
         return self.__dict_tof.get(name, 0) > 0
+
+    def set_tof(self, name, milliseconds):
+        """Startet bei Aufruf einen ausschaltverzoegerten Timer.
+
+        @param name Eindeutiger Name fuer Zugriff auf Timer
+        @param milliseconds Verzoegerung in Millisekunden
+
+        """
+        self.__dict_tof[name] = ceil(milliseconds / self.__cycletime)
 
     def set_tofc(self, name, cycles):
         """Startet bei Aufruf einen ausschaltverzoegerten Timer.
@@ -175,11 +192,30 @@ class Cycletools():
         """
         self.__dict_tof[name] = cycles
 
+    def get_ton(self, name):
+        """Einschaltverzoegerung.
+        @param name Eindeutiger Name des Timers
+        @return Wert <class 'bool'> der Einschaltverzoegerung"""
+        return self.__dict_ton.get(name, [-1])[0] == 0
+
     def get_tonc(self, name):
         """Einschaltverzoegerung.
         @param name Eindeutiger Name des Timers
-        @return Wert der Einschaltverzoegerung"""
+        @return Wert <class 'bool'> der Einschaltverzoegerung"""
         return self.__dict_ton.get(name, [-1])[0] == 0
+
+    def set_ton(self, name, milliseconds):
+        """Startet einen einschaltverzoegerten Timer.
+
+        @param name Eindeutiger Name fuer Zugriff auf Timer
+        @param milliseconds Millisekunden, der Verzoegerung wenn neu gestartet
+
+        """
+        if self.__dict_ton.get(name, [-1])[0] == -1:
+            self.__dict_ton[name] = \
+                [ceil(milliseconds / self.__cycletime), True]
+        else:
+            self.__dict_ton[name][1] = True
 
     def set_tonc(self, name, cycles):
         """Startet einen einschaltverzoegerten Timer.
@@ -193,11 +229,30 @@ class Cycletools():
         else:
             self.__dict_ton[name][1] = True
 
+    def get_tp(self, name):
+        """Impulstimer.
+        @param name Eindeutiger Name des Timers
+        @return Wert <class 'bool'> des Impulses"""
+        return self.__dict_tp.get(name, [-1])[0] > 0
+
     def get_tpc(self, name):
         """Impulstimer.
         @param name Eindeutiger Name des Timers
-        @return Wert der des Impulses"""
+        @return Wert <class 'bool'> des Impulses"""
         return self.__dict_tp.get(name, [-1])[0] > 0
+
+    def set_tp(self, name, milliseconds):
+        """Startet einen Impuls Timer.
+
+        @param name Eindeutiger Name fuer Zugriff auf Timer
+        @param milliseconds Millisekunden, die der Impuls anstehen soll
+
+        """
+        if self.__dict_tp.get(name, [-1])[0] == -1:
+            self.__dict_tp[name] = \
+                [ceil(milliseconds / self.__cycletime), True]
+        else:
+            self.__dict_tp[name][1] = True
 
     def set_tpc(self, name, cycles):
         """Startet einen Impuls Timer.
