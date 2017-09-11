@@ -161,4 +161,35 @@ revpimodio2.modio.RevPiModIO.writeprocimg?4(device=None)
 revpimodio2.modio.RevPiModIO?1(autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False)
 revpimodio2.modio.RevPiModIODriver?1(virtdev, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None)
 revpimodio2.modio.RevPiModIOSelected?1(deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False)
+revpimodio2.netio.NetFH._connect?5()
+revpimodio2.netio.NetFH.clear_dirtybytes?4(position=None)
+revpimodio2.netio.NetFH.close?4()
+revpimodio2.netio.NetFH.closed?7
+revpimodio2.netio.NetFH.flush?4()
+revpimodio2.netio.NetFH.get_closed?4()
+revpimodio2.netio.NetFH.get_name?4()
+revpimodio2.netio.NetFH.get_timeout?4()
+revpimodio2.netio.NetFH.name?7
+revpimodio2.netio.NetFH.read?4(length)
+revpimodio2.netio.NetFH.readpictory?4()
+revpimodio2.netio.NetFH.run?4()
+revpimodio2.netio.NetFH.seek?4(position)
+revpimodio2.netio.NetFH.set_dirtybytes?4(position, dirtybytes)
+revpimodio2.netio.NetFH.set_timeout?4(value)
+revpimodio2.netio.NetFH.tell?4()
+revpimodio2.netio.NetFH.timeout?7
+revpimodio2.netio.NetFH.write?4(bytebuff)
+revpimodio2.netio.NetFH?1(address, timeout=500)
+revpimodio2.netio.RevPiNetIO._create_myfh?5()
+revpimodio2.netio.RevPiNetIO.get_jconfigrsc?4()
+revpimodio2.netio.RevPiNetIO.net_cleardefaultvalues?4(device=None)
+revpimodio2.netio.RevPiNetIO.net_setdefaultvalues?4(device=None)
+revpimodio2.netio.RevPiNetIO?1(address, autorefresh=False, monitoring=False, syncoutputs=True, simulator=False)
+revpimodio2.netio.RevPiNetIODriver?1(address, virtdev, autorefresh=False, monitoring=False, syncoutputs=True)
+revpimodio2.netio.RevPiNetIOSelected?1(address, deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, simulator=False)
+revpimodio2.netio._sysdeldirty?8
+revpimodio2.netio._sysexit?8
+revpimodio2.netio._sysflush?8
+revpimodio2.netio._syspictory?8
+revpimodio2.netio._syssync?8
 revpimodio2.summary.Summary?1(summary)

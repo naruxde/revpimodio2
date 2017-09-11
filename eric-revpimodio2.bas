@@ -2,8 +2,12 @@ Core Device
 EventCallback Thread
 Gateway Device
 IntIO IOBase
+NetFH Thread
 ProcimgWriter Thread
 RevPiModIODriver RevPiModIOSelected
 RevPiModIOSelected RevPiModIO
+RevPiNetIO _RevPiModIO
+RevPiNetIODriver RevPiNetIOSelected
+RevPiNetIOSelected RevPiNetIO
 StructIO IOBase
 Virtual Gateway

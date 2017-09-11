@@ -8,7 +8,7 @@
 """RevPiModIO Modul fuer die Verwaltung der IOs."""
 import struct
 from threading import Event
-from .__init__ import RISING, FALLING, BOTH, consttostr
+from revpimodio2 import RISING, FALLING, BOTH, consttostr
 
 
 class Type(object):

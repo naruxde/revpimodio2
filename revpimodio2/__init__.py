@@ -18,13 +18,14 @@ fuehrt das Modul bei Datenaenderung aus.
 """
 import warnings
 
-from .modio import *
-
-__all__ = ["RevPiModIO", "RevPiModIOSelected", "RevPiModIODriver"]
+__all__ = [
+    "RevPiModIO", "RevPiModIOSelected", "RevPiModIODriver",
+    "RevPiNetIO", "RevPiNetIOSelected", "RevPiNetIODriver"
+]
 __author__ = "Sven Sager <akira@revpimodio.org>"
 __name__ = "revpimodio2"
 __package__ = "revpimodio2"
-__version__ = "2.0.4"
+__version__ = "2.1.0"
 
 # Global package values
 OFF = 0
@@ -60,3 +61,7 @@ def consttostr(value):
         return "BOTH"
     else:
         return ""
+
+# Benötigte Klassen importieren
+from .modio import RevPiModIO, RevPiModIOSelected, RevPiModIODriver
+from .netio import RevPiNetIO, RevPiNetIOSelected, RevPiNetIODriver
