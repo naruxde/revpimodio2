@@ -125,7 +125,7 @@ revpimodio2.io.StructIO?1(parentio, name, frm, **kwargs)
 revpimodio2.io.Type.INP?7
 revpimodio2.io.Type.MEM?7
 revpimodio2.io.Type.OUT?7
-revpimodio2.modio.RevPiModIO._configure?5()
+revpimodio2.modio.RevPiModIO._configure?5(jconfigrsc)
 revpimodio2.modio.RevPiModIO._create_myfh?5()
 revpimodio2.modio.RevPiModIO._get_configrsc?5()
 revpimodio2.modio.RevPiModIO._get_cycletime?5()

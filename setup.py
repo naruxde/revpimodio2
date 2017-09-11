@@ -16,7 +16,7 @@ setup(
 
     license="LGPLv3",
     name="revpimodio2",
-    version="2.0.3",
+    version="2.0.4",
 
     packages=["revpimodio2"],
 

@@ -67,6 +67,7 @@ class RevPiModIO(object):
         self._lst_devselect = []
         self._lst_refresh = []
         self._maxioerrors = 0
+        self._myfh = None
         self._th_mainloop = None
         self._waitexit = Event()
 
@@ -79,12 +80,9 @@ class RevPiModIO(object):
         self.io = None
         self.summary = None
 
-        # Filehandler öffnen
-        self._myfh = self._create_myfh()
-
         # Nur Konfigurieren, wenn nicht vererbt
         if type(self) == RevPiModIO:
-            self._configure()
+            self._configure(self.get_jconfigrsc())
 
     def __del__(self):
         """Zerstoert alle Klassen um aufzuraeumen."""
@@ -104,9 +102,12 @@ class RevPiModIO(object):
             self.__cleanupfunc()
             self.writeprocimg()
 
-    def _configure(self):
+    def _configure(self, jconfigrsc):
         """Verarbeitet die piCtory Konfigurationsdatei."""
-        jconfigrsc = self.get_jconfigrsc()
+
+        # Filehandler konfigurieren, wenn er noch nicht existiert
+        if self._myfh is None:
+            self._myfh = self._create_myfh()
 
         # App Klasse instantiieren
         self.app = appmodule.App(jconfigrsc["App"])
@@ -857,7 +858,7 @@ class RevPiModIOSelected(RevPiModIO):
                     "<class 'str'>"
                 )
 
-        self._configure()
+        self._configure(self.get_jconfigrsc())
 
         if len(self.device) == 0:
             if type(self) == RevPiModIODriver:

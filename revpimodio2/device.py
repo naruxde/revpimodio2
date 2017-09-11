@@ -395,7 +395,7 @@ class Core(Device):
             self._ioerrorlimit1 = 6
             self._ioerrorlimit2 = 7
 
-        if not self._modio._monitoring:
+        if not (self._modio._monitoring or self._modio._simulator):
             # Für RS485 errors defaults laden sollte procimg NULL sein
             if self._ioerrorlimit1 is not None:
                 self.__lst_io[self._ioerrorlimit1].set_value(
