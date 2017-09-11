@@ -5,7 +5,7 @@
 # Webpage: https://revpimodio.org/
 # (c) Sven Sager, License: LGPLv3
 #
-"""RevPiModIO Hauptklasse."""
+"""RevPiModIO Hauptklasse fuer piControl0 Zugriff."""
 import warnings
 from json import load as jload
 from math import ceil
@@ -18,12 +18,12 @@ from . import device as devicemodule
 from . import helper as helpermodule
 from . import summary as summarymodule
 from .io import IOList
-from .__init__ import RISING, FALLING, BOTH
+from revpimodio2 import RISING, FALLING, BOTH
 
 
 class RevPiModIO(object):
 
-    """Klasse fuer die Verwaltung aller piCtory Informationen.
+    """Klasse fuer die Verwaltung der piCtory Konfiguration.
 
     Diese Klasse uebernimmt die gesamte Konfiguration aus piCtory und bilded
     die Devices und IOs ab. Sie uebernimmt die exklusive Verwaltung des
