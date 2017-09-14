@@ -367,7 +367,7 @@ class Core(Device):
     def _devconfigure(self):
         """Core-Klasse vorbereiten."""
         self._iocycle = None
-        self._iotemperatur = None
+        self._iotemperature = None
         self._iofrequency = None
         self._ioerrorcnt = None
         self._ioled = 1
@@ -389,7 +389,7 @@ class Core(Device):
             # core 1.2
             self._iocycle = 1
             self._ioerrorcnt = 2
-            self._iotemperatur = 3
+            self._iotemperature = 3
             self._iofrequency = 4
             self._ioled = 5
             self._ioerrorlimit1 = 6
@@ -546,12 +546,12 @@ class Core(Device):
         )
 
     @property
-    def temperatur(self):
+    def temperature(self):
         """Gibt CPU-Temperatur zurueck.
         @return CPU-Temperatur in Celsius"""
-        return None if self._iotemperatur is None else int.from_bytes(
-            self.__lst_io[self._iotemperatur].get_value(),
-            byteorder=self.__lst_io[self._iotemperatur]._byteorder
+        return None if self._iotemperature is None else int.from_bytes(
+            self.__lst_io[self._iotemperature].get_value(),
+            byteorder=self.__lst_io[self._iotemperature]._byteorder
         )
 
     @property

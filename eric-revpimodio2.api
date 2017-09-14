@@ -25,7 +25,7 @@ revpimodio2.device.Core.overunderflow?4()
 revpimodio2.device.Core.picontrolrunning?4()
 revpimodio2.device.Core.rightgate?4()
 revpimodio2.device.Core.status?7
-revpimodio2.device.Core.temperatur?4()
+revpimodio2.device.Core.temperature?4()
 revpimodio2.device.Core.unconfdevice?4()
 revpimodio2.device.Device._buildio?5(dict_io, iotype)
 revpimodio2.device.Device._devconfigure?5()
