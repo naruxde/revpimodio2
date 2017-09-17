@@ -87,7 +87,7 @@ class RevPiModIO(object):
     def __del__(self):
         """Zerstoert alle Klassen um aufzuraeumen."""
         self.exit(full=True)
-        if hasattr(self, "_myfh"):
+        if self._myfh is not None:
             self._myfh.close()
 
     def __evt_exit(self, signum, sigframe):
@@ -116,7 +116,8 @@ class RevPiModIO(object):
         if len(self._lst_devselect) > 0:
             lst_found = []
 
-            if type(self) == RevPiModIODriver:
+            if type(self) == RevPiModIODriver \
+                    or type(self) == RevPiNetIODriver:
                 _searchtype = "VIRTUAL"
             else:
                 _searchtype = None
@@ -907,3 +908,7 @@ class RevPiModIODriver(RevPiModIOSelected):
         super().__init__(
             virtdev, autorefresh, False, syncoutputs, procimg, configrsc, True
         )
+
+
+# Nachträglicher Import
+from .netio import RevPiNetIODriver

@@ -128,6 +128,17 @@ class NetFH(Thread):
         self.__sockend = True
         self.__sockerr.set()
 
+        # Vom Socket sauber trennen
+        with self.__socklock:
+            try:
+                if self.__sockend:
+                    self._slavesock.send(_sysexit)
+                else:
+                    self._slavesock.shutdown(socket.SHUT_RDWR)
+            except:
+                pass
+            self._slavesock.close()
+
     def flush(self):
         """Schreibpuffer senden."""
         if self.__sockend:
@@ -246,17 +257,6 @@ class NetFH(Thread):
                     self.__socklock.release()
 
                 self.__trigger = False
-
-        # Vom Socket trennen
-        with self.__socklock:
-            try:
-                if self.__sockend:
-                    self._slavesock.send(_sysexit)
-                else:
-                    self._slavesock.shutdown(socket.SHUT_RDWR)
-            except:
-                pass
-            self._slavesock.close()
 
     def seek(self, position):
         """Springt an angegebene Position.
@@ -418,8 +418,9 @@ class RevPiNetIO(_RevPiModIO):
         # Netzwerkfilehandler anlegen
         self._myfh = self._create_myfh()
 
-        # Modul konfigurieren
-        self._configure(self.get_jconfigrsc())
+        # Nur Konfigurieren, wenn nicht vererbt
+        if type(self) == RevPiNetIO:
+            self._configure(self.get_jconfigrsc())
 
     def _create_myfh(self):
         """Erstellt NetworkFileObject.
