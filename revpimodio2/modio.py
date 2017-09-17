@@ -87,7 +87,7 @@ class RevPiModIO(object):
     def __del__(self):
         """Zerstoert alle Klassen um aufzuraeumen."""
         self.exit(full=True)
-        if hasattr(self, "_myfh"):
+        if self._myfh is not None:
             self._myfh.close()
 
     def __evt_exit(self, signum, sigframe):
