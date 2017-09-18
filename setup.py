@@ -19,8 +19,10 @@ setup(
     version="2.0.5",
 
     packages=["revpimodio2"],
+    python_requires="~=3.2",
+    keywords="revolutionpi plc automation",
 
-    description="Python3 Programmierung für Kunbus RevolutionPi",
+    description="Python3 programming for RevolutionPi of Kunbus GmbH",
     long_description=""
     "Das Modul stellt alle Devices und IOs aus der piCtory Konfiguration \n"
     "in Python3 zur Verfügung. Es ermöglicht den direkten Zugriff auf die \n"
@@ -33,12 +35,14 @@ setup(
     "zugegriffen werden.",
 
     classifiers=[
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
+        "Intended Audience :: Developers",
         "License :: OSI Approved :: "
         "GNU Lesser General Public License v3 (LGPLv3)",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: Microsoft :: Windows",
-        "Operating System :: POSIX :: Linux",
+        "Operating System :: POSIX",
         "Programming Language :: Python :: 3",
         "Topic :: Software Development :: Libraries :: Python Modules"
     ],
