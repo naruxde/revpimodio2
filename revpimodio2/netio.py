@@ -77,7 +77,7 @@ class NetFH(Thread):
         try:
             so.connect(self._address)
         except:
-            pass
+            so.close()
         else:
             # Alten Socket trennen
             with self.__socklock:
@@ -129,14 +129,15 @@ class NetFH(Thread):
         self.__sockerr.set()
 
         # Vom Socket sauber trennen
-        with self.__socklock:
-            try:
-                if self.__sockend:
-                    self._slavesock.send(_sysexit)
-                else:
-                    self._slavesock.shutdown(socket.SHUT_RDWR)
-            except:
-                pass
+        if self._slavesock is not None:
+            with self.__socklock:
+                try:
+                    if self.__sockend:
+                        self._slavesock.send(_sysexit)
+                    else:
+                        self._slavesock.shutdown(socket.SHUT_RDWR)
+                except:
+                    pass
             self._slavesock.close()
 
     def flush(self):
