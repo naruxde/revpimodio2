@@ -8,16 +8,7 @@
 """RevPiModIO Modul fuer die Verwaltung der IOs."""
 import struct
 from threading import Event
-from revpimodio2 import RISING, FALLING, BOTH, consttostr
-
-
-class Type(object):
-
-    """IO Typen."""
-
-    INP = 300
-    OUT = 301
-    MEM = 302
+from revpimodio2 import RISING, FALLING, BOTH, INP, OUT, MEM, consttostr
 
 
 class IOList(object):
@@ -120,7 +111,7 @@ class IOList(object):
                 ]:
             object.__setattr__(self, key, value)
         else:
-            raise TypeError(
+            raise ValueError(
                 "direct assignment is not supported - use .value Attribute"
             )
 
@@ -227,6 +218,8 @@ class DeadIO(object):
         @see #IOBase.replace_io replace_io(...)"""
         self.__deadio.replace_io(name, frm, **kwargs)
 
+    _parentdevice = property(lambda self: None)
+
 
 class IOBase(object):
 
@@ -248,7 +241,7 @@ class IOBase(object):
 
         @param parentdevice Parentdevice auf dem der IO liegt
         @param valuelist Datenliste fuer Instantiierung
-        @param iotype <class 'Type'> Wert
+        @param iotype <class 'int'> Wert
         @param byteorder Byteorder 'little'/'big' fuer <class 'int'> Berechnung
         @param sigend Intberechnung mit Vorzeichen durchfuehren
 
@@ -312,7 +305,8 @@ class IOBase(object):
             )
             return bool(int_byte & 1 << self._bitaddress)
         else:
-            return bool(self._parentdevice._ba_devdata[self._slc_address])
+            return self._parentdevice._ba_devdata[self._slc_address] != \
+                bytearray(self._length)
 
     def __len__(self):
         """Gibt die Bytelaenge des IO zurueck.
@@ -335,8 +329,8 @@ class IOBase(object):
         return self._byteorder
 
     def _get_iotype(self):
-        """Gibt io.Type zurueck.
-        @return <class 'int'> io.Type"""
+        """Gibt io type zurueck.
+        @return <class 'int'> io type"""
         return self._iotype
 
     def get_defaultvalue(self):
@@ -549,7 +543,7 @@ class IOBase(object):
     def set_value(self, value):
         """Setzt den Wert des IOs.
         @param value IO-Wert als <class bytes'> oder <class 'bool'>"""
-        if self._iotype == Type.OUT:
+        if self._iotype == OUT:
             if self._bitaddress >= 0:
                 # Versuchen egal welchen Typ in Bool zu konvertieren
                 value = bool(value)
@@ -591,7 +585,7 @@ class IOBase(object):
                         "".format(self._name, type(value))
                     )
 
-        elif self._iotype == Type.INP:
+        elif self._iotype == INP:
             if self._parentdevice._modio._simulator:
                 raise AttributeError(
                     "can not write to output '{}' in simulator mode"
@@ -601,7 +595,8 @@ class IOBase(object):
                 raise AttributeError(
                     "can not write to input '{}'".format(self._name)
                 )
-        elif self._iotype == Type.MEM:
+
+        elif self._iotype == MEM:
             raise AttributeError(
                 "can not write to memory '{}'".format(self._name)
             )
@@ -906,7 +901,7 @@ class StructIO(IOBase):
     def _get_frm(self):
         """Ruft die struct Formatierung ab.
         @return struct Formatierung"""
-        return self.__frm
+        return self.__frm[1]
 
     def _get_signed(self):
         """Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.

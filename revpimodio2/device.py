@@ -114,16 +114,16 @@ class Device(object):
         # IOM-Objekte erstellen und Adressen in SLCs speichern
         if simulator:
             self._slc_inp = self._buildio(
-                dict_device.pop("out"), iomodule.Type.INP)
+                dict_device.pop("out"), INP)
             self._slc_out = self._buildio(
-                dict_device.pop("inp"), iomodule.Type.OUT)
+                dict_device.pop("inp"), OUT)
         else:
             self._slc_inp = self._buildio(
-                dict_device.pop("inp"), iomodule.Type.INP)
+                dict_device.pop("inp"), INP)
             self._slc_out = self._buildio(
-                dict_device.pop("out"), iomodule.Type.OUT)
+                dict_device.pop("out"), OUT)
         self._slc_mem = self._buildio(
-            dict_device.pop("mem"), iomodule.Type.MEM
+            dict_device.pop("mem"), MEM
         )
 
         # SLCs mit offset berechnen
@@ -180,9 +180,7 @@ class Device(object):
     def __iter__(self):
         """Gibt Iterator aller IOs zurueck.
         @return <class 'iter'> aller IOs"""
-        for lst_io in self._modio.io[self._slc_devoff]:
-            for io in lst_io:
-                yield io
+        return self.__getioiter(self._slc_devoff)
 
     def __len__(self):
         """Gibt Anzahl der Bytes zurueck, die dieses Device belegt.
@@ -194,11 +192,20 @@ class Device(object):
         @return Devicename"""
         return self._name
 
+    def __getioiter(self, ioslc):
+        """Gibt <class 'iter'> mit allen IOs zurueck.
+        @param ioslc IO Abschnitt <class 'slice'>
+        @return IOs als Iterator"""
+        for lst_io in self._modio.io[ioslc]:
+            for io in lst_io:
+                if io is not None:
+                    yield io
+
     def _buildio(self, dict_io, iotype):
         """Erstellt aus der piCtory-Liste die IOs fuer dieses Device.
 
         @param dict_io <class 'dict'>-Objekt aus piCtory Konfiguration
-        @param iotype <class 'Type'> Wert
+        @param iotype <class 'int'> Wert
         @return <class 'slice'> mit Start und Stop Position dieser IOs
 
         """
@@ -211,11 +218,11 @@ class Device(object):
             # Neuen IO anlegen
             if bool(dict_io[key][7]) or self._producttype == 95:
                 # Bei Bitwerten oder Core RevPiIOBase verwenden
-                io_new = iomodule.IOBase(
+                io_new = IOBase(
                     self, dict_io[key], iotype, "little", False
                 )
             else:
-                io_new = iomodule.IntIO(
+                io_new = IntIO(
                     self, dict_io[key],
                     iotype,
                     "little",
@@ -295,59 +302,64 @@ class Device(object):
     def get_allios(self):
         """Gibt eine Liste aller Inputs und Outputs zurueck, keine MEMs.
         @return <class 'list'> Input und Output, keine MEMs"""
-        lst_return = []
-        for lst_io in self._modio.io[
-                self._slc_inpoff.start:self._slc_outoff.stop]:
-            lst_return += lst_io
-        return lst_return
+        return list(self.__getioiter(
+            slice(self._slc_inpoff.start, self._slc_outoff.stop)
+        ))
 
     def get_inputs(self):
         """Gibt eine Liste aller Inputs zurueck.
         @return <class 'list'> Inputs"""
-        lst_return = []
-        for lst_io in self._modio.io[self._slc_inpoff]:
-            lst_return += lst_io
-        return lst_return
+        return list(self.__getioiter(self._slc_inpoff))
 
     def get_outputs(self):
         """Gibt eine Liste aller Outputs zurueck.
         @return <class 'list'> Outputs"""
-        lst_return = []
-        for lst_io in self._modio.io[self._slc_outoff]:
-            lst_return += lst_io
-        return lst_return
+        return list(self.__getioiter(self._slc_outoff))
 
     def get_memories(self):
         """Gibt eine Liste aller mems zurueck.
         @return <class 'list'> Mems"""
-        lst_return = []
-        for lst_io in self._modio.io[self._slc_memoff]:
-            lst_return += lst_io
-        return lst_return
+        return list(self.__getioiter(self._slc_memoff))
 
     def readprocimg(self):
         """Alle Inputs fuer dieses Device vom Prozessabbild einlesen.
+
+        @return True, wenn erfolgreich ausgefuehrt
         @see revpimodio2.modio#RevPiModIO.readprocimg
-        RevPiModIO.readprocimg()"""
-        self._modio.readprocimg(self)
+        RevPiModIO.readprocimg()
+
+        """
+        return self._modio.readprocimg(self)
 
     def setdefaultvalues(self):
         """Alle Outputbuffer fuer dieses Device auf default Werte setzen.
+
+        @return True, wenn erfolgreich ausgefuehrt
         @see revpimodio2.modio#RevPiModIO.setdefaultvalues
-        RevPiModIO.setdefaultvalues()"""
+        RevPiModIO.setdefaultvalues()
+
+        """
         self._modio.setdefaultvalues(self)
 
     def syncoutputs(self):
         """Lesen aller Outputs im Prozessabbild fuer dieses Device.
+
+        @return True, wenn erfolgreich ausgefuehrt
         @see revpimodio2.modio#RevPiModIO.syncoutputs
-        RevPiModIO.syncoutputs()"""
-        self._modio.syncoutputs(self)
+        RevPiModIO.syncoutputs()
+
+        """
+        return self._modio.syncoutputs(self)
 
     def writeprocimg(self):
         """Schreiben aller Outputs dieses Devices ins Prozessabbild.
+
+        @return True, wenn erfolgreich ausgefuehrt
         @see revpimodio2.modio#RevPiModIO.writeprocimg
-        RevPiModIO.writeprocimg()"""
-        self._modio.writeprocimg(self)
+        RevPiModIO.writeprocimg()
+
+        """
+        return self._modio.writeprocimg(self)
 
     length = property(__len__)
     name = property(__str__)
@@ -616,9 +628,9 @@ class Gateway(Device):
         super().__init__(parent, dict_device, simulator)
 
         self._dict_slc = {
-            iomodule.Type.INP: self._slc_inp,
-            iomodule.Type.OUT: self._slc_out,
-            iomodule.Type.MEM: self._slc_mem
+            INP: self._slc_inp,
+            OUT: self._slc_out,
+            MEM: self._slc_mem
         }
 
     def get_rawbytes(self):
@@ -678,4 +690,5 @@ class Virtual(Gateway):
 
 
 # Nachträglicher Import
-from . import io as iomodule
+from .io import IOBase, IntIO
+from revpimodio2 import INP, OUT, MEM

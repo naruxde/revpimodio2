@@ -24,7 +24,7 @@ __all__ = [
 __author__ = "Sven Sager <akira@revpimodio.org>"
 __name__ = "revpimodio2"
 __package__ = "revpimodio2"
-__version__ = "2.0.5"
+__version__ = "2.0.6"
 
 # Global package values
 OFF = 0
@@ -33,6 +33,9 @@ RED = 2
 RISING = 31
 FALLING = 32
 BOTH = 33
+INP = 300
+OUT = 301
+MEM = 302
 
 warnings.simplefilter(action="always")
 
@@ -58,6 +61,12 @@ def consttostr(value):
         return "FALLING"
     elif value == 33:
         return "BOTH"
+    elif value == 300:
+        return "INP"
+    elif value == 301:
+        return "OUT"
+    elif value == 302:
+        return "MEM"
     else:
         return ""
 

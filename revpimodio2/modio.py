@@ -142,11 +142,11 @@ class RevPiModIO(object):
         err_names = []
         for device in sorted(lst_devices, key=lambda x: x["position"]):
 
-            # Bei VDev in alter piCtory Version, Position eindeutig machen
+            # VDev alter piCtory Versionen auf Kunbus-Standard ändern
             if device["position"] == "adap.":
-                device["position"] = -1
+                device["position"] = 64
                 while device["position"] in self.device:
-                    device["position"] -= 1
+                    device["position"] += 1
 
             if device["type"] == "BASE":
                 # Core
@@ -275,7 +275,7 @@ class RevPiModIO(object):
             )
         warnings.warn(
             "got io error during {} and count {} errors now".format(
-                self._ioerror, self._ioerror
+                action, self._ioerror
             ),
             RuntimeWarning
         )

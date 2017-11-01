@@ -1,7 +1,10 @@
 revpimodio2.BOTH?7
 revpimodio2.FALLING?7
 revpimodio2.GREEN?7
+revpimodio2.INP?7
+revpimodio2.MEM?7
 revpimodio2.OFF?7
+revpimodio2.OUT?7
 revpimodio2.RED?7
 revpimodio2.RISING?7
 revpimodio2.app.App?1(app)
@@ -79,6 +82,7 @@ revpimodio2.helper.ProcimgWriter.set_maxioerrors?4(value)
 revpimodio2.helper.ProcimgWriter.set_refresh?4(value)
 revpimodio2.helper.ProcimgWriter.stop?4()
 revpimodio2.helper.ProcimgWriter?1(parentmodio)
+revpimodio2.io.DeadIO._parentdevice?8
 revpimodio2.io.DeadIO.replace_io?4(name, frm, **kwargs)
 revpimodio2.io.DeadIO?1(deadio)
 revpimodio2.io.IOBase._get_address?5()
@@ -122,9 +126,6 @@ revpimodio2.io.StructIO.set_structvalue?4(value)
 revpimodio2.io.StructIO.signed?7
 revpimodio2.io.StructIO.value?7
 revpimodio2.io.StructIO?1(parentio, name, frm, **kwargs)
-revpimodio2.io.Type.INP?7
-revpimodio2.io.Type.MEM?7
-revpimodio2.io.Type.OUT?7
 revpimodio2.modio.RevPiModIO._configure?5(jconfigrsc)
 revpimodio2.modio.RevPiModIO._create_myfh?5()
 revpimodio2.modio.RevPiModIO._get_configrsc?5()

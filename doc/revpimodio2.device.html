@@ -378,6 +378,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#Device.__contains__">__contains__</a></td>
 <td>Prueft ob IO auf diesem Device liegt.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#Device.__getioiter">__getioiter</a></td>
+<td>Gibt <class 'iter'> mit allen IOs zurueck.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Device.__int__">__int__</a></td>
 <td>Gibt die Positon im RevPi Bus zurueck.</td>
 </tr><tr>
@@ -479,6 +482,22 @@ IO-Name <class 'str'> / IO-Bytenummer <class 'int'>
 <dd>
 True, wenn device vorhanden
 </dd>
+</dl><a NAME="Device.__getioiter" ID="Device.__getioiter"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Device.__getioiter</h3>
+<b>__getioiter</b>(<i>ioslc</i>)
+<p>
+Gibt <class 'iter'> mit allen IOs zurueck.
+</p><dl>
+<dt><i>ioslc</i></dt>
+<dd>
+IO Abschnitt <class 'slice'>
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+IOs als Iterator
+</dd>
 </dl><a NAME="Device.__int__" ID="Device.__int__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Device.__int__</h3>
@@ -535,7 +554,7 @@ Erstellt aus der piCtory-Liste die IOs fuer dieses Device.
 <class 'dict'>-Objekt aus piCtory Konfiguration
 </dd><dt><i>iotype</i></dt>
 <dd>
-<class 'Type'> Wert
+<class 'int'> Wert
 </dd>
 </dl><dl>
 <dt>Returns:</dt>
@@ -632,6 +651,11 @@ Device.readprocimg</h3>
 <p>
 Alle Inputs fuer dieses Device vom Prozessabbild einlesen.
 </p><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn erfolgreich ausgefuehrt
+</dd>
+</dl><dl>
 <dt><b>See Also:</b></dt>
 <dd>
 <a style="color:#0000FF" href="revpimodio2.modio.html#RevPiModIO.readprocimg">RevPiModIO.readprocimg()</a>
@@ -643,6 +667,11 @@ Device.setdefaultvalues</h3>
 <p>
 Alle Outputbuffer fuer dieses Device auf default Werte setzen.
 </p><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn erfolgreich ausgefuehrt
+</dd>
+</dl><dl>
 <dt><b>See Also:</b></dt>
 <dd>
 <a style="color:#0000FF" href="revpimodio2.modio.html#RevPiModIO.setdefaultvalues">RevPiModIO.setdefaultvalues()</a>
@@ -654,6 +683,11 @@ Device.syncoutputs</h3>
 <p>
 Lesen aller Outputs im Prozessabbild fuer dieses Device.
 </p><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn erfolgreich ausgefuehrt
+</dd>
+</dl><dl>
 <dt><b>See Also:</b></dt>
 <dd>
 <a style="color:#0000FF" href="revpimodio2.modio.html#RevPiModIO.syncoutputs">RevPiModIO.syncoutputs()</a>
@@ -665,6 +699,11 @@ Device.writeprocimg</h3>
 <p>
 Schreiben aller Outputs dieses Devices ins Prozessabbild.
 </p><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn erfolgreich ausgefuehrt
+</dd>
+</dl><dl>
 <dt><b>See Also:</b></dt>
 <dd>
 <a style="color:#0000FF" href="revpimodio2.modio.html#RevPiModIO.writeprocimg">RevPiModIO.writeprocimg()</a>

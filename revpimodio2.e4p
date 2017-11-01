@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project revpimodio2 -->
-<!-- Saved: 2017-09-17, 15:14:47 -->
+<!-- Saved: 2017-11-01, 15:30:36 -->
 <!-- Copyright (C) 2017 Sven Sager, akira@narux.de -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -9,7 +9,7 @@
   <ProgLanguage mixed="0">Python3</ProgLanguage>
   <ProjectType>Console</ProjectType>
   <Description>Das Modul stellt alle Devices und IOs aus der piCtory Konfiguration in Python3 zur Verfügung. Es ermöglicht den direkten Zugriff auf die Werte über deren vergebenen Namen. Lese- und Schreibaktionen mit dem Prozessabbild werden von dem Modul selbst verwaltet, ohne dass sich der Programmierer um Offsets und Adressen kümmern muss. Für die Gatewaymodule wie ModbusTCP oder Profinet sind eigene 'Inputs' und 'Outputs' über einen bestimmten Adressbereich definierbar. Auf diese IOs kann mit Python3 über den Namen direkt auf die Werte zugegriffen werden.</Description>
-  <Version>2.0.5</Version>
+  <Version>2.0.6</Version>
   <Author>Sven Sager</Author>
   <Email>akira@narux.de</Email>
   <Eol index="1"/>
@@ -31,7 +31,7 @@
     <Source>test/web_virtdevdriver.py</Source>
     <Source>test/web_benniesrun.py</Source>
     <Source>test/web_benniesrunxxl.py</Source>
-    <Source>test_trace.py</Source>
+    <Source>test_unit.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
@@ -43,6 +43,7 @@
     <Other>MANIFEST.in</Other>
     <Other>eric-revpimodio2.api</Other>
   </Others>
+  <MainScript>test_unit.py</MainScript>
   <Vcs>
     <VcsType>Mercurial</VcsType>
     <VcsOptions>
@@ -181,7 +182,7 @@
             <value>
               <list>
                 <string>setup.py</string>
-                <string>test_trace.py</string>
+                <string>test_unit.py</string>
               </list>
             </value>
             <key>
@@ -228,7 +229,7 @@
             <value>
               <list>
                 <string>setup.py</string>
-                <string>test_trace.py</string>
+                <string>test_unit.py</string>
               </list>
             </value>
             <key>
@@ -280,7 +281,7 @@
               <string>ExcludeFiles</string>
             </key>
             <value>
-              <string>*/test_trace.py</string>
+              <string>*/test_unit.py</string>
             </value>
             <key>
               <string>ExcludeMessages</string>
