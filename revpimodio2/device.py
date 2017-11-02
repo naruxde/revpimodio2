@@ -29,23 +29,35 @@ class DeviceList(object):
         else:
             return key in self.__dict_position.values()
 
-    def __delattr__(self, key):
+    def __delattr__(self, key, delcomplete=True):
         """Entfernt angegebenes Device.
-        @param key Device zum entfernen"""
-        dev_del = getattr(self, key)
+        @param key Device zum entfernen
+        @param delcomplete Wenn True wird Device komplett entfernt"""
+        if delcomplete:
+            # Device finden
+            if type(key) == int:
+                dev_del = self.__dict_position[key]
+                key = dev_del._name
+            else:
+                dev_del = getattr(self, key)
 
-        # Reinigungsjobs
-        dev_del.autorefresh(False)
-        for io in dev_del:
-            delattr(dev_del._modio.io, io._name)
+            # Reinigungsjobs
+            dev_del.autorefresh(False)
+            for io in dev_del:
+                delattr(dev_del._modio.io, io._name)
 
-        del self.__dict_position[dev_del._position]
-        object.__delattr__(self, key)
+            # Device aus dict löschen
+            del self.__dict_position[dev_del._position]
+
+        if hasattr(self, key):
+            object.__delattr__(self, key)
 
     def __delitem__(self, key):
         """Entfernt Device an angegebener Position.
         @param key Deviceposition zum entfernen"""
-        self.__delattr__(self[key]._name)
+        if issubclass(type(key), Device):
+            key = key._position
+        self.__delattr__(key)
 
     def __getitem__(self, key):
         """Gibt angegebenes Device zurueck.

@@ -674,7 +674,19 @@ class IOBase(object):
                     self._parentdevice._position, self._parentdevice._name
                 )
             )
-
+        if not (RISING <= edge <= BOTH):
+            raise AttributeError(
+                "parameter 'edge' must be revpimodio2.RISING, "
+                "revpimodio2.FALLING or revpimodio2.BOTH"
+            )
+        if not (exitevent is None or type(exitevent) == Event):
+            raise AttributeError(
+                "parameter 'exitevent' must be <class 'threading.Event'>"
+            )
+        if type(timeout) != int or timeout < 0:
+            raise AttributeError(
+                "parameter 'timeout' must be <class 'int'> and greater than 0"
+            )
         if edge != BOTH and self._bitaddress < 0:
             raise AttributeError(
                 "parameter 'edge' can be used with bit Inputs only"

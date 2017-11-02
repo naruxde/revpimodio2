@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project revpimodio2 -->
-<!-- Saved: 2017-11-01, 15:30:36 -->
+<!-- Saved: 2017-11-02, 13:54:10 -->
 <!-- Copyright (C) 2017 Sven Sager, akira@narux.de -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -354,7 +354,7 @@
               <string>ExcludeFiles</string>
             </key>
             <value>
-              <string>*/test/*,*/setup.py</string>
+              <string>*/test/*,*/setup.py,*/test_unit.py</string>
             </value>
           </dict>
         </value>

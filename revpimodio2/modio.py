@@ -172,7 +172,7 @@ class RevPiModIO(object):
             else:
                 # Device-Type nicht gefunden
                 warnings.warn(
-                    "device type {} unknown",
+                    "device type '{}' unknown".format(device["type"]),
                     Warning
                 )
                 dev_new = None
@@ -193,7 +193,7 @@ class RevPiModIO(object):
 
         # Namenszugriff zerstören, wenn doppelte Namen vorhanden sind
         for errdev in err_names:
-            delattr(self.device, errdev)
+            self.device.__delattr__(errdev, False)
             warnings.warn(
                 "equal device name in pictory configuration. can not "
                 "build device to access by name. you can access all devices "
@@ -364,6 +364,7 @@ class RevPiModIO(object):
             self._imgwriter.refresh = cycletime
 
         # Cycleloop starten
+        self._exit.clear()
         self._looprunning = True
         cycleinfo = helpermodule.Cycletools(self._imgwriter.refresh)
         ec = None
