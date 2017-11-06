@@ -102,12 +102,14 @@ class NetFH(Thread):
 
         with self.__socklock:
             if position is None:
+                # Alle Dirtybytes löschen
                 self._slavesock.sendall(_sysdeldirty)
             else:
+                # Nur bestimmte Dirtybytes löschen
                 self._slavesock.sendall(
                     b'\x01EY' +
                     position.to_bytes(length=2, byteorder="little") +
-                    b'\x00\x00\xFF\x00\x00\x00\x00\x00\x00\x00\x17'
+                    b'\x00\x00\xFE\x00\x00\x00\x00\x00\x00\x00\x17'
                 )
 
             check = self._slavesock.recv(1)
@@ -115,13 +117,13 @@ class NetFH(Thread):
                 self.__sockerr.set()
                 raise IOError("clear dirtybytes error on network")
 
-            # Daten bei Erfolg übernehmen
-            if position is None:
-                self.__dictdirty = {}
-            else:
-                del self.__dictdirty[position]
+        # Daten bei Erfolg übernehmen
+        if position is None:
+            self.__dictdirty = {}
+        elif position in self.__dictdirty:
+            del self.__dictdirty[position]
 
-            self.__trigger = True
+        self.__trigger = True
 
     def close(self):
         """Verbindung trennen."""
@@ -224,6 +226,7 @@ class NetFH(Thread):
 
                 byte_buff += data
                 if data.find(b'\x04') >= 0:
+                    # NOTE: Nur suchen oder Ende prüfen?
                     return byte_buff[:-1]
 
             self.__sockerr.set()
@@ -320,7 +323,7 @@ class NetFH(Thread):
                 self.__trigger = True
 
         else:
-            raise ValueError("value must between 0 and 65535 milliseconds")
+            raise ValueError("value must between 1 and 65535 milliseconds")
 
     def tell(self):
         """Gibt aktuelle Position zurueck.
@@ -384,6 +387,13 @@ class RevPiNetIO(_RevPiModIO):
 
         """
 
+        # Objekte die auch schon bei Fehler benötigt werden
+        self._exit = Event()
+        self._imgwriter = None
+        self._lst_refresh = []
+        self._myfh = None
+        self._waitexit = Event()
+
         # Adresse verarbeiten
         if type(address) == str:
             # TODO: IP-Adresse prüfen
@@ -396,7 +406,7 @@ class RevPiNetIO(_RevPiModIO):
 
                 # Werte prüfen
                 # TODO: IP-Adresse prüfen
-                if 0 < address[1] <= 65535:
+                if not 0 < address[1] <= 65535:
                     raise ValueError("port number out of range 1 - 65535")
 
                 self._address = address
@@ -448,14 +458,14 @@ class RevPiNetIO(_RevPiModIO):
             )
 
         if device is None:
-            mylist = self.device
+            self._myfh.clear_dirtybytes()
         else:
             dev = device if issubclass(type(device), Device) \
                 else self.device.__getitem__(device)
             mylist = [dev]
 
-        for dev in mylist:
-            self._myfh.clear_dirtybytes(dev._offset + dev._slc_out.start)
+            for dev in mylist:
+                self._myfh.clear_dirtybytes(dev._offset + dev._slc_out.start)
 
     def net_setdefaultvalues(self, device=None):
         """Konfiguriert den PLC Slave mit den piCtory Defaultwerten.

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project revpimodio2 -->
-<!-- Saved: 2017-11-02, 13:54:10 -->
+<!-- Saved: 2017-11-06, 11:06:12 -->
 <!-- Copyright (C) 2017 Sven Sager, akira@narux.de -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -31,6 +31,8 @@
     <Source>test/web_virtdevdriver.py</Source>
     <Source>test/web_benniesrun.py</Source>
     <Source>test/web_benniesrunxxl.py</Source>
+    <Source>revpimodio2/netio.py</Source>
+    <Source>test_unitnet.py</Source>
     <Source>test_unit.py</Source>
   </Sources>
   <Forms/>
@@ -183,6 +185,7 @@
               <list>
                 <string>setup.py</string>
                 <string>test_unit.py</string>
+                <string>test_unitnet.py</string>
               </list>
             </value>
             <key>
@@ -230,6 +233,7 @@
               <list>
                 <string>setup.py</string>
                 <string>test_unit.py</string>
+                <string>test_unitnet.py</string>
               </list>
             </value>
             <key>
