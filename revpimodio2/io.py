@@ -22,11 +22,10 @@ class IOList(object):
 
     def __contains__(self, key):
         """Prueft ob IO existiert.
-        @param key IO-Name <class 'str'> oder Byte <class 'int'>
+        @param key IO-Name <class 'str'> oder Bytenummer <class 'int'>
         @return True, wenn IO vorhanden / Byte belegt"""
         if type(key) == int:
-            return key in self.__dict_iobyte \
-                and len(self.__dict_iobyte[key]) > 0
+            return len(self.__dict_iobyte.get(key, [])) > 0
         else:
             return hasattr(self, key) and type(getattr(self, key)) != DeadIO
 

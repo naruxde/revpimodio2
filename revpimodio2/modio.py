@@ -86,9 +86,10 @@ class RevPiModIO(object):
 
     def __del__(self):
         """Zerstoert alle Klassen um aufzuraeumen."""
-        self.exit(full=True)
-        if self._myfh is not None:
-            self._myfh.close()
+        if hasattr(self, "_exit"):
+            self.exit(full=True)
+            if self._myfh is not None:
+                self._myfh.close()
 
     def __evt_exit(self, signum, sigframe):
         """Eventhandler fuer Programmende.
@@ -368,23 +369,33 @@ class RevPiModIO(object):
         self._looprunning = True
         cycleinfo = helpermodule.Cycletools(self._imgwriter.refresh)
         ec = None
-        while ec is None and not self._exit.is_set():
-            # Auf neue Daten warten und nur ausführen wenn set()
-            if not self._imgwriter.newdata.wait(2.5):
-                if not self._exit.is_set() and not self._imgwriter.is_alive():
-                    raise RuntimeError("autorefresh thread not running")
-                continue
-            self._imgwriter.newdata.clear()
+        try:
+            while ec is None and not self._exit.is_set():
+                # Auf neue Daten warten und nur ausführen wenn set()
+                if not self._imgwriter.newdata.wait(2.5):
+                    if not self._exit.is_set() \
+                            and not self._imgwriter.is_alive():
+                        self.exit(full=False)
+                        self._looprunning = False
+                        raise RuntimeError("autorefresh thread not running")
+                    continue
+                self._imgwriter.newdata.clear()
 
-            # Vor Aufruf der Funktion autorefresh sperren
-            self._imgwriter.lck_refresh.acquire()
+                # Vor Aufruf der Funktion autorefresh sperren
+                self._imgwriter.lck_refresh.acquire()
 
-            # Funktion aufrufen und auswerten
-            ec = func(cycleinfo)
-            cycleinfo._docycle()
+                # Funktion aufrufen und auswerten
+                ec = func(cycleinfo)
+                cycleinfo._docycle()
 
-            # autorefresh freigeben
-            self._imgwriter.lck_refresh.release()
+                # autorefresh freigeben
+                self._imgwriter.lck_refresh.release()
+        except Exception as e:
+            if self._imgwriter.lck_refresh.locked():
+                self._imgwriter.lck_refresh.release()
+            self.exit(full=False)
+            self._looprunning = False
+            raise e
 
         # Cycleloop beenden
         self._looprunning = False
@@ -533,6 +544,8 @@ class RevPiModIO(object):
             # Auf neue Daten warten und nur ausführen wenn set()
             if not self._imgwriter.newdata.wait(2.5):
                 if not self._exit.is_set() and not self._imgwriter.is_alive():
+                    self.exit(full=False)
+                    self._looprunning = False
                     raise RuntimeError("autorefresh thread not running")
                 continue
 
@@ -624,16 +637,23 @@ class RevPiModIO(object):
                         del dict_delay[tup_fire]
 
             # Erst nach Datenübernahme alle Events feuern
-            while len(lst_fire) > 0:
-                tup_fire = lst_fire.pop()
-                if tup_fire[0][2]:
-                    th = helpermodule.EventCallback(
-                        tup_fire[0][0], tup_fire[1], tup_fire[2]
-                    )
-                    th.start()
-                else:
-                    # Direct callen da Prüfung in io.IOBase.reg_event ist
-                    tup_fire[0][0](tup_fire[1], tup_fire[2])
+            try:
+                while len(lst_fire) > 0:
+                    tup_fire = lst_fire.pop()
+                    if tup_fire[0][2]:
+                        th = helpermodule.EventCallback(
+                            tup_fire[0][0], tup_fire[1], tup_fire[2]
+                        )
+                        th.start()
+                    else:
+                        # Direct callen da Prüfung in io.IOBase.reg_event ist
+                        tup_fire[0][0](tup_fire[1], tup_fire[2])
+            except Exception as e:
+                if self._imgwriter.lck_refresh.locked():
+                    self._imgwriter.lck_refresh.release()
+                self.exit(full=False)
+                self._looprunning = False
+                raise e
 
             # Refreshsperre aufheben wenn freeze
             if freeze:

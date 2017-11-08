@@ -171,18 +171,20 @@ class Device(object):
     def __contains__(self, key):
         """Prueft ob IO auf diesem Device liegt.
         @param key IO-Name <class 'str'> / IO-Bytenummer <class 'int'>
-        @return True, wenn device vorhanden"""
-        if type(key) == str:
-            return key in self._modio.io \
-                and getattr(self._modio.io, key)._parentdevice == self
-        elif type(key) == int:
+        @return True, wenn IO auf Device vorhanden"""
+        if issubclass(type(key), IOBase):
+            # Umwandlung für key
+            key = key._name
+
+        if type(key) == int:
             if key in self._modio.io:
                 for io in self._modio.io[key]:
                     if io is not None and io._parentdevice == self:
                         return True
             return False
         else:
-            return key._parentdevice == self
+            return key in self._modio.io \
+                and getattr(self._modio.io, key)._parentdevice == self
 
     def __int__(self):
         """Gibt die Positon im RevPi Bus zurueck.
