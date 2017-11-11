@@ -20,11 +20,12 @@ import warnings
 
 __all__ = [
     "RevPiModIO", "RevPiModIOSelected", "RevPiModIODriver",
+    "RevPiNetIO", "RevPiNetIOSelected", "RevPiNetIODriver"
 ]
 __author__ = "Sven Sager <akira@revpimodio.org>"
 __name__ = "revpimodio2"
 __package__ = "revpimodio2"
-__version__ = "2.0.7"
+__version__ = "2.1.1"
 
 # Global package values
 OFF = 0
@@ -72,3 +73,4 @@ def consttostr(value):
 
 # Benötigte Klassen importieren
 from .modio import RevPiModIO, RevPiModIOSelected, RevPiModIODriver
+from .netio import RevPiNetIO, RevPiNetIOSelected, RevPiNetIODriver

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html><head>
+<title>revpimodio2.netio</title>
+<meta charset="UTF-8">
+</head>
+<body style="background-color:#FFFFFF;color:#000000"><a NAME="top" ID="top"></a>
+<h1 style="background-color:#FFFFFF;color:#0000FF">
+revpimodio2.netio</h1>
+<p>
+RevPiModIO Hauptklasse fuer Netzwerkzugriff.
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Global Attributes</h3>
+<table>
+<tr><td>_sysdeldirty</td></tr><tr><td>_sysexit</td></tr><tr><td>_sysflush</td></tr><tr><td>_syspictory</td></tr><tr><td>_syssync</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Classes</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#NetFH">NetFH</a></td>
+<td>Netzwerk File Handler fuer das Prozessabbild.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#RevPiNetIO">RevPiNetIO</a></td>
+<td>Klasse fuer die Verwaltung der piCtory Konfiguration ueber das Netzwerk.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#RevPiNetIODriver">RevPiNetIODriver</a></td>
+<td>Klasse um eigene Treiber fuer die virtuellen Devices zu erstellen.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#RevPiNetIOSelected">RevPiNetIOSelected</a></td>
+<td>Klasse fuer die Verwaltung einzelner Devices aus piCtory.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Functions</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<hr /><hr />
+<a NAME="NetFH" ID="NetFH"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">NetFH</h2>
+<p>
+Netzwerk File Handler fuer das Prozessabbild.
+</p><p>
+    Dieses FileObject-like Object verwaltet das Lesen und Schriben des
+    Prozessabbilds ueber das Netzwerk. Ein entfernter Revolution Pi kann
+    so gesteuert werden.
+</p><p>
+
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+Thread
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>closed</td></tr><tr><td>name</td></tr><tr><td>timeout</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#NetFH.__init__">NetFH</a></td>
+<td>Init NetFH-class.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.__del__">__del__</a></td>
+<td>NetworkFileHandler beenden.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH._connect">_connect</a></td>
+<td>Stellt die Verbindung zu einem RevPiSlave her.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.clear_dirtybytes">clear_dirtybytes</a></td>
+<td>Entfernt die konfigurierten Dirtybytes vom RevPi Slave.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.close">close</a></td>
+<td>Verbindung trennen.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.flush">flush</a></td>
+<td>Schreibpuffer senden.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.get_closed">get_closed</a></td>
+<td>Pruefen ob Verbindung geschlossen ist.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.get_name">get_name</a></td>
+<td>Verbindugnsnamen zurueckgeben.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.get_timeout">get_timeout</a></td>
+<td>Gibt aktuellen Timeout zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.read">read</a></td>
+<td>Daten ueber das Netzwerk lesen.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.readpictory">readpictory</a></td>
+<td>Ruft die piCtory Konfiguration ab.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.run">run</a></td>
+<td>Handler fuer Synchronisierung.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.seek">seek</a></td>
+<td>Springt an angegebene Position.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.set_dirtybytes">set_dirtybytes</a></td>
+<td>Konfiguriert Dirtybytes fuer Prozessabbild bei Verbindungsfehler.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.set_timeout">set_timeout</a></td>
+<td>Setzt Timeoutwert fuer Verbindung.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.tell">tell</a></td>
+<td>Gibt aktuelle Position zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.write">write</a></td>
+<td>Daten ueber das Netzwerk schreiben.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="NetFH.__init__" ID="NetFH.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH (Constructor)</h3>
+<b>NetFH</b>(<i>address, timeout=500</i>)
+<p>
+Init NetFH-class.
+</p><a NAME="NetFH.__del__" ID="NetFH.__del__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.__del__</h3>
+<b>__del__</b>(<i></i>)
+<p>
+NetworkFileHandler beenden.
+</p><a NAME="NetFH._connect" ID="NetFH._connect"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH._connect</h3>
+<b>_connect</b>(<i></i>)
+<p>
+Stellt die Verbindung zu einem RevPiSlave her.
+</p><a NAME="NetFH.clear_dirtybytes" ID="NetFH.clear_dirtybytes"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.clear_dirtybytes</h3>
+<b>clear_dirtybytes</b>(<i>position=None</i>)
+<p>
+Entfernt die konfigurierten Dirtybytes vom RevPi Slave.
+</p><dl>
+<dt><i>position</i></dt>
+<dd>
+Startposition der Dirtybytes
+</dd>
+</dl><a NAME="NetFH.close" ID="NetFH.close"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.close</h3>
+<b>close</b>(<i></i>)
+<p>
+Verbindung trennen.
+</p><a NAME="NetFH.flush" ID="NetFH.flush"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.flush</h3>
+<b>flush</b>(<i></i>)
+<p>
+Schreibpuffer senden.
+</p><a NAME="NetFH.get_closed" ID="NetFH.get_closed"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.get_closed</h3>
+<b>get_closed</b>(<i></i>)
+<p>
+Pruefen ob Verbindung geschlossen ist.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn Verbindung geschlossen ist
+</dd>
+</dl><a NAME="NetFH.get_name" ID="NetFH.get_name"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.get_name</h3>
+<b>get_name</b>(<i></i>)
+<p>
+Verbindugnsnamen zurueckgeben.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+<class 'str'> IP:PORT
+</dd>
+</dl><a NAME="NetFH.get_timeout" ID="NetFH.get_timeout"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.get_timeout</h3>
+<b>get_timeout</b>(<i></i>)
+<p>
+Gibt aktuellen Timeout zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+<class 'int'> in Millisekunden
+</dd>
+</dl><a NAME="NetFH.read" ID="NetFH.read"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.read</h3>
+<b>read</b>(<i>length</i>)
+<p>
+Daten ueber das Netzwerk lesen.
+</p><dl>
+<dt><i>length</i></dt>
+<dd>
+Anzahl der Bytes
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+Gelesene <class 'bytes'>
+</dd>
+</dl><a NAME="NetFH.readpictory" ID="NetFH.readpictory"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.readpictory</h3>
+<b>readpictory</b>(<i></i>)
+<p>
+Ruft die piCtory Konfiguration ab.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+<class 'bytes'> piCtory Datei
+</dd>
+</dl><a NAME="NetFH.run" ID="NetFH.run"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.run</h3>
+<b>run</b>(<i></i>)
+<p>
+Handler fuer Synchronisierung.
+</p><a NAME="NetFH.seek" ID="NetFH.seek"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.seek</h3>
+<b>seek</b>(<i>position</i>)
+<p>
+Springt an angegebene Position.
+</p><dl>
+<dt><i>position</i></dt>
+<dd>
+An diese Position springen
+</dd>
+</dl><a NAME="NetFH.set_dirtybytes" ID="NetFH.set_dirtybytes"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.set_dirtybytes</h3>
+<b>set_dirtybytes</b>(<i>position, dirtybytes</i>)
+<p>
+Konfiguriert Dirtybytes fuer Prozessabbild bei Verbindungsfehler.
+</p><dl>
+<dt><i>positon</i></dt>
+<dd>
+Startposition zum Schreiben
+</dd><dt><i>dirtybytes</i></dt>
+<dd>
+<class 'bytes'> die geschrieben werden sollen
+</dd>
+</dl><a NAME="NetFH.set_timeout" ID="NetFH.set_timeout"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.set_timeout</h3>
+<b>set_timeout</b>(<i>value</i>)
+<p>
+Setzt Timeoutwert fuer Verbindung.
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+Timeout in Millisekunden
+</dd>
+</dl><a NAME="NetFH.tell" ID="NetFH.tell"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.tell</h3>
+<b>tell</b>(<i></i>)
+<p>
+Gibt aktuelle Position zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+int aktuelle Position
+</dd>
+</dl><a NAME="NetFH.write" ID="NetFH.write"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.write</h3>
+<b>write</b>(<i>bytebuff</i>)
+<p>
+Daten ueber das Netzwerk schreiben.
+</p><dl>
+<dt><i>bytebuff</i></dt>
+<dd>
+Bytes zum schreiben
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+<class 'int'> Anzahl geschriebener bytes
+</dd>
+</dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="RevPiNetIO" ID="RevPiNetIO"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">RevPiNetIO</h2>
+<p>
+Klasse fuer die Verwaltung der piCtory Konfiguration ueber das Netzwerk.
+</p><p>
+    Diese Klasse uebernimmt die gesamte Konfiguration aus piCtory und bilded
+    die Devices und IOs ab. Sie uebernimmt die exklusive Verwaltung des
+    Prozessabbilds und stellt sicher, dass die Daten synchron sind.
+    Sollten nur einzelne Devices gesteuert werden, verwendet man
+    RevPiModIOSelected() und uebergibt bei Instantiierung eine Liste mit
+    Device Positionen oder Device Namen.
+</p><p>
+
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+_RevPiModIO
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#RevPiNetIO.__init__">RevPiNetIO</a></td>
+<td>Instantiiert die Grundfunktionen.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#RevPiNetIO._create_myfh">_create_myfh</a></td>
+<td>Erstellt NetworkFileObject.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#RevPiNetIO.get_jconfigrsc">get_jconfigrsc</a></td>
+<td>Laed die piCotry Konfiguration und erstellt ein <class 'dict'>.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#RevPiNetIO.net_cleardefaultvalues">net_cleardefaultvalues</a></td>
+<td>Loescht Defaultwerte vom PLC Slave.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#RevPiNetIO.net_setdefaultvalues">net_setdefaultvalues</a></td>
+<td>Konfiguriert den PLC Slave mit den piCtory Defaultwerten.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="RevPiNetIO.__init__" ID="RevPiNetIO.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiNetIO (Constructor)</h3>
+<b>RevPiNetIO</b>(<i>address, autorefresh=False, monitoring=False, syncoutputs=True, simulator=False</i>)
+<p>
+Instantiiert die Grundfunktionen.
+</p><dl>
+<dt><i>address:</i></dt>
+<dd>
+IP-Adresse <class 'str'> / (IP, Port) <class 'tuple'>
+</dd><dt><i>autorefresh</i></dt>
+<dd>
+Wenn True, alle Devices zu autorefresh hinzufuegen
+</dd><dt><i>monitoring</i></dt>
+<dd>
+In- und Outputs werden gelesen, niemals geschrieben
+</dd><dt><i>syncoutputs</i></dt>
+<dd>
+Aktuell gesetzte Outputs vom Prozessabbild einlesen
+</dd><dt><i>simulator</i></dt>
+<dd>
+Laed das Modul als Simulator und vertauscht IOs
+</dd>
+</dl><a NAME="RevPiNetIO._create_myfh" ID="RevPiNetIO._create_myfh"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiNetIO._create_myfh</h3>
+<b>_create_myfh</b>(<i></i>)
+<p>
+Erstellt NetworkFileObject.
+        return FileObject
+</p><a NAME="RevPiNetIO.get_jconfigrsc" ID="RevPiNetIO.get_jconfigrsc"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiNetIO.get_jconfigrsc</h3>
+<b>get_jconfigrsc</b>(<i></i>)
+<p>
+Laed die piCotry Konfiguration und erstellt ein <class 'dict'>.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+<class 'dict'> der piCtory Konfiguration
+</dd>
+</dl><a NAME="RevPiNetIO.net_cleardefaultvalues" ID="RevPiNetIO.net_cleardefaultvalues"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiNetIO.net_cleardefaultvalues</h3>
+<b>net_cleardefaultvalues</b>(<i>device=None</i>)
+<p>
+Loescht Defaultwerte vom PLC Slave.
+</p><dl>
+<dt><i>device</i></dt>
+<dd>
+nur auf einzelnes Device anwenden, sonst auf Alle
+</dd>
+</dl><a NAME="RevPiNetIO.net_setdefaultvalues" ID="RevPiNetIO.net_setdefaultvalues"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiNetIO.net_setdefaultvalues</h3>
+<b>net_setdefaultvalues</b>(<i>device=None</i>)
+<p>
+Konfiguriert den PLC Slave mit den piCtory Defaultwerten.
+</p><dl>
+<dt><i>device</i></dt>
+<dd>
+nur auf einzelnes Device anwenden, sonst auf Alle
+</dd>
+</dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="RevPiNetIODriver" ID="RevPiNetIODriver"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">RevPiNetIODriver</h2>
+<p>
+Klasse um eigene Treiber fuer die virtuellen Devices zu erstellen.
+</p><p>
+    Mit dieser Klasse werden nur angegebene Virtuelle Devices mit RevPiModIO
+    verwaltet. Bei Instantiierung werden automatisch die Inputs und Outputs
+    verdreht, um das Schreiben der Inputs zu ermoeglichen. Die Daten koennen
+    dann ueber logiCAD an den Devices abgerufen werden.
+</p><p>
+
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+RevPiNetIOSelected
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#RevPiNetIODriver.__init__">RevPiNetIODriver</a></td>
+<td>Instantiiert die Grundfunktionen.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="RevPiNetIODriver.__init__" ID="RevPiNetIODriver.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiNetIODriver (Constructor)</h3>
+<b>RevPiNetIODriver</b>(<i>address, virtdev, autorefresh=False, monitoring=False, syncoutputs=True</i>)
+<p>
+Instantiiert die Grundfunktionen.
+</p><p>
+        Parameter 'monitoring' und 'simulator' stehen hier nicht zur
+        Verfuegung, da diese automatisch gesetzt werden.
+</p><dl>
+<dt><i>address:</i></dt>
+<dd>
+IP-Adresse <class 'str'> / (IP, Port) <class 'tuple'>
+</dd><dt><i>virtdev</i></dt>
+<dd>
+Virtuelles Device oder mehrere als <class 'list'>
+</dd>
+</dl><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" href="#RevPiModIO.__init__">RevPiModIO.__init__(...)</a>
+</dd>
+</dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="RevPiNetIOSelected" ID="RevPiNetIOSelected"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">RevPiNetIOSelected</h2>
+<p>
+Klasse fuer die Verwaltung einzelner Devices aus piCtory.
+</p><p>
+    Diese Klasse uebernimmt nur angegebene Devices der piCtory Konfiguration
+    und bilded sie inkl. IOs ab. Sie uebernimmt die exklusive Verwaltung des
+    Adressbereichs im Prozessabbild an dem sich die angegebenen Devices
+    befinden und stellt sicher, dass die Daten synchron sind.
+</p><p>
+
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+RevPiNetIO
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#RevPiNetIOSelected.__init__">RevPiNetIOSelected</a></td>
+<td>Instantiiert nur fuer angegebene Devices die Grundfunktionen.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="RevPiNetIOSelected.__init__" ID="RevPiNetIOSelected.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiNetIOSelected (Constructor)</h3>
+<b>RevPiNetIOSelected</b>(<i>address, deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, simulator=False</i>)
+<p>
+Instantiiert nur fuer angegebene Devices die Grundfunktionen.
+</p><p>
+        Der Parameter deviceselection kann eine einzelne
+        Device Position / einzelner Device Name sein oder eine Liste mit
+        mehreren Positionen / Namen
+</p><dl>
+<dt><i>address:</i></dt>
+<dd>
+IP-Adresse <class 'str'> / (IP, Port) <class 'tuple'>
+</dd><dt><i>deviceselection</i></dt>
+<dd>
+Positionsnummer oder Devicename
+</dd>
+</dl><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" href="#RevPiNetIO.__init__">RevPiNetIO.__init__(...)</a>
+</dd>
+</dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr />
+</body></html>
