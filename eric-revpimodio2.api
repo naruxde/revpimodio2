@@ -182,6 +182,7 @@ revpimodio2.netio.NetFH.timeout?7
 revpimodio2.netio.NetFH.write?4(bytebuff)
 revpimodio2.netio.NetFH?1(address, timeout=500)
 revpimodio2.netio.RevPiNetIO._create_myfh?5()
+revpimodio2.netio.RevPiNetIO.disconnect?4()
 revpimodio2.netio.RevPiNetIO.get_jconfigrsc?4()
 revpimodio2.netio.RevPiNetIO.net_cleardefaultvalues?4(device=None)
 revpimodio2.netio.RevPiNetIO.net_setdefaultvalues?4(device=None)

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project revpimodio2 -->
-<!-- Saved: 2017-11-06, 13:58:17 -->
+<!-- Saved: 2017-11-11, 16:19:49 -->
 <!-- Copyright (C) 2017 Sven Sager, akira@narux.de -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -34,6 +34,7 @@
     <Source>test/web_benniesrunxxl.py</Source>
     <Source>test/test_unit.py</Source>
     <Source>test/test_unitnet.py</Source>
+    <Source>test/test_netio_brett.py</Source>
   </Sources>
   <Forms/>
   <Translations/>

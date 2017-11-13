@@ -386,19 +386,10 @@ class RevPiNetIO(_RevPiModIO):
         @param simulator Laed das Modul als Simulator und vertauscht IOs
 
         """
-
-        # Objekte die auch schon bei Fehler benötigt werden
-        self._exit = Event()
-        self._imgwriter = None
-        self._lst_refresh = []
-        self._myfh = None
-        self._waitexit = Event()
-
         # Adresse verarbeiten
         if type(address) == str:
             # TODO: IP-Adresse prüfen
             self._address = (address, 55234)
-
         elif type(address) == tuple:
             if len(address) == 2 \
                     and type(address[0]) == str \
@@ -410,11 +401,15 @@ class RevPiNetIO(_RevPiModIO):
                     raise ValueError("port number out of range 1 - 65535")
 
                 self._address = address
-
             else:
                 raise ValueError(
                     "address tuple must be (<class 'str'>, <class 'int'>)"
                 )
+        else:
+            raise ValueError(
+                "parameter address must be <class 'str'> or <class 'tuple'> "
+                "like (<class 'str'>, <class 'int'>)"
+            )
 
         # Vererben
         super().__init__(
@@ -438,6 +433,10 @@ class RevPiNetIO(_RevPiModIO):
         return FileObject"""
         self._buffedwrite = True
         return NetFH(self._address)
+
+    def disconnect(self):
+        """Trennt Verbindungen und beendet autorefresh inkl. alle Threads."""
+        self.cleanup()
 
     def get_jconfigrsc(self):
         """Laed die piCotry Konfiguration und erstellt ein <class 'dict'>.
