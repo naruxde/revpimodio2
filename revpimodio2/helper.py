@@ -401,23 +401,9 @@ class ProcimgWriter(Thread):
         """Startet die automatische Prozessabbildsynchronisierung."""
         fh = self._modio._create_myfh()
         self._adjwait = self._refresh
+
         while not self._work.is_set():
             ot = default_timer()
-
-            # Verzögerte Events prüfen
-            # NOTE: Darf dies VOR der Aktualisierung der Daten gemacht werden?
-            if self.__eventwork:
-                for tup_fire in list(self.__dict_delay.keys()):
-                    if tup_fire[0][4] \
-                            and getattr(self._modio.io, tup_fire[1]).value != \
-                            tup_fire[2]:
-                        del self.__dict_delay[tup_fire]
-                    else:
-                        self.__dict_delay[tup_fire] -= 1
-                        if self.__dict_delay[tup_fire] <= 1:
-                            # Verzögertes Event übernehmen und löschen
-                            self._eventq.put(tup_fire, False)
-                            del self.__dict_delay[tup_fire]
 
             # Lockobjekt holen und Fehler werfen, wenn nicht schnell genug
             if not self.lck_refresh.acquire(timeout=self._adjwait):
@@ -427,63 +413,67 @@ class ProcimgWriter(Thread):
                     ),
                     RuntimeWarning
                 )
+                # Verzögerte Events pausieren an dieser Stelle
                 continue
 
             try:
                 fh.seek(0)
                 bytesbuff = bytearray(fh.read(self._modio._length))
+
+                if self._modio._monitoring:
+                    # Inputs und Outputs in Puffer
+                    for dev in self._modio._lst_refresh:
+                        dev._filelock.acquire()
+                        dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
+                        if self.__eventwork \
+                                and len(dev._dict_events) > 0 \
+                                and dev._ba_datacp != dev._ba_devdata:
+                            self.__check_change(dev)
+                        dev._filelock.release()
+                else:
+                    # Inputs in Puffer, Outputs in Prozessabbild
+                    for dev in self._modio._lst_refresh:
+                        with dev._filelock:
+                            dev._ba_devdata[dev._slc_inp] = \
+                                bytesbuff[dev._slc_inpoff]
+                            if self.__eventwork\
+                                    and len(dev._dict_events) > 0 \
+                                    and dev._ba_datacp != dev._ba_devdata:
+                                self.__check_change(dev)
+
+                            fh.seek(dev._slc_outoff.start)
+                            fh.write(dev._ba_devdata[dev._slc_out])
+
+                    if self._modio._buffedwrite:
+                        fh.flush()
+
             except IOError:
                 self._gotioerror()
                 self.lck_refresh.release()
-                self._work.wait(self._adjwait)
                 continue
 
-            if self._modio._monitoring:
-                # Inputs und Outputs in Puffer
-                for dev in self._modio._lst_refresh:
-                    dev._filelock.acquire()
-                    dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
-                    if self.__eventwork \
-                            and len(dev._dict_events) > 0 \
-                            and dev._ba_datacp != dev._ba_devdata:
-                        self.__check_change(dev)
-                    dev._filelock.release()
             else:
-                # Inputs in Puffer, Outputs in Prozessabbild
-                ioerr = False
-                for dev in self._modio._lst_refresh:
-                    dev._filelock.acquire()
-                    dev._ba_devdata[dev._slc_inp] = bytesbuff[dev._slc_inpoff]
-                    if self.__eventwork\
-                            and len(dev._dict_events) > 0 \
-                            and dev._ba_datacp != dev._ba_devdata:
-                        self.__check_change(dev)
+                # Alle aufwecken
+                self.lck_refresh.release()
+                self.newdata.set()
 
-                    try:
-                        fh.seek(dev._slc_outoff.start)
-                        fh.write(dev._ba_devdata[dev._slc_out])
-                    except IOError:
-                        ioerr = True
-                    finally:
-                        dev._filelock.release()
+            finally:
+                # Verzögerte Events prüfen
+                if self.__eventwork:
+                    for tup_fire in list(self.__dict_delay.keys()):
+                        if tup_fire[0][4] \
+                                and getattr(self._modio.io, tup_fire[1]).value != \
+                                tup_fire[2]:
+                            del self.__dict_delay[tup_fire]
+                        else:
+                            self.__dict_delay[tup_fire] -= 1
+                            if self.__dict_delay[tup_fire] <= 0:
+                                # Verzögertes Event übernehmen und löschen
+                                self._eventq.put(tup_fire, False)
+                                del self.__dict_delay[tup_fire]
 
-                if self._modio._buffedwrite:
-                    try:
-                        fh.flush()
-                    except IOError:
-                        ioerr = True
-
-                if ioerr:
-                    self._gotioerror()
-                    self.lck_refresh.release()
-                    self._work.wait(self._adjwait)
-                    continue
-
-            self.lck_refresh.release()
-
-            # Alle aufwecken
-            self.newdata.set()
-            self._work.wait(self._adjwait)
+                # Refresh abwarten
+                self._work.wait(self._adjwait)
 
             # Wartezeit anpassen um echte self._refresh zu erreichen
             if default_timer() - ot >= self._refresh:
