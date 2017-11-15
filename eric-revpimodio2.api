@@ -70,6 +70,7 @@ revpimodio2.helper.Cycletools?1(cycletime)
 revpimodio2.helper.EventCallback.run?4()
 revpimodio2.helper.EventCallback.stop?4()
 revpimodio2.helper.EventCallback?1(func, name, value)
+revpimodio2.helper.ProcimgWriter._collect_events?5(value)
 revpimodio2.helper.ProcimgWriter._get_ioerrors?5()
 revpimodio2.helper.ProcimgWriter._gotioerror?5()
 revpimodio2.helper.ProcimgWriter.get_maxioerrors?4()
@@ -149,7 +150,7 @@ revpimodio2.modio.RevPiModIO.get_jconfigrsc?4()
 revpimodio2.modio.RevPiModIO.handlesignalend?4(cleanupfunc=None)
 revpimodio2.modio.RevPiModIO.ioerrors?7
 revpimodio2.modio.RevPiModIO.length?7
-revpimodio2.modio.RevPiModIO.mainloop?4(freeze=False, blocking=True)
+revpimodio2.modio.RevPiModIO.mainloop?4(blocking=True)
 revpimodio2.modio.RevPiModIO.maxioerrors?7
 revpimodio2.modio.RevPiModIO.monitoring?7
 revpimodio2.modio.RevPiModIO.procimg?7

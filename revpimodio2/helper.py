@@ -6,10 +6,12 @@
 # (c) Sven Sager, License: LGPLv3
 #
 """RevPiModIO Helperklassen und Tools."""
+import queue
 import warnings
 from math import ceil
 from threading import Event, Lock, Thread
 from timeit import default_timer
+from revpimodio2 import RISING, FALLING, BOTH
 
 
 class EventCallback(Thread):
@@ -281,7 +283,10 @@ class ProcimgWriter(Thread):
         """Init ProcimgWriter class.
         @param parentmodio Parent Object"""
         super().__init__()
+        self.__dict_delay = {}
+        self.__eventwork = False
         self._adjwait = 0
+        self._eventq = queue.Queue()
         self._ioerror = 0
         self._maxioerrors = 0
         self._modio = parentmodio
@@ -291,6 +296,77 @@ class ProcimgWriter(Thread):
         self.daemon = True
         self.lck_refresh = Lock()
         self.newdata = Event()
+
+    def __check_change(self, dev):
+        """Findet Aenderungen fuer die Eventueberwachung."""
+        for io_event in dev._dict_events:
+
+            if dev._ba_datacp[io_event._slc_address] == \
+                    dev._ba_devdata[io_event._slc_address]:
+                continue
+
+            if io_event._bitaddress >= 0:
+                boolcp = bool(int.from_bytes(
+                    dev._ba_datacp[io_event._slc_address],
+                    byteorder=io_event._byteorder
+                ) & 1 << io_event._bitaddress)
+                boolor = bool(int.from_bytes(
+                    dev._ba_devdata[io_event._slc_address],
+                    byteorder=io_event._byteorder
+                ) & 1 << io_event._bitaddress)
+
+                if boolor == boolcp:
+                    continue
+
+                for regfunc in dev._dict_events[io_event]:
+                    if regfunc[1] == BOTH \
+                            or regfunc[1] == RISING and boolor \
+                            or regfunc[1] == FALLING and not boolor:
+                        if regfunc[3] == 0:
+                            self._eventq.put(
+                                (regfunc, io_event._name, io_event.value),
+                                False
+                            )
+                        else:
+                            # Verzögertes Event in dict einfügen
+                            tupfire = (
+                                regfunc, io_event._name, io_event.value
+                            )
+                            if regfunc[4] or tupfire not in self.__dict_delay:
+                                self.__dict_delay[tupfire] = ceil(
+                                    regfunc[3] / 1000 / self._refresh
+                                )
+            else:
+                for regfunc in dev._dict_events[io_event]:
+                    if regfunc[3] == 0:
+                        self._eventq.put(
+                            (regfunc, io_event._name, io_event.value),
+                            False
+                        )
+                    else:
+                        # Verzögertes Event in dict einfügen
+                        tupfire = (
+                            regfunc, io_event._name, io_event.value
+                        )
+                        if regfunc[4] or tupfire not in self.__dict_delay:
+                            self.__dict_delay[tupfire] = ceil(
+                                regfunc[3] / 1000 / self._refresh
+                            )
+
+        # Nach Verarbeitung aller IOs die Bytes kopieren (Lock ist noch drauf)
+        dev._ba_datacp = dev._ba_devdata[:]
+
+    def _collect_events(self, value):
+        """Aktiviert oder Deaktiviert die Eventueberwachung.
+        @param value True aktiviert / False deaktiviert"""
+        if type(value) != bool:
+            raise ValueError("value must be <class 'bool'>")
+
+        if self.__eventwork != value:
+            with self.lck_refresh:
+                self.__eventwork = value
+                self._eventq = queue.Queue()
+                self.__dict_delay = {}
 
     def _get_ioerrors(self):
         """Ruft aktuelle Anzahl der Fehler ab.
@@ -328,6 +404,21 @@ class ProcimgWriter(Thread):
         while not self._work.is_set():
             ot = default_timer()
 
+            # Verzögerte Events prüfen
+            # NOTE: Darf dies VOR der Aktualisierung der Daten gemacht werden?
+            if self.__eventwork:
+                for tup_fire in list(self.__dict_delay.keys()):
+                    if tup_fire[0][4] \
+                            and getattr(self._modio.io, tup_fire[1]).value != \
+                            tup_fire[2]:
+                        del self.__dict_delay[tup_fire]
+                    else:
+                        self.__dict_delay[tup_fire] -= 1
+                        if self.__dict_delay[tup_fire] <= 1:
+                            # Verzögertes Event übernehmen und löschen
+                            self._eventq.put(tup_fire, False)
+                            del self.__dict_delay[tup_fire]
+
             # Lockobjekt holen und Fehler werfen, wenn nicht schnell genug
             if not self.lck_refresh.acquire(timeout=self._adjwait):
                 warnings.warn(
@@ -352,6 +443,10 @@ class ProcimgWriter(Thread):
                 for dev in self._modio._lst_refresh:
                     dev._filelock.acquire()
                     dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
+                    if self.__eventwork \
+                            and len(dev._dict_events) > 0 \
+                            and dev._ba_datacp != dev._ba_devdata:
+                        self.__check_change(dev)
                     dev._filelock.release()
             else:
                 # Inputs in Puffer, Outputs in Prozessabbild
@@ -359,6 +454,11 @@ class ProcimgWriter(Thread):
                 for dev in self._modio._lst_refresh:
                     dev._filelock.acquire()
                     dev._ba_devdata[dev._slc_inp] = bytesbuff[dev._slc_inpoff]
+                    if self.__eventwork\
+                            and len(dev._dict_events) > 0 \
+                            and dev._ba_datacp != dev._ba_devdata:
+                        self.__check_change(dev)
+
                     try:
                         fh.seek(dev._slc_outoff.start)
                         fh.write(dev._ba_devdata[dev._slc_out])
