@@ -284,6 +284,8 @@ class ProcimgWriter(Thread):
         @param parentmodio Parent Object"""
         super().__init__()
         self.__dict_delay = {}
+        self.__eventth = None
+        self.__eventqth = queue.Queue()
         self.__eventwork = False
         self._adjwait = 0
         self._eventq = queue.Queue()
@@ -323,10 +325,16 @@ class ProcimgWriter(Thread):
                             or regfunc[1] == RISING and boolor \
                             or regfunc[1] == FALLING and not boolor:
                         if regfunc[3] == 0:
-                            self._eventq.put(
-                                (regfunc, io_event._name, io_event.value),
-                                False
-                            )
+                            if regfunc[2]:
+                                self.__eventqth.put(
+                                    (regfunc, io_event._name, io_event.value),
+                                    False
+                                )
+                            else:
+                                self._eventq.put(
+                                    (regfunc, io_event._name, io_event.value),
+                                    False
+                                )
                         else:
                             # Verzögertes Event in dict einfügen
                             tupfire = (
@@ -339,10 +347,16 @@ class ProcimgWriter(Thread):
             else:
                 for regfunc in dev._dict_events[io_event]:
                     if regfunc[3] == 0:
-                        self._eventq.put(
-                            (regfunc, io_event._name, io_event.value),
-                            False
-                        )
+                        if regfunc[2]:
+                            self.__eventqth.put(
+                                (regfunc, io_event._name, io_event.value),
+                                False
+                            )
+                        else:
+                            self._eventq.put(
+                                (regfunc, io_event._name, io_event.value),
+                                False
+                            )
                     else:
                         # Verzögertes Event in dict einfügen
                         tupfire = (
@@ -356,6 +370,19 @@ class ProcimgWriter(Thread):
         # Nach Verarbeitung aller IOs die Bytes kopieren (Lock ist noch drauf)
         dev._ba_datacp = dev._ba_devdata[:]
 
+    def __exec_th(self):
+        """Fuehrt Events aus, die als Thread registriert wurden."""
+        while self.__eventwork:
+            try:
+                tup_fireth = self.__eventqth.get(timeout=1)
+                th = EventCallback(
+                    tup_fireth[0][0], tup_fireth[1], tup_fireth[2]
+                )
+                th.start()
+                # TODO: Error handling
+            except queue.Empty:
+                pass
+
     def _collect_events(self, value):
         """Aktiviert oder Deaktiviert die Eventueberwachung.
         @param value True aktiviert / False deaktiviert"""
@@ -365,8 +392,12 @@ class ProcimgWriter(Thread):
         if self.__eventwork != value:
             with self.lck_refresh:
                 self.__eventwork = value
+                self.__eventqth = queue.Queue()
                 self._eventq = queue.Queue()
                 self.__dict_delay = {}
+            if value:
+                self.__eventth = Thread(target=self.__exec_th)
+                self.__eventth.start()
 
     def _get_ioerrors(self):
         """Ruft aktuelle Anzahl der Fehler ab.
@@ -469,7 +500,10 @@ class ProcimgWriter(Thread):
                             self.__dict_delay[tup_fire] -= 1
                             if self.__dict_delay[tup_fire] <= 0:
                                 # Verzögertes Event übernehmen und löschen
-                                self._eventq.put(tup_fire, False)
+                                if tup_fire[0][2]:
+                                    self.__eventqth.put(tup_fire, False)
+                                else:
+                                    self._eventq.put(tup_fire, False)
                                 del self.__dict_delay[tup_fire]
 
                 # Refresh abwarten
@@ -490,6 +524,7 @@ class ProcimgWriter(Thread):
                 self._adjwait += 0.001
 
         # Alle am Ende erneut aufwecken
+        self._collect_events(False)
         self.newdata.set()
         fh.close()
 

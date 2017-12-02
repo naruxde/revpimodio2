@@ -539,14 +539,8 @@ class RevPiModIO(object):
         while not self._exit.is_set():
             try:
                 tup_fire = self._imgwriter._eventq.get(timeout=1)
-                if tup_fire[0][2]:
-                    th = helpermodule.EventCallback(
-                        tup_fire[0][0], tup_fire[1], tup_fire[2]
-                    )
-                    th.start()
-                else:
-                    # Direct callen da Prüfung in io.IOBase.reg_event ist
-                    tup_fire[0][0](tup_fire[1], tup_fire[2])
+                # Direct callen da Prüfung in io.IOBase.reg_event ist
+                tup_fire[0][0](tup_fire[1], tup_fire[2])
             except Empty:
                 if not self._exit.is_set() and not self._imgwriter.is_alive():
                     self.exit(full=False)
