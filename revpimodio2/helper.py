@@ -284,7 +284,7 @@ class ProcimgWriter(Thread):
         @param parentmodio Parent Object"""
         super().__init__()
         self.__dict_delay = {}
-        self.__eventth = None
+        self.__eventth = Thread(target=self.__exec_th)
         self.__eventqth = queue.Queue()
         self.__eventwork = False
         self._adjwait = 0
@@ -396,7 +396,9 @@ class ProcimgWriter(Thread):
                 self.__eventqth = queue.Queue()
                 self._eventq = queue.Queue()
                 self.__dict_delay = {}
-            if value:
+
+            # Threadmanagement
+            if value and not self.__eventth.is_alive():
                 self.__eventth = Thread(target=self.__exec_th)
                 self.__eventth.start()
 
