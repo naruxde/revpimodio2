@@ -321,11 +321,11 @@ class ProcimgWriter(Thread):
                     continue
 
                 for regfunc in dev._dict_events[io_event]:
-                    if regfunc[1] == BOTH \
-                            or regfunc[1] == RISING and boolor \
-                            or regfunc[1] == FALLING and not boolor:
-                        if regfunc[3] == 0:
-                            if regfunc[2]:
+                    if regfunc.edge == BOTH \
+                            or regfunc.edge == RISING and boolor \
+                            or regfunc.edge == FALLING and not boolor:
+                        if regfunc.delay == 0:
+                            if regfunc.as_thread:
                                 self.__eventqth.put(
                                     (regfunc, io_event._name, io_event.value),
                                     False
@@ -340,14 +340,15 @@ class ProcimgWriter(Thread):
                             tupfire = (
                                 regfunc, io_event._name, io_event.value
                             )
-                            if regfunc[4] or tupfire not in self.__dict_delay:
+                            if regfunc.overwrite \
+                                    or tupfire not in self.__dict_delay:
                                 self.__dict_delay[tupfire] = ceil(
-                                    regfunc[3] / 1000 / self._refresh
+                                    regfunc.delay / 1000 / self._refresh
                                 )
             else:
                 for regfunc in dev._dict_events[io_event]:
-                    if regfunc[3] == 0:
-                        if regfunc[2]:
+                    if regfunc.delay == 0:
+                        if regfunc.as_thread:
                             self.__eventqth.put(
                                 (regfunc, io_event._name, io_event.value),
                                 False
@@ -362,9 +363,10 @@ class ProcimgWriter(Thread):
                         tupfire = (
                             regfunc, io_event._name, io_event.value
                         )
-                        if regfunc[4] or tupfire not in self.__dict_delay:
+                        if regfunc.overwrite \
+                                or tupfire not in self.__dict_delay:
                             self.__dict_delay[tupfire] = ceil(
-                                regfunc[3] / 1000 / self._refresh
+                                regfunc.delay / 1000 / self._refresh
                             )
 
         # Nach Verarbeitung aller IOs die Bytes kopieren (Lock ist noch drauf)
@@ -376,10 +378,9 @@ class ProcimgWriter(Thread):
             try:
                 tup_fireth = self.__eventqth.get(timeout=1)
                 th = EventCallback(
-                    tup_fireth[0][0], tup_fireth[1], tup_fireth[2]
+                    tup_fireth[0].func, tup_fireth[1], tup_fireth[2]
                 )
                 th.start()
-                # TODO: Error handling
             except queue.Empty:
                 pass
 
@@ -492,7 +493,7 @@ class ProcimgWriter(Thread):
                 # Verzögerte Events prüfen
                 if self.__eventwork:
                     for tup_fire in list(self.__dict_delay.keys()):
-                        if tup_fire[0][4] \
+                        if tup_fire[0].overwrite \
                                 and getattr(self._modio.io, tup_fire[1]).value != \
                                 tup_fire[2]:
                             del self.__dict_delay[tup_fire]
@@ -500,7 +501,7 @@ class ProcimgWriter(Thread):
                             self.__dict_delay[tup_fire] -= 1
                             if self.__dict_delay[tup_fire] <= 0:
                                 # Verzögertes Event übernehmen und löschen
-                                if tup_fire[0][2]:
+                                if tup_fire[0].as_thread:
                                     self.__eventqth.put(tup_fire, False)
                                 else:
                                     self._eventq.put(tup_fire, False)
@@ -530,6 +531,7 @@ class ProcimgWriter(Thread):
 
     def stop(self):
         """Beendet die automatische Prozessabbildsynchronisierung."""
+        self._collect_events(False)
         self._work.set()
 
     def set_maxioerrors(self, value):

@@ -418,7 +418,6 @@ class RevPiModIO(object):
             if self._imgwriter is not None and self._imgwriter.is_alive():
                 self._imgwriter.stop()
                 self._imgwriter.join(self._imgwriter._refresh)
-            # NOTE: Prüfen, ob es sauber läuft!
             if self._th_mainloop is not None and self._th_mainloop.is_alive():
                 self._th_mainloop.join(1)
             while len(self._lst_refresh) > 0:
@@ -426,7 +425,6 @@ class RevPiModIO(object):
                 dev._selfupdate = False
                 if not self._monitoring:
                     self.writeprocimg(dev)
-        # NOTE: Loops müssen sich selber IMMER sauber beenden
 
     def get_jconfigrsc(self):
         """Laed die piCotry Konfiguration und erstellt ein <class 'dict'>.
@@ -540,7 +538,7 @@ class RevPiModIO(object):
             try:
                 tup_fire = self._imgwriter._eventq.get(timeout=1)
                 # Direct callen da Prüfung in io.IOBase.reg_event ist
-                tup_fire[0][0](tup_fire[1], tup_fire[2])
+                tup_fire[0].func(tup_fire[1], tup_fire[2])
             except Empty:
                 if not self._exit.is_set() and not self._imgwriter.is_alive():
                     self.exit(full=False)

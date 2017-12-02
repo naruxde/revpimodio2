@@ -24,6 +24,9 @@ Classes</h3>
 <td><a style="color:#0000FF" href="#IOBase">IOBase</a></td>
 <td>Basisklasse fuer alle IO-Objekte.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#IOEvent">IOEvent</a></td>
+<td>Basisklasse fuer IO-Events.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#IOList">IOList</a></td>
 <td>Basisklasse fuer direkten Zugriff auf IO Objekte.</td>
 </tr><tr>
@@ -141,6 +144,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#IOBase.__len__">__len__</a></td>
 <td>Gibt die Bytelaenge des IO zurueck.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#IOBase.__reg_xevent">__reg_xevent</a></td>
+<td>Verwaltet reg_event und reg_timerevent.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.__str__">__str__</a></td>
 <td><class 'str'>-Wert der Klasse.</td>
 </tr><tr>
@@ -227,6 +233,29 @@ Gibt die Bytelaenge des IO zurueck.
 <dt>Returns:</dt>
 <dd>
 Bytelaenge des IO - 0 bei BITs
+</dd>
+</dl><a NAME="IOBase.__reg_xevent" ID="IOBase.__reg_xevent"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOBase.__reg_xevent</h3>
+<b>__reg_xevent</b>(<i>func, delay, edge, as_thread, overwrite</i>)
+<p>
+Verwaltet reg_event und reg_timerevent.
+</p><dl>
+<dt><i>func</i></dt>
+<dd>
+Funktion die bei Aenderung aufgerufen werden soll
+</dd><dt><i>delay</i></dt>
+<dd>
+Verzoegerung in ms zum Ausloesen - auch bei Wertaenderung
+</dd><dt><i>edge</i></dt>
+<dd>
+Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
+</dd><dt><i>as_thread</i></dt>
+<dd>
+Bei True, Funktion als EventCallback-Thread ausfuehren
+</dd><dt><i>overwrite</i></dt>
+<dd>
+Wenn True, wird Event bei ueberschrieben
 </dd>
 </dl><a NAME="IOBase.__str__" ID="IOBase.__str__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -466,6 +495,46 @@ Zeit in ms nach der abgebrochen wird
                 Wert 100: Devicelist.exit() wurde aufgerufen
 </dd>
 </dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="IOEvent" ID="IOEvent"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">IOEvent</h2>
+<p>
+Basisklasse fuer IO-Events.
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+object
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#IOEvent.__init__">IOEvent</a></td>
+<td>Init IOEvent class.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="IOEvent.__init__" ID="IOEvent.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IOEvent (Constructor)</h3>
+<b>IOEvent</b>(<i>func, edge, as_thread, delay, overwrite</i>)
+<p>
+Init IOEvent class.
+</p>
 <div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
 <hr /><hr />
 <a NAME="IOList" ID="IOList"></a>
