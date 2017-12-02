@@ -6,10 +6,12 @@
 # (c) Sven Sager, License: LGPLv3
 #
 """RevPiModIO Helperklassen und Tools."""
+import queue
 import warnings
 from math import ceil
 from threading import Event, Lock, Thread
 from timeit import default_timer
+from revpimodio2 import RISING, FALLING, BOTH
 
 
 class EventCallback(Thread):
@@ -281,7 +283,12 @@ class ProcimgWriter(Thread):
         """Init ProcimgWriter class.
         @param parentmodio Parent Object"""
         super().__init__()
+        self.__dict_delay = {}
+        self.__eventth = Thread(target=self.__exec_th)
+        self.__eventqth = queue.Queue()
+        self.__eventwork = False
         self._adjwait = 0
+        self._eventq = queue.Queue()
         self._ioerror = 0
         self._maxioerrors = 0
         self._modio = parentmodio
@@ -291,6 +298,109 @@ class ProcimgWriter(Thread):
         self.daemon = True
         self.lck_refresh = Lock()
         self.newdata = Event()
+
+    def __check_change(self, dev):
+        """Findet Aenderungen fuer die Eventueberwachung."""
+        for io_event in dev._dict_events:
+
+            if dev._ba_datacp[io_event._slc_address] == \
+                    dev._ba_devdata[io_event._slc_address]:
+                continue
+
+            if io_event._bitaddress >= 0:
+                boolcp = bool(int.from_bytes(
+                    dev._ba_datacp[io_event._slc_address],
+                    byteorder=io_event._byteorder
+                ) & 1 << io_event._bitaddress)
+                boolor = bool(int.from_bytes(
+                    dev._ba_devdata[io_event._slc_address],
+                    byteorder=io_event._byteorder
+                ) & 1 << io_event._bitaddress)
+
+                if boolor == boolcp:
+                    continue
+
+                for regfunc in dev._dict_events[io_event]:
+                    if regfunc.edge == BOTH \
+                            or regfunc.edge == RISING and boolor \
+                            or regfunc.edge == FALLING and not boolor:
+                        if regfunc.delay == 0:
+                            if regfunc.as_thread:
+                                self.__eventqth.put(
+                                    (regfunc, io_event._name, io_event.value),
+                                    False
+                                )
+                            else:
+                                self._eventq.put(
+                                    (regfunc, io_event._name, io_event.value),
+                                    False
+                                )
+                        else:
+                            # Verzögertes Event in dict einfügen
+                            tupfire = (
+                                regfunc, io_event._name, io_event.value
+                            )
+                            if regfunc.overwrite \
+                                    or tupfire not in self.__dict_delay:
+                                self.__dict_delay[tupfire] = ceil(
+                                    regfunc.delay / 1000 / self._refresh
+                                )
+            else:
+                for regfunc in dev._dict_events[io_event]:
+                    if regfunc.delay == 0:
+                        if regfunc.as_thread:
+                            self.__eventqth.put(
+                                (regfunc, io_event._name, io_event.value),
+                                False
+                            )
+                        else:
+                            self._eventq.put(
+                                (regfunc, io_event._name, io_event.value),
+                                False
+                            )
+                    else:
+                        # Verzögertes Event in dict einfügen
+                        tupfire = (
+                            regfunc, io_event._name, io_event.value
+                        )
+                        if regfunc.overwrite \
+                                or tupfire not in self.__dict_delay:
+                            self.__dict_delay[tupfire] = ceil(
+                                regfunc.delay / 1000 / self._refresh
+                            )
+
+        # Nach Verarbeitung aller IOs die Bytes kopieren (Lock ist noch drauf)
+        dev._ba_datacp = dev._ba_devdata[:]
+
+    def __exec_th(self):
+        """Fuehrt Events aus, die als Thread registriert wurden."""
+        while self.__eventwork:
+            try:
+                tup_fireth = self.__eventqth.get(timeout=1)
+                th = EventCallback(
+                    tup_fireth[0].func, tup_fireth[1], tup_fireth[2]
+                )
+                th.start()
+            except queue.Empty:
+                pass
+
+    def _collect_events(self, value):
+        """Aktiviert oder Deaktiviert die Eventueberwachung.
+        @param value True aktiviert / False deaktiviert"""
+        if type(value) != bool:
+            raise ValueError("value must be <class 'bool'>")
+
+        if self.__eventwork != value:
+            with self.lck_refresh:
+                self.__eventwork = value
+                self.__eventqth = queue.Queue()
+                self._eventq = queue.Queue()
+                self.__dict_delay = {}
+
+            # Threadmanagement
+            if value and not self.__eventth.is_alive():
+                self.__eventth = Thread(target=self.__exec_th)
+                self.__eventth.start()
 
     def _get_ioerrors(self):
         """Ruft aktuelle Anzahl der Fehler ab.
@@ -325,6 +435,7 @@ class ProcimgWriter(Thread):
         """Startet die automatische Prozessabbildsynchronisierung."""
         fh = self._modio._create_myfh()
         self._adjwait = self._refresh
+
         while not self._work.is_set():
             ot = default_timer()
 
@@ -336,54 +447,70 @@ class ProcimgWriter(Thread):
                     ),
                     RuntimeWarning
                 )
+                # Verzögerte Events pausieren an dieser Stelle
                 continue
 
             try:
                 fh.seek(0)
                 bytesbuff = bytearray(fh.read(self._modio._length))
+
+                if self._modio._monitoring:
+                    # Inputs und Outputs in Puffer
+                    for dev in self._modio._lst_refresh:
+                        dev._filelock.acquire()
+                        dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
+                        if self.__eventwork \
+                                and len(dev._dict_events) > 0 \
+                                and dev._ba_datacp != dev._ba_devdata:
+                            self.__check_change(dev)
+                        dev._filelock.release()
+                else:
+                    # Inputs in Puffer, Outputs in Prozessabbild
+                    for dev in self._modio._lst_refresh:
+                        with dev._filelock:
+                            dev._ba_devdata[dev._slc_inp] = \
+                                bytesbuff[dev._slc_inpoff]
+                            if self.__eventwork\
+                                    and len(dev._dict_events) > 0 \
+                                    and dev._ba_datacp != dev._ba_devdata:
+                                self.__check_change(dev)
+
+                            fh.seek(dev._slc_outoff.start)
+                            fh.write(dev._ba_devdata[dev._slc_out])
+
+                    if self._modio._buffedwrite:
+                        fh.flush()
+
             except IOError:
                 self._gotioerror()
                 self.lck_refresh.release()
-                self._work.wait(self._adjwait)
                 continue
 
-            if self._modio._monitoring:
-                # Inputs und Outputs in Puffer
-                for dev in self._modio._lst_refresh:
-                    dev._filelock.acquire()
-                    dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
-                    dev._filelock.release()
             else:
-                # Inputs in Puffer, Outputs in Prozessabbild
-                ioerr = False
-                for dev in self._modio._lst_refresh:
-                    dev._filelock.acquire()
-                    dev._ba_devdata[dev._slc_inp] = bytesbuff[dev._slc_inpoff]
-                    try:
-                        fh.seek(dev._slc_outoff.start)
-                        fh.write(dev._ba_devdata[dev._slc_out])
-                    except IOError:
-                        ioerr = True
-                    finally:
-                        dev._filelock.release()
+                # Alle aufwecken
+                self.lck_refresh.release()
+                self.newdata.set()
 
-                if self._modio._buffedwrite:
-                    try:
-                        fh.flush()
-                    except IOError:
-                        ioerr = True
+            finally:
+                # Verzögerte Events prüfen
+                if self.__eventwork:
+                    for tup_fire in list(self.__dict_delay.keys()):
+                        if tup_fire[0].overwrite \
+                                and getattr(self._modio.io, tup_fire[1]).value != \
+                                tup_fire[2]:
+                            del self.__dict_delay[tup_fire]
+                        else:
+                            self.__dict_delay[tup_fire] -= 1
+                            if self.__dict_delay[tup_fire] <= 0:
+                                # Verzögertes Event übernehmen und löschen
+                                if tup_fire[0].as_thread:
+                                    self.__eventqth.put(tup_fire, False)
+                                else:
+                                    self._eventq.put(tup_fire, False)
+                                del self.__dict_delay[tup_fire]
 
-                if ioerr:
-                    self._gotioerror()
-                    self.lck_refresh.release()
-                    self._work.wait(self._adjwait)
-                    continue
-
-            self.lck_refresh.release()
-
-            # Alle aufwecken
-            self.newdata.set()
-            self._work.wait(self._adjwait)
+                # Refresh abwarten
+                self._work.wait(self._adjwait)
 
             # Wartezeit anpassen um echte self._refresh zu erreichen
             if default_timer() - ot >= self._refresh:
@@ -400,11 +527,13 @@ class ProcimgWriter(Thread):
                 self._adjwait += 0.001
 
         # Alle am Ende erneut aufwecken
+        self._collect_events(False)
         self.newdata.set()
         fh.close()
 
     def stop(self):
         """Beendet die automatische Prozessabbildsynchronisierung."""
+        self._collect_events(False)
         self._work.set()
 
     def set_maxioerrors(self, value):
