@@ -8,8 +8,8 @@
 """RevPiModIO Hauptklasse fuer piControl0 Zugriff."""
 import warnings
 from json import load as jload
-from math import ceil
 from os import access, F_OK, R_OK
+from queue import Empty
 from signal import signal, SIG_DFL, SIGINT, SIGTERM
 from threading import Thread, Event
 
@@ -18,7 +18,6 @@ from . import device as devicemodule
 from . import helper as helpermodule
 from . import summary as summarymodule
 from .io import IOList
-from revpimodio2 import RISING, FALLING, BOTH
 
 
 class RevPiModIO(object):
@@ -419,12 +418,13 @@ class RevPiModIO(object):
             if self._imgwriter is not None and self._imgwriter.is_alive():
                 self._imgwriter.stop()
                 self._imgwriter.join(self._imgwriter._refresh)
+            if self._th_mainloop is not None and self._th_mainloop.is_alive():
+                self._th_mainloop.join(1)
             while len(self._lst_refresh) > 0:
                 dev = self._lst_refresh.pop()
                 dev._selfupdate = False
                 if not self._monitoring:
                     self.writeprocimg(dev)
-        self._looprunning = False
 
     def get_jconfigrsc(self):
         """Laed die piCotry Konfiguration und erstellt ein <class 'dict'>.
@@ -483,7 +483,7 @@ class RevPiModIO(object):
         signal(SIGINT, self.__evt_exit)
         signal(SIGTERM, self.__evt_exit)
 
-    def mainloop(self, freeze=False, blocking=True):
+    def mainloop(self, blocking=True):
         """Startet den Mainloop mit Eventueberwachung.
 
         Der aktuelle Programmthread wird hier bis Aufruf von
@@ -492,19 +492,12 @@ class RevPiModIO(object):
         einem Event registrierten, IOs. Wird eine Veraenderung erkannt,
         fuert das Programm die dazugehoerigen Funktionen der Reihe nach aus.
 
-        Wenn der Parameter "freeze" mit True angegeben ist, wird die
-        Prozessabbildsynchronisierung angehalten bis alle Eventfunktionen
-        ausgefuehrt wurden. Inputs behalten fuer die gesamte Dauer ihren
-        aktuellen Wert und Outputs werden erst nach Durchlauf aller Funktionen
-        in das Prozessabbild geschrieben.
-
         Wenn der Parameter "blocking" mit False angegeben wird, aktiviert
         dies die Eventueberwachung und blockiert das Programm NICHT an der
         Stelle des Aufrufs. Eignet sich gut fuer die GUI Programmierung, wenn
         Events vom RevPi benoetigt werden, aber das Programm weiter ausgefuehrt
         werden soll.
 
-        @param freeze Wenn True, Prozessabbildsynchronisierung anhalten
         @param blocking Wenn False, blockiert das Programm NICHT
         @return None
 
@@ -522,8 +515,7 @@ class RevPiModIO(object):
         # Thread erstellen, wenn nicht blockieren soll
         if not blocking:
             self._th_mainloop = Thread(
-                target=self.mainloop,
-                kwargs={"freeze": freeze, "blocking": True}
+                target=self.mainloop, kwargs={"blocking": True}
             )
             self._th_mainloop.start()
             return
@@ -538,129 +530,31 @@ class RevPiModIO(object):
             dev._ba_datacp = dev._ba_devdata[:]
             dev._filelock.release()
 
-        lst_fire = []
-        dict_delay = {}
+        # ImgWriter mit Eventüberwachung aktivieren
+        self._imgwriter._collect_events(True)
+        e = None
+
         while not self._exit.is_set():
-            # Auf neue Daten warten und nur ausführen wenn set()
-            if not self._imgwriter.newdata.wait(2.5):
+            try:
+                tup_fire = self._imgwriter._eventq.get(timeout=1)
+                # Direct callen da Prüfung in io.IOBase.reg_event ist
+                tup_fire[0].func(tup_fire[1], tup_fire[2])
+            except Empty:
                 if not self._exit.is_set() and not self._imgwriter.is_alive():
                     self.exit(full=False)
-                    self._looprunning = False
-                    raise RuntimeError("autorefresh thread not running")
-                continue
-
-            self._imgwriter.newdata.clear()
-
-            # Während Auswertung refresh sperren
-            self._imgwriter.lck_refresh.acquire()
-
-            for dev in self._lst_refresh:
-
-                if len(dev._dict_events) == 0 \
-                        or dev._ba_datacp == dev._ba_devdata:
-                    continue
-
-                for io_event in dev._dict_events:
-
-                    if dev._ba_datacp[io_event._slc_address] == \
-                            dev._ba_devdata[io_event._slc_address]:
-                        continue
-
-                    if io_event._bitaddress >= 0:
-                        boolcp = bool(int.from_bytes(
-                            dev._ba_datacp[io_event._slc_address],
-                            byteorder=io_event._byteorder
-                        ) & 1 << io_event._bitaddress)
-                        boolor = bool(int.from_bytes(
-                            dev._ba_devdata[io_event._slc_address],
-                            byteorder=io_event._byteorder
-                        ) & 1 << io_event._bitaddress)
-
-                        if boolor == boolcp:
-                            continue
-
-                        for regfunc in dev._dict_events[io_event]:
-                            if regfunc[1] == BOTH \
-                                    or regfunc[1] == RISING and boolor \
-                                    or regfunc[1] == FALLING and not boolor:
-                                if regfunc[3] == 0:
-                                    lst_fire.append((
-                                        regfunc, io_event._name, io_event.value
-                                    ))
-                                else:
-                                    # Verzögertes Event in dict einfügen
-                                    tupfire = (
-                                        regfunc, io_event._name, io_event.value
-                                    )
-                                    if regfunc[4] or tupfire not in dict_delay:
-                                        dict_delay[tupfire] = ceil(
-                                            regfunc[3] /
-                                            self._imgwriter.refresh
-                                        )
-                    else:
-                        for regfunc in dev._dict_events[io_event]:
-                            if regfunc[3] == 0:
-                                lst_fire.append(
-                                    (regfunc, io_event._name, io_event.value)
-                                )
-                            else:
-                                # Verzögertes Event in dict einfügen
-                                if regfunc[4] or regfunc not in dict_delay:
-                                    dict_delay[(
-                                        regfunc, io_event._name, io_event.value
-                                    )] = ceil(
-                                        regfunc[3] / self._imgwriter.refresh
-                                    )
-
-                # Nach Verarbeitung aller IOs die Bytes kopieren
-                dev._filelock.acquire()
-                dev._ba_datacp = dev._ba_devdata[:]
-                dev._filelock.release()
-
-            # Refreshsperre aufheben wenn nicht freeze
-            if not freeze:
-                self._imgwriter.lck_refresh.release()
-
-            # EventTuple:
-            # ((func, edge, as_thread, delay, löschen), ioname, iovalue)
-
-            # Verzögerte Events prüfen
-            for tup_fire in list(dict_delay.keys()):
-                if tup_fire[0][4] \
-                        and getattr(self.io, tup_fire[1]).value != tup_fire[2]:
-                    del dict_delay[tup_fire]
-                else:
-                    dict_delay[tup_fire] -= 1
-                    if dict_delay[tup_fire] <= 0:
-                        # Verzögertes Event übernehmen und löschen
-                        lst_fire.append(tup_fire)
-                        del dict_delay[tup_fire]
-
-            # Erst nach Datenübernahme alle Events feuern
-            try:
-                while len(lst_fire) > 0:
-                    tup_fire = lst_fire.pop()
-                    if tup_fire[0][2]:
-                        th = helpermodule.EventCallback(
-                            tup_fire[0][0], tup_fire[1], tup_fire[2]
-                        )
-                        th.start()
-                    else:
-                        # Direct callen da Prüfung in io.IOBase.reg_event ist
-                        tup_fire[0][0](tup_fire[1], tup_fire[2])
-            except Exception as e:
-                if self._imgwriter.lck_refresh.locked():
-                    self._imgwriter.lck_refresh.release()
+                    e = RuntimeError("autorefresh thread not running")
+            except Exception as ex:
                 self.exit(full=False)
-                self._looprunning = False
-                raise e
-
-            # Refreshsperre aufheben wenn freeze
-            if freeze:
-                self._imgwriter.lck_refresh.release()
+                e = ex
 
         # Mainloop verlassen
+        self._imgwriter._collect_events(False)
         self._looprunning = False
+        self._th_mainloop = None
+
+        # Fehler prüfen
+        if e is not None:
+            raise e
 
     def readprocimg(self, device=None):
         """Einlesen aller Inputs aller/eines Devices vom Prozessabbild.

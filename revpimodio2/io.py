@@ -11,6 +11,19 @@ from threading import Event
 from revpimodio2 import RISING, FALLING, BOTH, INP, OUT, MEM, consttostr
 
 
+class IOEvent(object):
+
+    """Basisklasse fuer IO-Events."""
+
+    def __init__(self, func, edge, as_thread, delay, overwrite):
+        """Init IOEvent class."""
+        self.as_thread = as_thread
+        self.delay = delay
+        self.edge = edge
+        self.func = func
+        self.overwrite = overwrite
+
+
 class IOList(object):
 
     """Basisklasse fuer direkten Zugriff auf IO Objekte."""
@@ -317,6 +330,67 @@ class IOBase(object):
         @return Namen des IOs"""
         return self._name
 
+    def __reg_xevent(self, func, delay, edge, as_thread, overwrite):
+        """Verwaltet reg_event und reg_timerevent.
+
+        @param func Funktion die bei Aenderung aufgerufen werden soll
+        @param delay Verzoegerung in ms zum Ausloesen - auch bei Wertaenderung
+        @param edge Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
+        @param as_thread Bei True, Funktion als EventCallback-Thread ausfuehren
+        @param overwrite Wenn True, wird Event bei ueberschrieben
+
+        """
+        # Prüfen ob Funktion callable ist
+        if not callable(func):
+            raise AttributeError(
+                "registered function '{}' is not callable".format(func)
+            )
+        if type(delay) != int or delay < 0:
+            raise AttributeError(
+                "'delay' must be <class 'int'> and greater or equal 0"
+            )
+        if edge != BOTH and self._bitaddress < 0:
+            raise AttributeError(
+                "parameter 'edge' can be used with bit io objects only"
+            )
+
+        if self not in self._parentdevice._dict_events:
+            self._parentdevice._dict_events[self] = \
+                [IOEvent(func, edge, as_thread, delay, overwrite)]
+        else:
+            # Prüfen ob Funktion schon registriert ist
+            for regfunc in self._parentdevice._dict_events[self]:
+                if regfunc.func != func:
+                    # Nächsten Eintrag testen
+                    continue
+
+                if edge == BOTH or regfunc.edge == BOTH:
+                    if self._bitaddress < 0:
+                        raise AttributeError(
+                            "io '{}' with function '{}' already in list."
+                            "".format(self._name, func)
+                        )
+                    else:
+                        raise AttributeError(
+                            "io '{}' with function '{}' already in list with "
+                            "edge '{}' - edge '{}' not allowed anymore".format(
+                                self._name, func,
+                                consttostr(regfunc.edge), consttostr(edge)
+                            )
+                        )
+                elif regfunc.edge == edge:
+                    raise AttributeError(
+                        "io '{}' with function '{}' for given edge '{}' "
+                        "already in list".format(
+                            self._name, func, consttostr(edge)
+                        )
+                    )
+
+            # Eventfunktion einfügen
+            self._parentdevice._dict_events[self].append(
+                IOEvent(func, edge, as_thread, delay, overwrite)
+            )
+
     def _get_address(self):
         """Gibt die absolute Byteadresse im Prozessabbild zurueck.
         @return Absolute Byteadresse"""
@@ -365,56 +439,7 @@ class IOBase(object):
         @param as_thread Bei True, Funktion als EventCallback-Thread ausfuehren
 
         """
-        # Prüfen ob Funktion callable ist
-        if not callable(func):
-            raise AttributeError(
-                "registered function '{}' is not callable".format(func)
-            )
-        if type(delay) != int or delay < 0:
-            raise AttributeError(
-                "'delay' must be <class 'int'> and greater or equal 0"
-            )
-        if edge != BOTH and self._bitaddress < 0:
-            raise AttributeError(
-                "parameter 'edge' can be used with bit io objects only"
-            )
-
-        if self not in self._parentdevice._dict_events:
-            self._parentdevice._dict_events[self] = \
-                [(func, edge, as_thread, delay, True)]
-        else:
-            # Prüfen ob Funktion schon registriert ist
-            for regfunc in self._parentdevice._dict_events[self]:
-                if regfunc[0] != func:
-                    # Nächsten Eintrag testen
-                    continue
-
-                if edge == BOTH or regfunc[1] == BOTH:
-                    if self._bitaddress < 0:
-                        raise AttributeError(
-                            "io '{}' with function '{}' already in list."
-                            "".format(self._name, func)
-                        )
-                    else:
-                        raise AttributeError(
-                            "io '{}' with function '{}' already in list with "
-                            "edge '{}' - edge '{}' not allowed anymore".format(
-                                self._name, func,
-                                consttostr(regfunc[1]), consttostr(edge)
-                            )
-                        )
-                elif regfunc[1] == edge:
-                    raise AttributeError(
-                        "io '{}' with function '{}' for given edge '{}' "
-                        "already in list".format(
-                            self._name, func, consttostr(edge)
-                        )
-                    )
-
-            # Eventfunktion einfügen
-            self._parentdevice._dict_events[self].append(
-                (func, edge, as_thread, delay, True)
-            )
+        self.__reg_xevent(func, delay, edge, as_thread, True)
 
     def reg_timerevent(self, func, delay, edge=BOTH, as_thread=False):
         """Registriert fuer IO einen Timer, welcher nach delay func ausfuehrt.
@@ -435,56 +460,7 @@ class IOBase(object):
         @param as_thread Bei True, Funktion als EventCallback-Thread ausfuehren
 
         """
-        # Prüfen ob Funktion callable ist
-        if not callable(func):
-            raise AttributeError(
-                "registered function '{}' is not callable".format(func)
-            )
-        if type(delay) != int or delay < 0:
-            raise AttributeError(
-                "'delay' must be <class 'int'> and greater or equal 0"
-            )
-        if edge != BOTH and self._bitaddress < 0:
-            raise AttributeError(
-                "parameter 'edge' can be used with bit io objects only"
-            )
-
-        if self not in self._parentdevice._dict_events:
-            self._parentdevice._dict_events[self] = \
-                [(func, edge, as_thread, delay, False)]
-        else:
-            # Prüfen ob Funktion schon registriert ist
-            for regfunc in self._parentdevice._dict_events[self]:
-                if regfunc[0] != func:
-                    # Nächsten Eintrag testen
-                    continue
-
-                if edge == BOTH or regfunc[1] == BOTH:
-                    if self._bitaddress < 0:
-                        raise AttributeError(
-                            "io '{}' with function '{}' already in list."
-                            "".format(self._name, func)
-                        )
-                    else:
-                        raise AttributeError(
-                            "io '{}' with function '{}' already in list with "
-                            "edge '{}' - edge '{}' not allowed anymore".format(
-                                self._name, func,
-                                consttostr(regfunc[1]), consttostr(edge)
-                            )
-                        )
-                elif regfunc[1] == edge:
-                    raise AttributeError(
-                        "io '{}' with function '{}' for given edge '{}' "
-                        "already in list".format(
-                            self._name, func, consttostr(edge)
-                        )
-                    )
-
-            # Eventfunktion einfügen
-            self._parentdevice._dict_events[self].append(
-                (func, edge, as_thread, delay, False)
-            )
+        self.__reg_xevent(func, delay, edge, as_thread, False)
 
     def replace_io(self, name, frm, **kwargs):
         """Ersetzt bestehenden IO mit Neuem.
@@ -613,8 +589,8 @@ class IOBase(object):
             else:
                 newlist = []
                 for regfunc in self._parentdevice._dict_events[self]:
-                    if regfunc[0] != func or edge is not None \
-                            and regfunc[1] != edge:
+                    if regfunc.func != func or edge is not None \
+                            and regfunc.edge != edge:
 
                         newlist.append(regfunc)
 

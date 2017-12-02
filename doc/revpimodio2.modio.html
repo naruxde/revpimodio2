@@ -440,7 +440,7 @@ Funktion wird nach dem letzten Lesen der Inputs
 </dl><a NAME="RevPiModIO.mainloop" ID="RevPiModIO.mainloop"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO.mainloop</h3>
-<b>mainloop</b>(<i>freeze=False, blocking=True</i>)
+<b>mainloop</b>(<i>blocking=True</i>)
 <p>
 Startet den Mainloop mit Eventueberwachung.
 </p><p>
@@ -450,22 +450,13 @@ Startet den Mainloop mit Eventueberwachung.
         einem Event registrierten, IOs. Wird eine Veraenderung erkannt,
         fuert das Programm die dazugehoerigen Funktionen der Reihe nach aus.
 </p><p>
-        Wenn der Parameter "freeze" mit True angegeben ist, wird die
-        Prozessabbildsynchronisierung angehalten bis alle Eventfunktionen
-        ausgefuehrt wurden. Inputs behalten fuer die gesamte Dauer ihren
-        aktuellen Wert und Outputs werden erst nach Durchlauf aller Funktionen
-        in das Prozessabbild geschrieben.
-</p><p>
         Wenn der Parameter "blocking" mit False angegeben wird, aktiviert
         dies die Eventueberwachung und blockiert das Programm NICHT an der
         Stelle des Aufrufs. Eignet sich gut fuer die GUI Programmierung, wenn
         Events vom RevPi benoetigt werden, aber das Programm weiter ausgefuehrt
         werden soll.
 </p><dl>
-<dt><i>freeze</i></dt>
-<dd>
-Wenn True, Prozessabbildsynchronisierung anhalten
-</dd><dt><i>blocking</i></dt>
+<dt><i>blocking</i></dt>
 <dd>
 Wenn False, blockiert das Programm NICHT
 </dd>
