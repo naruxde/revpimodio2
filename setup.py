@@ -16,7 +16,7 @@ setup(
 
     license="LGPLv3",
     name="revpimodio2",
-    version="2.1.1b3",
+    version="2.1.2",
 
     packages=["revpimodio2"],
     python_requires="~=3.2",
@@ -35,7 +35,7 @@ setup(
     "zugegriffen werden.",
 
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: "
