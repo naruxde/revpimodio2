@@ -284,7 +284,10 @@ class Device(object):
             self._filelock.release()
 
             self._selfupdate = True
-            self._modio._lst_refresh.append(self)
+
+            # Sicher in Liste einfügen
+            with self._modio._imgwriter.lck_refresh:
+                self._modio._lst_refresh.append(self)
 
             # Thread starten, wenn er noch nicht läuft
             if not self._modio._imgwriter.is_alive():
