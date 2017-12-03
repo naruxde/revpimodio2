@@ -415,12 +415,18 @@ class RevPiModIO(object):
         @param full Entfernt auch alle Devices aus autorefresh"""
         self._exit.set()
         self._waitexit.set()
+
         if full:
+            # ProcimgWriter beenden und darauf warten
             if self._imgwriter is not None and self._imgwriter.is_alive():
                 self._imgwriter.stop()
                 self._imgwriter.join(self._imgwriter._refresh)
+
+            # Mainloop beenden und darauf waretn
             if self._th_mainloop is not None and self._th_mainloop.is_alive():
                 self._th_mainloop.join(1)
+
+            # Alle Devices aus Autorefresh entfernen
             while len(self._lst_refresh) > 0:
                 dev = self._lst_refresh.pop()
                 dev._selfupdate = False

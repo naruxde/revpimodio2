@@ -373,7 +373,7 @@ class ProcimgWriter(Thread):
         dev._ba_datacp = dev._ba_devdata[:]
 
     def __exec_th(self):
-        """Fuehrt Events aus, die als Thread registriert wurden."""
+        """Laeuft als Thread, der Events als Thread startet."""
         while self.__eventwork:
             try:
                 tup_fireth = self.__eventqth.get(timeout=1)
@@ -400,6 +400,7 @@ class ProcimgWriter(Thread):
             # Threadmanagement
             if value and not self.__eventth.is_alive():
                 self.__eventth = Thread(target=self.__exec_th)
+                self.__eventth.daemon = True
                 self.__eventth.start()
 
     def _get_ioerrors(self):
