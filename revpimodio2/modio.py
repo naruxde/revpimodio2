@@ -43,7 +43,7 @@ class RevPiModIO(object):
         @param syncoutputs Aktuell gesetzte Outputs vom Prozessabbild einlesen
         @param procimg Abweichender Pfad zum Prozessabbild
         @param configrsc Abweichender Pfad zur piCtory Konfigurationsdatei
-        @param simulator Laed das Modul als Simulator und vertauscht IOs
+        @param simulator Laedt das Modul als Simulator und vertauscht IOs
 
         """
         self._autorefresh = autorefresh
@@ -434,7 +434,7 @@ class RevPiModIO(object):
                     self.writeprocimg(dev)
 
     def get_jconfigrsc(self):
-        """Laed die piCotry Konfiguration und erstellt ein <class 'dict'>.
+        """Laedt die piCtory Konfiguration und erstellt ein <class 'dict'>.
         @return <class 'dict'> der piCtory Konfiguration"""
         # piCtory Konfiguration prüfen
         if self._configrsc is not None:
@@ -457,7 +457,14 @@ class RevPiModIO(object):
                 )
 
         with open(self._configrsc, "r") as fhconfigrsc:
-            return jload(fhconfigrsc)
+            try:
+                jdata = jload(fhconfigrsc)
+            except:
+                raise RuntimeError(
+                    "can not read piCtory configuration - check your hardware "
+                    "configuration http://revpi_ip/"
+                )
+            return jdata
 
     def handlesignalend(self, cleanupfunc=None):
         """Signalhandler fuer Programmende verwalten.

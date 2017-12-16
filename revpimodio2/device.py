@@ -107,7 +107,7 @@ class Device(object):
 
         @param parent RevpiModIO parent object
         @param dict_device <class 'dict'> fuer dieses Device aus piCotry
-        @param simulator: Laed das Modul als Simulator und vertauscht IOs
+        @param simulator: Laedt das Modul als Simulator und vertauscht IOs
 
         """
         self._modio = parentmodio

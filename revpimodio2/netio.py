@@ -383,7 +383,7 @@ class RevPiNetIO(_RevPiModIO):
         @param autorefresh Wenn True, alle Devices zu autorefresh hinzufuegen
         @param monitoring In- und Outputs werden gelesen, niemals geschrieben
         @param syncoutputs Aktuell gesetzte Outputs vom Prozessabbild einlesen
-        @param simulator Laed das Modul als Simulator und vertauscht IOs
+        @param simulator Laedt das Modul als Simulator und vertauscht IOs
 
         """
         # Adresse verarbeiten
@@ -439,7 +439,7 @@ class RevPiNetIO(_RevPiModIO):
         self.cleanup()
 
     def get_jconfigrsc(self):
-        """Laed die piCotry Konfiguration und erstellt ein <class 'dict'>.
+        """Laedt die piCotry Konfiguration und erstellt ein <class 'dict'>.
         @return <class 'dict'> der piCtory Konfiguration"""
         mynh = NetFH(self._address)
         byte_buff = mynh.readpictory()
