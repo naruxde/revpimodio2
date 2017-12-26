@@ -7,6 +7,7 @@
 #
 """RevPiModIO Modul fuer die Verwaltung der IOs."""
 import struct
+from re import match as rematch
 from threading import Event
 from revpimodio2 import RISING, FALLING, BOTH, INP, OUT, MEM, consttostr
 
@@ -468,8 +469,19 @@ class IOBase(object):
         Wenn die kwargs fuer byteorder und defaultvalue nicht angegeben werden,
         uebernimmt das System die Daten aus dem ersetzten IO.
 
+        Es darf nur ein einzelnes Formatzeichen 'frm' uebergeben werden. Daraus
+        wird dann die benoetigte Laenge an Bytes berechnet und der Datentyp
+        festgelegt.
+        Eine Ausnahme ist die Formatierung 's'. Hier koennen mehrere Bytes
+        zu einem langen IO zusammengefasst werden. Die Formatierung muss
+        '8s' fuer z.B. 8 Bytes sein - NICHT 'ssssssss'!
+
+        Wenn durch die Formatierung mehr Bytes benoetigt werden, als
+        der urspruenglige IO hat, werden die nachfolgenden IOs ebenfalls
+        verwendet und entfernt.
+
         @param name Name des neuen Inputs
-        @param frm struct Formatierung (1 Zeichen)
+        @param frm struct formatierung (1 Zeichen) oder 'ANZAHLs' z.B. '8s'
         @param kwargs Weitere Parameter:
             - bmk: interne Bezeichnung fuer IO
             - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
@@ -815,7 +827,7 @@ class StructIO(IOBase):
 
         @param parentio ParentIO Objekt, welches ersetzt wird
         @param name Name des neuen IO
-        @param frm struct formatierung (1 Zeichen)
+        @param frm struct formatierung (1 Zeichen) oder 'ANZAHLs' z.B. '8s'
         @param kwargs Weitere Parameter:
             - bmk: Bezeichnung fuer IO
             - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
@@ -823,7 +835,10 @@ class StructIO(IOBase):
             - defaultvalue: Standardwert fuer IO, Standard vom ersetzter IO
 
         """
-        if len(frm) == 1:
+        # Mehrfach s prüfen 8s
+        regex = rematch("[0-9]*s", frm)
+
+        if len(frm) == 1 or regex is not None and regex.end() == len(frm):
             # Byteorder prüfen und übernehmen
             byteorder = kwargs.get("byteorder", parentio._byteorder)
             if not (byteorder == "little" or byteorder == "big"):
@@ -863,7 +878,9 @@ class StructIO(IOBase):
                 bitaddress
             ]
         else:
-            raise AttributeError("parameter frm has to be a single sign")
+            raise AttributeError(
+                "parameter frm has to be a single sign or 'COUNTs' e.g. '8s'"
+            )
 
         # Basisklasse instantiieren
         super().__init__(
@@ -888,7 +905,7 @@ class StructIO(IOBase):
     def _get_frm(self):
         """Ruft die struct Formatierung ab.
         @return struct Formatierung"""
-        return self.__frm[1]
+        return self.__frm[1:]
 
     def _get_signed(self):
         """Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.

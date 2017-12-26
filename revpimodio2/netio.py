@@ -7,6 +7,7 @@
 #
 """RevPiModIO Hauptklasse fuer Netzwerkzugriff."""
 import socket
+import warnings
 from json import loads as jloads
 from threading import Thread, Event, Lock
 
@@ -252,14 +253,18 @@ class NetFH(Thread):
                         self._slavesock.send(_syssync)
                         data = self._slavesock.recv(2)
                     except IOError:
-                        print("ioerror in run()")
+                        warnings.warn(
+                            "network error in sync of NetFH", RuntimeWarning
+                        )
                         self.__sockerr.set()
                     else:
                         if data != b'\x06\x16':
-                            print("data error in run():", str(data))
+                            warnings.warn(
+                                "data error in sync of NetFH", RuntimeWarning
+                            )
                             self.__sockerr.set()
-                    self.__socklock.release()
 
+                    self.__socklock.release()
                 self.__trigger = False
 
     def seek(self, position):

@@ -389,13 +389,24 @@ Ersetzt bestehenden IO mit Neuem.
 </p><p>
         Wenn die kwargs fuer byteorder und defaultvalue nicht angegeben werden,
         uebernimmt das System die Daten aus dem ersetzten IO.
+</p><p>
+        Es darf nur ein einzelnes Formatzeichen 'frm' uebergeben werden. Daraus
+        wird dann die benoetigte Laenge an Bytes berechnet und der Datentyp
+        festgelegt.
+        Eine Ausnahme ist die Formatierung 's'. Hier koennen mehrere Bytes
+        zu einem langen IO zusammengefasst werden. Die Formatierung muss
+        '8s' fuer z.B. 8 Bytes sein - NICHT 'ssssssss'!
+</p><p>
+        Wenn durch die Formatierung mehr Bytes benoetigt werden, als
+        der urspruenglige IO hat, werden die nachfolgenden IOs ebenfalls
+        verwendet und entfernt.
 </p><dl>
 <dt><i>name</i></dt>
 <dd>
 Name des neuen Inputs
 </dd><dt><i>frm</i></dt>
 <dd>
-struct Formatierung (1 Zeichen)
+struct formatierung (1 Zeichen) oder 'ANZAHLs' z.B. '8s'
 </dd><dt><i>kwargs</i></dt>
 <dd>
 Weitere Parameter:
@@ -927,7 +938,7 @@ ParentIO Objekt, welches ersetzt wird
 Name des neuen IO
 </dd><dt><i>frm</i></dt>
 <dd>
-struct formatierung (1 Zeichen)
+struct formatierung (1 Zeichen) oder 'ANZAHLs' z.B. '8s'
 </dd><dt><i>kwargs</i></dt>
 <dd>
 Weitere Parameter:
