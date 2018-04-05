@@ -364,6 +364,9 @@ class RevPiModIO(object):
         if not (cycletime is None or cycletime == self._imgwriter.refresh):
             self._imgwriter.refresh = cycletime
 
+            # Zeitänderung in _imgwriter neuladen
+            self._imgwriter.newdata.clear()
+
         # Cycleloop starten
         self._exit.clear()
         self._looprunning = True
