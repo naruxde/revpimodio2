@@ -180,6 +180,7 @@ class IOList(object):
                     delattr(self, oldio._name)
 
         if io._defaultvalue is None:
+            # Nur bei StructIO und keiner gegebenen defaultvalue übernehmen
             if io._bitaddress < 0:
                 io._defaultvalue = calc_defaultvalue
             else:
@@ -254,11 +255,14 @@ class IOBase(object):
 
         @param parentdevice Parentdevice auf dem der IO liegt
         @param valuelist Datenliste fuer Instantiierung
+            ["name","defval","bitlen","startaddr",exp,"idx","bmk","bitaddr"]
         @param iotype <class 'int'> Wert
         @param byteorder Byteorder 'little'/'big' fuer <class 'int'> Berechnung
         @param sigend Intberechnung mit Vorzeichen durchfuehren
 
         """
+        # ["name","defval","bitlen","startaddr",exp,"idx","bmk","bitaddr"]
+        # [  0   ,   1    ,   2    ,     3     , 4 ,  5  ,  6  ,    7    ]
         self._parentdevice = parentdevice
 
         # Bitadressen auf Bytes aufbrechen und umrechnen
@@ -279,12 +283,13 @@ class IOBase(object):
             self._slc_address = slice(
                 int_startaddress, int_startaddress + self._length
             )
-            # Defaultvalue aus Zahl in Bytes umrechnen
             if str(valuelist[1]).isdigit():
+                # Defaultvalue aus Zahl in Bytes umrechnen
                 self._defaultvalue = int(valuelist[1]).to_bytes(
                     self._length, byteorder=self._byteorder
                 )
             elif valuelist[1] is None and type(self) == StructIO:
+                # Auf None setzen um später berechnete Werte zu übernehmen
                 self._defaultvalue = None
             elif type(valuelist[1]) == bytes:
                 # Defaultvalue direkt von bytes übernehmen
@@ -297,7 +302,18 @@ class IOBase(object):
                         "".format(self._length, len(valuelist[1]))
                     )
             else:
+                # Defaultvalue mit leeren Bytes füllen
                 self._defaultvalue = bytes(self._length)
+
+                # Versuchen String in ASCII Bytes zu wandeln
+                if type(valuelist[1]) == str:
+                    try:
+                        buff = valuelist[1].encode("ASCII")
+                        if len(buff) <= self._length:
+                            self._defaultvalue = \
+                                buff + bytes(self._length - len(buff))
+                    except:
+                        pass
 
         else:
             # Höhere Bits als 7 auf nächste Bytes umbrechen
@@ -305,8 +321,15 @@ class IOBase(object):
             self._slc_address = slice(
                 int_startaddress, int_startaddress + 1
             )
-            self._defaultvalue = None if valuelist[1] is None \
-                else bool(int(valuelist[1]))
+
+            # Defaultvalue ermitteln, sonst False
+            if valuelist[1] is None and type(self) == StructIO:
+                self._defaultvalue = None
+            else:
+                try:
+                    self._defaultvalue = bool(int(valuelist[1]))
+                except:
+                    self._defaultvalue = False
 
     def __bool__(self):
         """<class 'bool'>-Wert der Klasse.
