@@ -72,8 +72,14 @@ class DeviceList(object):
 
     def __iter__(self):
         """Gibt Iterator aller Devices zurueck.
+
+        Die Reihenfolge ist nach Position im Prozessabbild sortiert und nicht
+        nach Position (Dies entspricht der Positionierung aus piCtory)!
+
         @return <class 'iter'> aller Devices"""
-        for dev in sorted(self.__dict_position):
+        for dev in sorted(
+                self.__dict_position,
+                key=lambda key: self.__dict_position[key]._offset):
             yield self.__dict_position[dev]
 
     def __len__(self):
