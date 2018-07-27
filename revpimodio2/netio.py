@@ -9,6 +9,7 @@
 import socket
 import warnings
 from json import loads as jloads
+from re import compile
 from threading import Thread, Event, Lock
 
 from .device import Device
@@ -37,7 +38,9 @@ class NetFH(Thread):
     """
 
     def __init__(self, address, timeout=500):
-        """Init NetFH-class."""
+        """Init NetFH-class.
+        @param address IP Adresse des RevPis
+        @param timeout Verbindungstimeout in Millisekunden"""
         super().__init__()
         self.daemon = True
 
@@ -49,11 +52,11 @@ class NetFH(Thread):
         self.__sockerr = Event()
         self.__sockend = False
         self.__socklock = Lock()
-        self.__timeout = timeout / 1000
+        self.__timeout = None
         self.__trigger = False
-        self.__waitsync = self.__timeout / 2
+        self.__waitsync = None
 
-        socket.setdefaulttimeout(self.__timeout)
+        self.__set_systimeout(timeout)
 
         # Verbindung herstellen
         self._address = address
@@ -70,6 +73,20 @@ class NetFH(Thread):
     def __del__(self):
         """NetworkFileHandler beenden."""
         self.close()
+
+    def __set_systimeout(self, value):
+        """Systemfunktion fuer Timeoutberechnung.
+        @param value Timeout in Millisekunden 100 - 60000"""
+
+        if isinstance(value, int) and (100 <= value <= 60000):
+            self.__timeout = value / 1000
+            socket.setdefaulttimeout(self.__timeout)
+
+            # 70 Prozent vom Timeout für Synctimer verwenden
+            self.__waitsync = self.__timeout / 10 * 7
+
+        else:
+            raise ValueError("value must between 10 and 60000 milliseconds")
 
     def _connect(self):
         """Stellt die Verbindung zu einem RevPiSlave her."""
@@ -306,29 +323,24 @@ class NetFH(Thread):
         if self.__sockend:
             raise ValueError("I/O operation on closed file")
 
-        if type(value) == int and (0 < value <= 65535):
-            self.__timeout = value / 1000
-            self.__waitsync = self.__timeout / 2 - 0.05
+        # Timeoutwert verarbeiten (könnte Exception auslösen)
+        self.__set_systimeout(value)
 
-            # Timeouts in Sockets übernehmen
-            socket.setdefaulttimeout(self.__timeout)
-            self._slavesock.settimeout(self.__timeout)
+        # Timeouts in Socket setzen
+        self._slavesock.settimeout(self.__timeout)
 
-            with self.__socklock:
-                self._slavesock.send(
-                    b'\x01CF' +
-                    value.to_bytes(length=2, byteorder="little") +
-                    b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
-                )
-                check = self._slavesock.recv(1)
-                if check != b'\x1e':
-                    self.__sockerr.set()
-                    raise IOError("set timeout error on network")
+        with self.__socklock:
+            self._slavesock.send(
+                b'\x01CF' +
+                value.to_bytes(length=2, byteorder="little") +
+                b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
+            )
+            check = self._slavesock.recv(1)
+            if check != b'\x1e':
+                self.__sockerr.set()
+                raise IOError("set timeout error on network")
 
-                self.__trigger = True
-
-        else:
-            raise ValueError("value must between 1 and 65535 milliseconds")
+            self.__trigger = True
 
     def tell(self):
         """Gibt aktuelle Position zurueck.
@@ -391,17 +403,19 @@ class RevPiNetIO(_RevPiModIO):
         @param simulator Laedt das Modul als Simulator und vertauscht IOs
 
         """
+        check_ip = compile(
+            r"^(?P<ipn>(25[0-5]|(2[0-4]|[01]?\d|)\d))(\.(?P=ipn)){3}$"
+        )
+
         # Adresse verarbeiten
-        if type(address) == str:
-            # TODO: IP-Adresse prüfen
+        if isinstance(address, str):
             self._address = (address, 55234)
-        elif type(address) == tuple:
+        elif isinstance(address, tuple):
             if len(address) == 2 \
-                    and type(address[0]) == str \
-                    and type(address[1]) == int:
+                    and isinstance(address[0], str) \
+                    and isinstance(address[1], int):
 
                 # Werte prüfen
-                # TODO: IP-Adresse prüfen
                 if not 0 < address[1] <= 65535:
                     raise ValueError("port number out of range 1 - 65535")
 
@@ -415,6 +429,16 @@ class RevPiNetIO(_RevPiModIO):
                 "parameter address must be <class 'str'> or <class 'tuple'> "
                 "like (<class 'str'>, <class 'int'>)"
             )
+
+        # IP-Adresse prüfen und ggf. auflösen
+        if check_ip.match(self._address[0]) is None:
+            try:
+                ipv4 = socket.gethostname(self._address[0])
+                self._address = (ipv4, self._address[1])
+            except:
+                raise ValueError(
+                    "ip '{}' is no valid ip address".format(self._address[0])
+                )
 
         # Vererben
         super().__init__(
