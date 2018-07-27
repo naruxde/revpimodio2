@@ -37,7 +37,9 @@ class NetFH(Thread):
     """
 
     def __init__(self, address, timeout=500):
-        """Init NetFH-class."""
+        """Init NetFH-class.
+        @param address IP Adresse des RevPi
+        @param timeout Timeout in Millisekunden der Verbindung"""
         super().__init__()
         self.daemon = True
 

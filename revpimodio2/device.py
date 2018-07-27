@@ -236,7 +236,7 @@ class Device(object):
         for key in sorted(dict_io, key=lambda x: int(x)):
 
             # Neuen IO anlegen
-            if bool(dict_io[key][7]) or self._producttype == 95:
+            if bool(dict_io[key][7]) or isinstance(self, Core):
                 # Bei Bitwerten oder Core RevPiIOBase verwenden
                 io_new = IOBase(
                     self, dict_io[key], iotype, "little", False
