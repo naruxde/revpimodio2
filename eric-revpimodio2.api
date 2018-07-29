@@ -9,12 +9,17 @@ revpimodio2.RED?7
 revpimodio2.RISING?7
 revpimodio2.app.App?1(app)
 revpimodio2.consttostr?4(value)
+revpimodio2.device.Connect.A3?7
+revpimodio2.device.Connect._devconfigure?5()
+revpimodio2.device.Connect._get_leda3?5()
+revpimodio2.device.Connect._set_leda3?5(value)
 revpimodio2.device.Core.A1?7
 revpimodio2.device.Core.A2?7
 revpimodio2.device.Core._devconfigure?5()
 revpimodio2.device.Core._get_leda1?5()
 revpimodio2.device.Core._get_leda2?5()
 revpimodio2.device.Core._get_status?5()
+revpimodio2.device.Core._set_calculatedled?5(addresslist, shifted_value)
 revpimodio2.device.Core._set_leda1?5(value)
 revpimodio2.device.Core._set_leda2?5(value)
 revpimodio2.device.Core.errorlimit1?4(value)

@@ -150,10 +150,17 @@ class RevPiModIO(object):
                     device["position"] += 1
 
             if device["type"] == "BASE":
-                # Core
-                dev_new = devicemodule.Core(
-                    self, device, simulator=self._simulator
-                )
+                pt = int(device["productType"])
+                if pt == 105:
+                    # RevPi Connect
+                    dev_new = devicemodule.Connect(
+                        self, device, simulator=self._simulator
+                    )
+                else:
+                    # RevPi Core immer als Fallback verwenden
+                    dev_new = devicemodule.Core(
+                        self, device, simulator=self._simulator
+                    )
                 self.core = dev_new
             elif device["type"] == "LEFT_RIGHT":
                 # IOs

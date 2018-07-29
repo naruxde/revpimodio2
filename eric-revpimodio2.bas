@@ -1,3 +1,4 @@
+Connect Core
 Core Device
 EventCallback Thread
 Gateway Device

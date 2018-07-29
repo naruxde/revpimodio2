@@ -18,6 +18,9 @@ Global Attributes</h3>
 Classes</h3>
 <table>
 <tr>
+<td><a style="color:#0000FF" href="#Connect">Connect</a></td>
+<td>Klasse fuer den RevPi Connect.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Core">Core</a></td>
 <td>Klasse fuer den RevPi Core.</td>
 </tr><tr>
@@ -39,6 +42,78 @@ Functions</h3>
 <table>
 <tr><td>None</td></tr>
 </table>
+<hr /><hr />
+<a NAME="Connect" ID="Connect"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">Connect</h2>
+<p>
+Klasse fuer den RevPi Connect.
+</p><p>
+    Stellt Funktionen fuer die LEDs, Watchdog und den Status zur Verfuegung.
+</p><p>
+
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+Core
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>A3</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#Connect._devconfigure">_devconfigure</a></td>
+<td>Connect-Klasse vorbereiten.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Connect._get_leda3">_get_leda3</a></td>
+<td>Gibt den Zustand der LED A3 vom Connect zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Connect._set_leda3">_set_leda3</a></td>
+<td>Setzt den Zustand der LED A3 vom Connect.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="Connect._devconfigure" ID="Connect._devconfigure"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Connect._devconfigure</h3>
+<b>_devconfigure</b>(<i></i>)
+<p>
+Connect-Klasse vorbereiten.
+</p><a NAME="Connect._get_leda3" ID="Connect._get_leda3"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Connect._get_leda3</h3>
+<b>_get_leda3</b>(<i></i>)
+<p>
+Gibt den Zustand der LED A3 vom Connect zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+0=aus, 1=gruen, 2=rot
+</dd>
+</dl><a NAME="Connect._set_leda3" ID="Connect._set_leda3"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Connect._set_leda3</h3>
+<b>_set_leda3</b>(<i>value</i>)
+<p>
+Setzt den Zustand der LED A3 vom Connect.
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+0=aus, 1=gruen, 2=rot
+</dd>
+</dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
 <hr /><hr />
 <a NAME="Core" ID="Core"></a>
 <h2 style="background-color:#FFFFFF;color:#0000FF">Core</h2>
@@ -73,19 +148,22 @@ Methods</h3>
 <td>Core-Klasse vorbereiten.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core._get_leda1">_get_leda1</a></td>
-<td>Gibt den Zustand der LED A1 vom core zurueck.</td>
+<td>Gibt den Zustand der LED A1 vom Core zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core._get_leda2">_get_leda2</a></td>
-<td>Gibt den Zustand der LED A2 vom core zurueck.</td>
+<td>Gibt den Zustand der LED A2 vom Core zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core._get_status">_get_status</a></td>
 <td>Gibt den RevPi Core Status zurueck.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#Core._set_calculatedled">_set_calculatedled</a></td>
+<td>Berechnet und setzt neuen Bytewert fuer LED byte.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Core._set_leda1">_set_leda1</a></td>
-<td>Setzt den Zustand der LED A1 vom core.</td>
+<td>Setzt den Zustand der LED A1 vom Core.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core._set_leda2">_set_leda2</a></td>
-<td>Setzt den Zustand der LED A2 vom core.</td>
+<td>Setzt den Zustand der LED A2 vom Core.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core.errorlimit1">errorlimit1</a></td>
 <td>Setzt RS485 ErrorLimit1 auf neuen Wert.</td>
@@ -156,7 +234,7 @@ Core-Klasse vorbereiten.
 Core._get_leda1</h3>
 <b>_get_leda1</b>(<i></i>)
 <p>
-Gibt den Zustand der LED A1 vom core zurueck.
+Gibt den Zustand der LED A1 vom Core zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
@@ -167,7 +245,7 @@ Gibt den Zustand der LED A1 vom core zurueck.
 Core._get_leda2</h3>
 <b>_get_leda2</b>(<i></i>)
 <p>
-Gibt den Zustand der LED A2 vom core zurueck.
+Gibt den Zustand der LED A2 vom Core zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
@@ -184,12 +262,26 @@ Gibt den RevPi Core Status zurueck.
 <dd>
 Status als <class 'int'>
 </dd>
+</dl><a NAME="Core._set_calculatedled" ID="Core._set_calculatedled"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Core._set_calculatedled</h3>
+<b>_set_calculatedled</b>(<i>addresslist, shifted_value</i>)
+<p>
+Berechnet und setzt neuen Bytewert fuer LED byte.
+</p><dl>
+<dt><i>addresslist</i></dt>
+<dd>
+Liste der Vergleicher
+</dd><dt><i>shifed_value</i></dt>
+<dd>
+Bits vergleichen
+</dd>
 </dl><a NAME="Core._set_leda1" ID="Core._set_leda1"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Core._set_leda1</h3>
 <b>_set_leda1</b>(<i>value</i>)
 <p>
-Setzt den Zustand der LED A1 vom core.
+Setzt den Zustand der LED A1 vom Core.
 </p><dl>
 <dt><i>value</i></dt>
 <dd>
@@ -200,7 +292,7 @@ Setzt den Zustand der LED A1 vom core.
 Core._set_leda2</h3>
 <b>_set_leda2</b>(<i>value</i>)
 <p>
-Setzt den Zustand der LED A2 vom core.
+Setzt den Zustand der LED A2 vom Core.
 </p><dl>
 <dt><i>value</i></dt>
 <dd>
