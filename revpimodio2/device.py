@@ -402,59 +402,60 @@ class Core(Device):
 
     def _devconfigure(self):
         """Core-Klasse vorbereiten."""
+        # Eigene IO-Liste aufbauen
+        lst_io = [x for x in self.__iter__()]
+
+        self._iostatusbyte = lst_io[0]
         self._iocycle = None
         self._iotemperature = None
         self._iofrequency = None
         self._ioerrorcnt = None
-        self._ioled = 1
+        self._ioled = lst_io[1]
         self._ioerrorlimit1 = None
         self._ioerrorlimit2 = None
 
-        # Eigene IO-Liste aufbauen
-        self.__lst_io = [x for x in self.__iter__()]
-
-        int_lenio = len(self.__lst_io)
+        int_lenio = len(lst_io)
         if int_lenio == 6:
             # Core 1.1
-            self._iocycle = 1
-            self._ioerrorcnt = 2
-            self._ioled = 3
-            self._ioerrorlimit1 = 4
-            self._ioerrorlimit2 = 5
+            self._iocycle = lst_io[1]
+            self._ioerrorcnt = lst_io[2]
+            self._ioled = lst_io[3]
+            self._ioerrorlimit1 = lst_io[4]
+            self._ioerrorlimit2 = lst_io[5]
         elif int_lenio == 8:
             # Core 1.2
-            self._iocycle = 1
-            self._ioerrorcnt = 2
-            self._iotemperature = 3
-            self._iofrequency = 4
-            self._ioled = 5
-            self._ioerrorlimit1 = 6
-            self._ioerrorlimit2 = 7
+            self._iocycle = lst_io[1]
+            self._ioerrorcnt = lst_io[2]
+            self._iotemperature = lst_io[3]
+            self._iofrequency = lst_io[4]
+            self._ioled = lst_io[5]
+            self._ioerrorlimit1 = lst_io[6]
+            self._ioerrorlimit2 = lst_io[7]
 
         if not (self._modio._monitoring or self._modio._simulator):
             # Für RS485 errors defaults laden sollte procimg NULL sein
             if self._ioerrorlimit1 is not None:
-                self.__lst_io[self._ioerrorlimit1].set_value(
-                    self.__lst_io[self._ioerrorlimit1]._defaultvalue
+                self._ioerrorlimit1.set_value(
+                    self._ioerrorlimit1._defaultvalue
                 )
             if self._ioerrorlimit2 is not None:
-                self.__lst_io[self._ioerrorlimit2].set_value(
-                    self.__lst_io[self._ioerrorlimit2]._defaultvalue
+                self._ioerrorlimit2.set_value(
+                    self._ioerrorlimit2._defaultvalue
                 )
             # RS485 errors schreiben
             self._modio.writeprocimg(self)
 
-    def __errorlimit(self, io_id, errorlimit):
+    def __errorlimit(self, io, errorlimit):
         """Verwaltet das Lesen und Schreiben der ErrorLimits.
-        @param io_id Index des IOs fuer ErrorLimit
+        @param io IOs Objekt fuer ErrorLimit
         @return Aktuellen ErrorLimit oder None wenn nicht verfuegbar"""
         if errorlimit is None:
-            return None if io_id is None else int.from_bytes(
-                self.__lst_io[io_id].get_value(), byteorder="little"
+            return None if io is None else int.from_bytes(
+                io.get_value(), byteorder="little"
             )
         else:
             if 0 <= errorlimit <= 65535:
-                self.__lst_io[io_id].set_value(
+                io.set_value(
                     errorlimit.to_bytes(2, byteorder="little")
                 )
             else:
@@ -466,14 +467,14 @@ class Core(Device):
         """Gibt den RevPi Core Status zurueck.
         @return Status als <class 'int'>"""
         return int.from_bytes(
-            self.__lst_io[0].get_value(), byteorder="little"
+            self._iostatusbyte.get_value(), byteorder="little"
         )
 
     def _get_leda1(self):
         """Gibt den Zustand der LED A1 vom Core zurueck.
         @return 0=aus, 1=gruen, 2=rot"""
         int_led = int.from_bytes(
-            self.__lst_io[self._ioled].get_value(), byteorder="little"
+            self._ioled.get_value(), byteorder="little"
         )
         led = int_led & 1
         led += int_led & 2
@@ -483,7 +484,7 @@ class Core(Device):
         """Gibt den Zustand der LED A2 vom Core zurueck.
         @return 0=aus, 1=gruen, 2=rot"""
         int_led = int.from_bytes(
-            self.__lst_io[self._ioled].get_value(), byteorder="little"
+            self._ioled.get_value(), byteorder="little"
         ) >> 2
         led = int_led & 1
         led += int_led & 2
@@ -495,12 +496,12 @@ class Core(Device):
         @param shifed_value Bits vergleichen"""
         # Byte als int holen
         int_led = int.from_bytes(
-            self.__lst_io[self._ioled].get_value(), byteorder="little"
+            self._ioled.get_value(), byteorder="little"
         )
 
         for int_bit in addresslist:
             value = bool(shifted_value & int_bit)
-            if bool(int_led & 1) != value:
+            if bool(int_led & int_bit) != value:
                 # Berechnen, wenn verändert
                 if value:
                     int_led += int_bit
@@ -508,9 +509,7 @@ class Core(Device):
                     int_led -= int_bit
 
         # Zurückschreiben wenn verändert
-        self.__lst_io[self._ioled].set_value(
-            int_led.to_bytes(length=1, byteorder="little")
-        )
+        self._ioled.set_value(int_led.to_bytes(length=1, byteorder="little"))
 
     def _set_leda1(self, value):
         """Setzt den Zustand der LED A1 vom Core.
@@ -537,7 +536,7 @@ class Core(Device):
         """Statusbit fuer piControl-Treiber laeuft.
         @return True, wenn Treiber laeuft"""
         return bool(int.from_bytes(
-            self.__lst_io[0].get_value(), byteorder="little"
+            self._iostatusbyte.get_value(), byteorder="little"
         ) & 1)
 
     @property
@@ -545,7 +544,7 @@ class Core(Device):
         """Statusbit fuer ein IO-Modul nicht mit PiCtory konfiguriert.
         @return True, wenn IO Modul nicht konfiguriert"""
         return bool(int.from_bytes(
-            self.__lst_io[0].get_value(), byteorder="little"
+            self._iostatusbyte.get_value(), byteorder="little"
         ) & 2)
 
     @property
@@ -553,7 +552,7 @@ class Core(Device):
         """Statusbit fuer ein IO-Modul fehlt oder piGate konfiguriert.
         @return True, wenn IO-Modul fehlt oder piGate konfiguriert"""
         return bool(int.from_bytes(
-            self.__lst_io[0].get_value(), byteorder="little"
+            self._iostatusbyte.get_value(), byteorder="little"
         ) & 4)
 
     @property
@@ -561,7 +560,7 @@ class Core(Device):
         """Statusbit Modul belegt mehr oder weniger Speicher als konfiguriert.
         @return True, wenn falscher Speicher belegt ist"""
         return bool(int.from_bytes(
-            self.__lst_io[0].get_value(), byteorder="little"
+            self._iostatusbyte.get_value(), byteorder="little"
         ) & 8)
 
     @property
@@ -569,7 +568,7 @@ class Core(Device):
         """Statusbit links vom RevPi ist ein piGate Modul angeschlossen.
         @return True, wenn piGate links existiert"""
         return bool(int.from_bytes(
-            self.__lst_io[0].get_value(), byteorder="little"
+            self._iostatusbyte.get_value(), byteorder="little"
         ) & 16)
 
     @property
@@ -577,7 +576,7 @@ class Core(Device):
         """Statusbit rechts vom RevPi ist ein piGate Modul angeschlossen.
         @return True, wenn piGate rechts existiert"""
         return bool(int.from_bytes(
-            self.__lst_io[0].get_value(), byteorder="little"
+            self._iostatusbyte.get_value(), byteorder="little"
         ) & 32)
 
     @property
@@ -585,7 +584,7 @@ class Core(Device):
         """Gibt Zykluszeit der Prozessabbildsynchronisierung zurueck.
         @return Zykluszeit in ms"""
         return None if self._iocycle is None else int.from_bytes(
-            self.__lst_io[self._iocycle].get_value(), byteorder="little"
+            self._iocycle.get_value(), byteorder="little"
         )
 
     @property
@@ -593,7 +592,7 @@ class Core(Device):
         """Gibt CPU-Temperatur zurueck.
         @return CPU-Temperatur in Celsius"""
         return None if self._iotemperature is None else int.from_bytes(
-            self.__lst_io[self._iotemperature].get_value(), byteorder="little"
+            self._iotemperature.get_value(), byteorder="little"
         )
 
     @property
@@ -601,7 +600,7 @@ class Core(Device):
         """Gibt CPU Taktfrequenz zurueck.
         @return CPU Taktfrequenz in MHz"""
         return None if self._iofrequency is None else int.from_bytes(
-            self.__lst_io[self._iofrequency].get_value(), byteorder="little"
+            self._iofrequency.get_value(), byteorder="little"
         ) * 10
 
     @property
@@ -609,7 +608,7 @@ class Core(Device):
         """Gibt Fehleranzahl auf RS485 piBridge Bus zurueck.
         @return Fehleranzahl der piBridge"""
         return None if self._ioerrorcnt is None else int.from_bytes(
-            self.__lst_io[self._ioerrorcnt].get_value(), byteorder="little"
+            self._ioerrorcnt.get_value(), byteorder="little"
         )
 
     @property
@@ -649,36 +648,29 @@ class Connect(Core):
         """Connect-Klasse vorbereiten."""
         super()._devconfigure()
 
-        # TODO: IO Objekte für WD und X2 erzeugen
-        self.wd = None
-        self.x2in = None
-        self.x2out = None
+        # IO Objekte für WD und X2 in/out erzeugen
+        self.wd = IOBase(self, [
+            "wd", 0, 1, self._ioled.address,
+            False, None, "Connect_WatchDog", "6"
+        ], OUT, "little", False)
+        self.x2in = IOBase(self, [
+            "x2in", 0, 1, self._iostatusbyte.address,
+            False, None, "Connect_X2_IN", "6"
+        ], INP, "little", False)
+        self.x2out = IOBase(self, [
+            "x2out", 0, 1, self._ioled.address,
+            False, None, "Connect_X2_OUT", "7"
+        ], OUT, "little", False)
 
     def _get_leda3(self):
         """Gibt den Zustand der LED A3 vom Connect zurueck.
         @return 0=aus, 1=gruen, 2=rot"""
         int_led = int.from_bytes(
-            self.__lst_io[self._ioled].get_value(), byteorder="little"
+            self._ioled.get_value(), byteorder="little"
         ) >> 4
         led = int_led & 1
         led += int_led & 2
         return led
-
-#    def _get_wd(self):
-#        """Gibt den Zustand des Watchdogs vom Connect zurueck.
-#        @return True / False muss getriggert werden"""
-#        int_led = int.from_bytes(
-#            self.__lst_io[self._ioled].get_value(), byteorder="little"
-#        )
-#        return bool(int_led & 64)
-#
-#    def _get_x2out(self):
-#        """Gibt den Zustand des Relais X2 vom Connect zurueck.
-#        @return True, wenn Relais geschlossen"""
-#        int_led = int.from_bytes(
-#            self.__lst_io[self._ioled].get_value(), byteorder="little"
-#        )
-#        return bool(int_led & 128)
 
     def _set_leda3(self, value):
         """Setzt den Zustand der LED A3 vom Connect.
@@ -688,26 +680,7 @@ class Connect(Core):
         else:
             raise ValueError("led status must be between 0 and 3")
 
-#    def _set_wd(self, value):
-#        """Setzt den Zustand des Watchdogs vom Connect.
-#        @param value True / False muss getriggert werden"""
-#        if isinstance(value, bool):
-#            self._set_calculatedled([128], 128)
-#        else:
-#            raise ValueError("value must be True / False")
-#
-#    def _set_x2out(self, value):
-#        """Setzt den Zustand des Watchdogs vom Connect.
-#        @param value True / False muss getriggert werden"""
-#        if isinstance(value, bool):
-#            self._set_calculatedled([64], 64)
-#        else:
-#            raise ValueError("value must be True / False")
-
     A3 = property(_get_leda3, _set_leda3)
-#    WD = property(_get_wd, _set_wd)
-#    X2IN = property(_get_x2in)
-#    X2OUT = property(_get_x2out, _set_x2out)
 
 
 class Gateway(Device):
