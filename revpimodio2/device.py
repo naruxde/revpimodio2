@@ -55,7 +55,7 @@ class DeviceList(object):
     def __delitem__(self, key):
         """Entfernt Device an angegebener Position.
         @param key Deviceposition zum entfernen"""
-        if issubclass(type(key), Device):
+        if isinstance(key, Device):
             key = key._position
         self.__delattr__(key)
 
@@ -91,7 +91,7 @@ class DeviceList(object):
         """Setzt Attribute nur wenn Device.
         @param key Attributname
         @param value Attributobjekt"""
-        if issubclass(type(value), Device):
+        if isinstance(value, Device):
             object.__setattr__(self, key, value)
             self.__dict_position[value._position] = value
         elif key == "_DeviceList__dict_position":
@@ -178,7 +178,7 @@ class Device(object):
         """Prueft ob IO auf diesem Device liegt.
         @param key IO-Name <class 'str'> / IO-Bytenummer <class 'int'>
         @return True, wenn IO auf Device vorhanden"""
-        if issubclass(type(key), IOBase):
+        if isinstance(key, IOBase):
             # Umwandlung für key
             key = key._name
 
@@ -432,18 +432,23 @@ class Core(Device):
             self._ioerrorlimit1 = lst_io[6]
             self._ioerrorlimit2 = lst_io[7]
 
-        if not (self._modio._monitoring or self._modio._simulator):
-            # Für RS485 errors defaults laden sollte procimg NULL sein
-            if self._ioerrorlimit1 is not None:
-                self._ioerrorlimit1.set_value(
-                    self._ioerrorlimit1._defaultvalue
-                )
-            if self._ioerrorlimit2 is not None:
-                self._ioerrorlimit2.set_value(
-                    self._ioerrorlimit2._defaultvalue
-                )
-            # RS485 errors schreiben
-            self._modio.writeprocimg(self)
+        # Echte IOs erzeugen
+        self.a1green = IOBase(self, [
+            "a1green", 0, 1, self._ioled.address,
+            False, None, "LED_A1_GREEN", "0"
+        ], OUT, "little", False)
+        self.a1red = IOBase(self, [
+            "a1red", 0, 1, self._ioled.address,
+            False, None, "LED_A1_RED", "1"
+        ], OUT, "little", False)
+        self.a2green = IOBase(self, [
+            "a2green", 0, 1, self._ioled.address,
+            False, None, "LED_A2_GREEN", "2"
+        ], OUT, "little", False)
+        self.a2red = IOBase(self, [
+            "a2red", 0, 1, self._ioled.address,
+            False, None, "LED_A2_RED", "3"
+        ], OUT, "little", False)
 
     def __errorlimit(self, io, errorlimit):
         """Verwaltet das Lesen und Schreiben der ErrorLimits.
@@ -648,10 +653,20 @@ class Connect(Core):
         """Connect-Klasse vorbereiten."""
         super()._devconfigure()
 
+        # Echte IOs erzeugen
+        self.a3green = IOBase(self, [
+            "a3green", 0, 1, self._ioled.address,
+            False, None, "LED_A3_GREEN", "4"
+        ], OUT, "little", False)
+        self.a3red = IOBase(self, [
+            "a3red", 0, 1, self._ioled.address,
+            False, None, "LED_A3_RED", "5"
+        ], OUT, "little", False)
+
         # IO Objekte für WD und X2 in/out erzeugen
         self.wd = IOBase(self, [
             "wd", 0, 1, self._ioled.address,
-            False, None, "Connect_WatchDog", "6"
+            False, None, "Connect_WatchDog", "7"
         ], OUT, "little", False)
         self.x2in = IOBase(self, [
             "x2in", 0, 1, self._iostatusbyte.address,
@@ -659,7 +674,7 @@ class Connect(Core):
         ], INP, "little", False)
         self.x2out = IOBase(self, [
             "x2out", 0, 1, self._ioled.address,
-            False, None, "Connect_X2_OUT", "7"
+            False, None, "Connect_X2_OUT", "6"
         ], OUT, "little", False)
 
     def _get_leda3(self):

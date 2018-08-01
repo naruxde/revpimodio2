@@ -191,7 +191,7 @@ class IOList(object):
     def _private_register_new_io_object(self, new_io):
         """Registriert neues IO Objekt unabhaenging von __setattr__.
         @param new_io Neues IO Objekt"""
-        if issubclass(type(new_io), IOBase):
+        if isinstance(new_io, IOBase):
             if hasattr(self, new_io._name):
                 raise AttributeError(
                     "attribute {} already exists - can not set io".format(
@@ -317,7 +317,7 @@ class IOBase(object):
 
         else:
             # Höhere Bits als 7 auf nächste Bytes umbrechen
-            int_startaddress += int((int(valuelist[7]) % 16) / 8)
+            int_startaddress += int(int(valuelist[7]) / 8)
             self._slc_address = slice(
                 int_startaddress, int_startaddress + 1
             )
@@ -519,7 +519,7 @@ class IOBase(object):
         >Python3 struct</a>
 
         """
-        if not issubclass(type(self._parentdevice), Gateway):
+        if not isinstance(self._parentdevice, Gateway):
             raise RuntimeError(
                 "this function can be used for ios on gatway or virtual "
                 "devices only"

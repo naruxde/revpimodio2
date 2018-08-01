@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project revpimodio2 -->
-<!-- Saved: 2018-07-25, 14:56:58 -->
+<!-- Saved: 2018-08-01, 12:41:53 -->
 <!-- Copyright (C) 2018 Sven Sager, akira@narux.de -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -38,6 +38,7 @@
     <Source>test/web_startseite.py</Source>
     <Source>test/web_rpidaten.py</Source>
     <Source>test/web_rpii2c.py</Source>
+    <Source>test/test_unit_fh.py</Source>
   </Sources>
   <Forms/>
   <Translations/>

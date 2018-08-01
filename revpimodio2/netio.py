@@ -466,7 +466,7 @@ class RevPiNetIO(_RevPiModIO):
         if device is None:
             self._myfh.clear_dirtybytes()
         else:
-            dev = device if issubclass(type(device), Device) \
+            dev = device if isinstance(device, Device) \
                 else self.device.__getitem__(device)
             mylist = [dev]
 
@@ -486,7 +486,7 @@ class RevPiNetIO(_RevPiModIO):
         if device is None:
             mylist = self.device
         else:
-            dev = device if issubclass(type(device), Device) \
+            dev = device if isinstance(device, Device) \
                 else self.device.__getitem__(device)
             mylist = [dev]
 

@@ -79,6 +79,9 @@ class RevPiModIO(object):
         self.io = None
         self.summary = None
 
+        # Event für Benutzeraktionen
+        self.exitsignal = Event()
+
         # Nur Konfigurieren, wenn nicht vererbt
         if type(self) == RevPiModIO:
             self._configure(self.get_jconfigrsc())
@@ -177,6 +180,9 @@ class RevPiModIO(object):
                 dev_new = devicemodule.Gateway(
                     self, device, simulator=self._simulator
                 )
+            elif device["type"] == "RIGHT":
+                # Connectdevice
+                dev_new = None
             else:
                 # Device-Type nicht gefunden
                 warnings.warn(
@@ -215,6 +221,20 @@ class RevPiModIO(object):
         # Aktuellen Outputstatus von procimg einlesen
         if self._syncoutputs:
             self.syncoutputs()
+
+        # Für RS485 errors am core defaults laden sollte procimg NULL sein
+        if not (self.core is None or self._monitoring or self._simulator):
+            if self.core._ioerrorlimit1 is not None:
+                self.core._ioerrorlimit1.set_value(
+                    self.core._ioerrorlimit1._defaultvalue
+                )
+            if self.core._ioerrorlimit2 is not None:
+                self.core._ioerrorlimit2.set_value(
+                    self.core._ioerrorlimit2._defaultvalue
+                )
+
+            # RS485 errors schreiben
+            self.writeprocimg(self.core)
 
         # Optional ins autorefresh aufnehmen
         if self._autorefresh:
@@ -374,6 +394,9 @@ class RevPiModIO(object):
             # Zeitänderung in _imgwriter neuladen
             self._imgwriter.newdata.clear()
 
+        # Benutzerevent
+        self.exitsignal.clear()
+
         # Cycleloop starten
         self._exit.clear()
         self._looprunning = True
@@ -423,6 +446,10 @@ class RevPiModIO(object):
         wird dann gestoppt und das Programm kann sauber beendet werden.
 
         @param full Entfernt auch alle Devices aus autorefresh"""
+
+        # Benutzerevent
+        self.exitsignal.set()
+
         self._exit.set()
         self._waitexit.set()
 
@@ -544,6 +571,9 @@ class RevPiModIO(object):
             self._th_mainloop.start()
             return
 
+        # Benutzerevent
+        self.exitsignal.clear()
+
         # Event säubern vor Eintritt in Mainloop
         self._exit.clear()
         self._looprunning = True
@@ -592,7 +622,7 @@ class RevPiModIO(object):
         if device is None:
             mylist = self.device
         else:
-            dev = device if issubclass(type(device), devicemodule.Device) \
+            dev = device if isinstance(device, devicemodule.Device) \
                 else self.device.__getitem__(device)
 
             if dev._selfupdate:
@@ -647,7 +677,7 @@ class RevPiModIO(object):
         if device is None:
             mylist = self.device
         else:
-            dev = device if issubclass(type(device), devicemodule.Device) \
+            dev = device if isinstance(device, devicemodule.Device) \
                 else self.device.__getitem__(device)
             mylist = [dev]
 
@@ -667,12 +697,12 @@ class RevPiModIO(object):
         if device is None:
             mylist = self.device
         else:
-            dev = device if issubclass(type(device), devicemodule.Device) \
+            dev = device if isinstance(device, devicemodule.Device) \
                 else self.device.__getitem__(device)
 
             if dev._selfupdate:
                 raise RuntimeError(
-                    "can not sync process image, while device '{}|{}'"
+                    "can not sync outputs, while device '{}|{}'"
                     "is in autorefresh mode".format(dev._position, dev._name)
                 )
             mylist = [dev]
@@ -710,7 +740,7 @@ class RevPiModIO(object):
         if device is None:
             mylist = self.device
         else:
-            dev = device if issubclass(type(device), devicemodule.Device) \
+            dev = device if isinstance(device, devicemodule.Device) \
                 else self.device.__getitem__(device)
 
             if dev._selfupdate:
