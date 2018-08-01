@@ -12,7 +12,10 @@ revpimodio2.consttostr?4(value)
 revpimodio2.device.Connect.A3?7
 revpimodio2.device.Connect._devconfigure?5()
 revpimodio2.device.Connect._get_leda3?5()
+revpimodio2.device.Connect._get_wdtrigger?5()
 revpimodio2.device.Connect._set_leda3?5(value)
+revpimodio2.device.Connect._set_wdtrigger?5(value)
+revpimodio2.device.Connect.watchdogtrigger?7
 revpimodio2.device.Core.A1?7
 revpimodio2.device.Core.A2?7
 revpimodio2.device.Core._devconfigure?5()

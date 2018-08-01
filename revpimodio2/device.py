@@ -6,7 +6,7 @@
 # (c) Sven Sager, License: LGPLv3
 #
 """Modul fuer die Verwaltung der Devices."""
-from threading import Lock
+from threading import Thread, Event, Lock
 from .helper import ProcimgWriter
 
 
@@ -434,19 +434,19 @@ class Core(Device):
 
         # Echte IOs erzeugen
         self.a1green = IOBase(self, [
-            "a1green", 0, 1, self._ioled.address,
+            "a1green", 0, 1, self._ioled._slc_address.start,
             False, None, "LED_A1_GREEN", "0"
         ], OUT, "little", False)
         self.a1red = IOBase(self, [
-            "a1red", 0, 1, self._ioled.address,
+            "a1red", 0, 1, self._ioled._slc_address.start,
             False, None, "LED_A1_RED", "1"
         ], OUT, "little", False)
         self.a2green = IOBase(self, [
-            "a2green", 0, 1, self._ioled.address,
+            "a2green", 0, 1, self._ioled._slc_address.start,
             False, None, "LED_A2_GREEN", "2"
         ], OUT, "little", False)
         self.a2red = IOBase(self, [
-            "a2red", 0, 1, self._ioled.address,
+            "a2red", 0, 1, self._ioled._slc_address.start,
             False, None, "LED_A2_RED", "3"
         ], OUT, "little", False)
 
@@ -649,31 +649,38 @@ class Connect(Core):
 
     """
 
+    def __wdtrigger(self):
+        """WD Ausgang alle 10 Sekunden automatisch toggeln."""
+        while not self.__evt_wdtrigger.wait(10):
+            self.wd.value = not self.wd.value
+
     def _devconfigure(self):
         """Connect-Klasse vorbereiten."""
         super()._devconfigure()
+        self.__evt_wdtrigger = Event()
+        self.__th_wdtrigger = None
 
         # Echte IOs erzeugen
         self.a3green = IOBase(self, [
-            "a3green", 0, 1, self._ioled.address,
+            "a3green", 0, 1, self._ioled._slc_address.start,
             False, None, "LED_A3_GREEN", "4"
         ], OUT, "little", False)
         self.a3red = IOBase(self, [
-            "a3red", 0, 1, self._ioled.address,
+            "a3red", 0, 1, self._ioled._slc_address.start,
             False, None, "LED_A3_RED", "5"
         ], OUT, "little", False)
 
         # IO Objekte für WD und X2 in/out erzeugen
         self.wd = IOBase(self, [
-            "wd", 0, 1, self._ioled.address,
+            "wd", 0, 1, self._ioled._slc_address.start,
             False, None, "Connect_WatchDog", "7"
         ], OUT, "little", False)
         self.x2in = IOBase(self, [
-            "x2in", 0, 1, self._iostatusbyte.address,
+            "x2in", 0, 1, self._iostatusbyte._slc_address.start,
             False, None, "Connect_X2_IN", "6"
         ], INP, "little", False)
         self.x2out = IOBase(self, [
-            "x2out", 0, 1, self._ioled.address,
+            "x2out", 0, 1, self._ioled._slc_address.start,
             False, None, "Connect_X2_OUT", "6"
         ], OUT, "little", False)
 
@@ -687,6 +694,12 @@ class Connect(Core):
         led += int_led & 2
         return led
 
+    def _get_wdtrigger(self):
+        """Ruft den Wert fuer Autowatchdog ab.
+        @return True, wenn Autowatchdog aktiv ist"""
+        return self.__th_wdtrigger is not None \
+            and self.__th_wdtrigger.is_alive()
+
     def _set_leda3(self, value):
         """Setzt den Zustand der LED A3 vom Connect.
         @param value 0=aus, 1=gruen, 2=rot"""
@@ -695,7 +708,29 @@ class Connect(Core):
         else:
             raise ValueError("led status must be between 0 and 3")
 
+    def _set_wdtrigger(self, value):
+        """Setzt den Wert fuer Autowatchdog.
+
+        Wird dieser Wert auf True gesetzt, wechselt im Hintergrund das noetige
+        Bit zum toggeln des Watchdogs alle 10 Sekunden zwichen True und False.
+        Dieses Bit wird bei autorefresh=True natuerlich automatisch in das
+        Prozessabbild geschrieben.
+
+        WICHTIG: Sollte autorefresh=False sein, muss zyklisch
+                 .writeprocimg() aufgerufen werden, um den Wert in das
+                 Prozessabbild zu schreiben!!!
+
+        @param value True zum aktivieren, Fals zum beenden"""
+        if not value:
+            self.__evt_wdtrigger.set()
+
+        elif not self._get_wdtrigger():
+            self.__evt_wdtrigger.clear()
+            self.__th_wdtrigger = Thread(target=self.__wdtrigger, daemon=True)
+            self.__th_wdtrigger.start()
+
     A3 = property(_get_leda3, _set_leda3)
+    watchdogtrigger = property(_get_wdtrigger, _set_wdtrigger)
 
 
 class Gateway(Device):

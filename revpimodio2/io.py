@@ -255,13 +255,13 @@ class IOBase(object):
 
         @param parentdevice Parentdevice auf dem der IO liegt
         @param valuelist Datenliste fuer Instantiierung
-            ["name","defval","bitlen","startaddr",exp,"idx","bmk","bitaddr"]
+            ["name","defval","bitlen","startaddrdev",exp,"idx","bmk","bitaddr"]
         @param iotype <class 'int'> Wert
         @param byteorder Byteorder 'little'/'big' fuer <class 'int'> Berechnung
         @param sigend Intberechnung mit Vorzeichen durchfuehren
 
         """
-        # ["name","defval","bitlen","startaddr",exp,"idx","bmk","bitaddr"]
+        # ["name","defval","bitlen","startaddrdev",exp,"idx","bmk","bitaddr"]
         # [  0   ,   1    ,   2    ,     3     , 4 ,  5  ,  6  ,    7    ]
         self._parentdevice = parentdevice
 

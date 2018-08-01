@@ -58,7 +58,7 @@ Core
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>A3</td></tr>
+<tr><td>A3</td></tr><tr><td>watchdogtrigger</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -69,14 +69,23 @@ Class Methods</h3>
 Methods</h3>
 <table>
 <tr>
+<td><a style="color:#0000FF" href="#Connect.__wdtrigger">__wdtrigger</a></td>
+<td>WD Ausgang alle 10 Sekunden automatisch toggeln.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Connect._devconfigure">_devconfigure</a></td>
 <td>Connect-Klasse vorbereiten.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Connect._get_leda3">_get_leda3</a></td>
 <td>Gibt den Zustand der LED A3 vom Connect zurueck.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#Connect._get_wdtrigger">_get_wdtrigger</a></td>
+<td>Ruft den Wert fuer Autowatchdog ab.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Connect._set_leda3">_set_leda3</a></td>
 <td>Setzt den Zustand der LED A3 vom Connect.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Connect._set_wdtrigger">_set_wdtrigger</a></td>
+<td>Setzt den Wert fuer Autowatchdog.</td>
 </tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -84,7 +93,13 @@ Static Methods</h3>
 <table>
 <tr><td>None</td></tr>
 </table>
-<a NAME="Connect._devconfigure" ID="Connect._devconfigure"></a>
+<a NAME="Connect.__wdtrigger" ID="Connect.__wdtrigger"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Connect.__wdtrigger</h3>
+<b>__wdtrigger</b>(<i></i>)
+<p>
+WD Ausgang alle 10 Sekunden automatisch toggeln.
+</p><a NAME="Connect._devconfigure" ID="Connect._devconfigure"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Connect._devconfigure</h3>
 <b>_devconfigure</b>(<i></i>)
@@ -101,6 +116,17 @@ Gibt den Zustand der LED A3 vom Connect zurueck.
 <dd>
 0=aus, 1=gruen, 2=rot
 </dd>
+</dl><a NAME="Connect._get_wdtrigger" ID="Connect._get_wdtrigger"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Connect._get_wdtrigger</h3>
+<b>_get_wdtrigger</b>(<i></i>)
+<p>
+Ruft den Wert fuer Autowatchdog ab.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn Autowatchdog aktiv ist
+</dd>
 </dl><a NAME="Connect._set_leda3" ID="Connect._set_leda3"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Connect._set_leda3</h3>
@@ -111,6 +137,26 @@ Setzt den Zustand der LED A3 vom Connect.
 <dt><i>value</i></dt>
 <dd>
 0=aus, 1=gruen, 2=rot
+</dd>
+</dl><a NAME="Connect._set_wdtrigger" ID="Connect._set_wdtrigger"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Connect._set_wdtrigger</h3>
+<b>_set_wdtrigger</b>(<i>value</i>)
+<p>
+Setzt den Wert fuer Autowatchdog.
+</p><p>
+        Wird dieser Wert auf True gesetzt, wechselt im Hintergrund das noetige
+        Bit zum toggeln des Watchdogs alle 10 Sekunden zwichen True und False.
+        Dieses Bit wird bei autorefresh=True natuerlich automatisch in das
+        Prozessabbild geschrieben.
+</p><p>
+        WICHTIG: Sollte autorefresh=False sein, muss zyklisch
+                 .writeprocimg() aufgerufen werden, um den Wert in das
+                 Prozessabbild zu schreiben!!!
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+True zum aktivieren, Fals zum beenden
 </dd>
 </dl>
 <div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
