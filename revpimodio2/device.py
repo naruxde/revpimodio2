@@ -721,10 +721,20 @@ class Connect(Core):
                  Prozessabbild zu schreiben!!!
 
         @param value True zum aktivieren, Fals zum beenden"""
+        if self._modio._monitoring:
+            raise RuntimeError(
+                "can not trigger watchdog, while system is in monitoring mode"
+            )
+        if self._modio._simulator:
+            raise RuntimeError(
+                "can not trigger watchdog, while system is in simulator mode"
+            )
+
         if not value:
             self.__evt_wdtrigger.set()
 
         elif not self._get_wdtrigger():
+            # Watchdogtrigger erstellen
             self.__evt_wdtrigger.clear()
             self.__th_wdtrigger = Thread(target=self.__wdtrigger, daemon=True)
             self.__th_wdtrigger.start()
