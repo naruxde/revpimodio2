@@ -649,16 +649,16 @@ class Connect(Core):
 
     """
 
-    def __wdtrigger(self):
+    def __wdtoggle(self):
         """WD Ausgang alle 10 Sekunden automatisch toggeln."""
-        while not self.__evt_wdtrigger.wait(10):
+        while not self.__evt_wdtoggle.wait(10):
             self.wd.value = not self.wd.value
 
     def _devconfigure(self):
         """Connect-Klasse vorbereiten."""
         super()._devconfigure()
-        self.__evt_wdtrigger = Event()
-        self.__th_wdtrigger = None
+        self.__evt_wdtoggle = Event()
+        self.__th_wdtoggle = None
 
         # Echte IOs erzeugen
         self.a3green = IOBase(self, [
@@ -694,11 +694,11 @@ class Connect(Core):
         led += int_led & 2
         return led
 
-    def _get_wdtrigger(self):
+    def _get_wdtoggle(self):
         """Ruft den Wert fuer Autowatchdog ab.
         @return True, wenn Autowatchdog aktiv ist"""
-        return self.__th_wdtrigger is not None \
-            and self.__th_wdtrigger.is_alive()
+        return self.__th_wdtoggle is not None \
+            and self.__th_wdtoggle.is_alive()
 
     def _set_leda3(self, value):
         """Setzt den Zustand der LED A3 vom Connect.
@@ -708,7 +708,7 @@ class Connect(Core):
         else:
             raise ValueError("led status must be between 0 and 3")
 
-    def _set_wdtrigger(self, value):
+    def _set_wdtoggle(self, value):
         """Setzt den Wert fuer Autowatchdog.
 
         Wird dieser Wert auf True gesetzt, wechselt im Hintergrund das noetige
@@ -723,24 +723,24 @@ class Connect(Core):
         @param value True zum aktivieren, Fals zum beenden"""
         if self._modio._monitoring:
             raise RuntimeError(
-                "can not trigger watchdog, while system is in monitoring mode"
+                "can not toggle watchdog, while system is in monitoring mode"
             )
         if self._modio._simulator:
             raise RuntimeError(
-                "can not trigger watchdog, while system is in simulator mode"
+                "can not toggle watchdog, while system is in simulator mode"
             )
 
         if not value:
-            self.__evt_wdtrigger.set()
+            self.__evt_wdtoggle.set()
 
-        elif not self._get_wdtrigger():
-            # Watchdogtrigger erstellen
-            self.__evt_wdtrigger.clear()
-            self.__th_wdtrigger = Thread(target=self.__wdtrigger, daemon=True)
-            self.__th_wdtrigger.start()
+        elif not self._get_wdtoggle():
+            # Watchdogtoggler erstellen
+            self.__evt_wdtoggle.clear()
+            self.__th_wdtoggle = Thread(target=self.__wdtoggle, daemon=True)
+            self.__th_wdtoggle.start()
 
     A3 = property(_get_leda3, _set_leda3)
-    watchdogtrigger = property(_get_wdtrigger, _set_wdtrigger)
+    wdautotoggle = property(_get_wdtoggle, _set_wdtoggle)
 
 
 class Gateway(Device):

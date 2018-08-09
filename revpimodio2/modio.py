@@ -103,7 +103,8 @@ class RevPiModIO(object):
         if self.__cleanupfunc is not None:
             self.readprocimg()
             self.__cleanupfunc()
-            self.writeprocimg()
+            if not self._monitoring:
+                self.writeprocimg()
 
     def _configure(self, jconfigrsc):
         """Verarbeitet die piCtory Konfigurationsdatei."""
@@ -459,7 +460,7 @@ class RevPiModIO(object):
                 self._imgwriter.stop()
                 self._imgwriter.join(self._imgwriter._refresh)
 
-            # Mainloop beenden und darauf waretn
+            # Mainloop beenden und darauf 1 Sekunde warten
             if self._th_mainloop is not None and self._th_mainloop.is_alive():
                 self._th_mainloop.join(1)
 
