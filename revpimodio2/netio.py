@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-#
-# python3-RevPiModIO
-#
-# Webpage: https://revpimodio.org/
-# (c) Sven Sager, License: LGPLv3
-#
 """RevPiModIO Hauptklasse fuer Netzwerkzugriff."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
+
 import socket
 import warnings
 from json import loads as jloads
@@ -79,7 +77,7 @@ class NetFH(Thread):
         so = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             so.connect(self._address)
-        except:
+        except Exception:
             so.close()
         else:
             # Alten Socket trennen
@@ -141,7 +139,7 @@ class NetFH(Thread):
                         self._slavesock.send(_sysexit)
                     else:
                         self._slavesock.shutdown(socket.SHUT_RDWR)
-                except:
+                except Exception:
                     pass
             self._slavesock.close()
 
@@ -178,7 +176,7 @@ class NetFH(Thread):
     def get_name(self):
         """Verbindugnsnamen zurueckgeben.
         @return <class 'str'> IP:PORT"""
-        return "{}:{}".format(*self._address)
+        return "{0}:{1}".format(*self._address)
 
     def get_timeout(self):
         """Gibt aktuellen Timeout zurueck.
@@ -423,7 +421,7 @@ class RevPiNetIO(_RevPiModIO):
             autorefresh,
             monitoring,
             syncoutputs,
-            "{}:{}".format(*self._address),
+            "{0}:{1}".format(*self._address),
             None,
             simulator
         )

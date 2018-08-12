@@ -1,9 +1,10 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
-#
-# (c) Sven Sager, License: LGPLv3
-#
 """Setupscript fuer python3-revpimodio."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
+
 from distutils.core import setup
 
 setup(

@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-#
-# python3-RevPiModIO
-#
-# Webpage: https://revpimodio.org/
-# (c) Sven Sager, License: LGPLv3
-#
 """RevPiModIO Modul fuer die Verwaltung der IOs."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
+
 import struct
 from re import match as rematch
 from threading import Event
@@ -69,7 +67,7 @@ class IOList(object):
         if key in self.__dict_iorefname:
             return self.__dict_iorefname[key]
         else:
-            raise AttributeError("can not find io '{}'".format(key))
+            raise AttributeError("can not find io '{0}'".format(key))
 
     def __getitem__(self, key):
         """Ruft angegebenen IO ab.
@@ -86,7 +84,7 @@ class IOList(object):
         """
         if type(key) == int:
             if key not in self.__dict_iobyte:
-                raise KeyError("byte '{}' does not exist".format(key))
+                raise KeyError("byte '{0}' does not exist".format(key))
             return self.__dict_iobyte[key]
         elif type(key) == slice:
             return [
@@ -151,14 +149,14 @@ class IOList(object):
                     if oldio._bitaddress >= 0:
                         if io._bitaddress == oldio._bitaddress:
                             raise MemoryError(
-                                "bit {} already assigned to '{}'".format(
+                                "bit {0} already assigned to '{1}'".format(
                                     io._bitaddress, oldio._name
                                 )
                             )
                     else:
                         # Bereits überschriebene bytes sind ungültig
                         raise MemoryError(
-                            "new io '{}' overlaps memory of '{}'".format(
+                            "new io '{0}' overlaps memory of '{1}'".format(
                                 io._name, oldio._name
                             )
                         )
@@ -194,7 +192,7 @@ class IOList(object):
         if isinstance(new_io, IOBase):
             if hasattr(self, new_io._name):
                 raise AttributeError(
-                    "attribute {} already exists - can not set io".format(
+                    "attribute {0} already exists - can not set io".format(
                         new_io._name
                     )
                 )
@@ -298,7 +296,7 @@ class IOBase(object):
                 else:
                     raise ValueError(
                         "given bytes for default value must have a length "
-                        "of {} but {} was given"
+                        "of {0} but {1} was given"
                         "".format(self._length, len(valuelist[1]))
                     )
             else:
@@ -312,7 +310,7 @@ class IOBase(object):
                         if len(buff) <= self._length:
                             self._defaultvalue = \
                                 buff + bytes(self._length - len(buff))
-                    except:
+                    except Exception:
                         pass
 
         else:
@@ -328,7 +326,7 @@ class IOBase(object):
             else:
                 try:
                     self._defaultvalue = bool(int(valuelist[1]))
-                except:
+                except Exception:
                     self._defaultvalue = False
 
     def __bool__(self):
@@ -367,7 +365,7 @@ class IOBase(object):
         # Prüfen ob Funktion callable ist
         if not callable(func):
             raise AttributeError(
-                "registered function '{}' is not callable".format(func)
+                "registered function '{0}' is not callable".format(func)
             )
         if type(delay) != int or delay < 0:
             raise AttributeError(
@@ -391,20 +389,21 @@ class IOBase(object):
                 if edge == BOTH or regfunc.edge == BOTH:
                     if self._bitaddress < 0:
                         raise AttributeError(
-                            "io '{}' with function '{}' already in list."
+                            "io '{0}' with function '{1}' already in list."
                             "".format(self._name, func)
                         )
                     else:
                         raise AttributeError(
-                            "io '{}' with function '{}' already in list with "
-                            "edge '{}' - edge '{}' not allowed anymore".format(
+                            "io '{0}' with function '{1}' already in list "
+                            "with edge '{2}' - edge '{3}' not allowed anymore"
+                            "".format(
                                 self._name, func,
                                 consttostr(regfunc.edge), consttostr(edge)
                             )
                         )
                 elif regfunc.edge == edge:
                     raise AttributeError(
-                        "io '{}' with function '{}' for given edge '{}' "
+                        "io '{0}' with function '{1}' for given edge '{2}' "
                         "already in list".format(
                             self._name, func, consttostr(edge)
                         )
@@ -584,31 +583,31 @@ class IOBase(object):
                             value
                     else:
                         raise ValueError(
-                            "'{}' requires a <class 'bytes'> object of length "
-                            "{}, but {} was given".format(
+                            "'{0}' requires a <class 'bytes'> object of "
+                            "length {1}, but {2} was given".format(
                                 self._name, self._length, len(value)
                             )
                         )
                 else:
                     raise ValueError(
-                        "'{}' requires a <class 'bytes'> object, not {}"
+                        "'{0}' requires a <class 'bytes'> object, not {1}"
                         "".format(self._name, type(value))
                     )
 
         elif self._iotype == INP:
             if self._parentdevice._modio._simulator:
                 raise AttributeError(
-                    "can not write to output '{}' in simulator mode"
+                    "can not write to output '{0}' in simulator mode"
                     "".format(self._name)
                 )
             else:
                 raise AttributeError(
-                    "can not write to input '{}'".format(self._name)
+                    "can not write to input '{0}'".format(self._name)
                 )
 
         elif self._iotype == MEM:
             raise AttributeError(
-                "can not write to memory '{}'".format(self._name)
+                "can not write to memory '{0}'".format(self._name)
             )
 
     def unreg_event(self, func=None, edge=None):
@@ -679,7 +678,7 @@ class IOBase(object):
         # Prüfen ob Device in autorefresh ist
         if not self._parentdevice._selfupdate:
             raise RuntimeError(
-                "autorefresh is not activated for device '{}|{}' - there "
+                "autorefresh is not activated for device '{0}|{1}' - there "
                 "will never be new data".format(
                     self._parentdevice._position, self._parentdevice._name
                 )
@@ -825,7 +824,7 @@ class IntIO(IOBase):
             ))
         else:
             raise ValueError(
-                "'{}' need a <class 'int'> value, but {} was given"
+                "'{0}' need a <class 'int'> value, but {1} was given"
                 "".format(self._name, type(value))
             )
 
@@ -873,7 +872,7 @@ class StructIO(IOBase):
                 max_bits = parentio._length * 8
                 if not (0 <= bitaddress < max_bits):
                     raise AttributeError(
-                        "bitaddress must be a value between 0 and {}"
+                        "bitaddress must be a value between 0 and {0}"
                         "".format(max_bits - 1)
                     )
                 bitlength = 1

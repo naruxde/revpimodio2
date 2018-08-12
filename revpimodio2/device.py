@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-#
-# python3-RevPiModIO
-#
-# Webpage: https://revpimodio.org/
-# (c) Sven Sager, License: LGPLv3
-#
 """Modul fuer die Verwaltung der Devices."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
+
 from threading import Thread, Event, Lock
 from .helper import ProcimgWriter
 
@@ -65,7 +63,7 @@ class DeviceList(object):
         @return Gefundenes <class 'Device'>-Objekt"""
         if type(key) == int:
             if key not in self.__dict_position:
-                raise KeyError("no device on position {}".format(key))
+                raise KeyError("no device on position {0}".format(key))
             return self.__dict_position[key]
         else:
             return getattr(self, key)

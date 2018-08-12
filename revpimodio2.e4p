@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project revpimodio2 -->
-<!-- Saved: 2018-08-09, 08:14:06 -->
+<!-- Saved: 2018-08-12, 18:11:33 -->
 <!-- Copyright (C) 2018 Sven Sager, akira@narux.de -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -14,40 +14,40 @@
   <Email>akira@narux.de</Email>
   <Eol index="1"/>
   <Sources>
-    <Source>setup.py</Source>
-    <Source>revpimodio2/modio.py</Source>
-    <Source>revpimodio2/summary.py</Source>
-    <Source>revpimodio2/app.py</Source>
-    <Source>revpimodio2/io.py</Source>
     <Source>revpimodio2/__init__.py</Source>
+    <Source>revpimodio2/app.py</Source>
     <Source>revpimodio2/device.py</Source>
     <Source>revpimodio2/helper.py</Source>
+    <Source>revpimodio2/io.py</Source>
+    <Source>revpimodio2/modio.py</Source>
     <Source>revpimodio2/netio.py</Source>
-    <Source>test/test_dio_while2.py</Source>
-    <Source>test/test_dio_mainloop.py</Source>
+    <Source>revpimodio2/summary.py</Source>
+    <Source>setup.py</Source>
     <Source>test/test_dio_cycleloop.py</Source>
+    <Source>test/test_dio_mainloop.py</Source>
+    <Source>test/test_dio_while2.py</Source>
     <Source>test/test_net_leistung.py</Source>
-    <Source>test/web_cycleloop.py</Source>
-    <Source>test/web_mainloop.py</Source>
-    <Source>test/web_virtdevdriver.py</Source>
+    <Source>test/test_netio_brett.py</Source>
+    <Source>test/test_unit.py</Source>
+    <Source>test/test_unit_fh.py</Source>
+    <Source>test/test_unitnet.py</Source>
     <Source>test/web_benniesrun.py</Source>
     <Source>test/web_benniesrunxxl.py</Source>
-    <Source>test/test_unit.py</Source>
-    <Source>test/test_unitnet.py</Source>
-    <Source>test/test_netio_brett.py</Source>
-    <Source>test/web_startseite.py</Source>
+    <Source>test/web_cycleloop.py</Source>
+    <Source>test/web_mainloop.py</Source>
     <Source>test/web_rpidaten.py</Source>
     <Source>test/web_rpii2c.py</Source>
-    <Source>test/test_unit_fh.py</Source>
+    <Source>test/web_startseite.py</Source>
+    <Source>test/web_virtdevdriver.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
   <Resources/>
   <Interfaces/>
   <Others>
-    <Other>doc</Other>
     <Other>.hgignore</Other>
     <Other>MANIFEST.in</Other>
+    <Other>doc</Other>
     <Other>eric-revpimodio2.api</Other>
   </Others>
   <MainScript>test/test_unit.py</MainScript>
@@ -153,9 +153,6 @@
         </value>
       </dict>
     </VcsOptions>
-    <VcsOtherData>
-      <dict/>
-    </VcsOtherData>
   </Vcs>
   <FiletypeAssociations>
     <FiletypeAssociation pattern="*.idl" type="INTERFACES"/>
@@ -250,14 +247,6 @@
               <bool>False</bool>
             </value>
             <key>
-              <string>sourceExtensions</string>
-            </key>
-            <value>
-              <list>
-                <string></string>
-              </list>
-            </value>
-            <key>
               <string>useRecursion</string>
             </key>
             <value>
@@ -277,6 +266,41 @@
         <value>
           <dict>
             <key>
+              <string>BuiltinsChecker</string>
+            </key>
+            <value>
+              <dict>
+                <key>
+                  <string>chr</string>
+                </key>
+                <value>
+                  <list>
+                    <string>unichr</string>
+                  </list>
+                </value>
+                <key>
+                  <string>str</string>
+                </key>
+                <value>
+                  <list>
+                    <string>unicode</string>
+                  </list>
+                </value>
+              </dict>
+            </value>
+            <key>
+              <string>CopyrightAuthor</string>
+            </key>
+            <value>
+              <string></string>
+            </value>
+            <key>
+              <string>CopyrightMinFileSize</string>
+            </key>
+            <value>
+              <int>0</int>
+            </value>
+            <key>
               <string>DocstringType</string>
             </key>
             <value>
@@ -286,13 +310,13 @@
               <string>ExcludeFiles</string>
             </key>
             <value>
-              <string></string>
+              <string>*/test/*</string>
             </value>
             <key>
               <string>ExcludeMessages</string>
             </key>
             <value>
-              <string>E123,E226,E24</string>
+              <string>E123,E226,E24,C101,E402,C111</string>
             </value>
             <key>
               <string>FixCodes</string>
@@ -307,6 +331,12 @@
               <bool>False</bool>
             </value>
             <key>
+              <string>FutureChecker</string>
+            </key>
+            <value>
+              <string></string>
+            </value>
+            <key>
               <string>HangClosing</string>
             </key>
             <value>
@@ -317,6 +347,24 @@
             </key>
             <value>
               <string></string>
+            </value>
+            <key>
+              <string>LineComplexity</string>
+            </key>
+            <value>
+              <int>15</int>
+            </value>
+            <key>
+              <string>LineComplexityScore</string>
+            </key>
+            <value>
+              <int>10</int>
+            </value>
+            <key>
+              <string>MaxCodeComplexity</string>
+            </key>
+            <value>
+              <int>10</int>
             </value>
             <key>
               <string>MaxLineLength</string>
@@ -341,6 +389,12 @@
             </key>
             <value>
               <bool>False</bool>
+            </value>
+            <key>
+              <string>ValidEncodings</string>
+            </key>
+            <value>
+              <string>latin-1, utf-8</string>
             </value>
           </dict>
         </value>

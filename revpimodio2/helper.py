@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-#
-# python3-RevPiModIO
-#
-# Webpage: https://revpimodio.org/
-# (c) Sven Sager, License: LGPLv3
-#
 """RevPiModIO Helperklassen und Tools."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
+
 import queue
 import warnings
 from math import ceil
@@ -413,12 +411,12 @@ class ProcimgWriter(Thread):
         self._ioerror += 1
         if self._maxioerrors != 0 and self._ioerror >= self._maxioerrors:
             raise RuntimeError(
-                "reach max io error count {} on process image".format(
+                "reach max io error count {0} on process image".format(
                     self._maxioerrors
                 )
             )
         warnings.warn(
-            "count {} io errors on process image".format(self._ioerror),
+            "count {0} io errors on process image".format(self._ioerror),
             RuntimeWarning
         )
 
@@ -443,7 +441,7 @@ class ProcimgWriter(Thread):
             # Lockobjekt holen und Fehler werfen, wenn nicht schnell genug
             if not self.lck_refresh.acquire(timeout=self._adjwait):
                 warnings.warn(
-                    "cycle time of {} ms exceeded on lock".format(
+                    "cycle time of {0} ms exceeded on lock".format(
                         int(self._refresh * 1000)
                     ),
                     RuntimeWarning
@@ -496,8 +494,8 @@ class ProcimgWriter(Thread):
                 # Verzögerte Events prüfen
                 if self.__eventwork:
                     for tup_fire in list(self.__dict_delay.keys()):
-                        if tup_fire[0].overwrite \
-                                and getattr(self._modio.io, tup_fire[1]).value != \
+                        if tup_fire[0].overwrite and \
+                                getattr(self._modio.io, tup_fire[1]).value != \
                                 tup_fire[2]:
                             del self.__dict_delay[tup_fire]
                         else:
@@ -518,7 +516,7 @@ class ProcimgWriter(Thread):
                 self._adjwait -= 0.001
                 if self._adjwait < 0:
                     warnings.warn(
-                        "cycle time of {} ms exceeded".format(
+                        "cycle time of {0} ms exceeded".format(
                             int(self._refresh * 1000)
                         ),
                         RuntimeWarning

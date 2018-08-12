@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-#
-# python3-RevPiModIO
-#
-# Webpage: https://revpimodio.org/
-# (c) Sven Sager, License: LGPLv3
-#
 """RevPiModIO Hauptklasse fuer piControl0 Zugriff."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
+
 import warnings
 from json import load as jload
 from os import access, F_OK, R_OK
@@ -187,7 +185,7 @@ class RevPiModIO(object):
             else:
                 # Device-Type nicht gefunden
                 warnings.warn(
-                    "device type '{}' unknown".format(device["type"]),
+                    "device type '{0}' unknown".format(device["type"]),
                     Warning
                 )
                 dev_new = None
@@ -298,12 +296,12 @@ class RevPiModIO(object):
         self._ioerror += 1
         if self._maxioerrors != 0 and self._ioerror >= self._maxioerrors:
             raise RuntimeError(
-                "reach max io error count {} on process image".format(
+                "reach max io error count {0} on process image".format(
                     self._maxioerrors
                 )
             )
         warnings.warn(
-            "got io error during {} and count {} errors now".format(
+            "got io error during {0} and count {1} errors now".format(
                 action, self._ioerror
             ),
             RuntimeWarning
@@ -385,7 +383,7 @@ class RevPiModIO(object):
         # Prüfen ob Funktion callable ist
         if not callable(func):
             raise RuntimeError(
-                "registered function '{}' ist not callable".format(func)
+                "registered function '{0}' ist not callable".format(func)
             )
 
         # Zykluszeit übernehmen
@@ -478,7 +476,7 @@ class RevPiModIO(object):
         if self._configrsc is not None:
             if not access(self._configrsc, F_OK | R_OK):
                 raise RuntimeError(
-                    "can not access pictory configuration at {}".format(
+                    "can not access pictory configuration at {0}".format(
                         self._configrsc))
         else:
             # piCtory Konfiguration an bekannten Stellen prüfen
@@ -489,7 +487,7 @@ class RevPiModIO(object):
                     break
             if self._configrsc is None:
                 raise RuntimeError(
-                    "can not access known pictory configurations at {} - "
+                    "can not access known pictory configurations at {0} - "
                     "use 'configrsc' parameter so specify location"
                     "".format(", ".join(lst_rsc))
                 )
@@ -497,7 +495,7 @@ class RevPiModIO(object):
         with open(self._configrsc, "r") as fhconfigrsc:
             try:
                 jdata = jload(fhconfigrsc)
-            except:
+            except Exception:
                 raise RuntimeError(
                     "can not read piCtory configuration - check your hardware "
                     "configuration http://revpi_ip/"
@@ -529,7 +527,8 @@ class RevPiModIO(object):
         # Prüfen ob Funktion callable ist
         if not (cleanupfunc is None or callable(cleanupfunc)):
             raise RuntimeError(
-                "registered function '{}' ist not callable".format(cleanupfunc)
+                "registered function '{0}' ist not callable"
+                "".format(cleanupfunc)
             )
         self.__cleanupfunc = cleanupfunc
         signal(SIGINT, self.__evt_exit)
@@ -628,7 +627,7 @@ class RevPiModIO(object):
 
             if dev._selfupdate:
                 raise RuntimeError(
-                    "can not read process image, while device '{}|{}'"
+                    "can not read process image, while device '{0}|{1}'"
                     "is in autorefresh mode".format(dev._position, dev._name)
                 )
             mylist = [dev]
@@ -703,7 +702,7 @@ class RevPiModIO(object):
 
             if dev._selfupdate:
                 raise RuntimeError(
-                    "can not sync outputs, while device '{}|{}'"
+                    "can not sync outputs, while device '{0}|{1}'"
                     "is in autorefresh mode".format(dev._position, dev._name)
                 )
             mylist = [dev]
@@ -746,7 +745,7 @@ class RevPiModIO(object):
 
             if dev._selfupdate:
                 raise RuntimeError(
-                    "can not write process image, while device '{}|{}'"
+                    "can not write process image, while device '{0}|{1}'"
                     "is in autorefresh mode".format(dev._position, dev._name)
                 )
             mylist = [dev]
