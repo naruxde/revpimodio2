@@ -31,6 +31,13 @@ class RevPiModIO(object):
 
     """
 
+    __slots__ = "__cleanupfunc", "_autorefresh", "_buffedwrite", \
+        "_configrsc", "_exit", "_imgwriter", "_ioerror", "_length", \
+        "_looprunning", "_lst_devselect", "_lst_refresh", "_maxioerrors", \
+        "_myfh", "_monitoring", "_procimg", "_simulator", "_syncoutputs", \
+        "_th_mainloop", "_waitexit", \
+        "core", "app", "device", "exitsignal", "io", "summary"
+
     def __init__(
             self, autorefresh=False, monitoring=False, syncoutputs=True,
             procimg=None, configrsc=None, simulator=False):
@@ -796,6 +803,8 @@ class RevPiModIOSelected(RevPiModIO):
 
     """
 
+    __slots__ = ()
+
     def __init__(
             self, deviceselection, autorefresh=False, monitoring=False,
             syncoutputs=True, procimg=None, configrsc=None, simulator=False):
@@ -859,6 +868,8 @@ class RevPiModIODriver(RevPiModIOSelected):
     dann ueber logiCAD an den Devices abgerufen werden.
 
     """
+
+    __slots__ = ()
 
     def __init__(
             self, virtdev, autorefresh=False, monitoring=False,

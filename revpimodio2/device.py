@@ -106,6 +106,13 @@ class Device(object):
 
     """
 
+    __slots__ = "_ba_devdata", "_ba_datacp",  \
+        "_dict_events", "_filelock", "_length", "_modio", "_name", "_offset", \
+        "_position", "_producttype", "_selfupdate", "_slc_devoff", \
+        "_slc_inp", "_slc_inpoff", "_slc_mem", "_slc_memoff", \
+        "_slc_out", "_slc_outoff", "bmk", "catalognr", "comment", "extend", \
+        "guid", "id", "inpvariant", "outvariant", "type"
+
     def __init__(self, parentmodio, dict_device, simulator=False):
         """Instantiierung der Device-Klasse.
 
@@ -122,24 +129,24 @@ class Device(object):
         self._selfupdate = False
 
         # Wertzuweisung aus dict_device
-        self._name = dict_device.pop("name")
-        self._offset = int(dict_device.pop("offset"))
-        self._position = int(dict_device.pop("position"))
-        self._producttype = int(dict_device.pop("productType"))
+        self._name = dict_device.get("name")
+        self._offset = int(dict_device.get("offset"))
+        self._position = int(dict_device.get("position"))
+        self._producttype = int(dict_device.get("productType"))
 
         # IOM-Objekte erstellen und Adressen in SLCs speichern
         if simulator:
             self._slc_inp = self._buildio(
-                dict_device.pop("out"), INP)
+                dict_device.get("out"), INP)
             self._slc_out = self._buildio(
-                dict_device.pop("inp"), OUT)
+                dict_device.get("inp"), OUT)
         else:
             self._slc_inp = self._buildio(
-                dict_device.pop("inp"), INP)
+                dict_device.get("inp"), INP)
             self._slc_out = self._buildio(
-                dict_device.pop("out"), OUT)
+                dict_device.get("out"), OUT)
         self._slc_mem = self._buildio(
-            dict_device.pop("mem"), MEM
+            dict_device.get("mem"), MEM
         )
 
         # SLCs mit offset berechnen
@@ -162,7 +169,15 @@ class Device(object):
         self._ba_datacp = bytearray()
 
         # Alle restlichen attribute an Klasse anhängen
-        self.__dict__.update(dict_device)
+        self.bmk = dict_device.get("bmk", "")
+        self.catalognr = dict_device.get("catalogNr", "")
+        self.comment = dict_device.get("comment", "")
+        self.extend = dict_device.get("extend", {})
+        self.guid = dict_device.get("GUID", "")
+        self.id = dict_device.get("id", "")
+        self.inpvariant = dict_device.get("inpVariant", 0)
+        self.outvariant = dict_device.get("outVariant", 0)
+        self.type = dict_device.get("type", "")
 
         # Spezielle Konfiguration von abgeleiteten Klassen durchführen
         self._devconfigure()
@@ -397,6 +412,10 @@ class Core(Device):
     Stellt Funktionen fuer die LEDs und den Status zur Verfuegung.
 
     """
+
+    __slots__ = "_iocycle", "_ioerrorcnt", "_iostatusbyte", "_iotemperature", \
+        "_ioerrorlimit1", "_ioerrorlimit2", "_iofrequency", "_ioled", \
+        "a1green", "a1red", "a2green", "a2red"
 
     def _devconfigure(self):
         """Core-Klasse vorbereiten."""
@@ -647,6 +666,9 @@ class Connect(Core):
 
     """
 
+    __slots__ = "__evt_wdtoggle", "__th_wdtoggle", "a3green", "a3red", "wd", \
+        "x2in", "x2out"
+
     def __wdtoggle(self):
         """WD Ausgang alle 10 Sekunden automatisch toggeln."""
         while not self.__evt_wdtoggle.wait(10):
@@ -754,6 +776,8 @@ class Gateway(Device):
 
     """
 
+    __slots__ = "_dict_slc"
+
     def __init__(self, parent, dict_device, simulator=False):
         """Erweitert Device-Klasse um get_rawbytes-Funktionen.
         @see #Device.__init__ Device.__init__(...)"""
@@ -782,6 +806,8 @@ class Virtual(Gateway):
     @see #Gateway Gateway
 
     """
+
+    __slots__ = ()
 
     def writeinputdefaults(self):
         """Schreibt fuer ein virtuelles Device piCtory Defaultinputwerte.

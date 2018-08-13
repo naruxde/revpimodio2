@@ -9,6 +9,8 @@ class Summary(object):
 
     """Bildet die Summary-Sektion der config.rsc ab."""
 
+    __slots__ = "inptotal", "outtotal"
+
     def __init__(self, summary):
         """Instantiiert die RevPiSummary-Klasse.
         @param summary piCtory Summaryinformationen"""

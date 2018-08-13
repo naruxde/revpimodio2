@@ -34,6 +34,12 @@ class NetFH(Thread):
 
     """
 
+    __slots__ = "__by_buff", "__int_buff", "__dictdirty", "__flusherr", \
+        "__position", "__sockact", "__sockerr", "__sockend", "__socklock", \
+        "__timeout", "__trigger", "__waitsync", \
+        "_address", "_slavesock", \
+        "daemon"
+
     def __init__(self, address, timeout=500):
         """Init NetFH-class.
         @param address IP Adresse des RevPi
@@ -379,6 +385,8 @@ class RevPiNetIO(_RevPiModIO):
 
     """
 
+    __slots__ = "_address"
+
     def __init__(
             self, address, autorefresh=False, monitoring=False,
             syncoutputs=True, simulator=False):
@@ -530,6 +538,8 @@ class RevPiNetIOSelected(RevPiNetIO):
 
     """
 
+    __slots__ = ()
+
     def __init__(
             self, address, deviceselection, autorefresh=False,
             monitoring=False, syncoutputs=True, simulator=False):
@@ -594,6 +604,8 @@ class RevPiNetIODriver(RevPiNetIOSelected):
     dann ueber logiCAD an den Devices abgerufen werden.
 
     """
+
+    __slots__ = ()
 
     def __init__(
             self, address, virtdev, autorefresh=False, monitoring=False,

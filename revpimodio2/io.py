@@ -14,6 +14,8 @@ class IOEvent(object):
 
     """Basisklasse fuer IO-Events."""
 
+    __slots__ = "as_thread", "delay", "edge", "func", "overwrite"
+
     def __init__(self, func, edge, as_thread, delay, overwrite):
         """Init IOEvent class."""
         self.as_thread = as_thread
@@ -220,6 +222,8 @@ class DeadIO(object):
 
     """Klasse, mit der ersetzte IOs verwaltet werden."""
 
+    __slots__ = "__deadio"
+
     def __init__(self, deadio):
         """Instantiierung der DeadIO-Klasse.
         @param deadio IO, der ersetzt wurde"""
@@ -247,6 +251,10 @@ class IOBase(object):
     auch als <class 'int'> verwendet werden koennen.
 
     """
+
+    __slots__ = "_bitaddress", "_bitlength", "_byteorder", "_defaultvalue", \
+        "_iotype", "_length", "_name", "_parentdevice", \
+        "_signed", "_slc_address", "bmk"
 
     def __init__(self, parentdevice, valuelist, iotype, byteorder, signed):
         """Instantiierung der IOBase-Klasse.
@@ -767,6 +775,8 @@ class IntIO(IOBase):
 
     """
 
+    __slots__ = ()
+
     def __int__(self):
         """Gibt IO-Wert zurueck mit Beachtung byteorder/signed.
         @return IO-Wert als <class 'int'>"""
@@ -843,6 +853,9 @@ class StructIO(IOBase):
     @see #IOBase IOBase
 
     """
+
+    __slots__ = "__frm", "_parentio_address", "_parentio_defaultvalue", \
+        "_parentio_length"
 
     def __init__(self, parentio, name, frm, **kwargs):
         """Erstellt einen IO mit struct-Formatierung.

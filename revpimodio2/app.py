@@ -9,6 +9,8 @@ class App(object):
 
     """Bildet die App Sektion der config.rsc ab."""
 
+    __slots__ = "name", "version", "language", "layout"
+
     def __init__(self, app):
         """Instantiiert die App-Klasse.
         @param app piCtory Appinformationen"""

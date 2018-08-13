@@ -37,6 +37,8 @@ class EventCallback(Thread):
 
     """
 
+    __slots__ = "daemon", "exit", "func", "ioname", "iovalue"
+
     def __init__(self, func, name, value):
         """Init EventCallback class.
 
@@ -85,6 +87,11 @@ class Cycletools():
 
     """
 
+    __slots__ = "__cycle", "__cycletime", "__ucycle", \
+        "__dict_ton", "__dict_tof", "__dict_tp", "first", \
+        "flag1c", "flag5c", "flag10c", "flag15c", "flag20c", \
+        "flank5c", "flank10c", "flank15c", "flank20c", "var"
+
     def __init__(self, cycletime):
         """Init Cycletools class."""
         self.__cycle = 0
@@ -107,6 +114,11 @@ class Cycletools():
         self.flank10c = True
         self.flank15c = True
         self.flank20c = True
+
+        # Benutzerdaten
+        class Var:
+            pass
+        self.var = Var()
 
     def _docycle(self):
         """Zyklusarbeiten."""
@@ -276,6 +288,10 @@ class ProcimgWriter(Thread):
     Event-Handling verwendet.
 
     """
+
+    __slots__ = "__dict_delay", "__eventth", "__eventqth", "__eventwork", \
+        "_adjwait", "_eventq", "_ioerror", "_maxioerrors", "_modio", \
+        "_refresh", "_work", "daemon", "lck_refresh", "newdata"
 
     def __init__(self, parentmodio):
         """Init ProcimgWriter class.
