@@ -284,9 +284,8 @@ class Device(object):
             self._modio.readprocimg(self)
 
             # Datenkopie anlegen
-            self._filelock.acquire()
-            self._ba_datacp = self._ba_devdata[:]
-            self._filelock.release()
+            with self._filelock:
+                self._ba_datacp = self._ba_devdata[:]
 
             self._selfupdate = True
 
