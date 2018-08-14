@@ -385,8 +385,9 @@ class IOBase(object):
             )
 
         if self not in self._parentdevice._dict_events:
-            self._parentdevice._dict_events[self] = \
-                [IOEvent(func, edge, as_thread, delay, overwrite)]
+            with self._parentdevice._filelock:
+                self._parentdevice._dict_events[self] = \
+                    [IOEvent(func, edge, as_thread, delay, overwrite)]
         else:
             # Prüfen ob Funktion schon registriert ist
             for regfunc in self._parentdevice._dict_events[self]:
@@ -418,9 +419,10 @@ class IOBase(object):
                     )
 
             # Eventfunktion einfügen
-            self._parentdevice._dict_events[self].append(
-                IOEvent(func, edge, as_thread, delay, overwrite)
-            )
+            with self._parentdevice._filelock:
+                self._parentdevice._dict_events[self].append(
+                    IOEvent(func, edge, as_thread, delay, overwrite)
+                )
 
     def _get_address(self):
         """Gibt die absolute Byteadresse im Prozessabbild zurueck.
@@ -627,7 +629,8 @@ class IOBase(object):
         """
         if self in self._parentdevice._dict_events:
             if func is None:
-                del self._parentdevice._dict_events[self]
+                with self._parentdevice._filelock:
+                    del self._parentdevice._dict_events[self]
             else:
                 newlist = []
                 for regfunc in self._parentdevice._dict_events[self]:
@@ -637,10 +640,11 @@ class IOBase(object):
                         newlist.append(regfunc)
 
                 # Wenn Funktionen übrig bleiben, diese übernehmen
-                if len(newlist) > 0:
-                    self._parentdevice._dict_events[self] = newlist
-                else:
-                    del self._parentdevice._dict_events[self]
+                with self._parentdevice._filelock:
+                    if len(newlist) > 0:
+                        self._parentdevice._dict_events[self] = newlist
+                    else:
+                        del self._parentdevice._dict_events[self]
 
     def wait(self, edge=BOTH, exitevent=None, okvalue=None, timeout=0):
         """Wartet auf Wertaenderung eines IOs.

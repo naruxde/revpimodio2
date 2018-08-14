@@ -319,7 +319,7 @@ class RevPiModIO(object):
         @param milliseconds <class 'int'> in Millisekunden"""
         if self._looprunning:
             raise RuntimeError(
-                "can not change cycletime when cycleloop or mainloop are "
+                "can not change cycletime when cycleloop or mainloop is "
                 "running"
             )
         else:
@@ -587,9 +587,8 @@ class RevPiModIO(object):
 
         # Beim Eintritt in mainloop Bytecopy erstellen
         for dev in self._lst_refresh:
-            dev._filelock.acquire()
-            dev._ba_datacp = dev._ba_devdata[:]
-            dev._filelock.release()
+            with dev._filelock:
+                dev._ba_datacp = dev._ba_devdata[:]
 
         # ImgWriter mit Eventüberwachung aktivieren
         self._imgwriter._collect_events(True)

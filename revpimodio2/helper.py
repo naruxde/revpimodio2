@@ -400,9 +400,15 @@ class ProcimgWriter(Thread):
 
     def _collect_events(self, value):
         """Aktiviert oder Deaktiviert die Eventueberwachung.
-        @param value True aktiviert / False deaktiviert"""
+        @param value True aktiviert / False deaktiviert
+        @return True, wenn Anforderung erfolgreich war"""
         if type(value) != bool:
             raise ValueError("value must be <class 'bool'>")
+
+        # Nur starten, wenn System läuft
+        if not self.is_alive():
+            self.__eventwork = False
+            return False
 
         if self.__eventwork != value:
             with self.lck_refresh:
@@ -416,6 +422,8 @@ class ProcimgWriter(Thread):
                 self.__eventth = Thread(target=self.__exec_th)
                 self.__eventth.daemon = True
                 self.__eventth.start()
+
+        return True
 
     def _get_ioerrors(self):
         """Ruft aktuelle Anzahl der Fehler ab.
@@ -472,13 +480,13 @@ class ProcimgWriter(Thread):
                 if self._modio._monitoring:
                     # Inputs und Outputs in Puffer
                     for dev in self._modio._lst_refresh:
-                        dev._filelock.acquire()
-                        dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
-                        if self.__eventwork \
-                                and len(dev._dict_events) > 0 \
-                                and dev._ba_datacp != dev._ba_devdata:
-                            self.__check_change(dev)
-                        dev._filelock.release()
+                        with dev._filelock:
+                            dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
+                            if self.__eventwork \
+                                    and len(dev._dict_events) > 0 \
+                                    and dev._ba_datacp != dev._ba_devdata:
+                                self.__check_change(dev)
+
                 else:
                     # Inputs in Puffer, Outputs in Prozessabbild
                     for dev in self._modio._lst_refresh:
@@ -509,7 +517,7 @@ class ProcimgWriter(Thread):
             finally:
                 # Verzögerte Events prüfen
                 if self.__eventwork:
-                    for tup_fire in list(self.__dict_delay.keys()):
+                    for tup_fire in tuple(self.__dict_delay.keys()):
                         if tup_fire[0].overwrite and \
                                 getattr(self._modio.io, tup_fire[1]).value != \
                                 tup_fire[2]:
