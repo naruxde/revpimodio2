@@ -6,10 +6,12 @@ __license__ = "LGPLv3"
 
 import warnings
 from json import load as jload
+from multiprocessing import cpu_count
 from os import access, F_OK, R_OK
 from queue import Empty
 from signal import signal, SIG_DFL, SIGINT, SIGTERM
 from threading import Thread, Event
+from timeit import default_timer
 
 from . import app as appmodule
 from . import device as devicemodule
@@ -224,6 +226,10 @@ class RevPiModIO(object):
         # ImgWriter erstellen
         self._imgwriter = helpermodule.ProcimgWriter(self)
 
+        # Refreshzeit CM1 25 Hz / CM3 50 Hz
+        if not isinstance(self, RevPiNetIO):
+            self._imgwriter.refresh = 20 if cpu_count() > 1 else 40
+
         # Aktuellen Outputstatus von procimg einlesen
         if self._syncoutputs:
             self.syncoutputs()
@@ -349,7 +355,7 @@ class RevPiModIO(object):
         self.io = None
         self.summary = None
 
-    def cycleloop(self, func, cycletime=None):
+    def cycleloop(self, func, cycletime=50):
         """Startet den Cycleloop.
 
         Der aktuelle Programmthread wird hier bis Aufruf von
@@ -361,19 +367,20 @@ class RevPiModIO(object):
         Prozessabbild geschrieben.
 
         Verlassen wird der Cycleloop, wenn die aufgerufene Funktion einen
-        Rueckgabewert nicht gleich None liefert, oder durch Aufruf von
-        revpimodio.exit().
+        Rueckgabewert nicht gleich None liefert (z.B. return True), oder durch
+        Aufruf von .exit().
 
         HINWEIS: Die Aktualisierungszeit und die Laufzeit der Funktion duerfen
         die eingestellte autorefresh Zeit, bzw. uebergebene cycletime nicht
         ueberschreiten!
 
-        Ueber das Attribut cycletime kann die Aktualisierungsrate fuer das
-        Prozessabbild gesetzt werden.
+        Ueber den Parameter cycletime wird die gewuenschte Zukluszeit der
+        uebergebenen Funktion gesetzt. Der Standardwert betraegt
+        50 Millisekunden, in denen das Prozessabild eingelesen, die uebergebene
+        Funktion ausgefuert und das Prozessabbild geschrieben wird.
 
         @param func Funktion, die ausgefuehrt werden soll
-        @param cycletime Zykluszeit in Millisekunden, bei Nichtangabe wird
-               aktuelle .cycletime Zeit verwendet - Standardwert 50 ms
+        @param cycletime Zykluszeit in Millisekunden - Standardwert 50 ms
         @return None
 
         """
@@ -385,7 +392,10 @@ class RevPiModIO(object):
 
         # Prüfen ob Devices in autorefresh sind
         if len(self._lst_refresh) == 0:
-            raise RuntimeError("no device with autorefresh activated")
+            raise RuntimeError(
+                "no device with autorefresh activated - use autorefresh=True "
+                "or call .autorefresh_all() before entering cycleloop"
+            )
 
         # Prüfen ob Funktion callable ist
         if not callable(func):
@@ -394,7 +404,8 @@ class RevPiModIO(object):
             )
 
         # Zykluszeit übernehmen
-        if not (cycletime is None or cycletime == self._imgwriter.refresh):
+        old_cycletime = self._imgwriter.refresh
+        if not cycletime == self._imgwriter.refresh:
             self._imgwriter.refresh = cycletime
 
             # Zeitänderung in _imgwriter neuladen
@@ -438,6 +449,9 @@ class RevPiModIO(object):
 
         # Cycleloop beenden
         self._looprunning = False
+
+        # Alte autorefresh Zeit setzen
+        self._imgwriter.refresh = old_cycletime
 
         return ec
 
@@ -568,7 +582,10 @@ class RevPiModIO(object):
 
         # Prüfen ob Devices in autorefresh sind
         if len(self._lst_refresh) == 0:
-            raise RuntimeError("no device with autorefresh activated")
+            raise RuntimeError(
+                "no device with autorefresh activated - use autorefresh=True "
+                "or call .autorefresh_all() before entering mainloop"
+            )
 
         # Thread erstellen, wenn nicht blockieren soll
         if not blocking:
@@ -593,12 +610,33 @@ class RevPiModIO(object):
         # ImgWriter mit Eventüberwachung aktivieren
         self._imgwriter._collect_events(True)
         e = None
+        runtime = 0
 
         while not self._exit.is_set():
+
+            # Laufzeit der Eventqueue auf 0 setzen
+            if self._imgwriter._eventq.qsize() == 0:
+                runtime = 0
+
             try:
                 tup_fire = self._imgwriter._eventq.get(timeout=1)
+
+                # Messung Laufzeit der Queue starten
+                if runtime == 0:
+                    runtime = default_timer()
+
                 # Direct callen da Prüfung in io.IOBase.reg_event ist
                 tup_fire[0].func(tup_fire[1], tup_fire[2])
+
+                # Laufzeitprüfung
+                if runtime != -1 and \
+                        default_timer() - runtime > self._imgwriter._refresh:
+                    runtime = -1
+                    warnings.warn(
+                        "can not execute all event functions in one cycle - "
+                        "rise .cycletime or optimize your event functions",
+                        RuntimeWarning
+                    )
             except Empty:
                 if not self._exit.is_set() and not self._imgwriter.is_alive():
                     self.exit(full=False)
@@ -889,4 +927,4 @@ class RevPiModIODriver(RevPiModIOSelected):
 
 
 # Nachträglicher Import
-from .netio import RevPiNetIODriver
+from .netio import RevPiNetIODriver, RevPiNetIO

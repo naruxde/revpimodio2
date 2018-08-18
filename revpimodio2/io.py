@@ -254,7 +254,7 @@ class IOBase(object):
 
     __slots__ = "_bitaddress", "_bitlength", "_byteorder", "_defaultvalue", \
         "_iotype", "_length", "_name", "_parentdevice", \
-        "_signed", "_slc_address", "bmk"
+        "_signed", "_slc_address", "bmk", "export"
 
     def __init__(self, parentdevice, valuelist, iotype, byteorder, signed):
         """Instantiierung der IOBase-Klasse.
@@ -268,7 +268,7 @@ class IOBase(object):
 
         """
         # ["name","defval","bitlen","startaddrdev",exp,"idx","bmk","bitaddr"]
-        # [  0   ,   1    ,   2    ,     3     , 4 ,  5  ,  6  ,    7    ]
+        # [  0   ,   1    ,   2    ,       3      , 4 ,  5  ,  6  ,    7    ]
         self._parentdevice = parentdevice
 
         # Bitadressen auf Bytes aufbrechen und umrechnen
@@ -283,6 +283,7 @@ class IOBase(object):
         self._name = valuelist[0]
         self._signed = signed
         self.bmk = valuelist[6]
+        self.export = bool(valuelist[4])
 
         int_startaddress = int(valuelist[3])
         if self._bitaddress == -1:

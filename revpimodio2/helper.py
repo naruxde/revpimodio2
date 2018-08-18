@@ -556,7 +556,6 @@ class ProcimgWriter(Thread):
 
     def stop(self):
         """Beendet die automatische Prozessabbildsynchronisierung."""
-        self._collect_events(False)
         self._work.set()
 
     def set_maxioerrors(self, value):
@@ -570,13 +569,13 @@ class ProcimgWriter(Thread):
     def set_refresh(self, value):
         """Setzt die Zykluszeit in Millisekunden.
         @param value <class 'int'> Millisekunden"""
-        if type(value) == int and 10 <= value <= 2000:
+        if type(value) == int and 5 <= value <= 2000:
             waitdiff = self._refresh - self._adjwait
             self._refresh = value / 1000
-            self._adjwait = self._refresh - waitdiff
+            self._adjwait = 0 if waitdiff < 0 else self._refresh - waitdiff
         else:
             raise ValueError(
-                "refresh time must be 10 to 2000 milliseconds"
+                "refresh time must be 5 to 2000 milliseconds"
             )
 
     ioerrors = property(_get_ioerrors)

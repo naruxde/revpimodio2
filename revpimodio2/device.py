@@ -213,7 +213,7 @@ class Device(object):
     def __iter__(self):
         """Gibt Iterator aller IOs zurueck.
         @return <class 'iter'> aller IOs"""
-        return self.__getioiter(self._slc_devoff)
+        return self.__getioiter(self._slc_devoff, None)
 
     def __len__(self):
         """Gibt Anzahl der Bytes zurueck, die dieses Device belegt.
@@ -225,13 +225,17 @@ class Device(object):
         @return Devicename"""
         return self._name
 
-    def __getioiter(self, ioslc):
+    def __getioiter(self, ioslc, export):
         """Gibt <class 'iter'> mit allen IOs zurueck.
+
         @param ioslc IO Abschnitt <class 'slice'>
-        @return IOs als Iterator"""
+        @param export Filter fuer 'Export' Flag in piCtory
+        @return IOs als Iterator
+
+        """
         for lst_io in self._modio.io[ioslc]:
             for io in lst_io:
-                if io is not None:
+                if io is not None and (export is None or io.export == export):
                     yield io
 
     def _buildio(self, dict_io, iotype):
@@ -335,27 +339,60 @@ class Device(object):
             if not self._modio._monitoring:
                 self._modio.writeprocimg(self)
 
-    def get_allios(self):
+    def get_allios(self, export=None):
         """Gibt eine Liste aller Inputs und Outputs zurueck, keine MEMs.
-        @return <class 'list'> Input und Output, keine MEMs"""
+
+        Bleibt Parameter 'export' auf None werden alle Inputs und Outputs
+        zurueckgegeben. Wird 'export' auf True/False gesetzt, werden nur Inputs
+        und Outputs zurueckgegeben, bei denen der Wert 'Export' in piCtory
+        uebereinstimmt.
+
+        @param export Nur In-/Outputs mit angegebenen 'Export' Wert in piCtory
+        @return <class 'list'> Input und Output, keine MEMs
+
+        """
         return list(self.__getioiter(
-            slice(self._slc_inpoff.start, self._slc_outoff.stop)
+            slice(self._slc_inpoff.start, self._slc_outoff.stop), export
         ))
 
-    def get_inputs(self):
+    def get_inputs(self, export=None):
         """Gibt eine Liste aller Inputs zurueck.
-        @return <class 'list'> Inputs"""
-        return list(self.__getioiter(self._slc_inpoff))
 
-    def get_outputs(self):
+        Bleibt Parameter 'export' auf None werden alle Inputs zurueckgegeben.
+        Wird 'export' auf True/False gesetzt, werden nur Inputs zurueckgegeben,
+        bei denen der Wert 'Export' in piCtory uebereinstimmt.
+
+        @param export Nur Inputs mit angegebenen 'Export' Wert in piCtory
+        @return <class 'list'> Inputs
+
+        """
+        return list(self.__getioiter(self._slc_inpoff, export))
+
+    def get_outputs(self, export=None):
         """Gibt eine Liste aller Outputs zurueck.
-        @return <class 'list'> Outputs"""
-        return list(self.__getioiter(self._slc_outoff))
 
-    def get_memories(self):
-        """Gibt eine Liste aller mems zurueck.
-        @return <class 'list'> Mems"""
-        return list(self.__getioiter(self._slc_memoff))
+        Bleibt Parameter 'export' auf None werden alle Outputs zurueckgegeben.
+        Wird 'export' auf True/False gesetzt, werden nur Outputs
+        zurueckgegeben, bei denen der Wert 'Export' in piCtory uebereinstimmt.
+
+        @param export Nur Outputs mit angegebenen 'Export' Wert in piCtory
+        @return <class 'list'> Outputs
+
+        """
+        return list(self.__getioiter(self._slc_outoff, export))
+
+    def get_memories(self, export=None):
+        """Gibt eine Liste aller Memoryobjekte zurueck.
+
+        Bleibt Parameter 'export' auf None werden alle Mems zurueckgegeben.
+        Wird 'export' auf True/False gesetzt, werden nur Mems zurueckgegeben,
+        bei denen der Wert 'Export' in piCtory uebereinstimmt.
+
+        @param export Nur Mems mit angegebenen 'Export' Wert in piCtory
+        @return <class 'list'> Mems
+
+        """
+        return list(self.__getioiter(self._slc_memoff, export))
 
     def readprocimg(self):
         """Alle Inputs fuer dieses Device vom Prozessabbild einlesen.
@@ -832,7 +869,7 @@ class Virtual(Gateway):
         for io in self.get_inputs():
             self._ba_devdata[io._slc_address] = io._defaultvalue
 
-        # Outpus auf Bus schreiben
+        # Outputs auf Bus schreiben
         try:
             self._modio._myfh.seek(self._slc_inpoff.start)
             self._modio._myfh.write(self._ba_devdata[self._slc_inp])
