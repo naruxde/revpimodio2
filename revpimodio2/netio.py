@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-#
-# python3-RevPiModIO
-#
-# Webpage: https://revpimodio.org/
-# (c) Sven Sager, License: LGPLv3
-#
 """RevPiModIO Hauptklasse fuer Netzwerkzugriff."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
+
 import socket
 import warnings
 from json import loads as jloads
@@ -37,10 +35,16 @@ class NetFH(Thread):
 
     """
 
+    __slots__ = "__by_buff", "__int_buff", "__dictdirty", "__flusherr", \
+        "__position", "__sockact", "__sockerr", "__sockend", "__socklock", \
+        "__timeout", "__trigger", "__waitsync", \
+        "_address", "_slavesock", \
+        "daemon"
+
     def __init__(self, address, timeout=500):
         """Init NetFH-class.
-        @param address IP Adresse des RevPis
-        @param timeout Verbindungstimeout in Millisekunden"""
+        @param address IP Adresse des RevPi
+        @param timeout Timeout in Millisekunden der Verbindung"""
         super().__init__()
         self.daemon = True
 
@@ -94,7 +98,7 @@ class NetFH(Thread):
         so = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             so.connect(self._address)
-        except:
+        except Exception:
             so.close()
         else:
             # Alten Socket trennen
@@ -156,7 +160,7 @@ class NetFH(Thread):
                         self._slavesock.send(_sysexit)
                     else:
                         self._slavesock.shutdown(socket.SHUT_RDWR)
-                except:
+                except Exception:
                     pass
             self._slavesock.close()
 
@@ -193,7 +197,7 @@ class NetFH(Thread):
     def get_name(self):
         """Verbindugnsnamen zurueckgeben.
         @return <class 'str'> IP:PORT"""
-        return "{}:{}".format(*self._address)
+        return "{0}:{1}".format(*self._address)
 
     def get_timeout(self):
         """Gibt aktuellen Timeout zurueck.
@@ -391,6 +395,8 @@ class RevPiNetIO(_RevPiModIO):
 
     """
 
+    __slots__ = "_address"
+
     def __init__(
             self, address, autorefresh=False, monitoring=False,
             syncoutputs=True, simulator=False):
@@ -445,7 +451,7 @@ class RevPiNetIO(_RevPiModIO):
             autorefresh,
             monitoring,
             syncoutputs,
-            "{}:{}".format(*self._address),
+            "{0}:{1}".format(*self._address),
             None,
             simulator
         )
@@ -488,7 +494,7 @@ class RevPiNetIO(_RevPiModIO):
         if device is None:
             self._myfh.clear_dirtybytes()
         else:
-            dev = device if issubclass(type(device), Device) \
+            dev = device if isinstance(device, Device) \
                 else self.device.__getitem__(device)
             mylist = [dev]
 
@@ -508,7 +514,7 @@ class RevPiNetIO(_RevPiModIO):
         if device is None:
             mylist = self.device
         else:
-            dev = device if issubclass(type(device), Device) \
+            dev = device if isinstance(device, Device) \
                 else self.device.__getitem__(device)
             mylist = [dev]
 
@@ -553,6 +559,8 @@ class RevPiNetIOSelected(RevPiNetIO):
     befinden und stellt sicher, dass die Daten synchron sind.
 
     """
+
+    __slots__ = ()
 
     def __init__(
             self, address, deviceselection, autorefresh=False,
@@ -618,6 +626,8 @@ class RevPiNetIODriver(RevPiNetIOSelected):
     dann ueber logiCAD an den Devices abgerufen werden.
 
     """
+
+    __slots__ = ()
 
     def __init__(
             self, address, virtdev, autorefresh=False, monitoring=False,

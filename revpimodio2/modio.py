@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-#
-# python3-RevPiModIO
-#
-# Webpage: https://revpimodio.org/
-# (c) Sven Sager, License: LGPLv3
-#
 """RevPiModIO Hauptklasse fuer piControl0 Zugriff."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
+
 import warnings
 from json import load as jload
+from multiprocessing import cpu_count
 from os import access, F_OK, R_OK
 from queue import Empty
 from signal import signal, SIG_DFL, SIGINT, SIGTERM
 from threading import Thread, Event
+from timeit import default_timer
 
 from . import app as appmodule
 from . import device as devicemodule
@@ -32,6 +32,13 @@ class RevPiModIO(object):
     Device Positionen oder Device Namen.
 
     """
+
+    __slots__ = "__cleanupfunc", "_autorefresh", "_buffedwrite", \
+        "_configrsc", "_exit", "_imgwriter", "_ioerror", "_length", \
+        "_looprunning", "_lst_devselect", "_lst_refresh", "_maxioerrors", \
+        "_myfh", "_monitoring", "_procimg", "_simulator", "_syncoutputs", \
+        "_th_mainloop", "_waitexit", \
+        "core", "app", "device", "exitsignal", "io", "summary"
 
     def __init__(
             self, autorefresh=False, monitoring=False, syncoutputs=True,
@@ -79,6 +86,9 @@ class RevPiModIO(object):
         self.io = None
         self.summary = None
 
+        # Event für Benutzeraktionen
+        self.exitsignal = Event()
+
         # Nur Konfigurieren, wenn nicht vererbt
         if type(self) == RevPiModIO:
             self._configure(self.get_jconfigrsc())
@@ -100,7 +110,8 @@ class RevPiModIO(object):
         if self.__cleanupfunc is not None:
             self.readprocimg()
             self.__cleanupfunc()
-            self.writeprocimg()
+            if not self._monitoring:
+                self.writeprocimg()
 
     def _configure(self, jconfigrsc):
         """Verarbeitet die piCtory Konfigurationsdatei."""
@@ -150,10 +161,17 @@ class RevPiModIO(object):
                     device["position"] += 1
 
             if device["type"] == "BASE":
-                # Core
-                dev_new = devicemodule.Core(
-                    self, device, simulator=self._simulator
-                )
+                pt = int(device["productType"])
+                if pt == 105:
+                    # RevPi Connect
+                    dev_new = devicemodule.Connect(
+                        self, device, simulator=self._simulator
+                    )
+                else:
+                    # RevPi Core immer als Fallback verwenden
+                    dev_new = devicemodule.Core(
+                        self, device, simulator=self._simulator
+                    )
                 self.core = dev_new
             elif device["type"] == "LEFT_RIGHT":
                 # IOs
@@ -170,10 +188,13 @@ class RevPiModIO(object):
                 dev_new = devicemodule.Gateway(
                     self, device, simulator=self._simulator
                 )
+            elif device["type"] == "RIGHT":
+                # Connectdevice
+                dev_new = None
             else:
                 # Device-Type nicht gefunden
                 warnings.warn(
-                    "device type '{}' unknown".format(device["type"]),
+                    "device type '{0}' unknown".format(device["type"]),
                     Warning
                 )
                 dev_new = None
@@ -205,9 +226,27 @@ class RevPiModIO(object):
         # ImgWriter erstellen
         self._imgwriter = helpermodule.ProcimgWriter(self)
 
+        # Refreshzeit CM1 25 Hz / CM3 50 Hz
+        if not isinstance(self, RevPiNetIO):
+            self._imgwriter.refresh = 20 if cpu_count() > 1 else 40
+
         # Aktuellen Outputstatus von procimg einlesen
         if self._syncoutputs:
             self.syncoutputs()
+
+        # Für RS485 errors am core defaults laden sollte procimg NULL sein
+        if not (self.core is None or self._monitoring or self._simulator):
+            if self.core._ioerrorlimit1 is not None:
+                self.core._ioerrorlimit1.set_value(
+                    self.core._ioerrorlimit1._defaultvalue
+                )
+            if self.core._ioerrorlimit2 is not None:
+                self.core._ioerrorlimit2.set_value(
+                    self.core._ioerrorlimit2._defaultvalue
+                )
+
+            # RS485 errors schreiben
+            self.writeprocimg(self.core)
 
         # Optional ins autorefresh aufnehmen
         if self._autorefresh:
@@ -270,12 +309,12 @@ class RevPiModIO(object):
         self._ioerror += 1
         if self._maxioerrors != 0 and self._ioerror >= self._maxioerrors:
             raise RuntimeError(
-                "reach max io error count {} on process image".format(
+                "reach max io error count {0} on process image".format(
                     self._maxioerrors
                 )
             )
         warnings.warn(
-            "got io error during {} and count {} errors now".format(
+            "got io error during {0} and count {1} errors now".format(
                 action, self._ioerror
             ),
             RuntimeWarning
@@ -286,7 +325,7 @@ class RevPiModIO(object):
         @param milliseconds <class 'int'> in Millisekunden"""
         if self._looprunning:
             raise RuntimeError(
-                "can not change cycletime when cycleloop or mainloop are "
+                "can not change cycletime when cycleloop or mainloop is "
                 "running"
             )
         else:
@@ -316,7 +355,7 @@ class RevPiModIO(object):
         self.io = None
         self.summary = None
 
-    def cycleloop(self, func, cycletime=None):
+    def cycleloop(self, func, cycletime=50):
         """Startet den Cycleloop.
 
         Der aktuelle Programmthread wird hier bis Aufruf von
@@ -328,19 +367,20 @@ class RevPiModIO(object):
         Prozessabbild geschrieben.
 
         Verlassen wird der Cycleloop, wenn die aufgerufene Funktion einen
-        Rueckgabewert nicht gleich None liefert, oder durch Aufruf von
-        revpimodio.exit().
+        Rueckgabewert nicht gleich None liefert (z.B. return True), oder durch
+        Aufruf von .exit().
 
         HINWEIS: Die Aktualisierungszeit und die Laufzeit der Funktion duerfen
         die eingestellte autorefresh Zeit, bzw. uebergebene cycletime nicht
         ueberschreiten!
 
-        Ueber das Attribut cycletime kann die Aktualisierungsrate fuer das
-        Prozessabbild gesetzt werden.
+        Ueber den Parameter cycletime wird die gewuenschte Zukluszeit der
+        uebergebenen Funktion gesetzt. Der Standardwert betraegt
+        50 Millisekunden, in denen das Prozessabild eingelesen, die uebergebene
+        Funktion ausgefuert und das Prozessabbild geschrieben wird.
 
         @param func Funktion, die ausgefuehrt werden soll
-        @param cycletime Zykluszeit in Millisekunden, bei Nichtangabe wird
-               aktuelle .cycletime Zeit verwendet - Standardwert 50 ms
+        @param cycletime Zykluszeit in Millisekunden - Standardwert 50 ms
         @return None
 
         """
@@ -352,20 +392,27 @@ class RevPiModIO(object):
 
         # Prüfen ob Devices in autorefresh sind
         if len(self._lst_refresh) == 0:
-            raise RuntimeError("no device with autorefresh activated")
+            raise RuntimeError(
+                "no device with autorefresh activated - use autorefresh=True "
+                "or call .autorefresh_all() before entering cycleloop"
+            )
 
         # Prüfen ob Funktion callable ist
         if not callable(func):
             raise RuntimeError(
-                "registered function '{}' ist not callable".format(func)
+                "registered function '{0}' ist not callable".format(func)
             )
 
         # Zykluszeit übernehmen
-        if not (cycletime is None or cycletime == self._imgwriter.refresh):
+        old_cycletime = self._imgwriter.refresh
+        if not cycletime == self._imgwriter.refresh:
             self._imgwriter.refresh = cycletime
 
             # Zeitänderung in _imgwriter neuladen
             self._imgwriter.newdata.clear()
+
+        # Benutzerevent
+        self.exitsignal.clear()
 
         # Cycleloop starten
         self._exit.clear()
@@ -403,6 +450,9 @@ class RevPiModIO(object):
         # Cycleloop beenden
         self._looprunning = False
 
+        # Alte autorefresh Zeit setzen
+        self._imgwriter.refresh = old_cycletime
+
         return ec
 
     def exit(self, full=True):
@@ -416,6 +466,10 @@ class RevPiModIO(object):
         wird dann gestoppt und das Programm kann sauber beendet werden.
 
         @param full Entfernt auch alle Devices aus autorefresh"""
+
+        # Benutzerevent
+        self.exitsignal.set()
+
         self._exit.set()
         self._waitexit.set()
 
@@ -425,7 +479,7 @@ class RevPiModIO(object):
                 self._imgwriter.stop()
                 self._imgwriter.join(self._imgwriter._refresh)
 
-            # Mainloop beenden und darauf waretn
+            # Mainloop beenden und darauf 1 Sekunde warten
             if self._th_mainloop is not None and self._th_mainloop.is_alive():
                 self._th_mainloop.join(1)
 
@@ -443,7 +497,7 @@ class RevPiModIO(object):
         if self._configrsc is not None:
             if not access(self._configrsc, F_OK | R_OK):
                 raise RuntimeError(
-                    "can not access pictory configuration at {}".format(
+                    "can not access pictory configuration at {0}".format(
                         self._configrsc))
         else:
             # piCtory Konfiguration an bekannten Stellen prüfen
@@ -454,7 +508,7 @@ class RevPiModIO(object):
                     break
             if self._configrsc is None:
                 raise RuntimeError(
-                    "can not access known pictory configurations at {} - "
+                    "can not access known pictory configurations at {0} - "
                     "use 'configrsc' parameter so specify location"
                     "".format(", ".join(lst_rsc))
                 )
@@ -462,7 +516,7 @@ class RevPiModIO(object):
         with open(self._configrsc, "r") as fhconfigrsc:
             try:
                 jdata = jload(fhconfigrsc)
-            except:
+            except Exception:
                 raise RuntimeError(
                     "can not read piCtory configuration - check your hardware "
                     "configuration http://revpi_ip/"
@@ -494,7 +548,8 @@ class RevPiModIO(object):
         # Prüfen ob Funktion callable ist
         if not (cleanupfunc is None or callable(cleanupfunc)):
             raise RuntimeError(
-                "registered function '{}' ist not callable".format(cleanupfunc)
+                "registered function '{0}' ist not callable"
+                "".format(cleanupfunc)
             )
         self.__cleanupfunc = cleanupfunc
         signal(SIGINT, self.__evt_exit)
@@ -527,7 +582,10 @@ class RevPiModIO(object):
 
         # Prüfen ob Devices in autorefresh sind
         if len(self._lst_refresh) == 0:
-            raise RuntimeError("no device with autorefresh activated")
+            raise RuntimeError(
+                "no device with autorefresh activated - use autorefresh=True "
+                "or call .autorefresh_all() before entering mainloop"
+            )
 
         # Thread erstellen, wenn nicht blockieren soll
         if not blocking:
@@ -537,25 +595,48 @@ class RevPiModIO(object):
             self._th_mainloop.start()
             return
 
+        # Benutzerevent
+        self.exitsignal.clear()
+
         # Event säubern vor Eintritt in Mainloop
         self._exit.clear()
         self._looprunning = True
 
         # Beim Eintritt in mainloop Bytecopy erstellen
         for dev in self._lst_refresh:
-            dev._filelock.acquire()
-            dev._ba_datacp = dev._ba_devdata[:]
-            dev._filelock.release()
+            with dev._filelock:
+                dev._ba_datacp = dev._ba_devdata[:]
 
         # ImgWriter mit Eventüberwachung aktivieren
         self._imgwriter._collect_events(True)
         e = None
+        runtime = 0
 
         while not self._exit.is_set():
+
+            # Laufzeit der Eventqueue auf 0 setzen
+            if self._imgwriter._eventq.qsize() == 0:
+                runtime = 0
+
             try:
                 tup_fire = self._imgwriter._eventq.get(timeout=1)
+
+                # Messung Laufzeit der Queue starten
+                if runtime == 0:
+                    runtime = default_timer()
+
                 # Direct callen da Prüfung in io.IOBase.reg_event ist
                 tup_fire[0].func(tup_fire[1], tup_fire[2])
+
+                # Laufzeitprüfung
+                if runtime != -1 and \
+                        default_timer() - runtime > self._imgwriter._refresh:
+                    runtime = -1
+                    warnings.warn(
+                        "can not execute all event functions in one cycle - "
+                        "rise .cycletime or optimize your event functions",
+                        RuntimeWarning
+                    )
             except Empty:
                 if not self._exit.is_set() and not self._imgwriter.is_alive():
                     self.exit(full=False)
@@ -585,12 +666,12 @@ class RevPiModIO(object):
         if device is None:
             mylist = self.device
         else:
-            dev = device if issubclass(type(device), devicemodule.Device) \
+            dev = device if isinstance(device, devicemodule.Device) \
                 else self.device.__getitem__(device)
 
             if dev._selfupdate:
                 raise RuntimeError(
-                    "can not read process image, while device '{}|{}'"
+                    "can not read process image, while device '{0}|{1}'"
                     "is in autorefresh mode".format(dev._position, dev._name)
                 )
             mylist = [dev]
@@ -640,7 +721,7 @@ class RevPiModIO(object):
         if device is None:
             mylist = self.device
         else:
-            dev = device if issubclass(type(device), devicemodule.Device) \
+            dev = device if isinstance(device, devicemodule.Device) \
                 else self.device.__getitem__(device)
             mylist = [dev]
 
@@ -660,12 +741,12 @@ class RevPiModIO(object):
         if device is None:
             mylist = self.device
         else:
-            dev = device if issubclass(type(device), devicemodule.Device) \
+            dev = device if isinstance(device, devicemodule.Device) \
                 else self.device.__getitem__(device)
 
             if dev._selfupdate:
                 raise RuntimeError(
-                    "can not sync process image, while device '{}|{}'"
+                    "can not sync outputs, while device '{0}|{1}'"
                     "is in autorefresh mode".format(dev._position, dev._name)
                 )
             mylist = [dev]
@@ -703,12 +784,12 @@ class RevPiModIO(object):
         if device is None:
             mylist = self.device
         else:
-            dev = device if issubclass(type(device), devicemodule.Device) \
+            dev = device if isinstance(device, devicemodule.Device) \
                 else self.device.__getitem__(device)
 
             if dev._selfupdate:
                 raise RuntimeError(
-                    "can not write process image, while device '{}|{}'"
+                    "can not write process image, while device '{0}|{1}'"
                     "is in autorefresh mode".format(dev._position, dev._name)
                 )
             mylist = [dev]
@@ -758,6 +839,8 @@ class RevPiModIOSelected(RevPiModIO):
     befinden und stellt sicher, dass die Daten synchron sind.
 
     """
+
+    __slots__ = ()
 
     def __init__(
             self, deviceselection, autorefresh=False, monitoring=False,
@@ -823,6 +906,8 @@ class RevPiModIODriver(RevPiModIOSelected):
 
     """
 
+    __slots__ = ()
+
     def __init__(
             self, virtdev, autorefresh=False, monitoring=False,
             syncoutputs=True, procimg=None, configrsc=None):
@@ -842,4 +927,4 @@ class RevPiModIODriver(RevPiModIOSelected):
 
 
 # Nachträglicher Import
-from .netio import RevPiNetIODriver
+from .netio import RevPiNetIODriver, RevPiNetIO

@@ -12,12 +12,15 @@ Modul fuer die Verwaltung der Devices.
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Global Attributes</h3>
 <table>
-<tr><td>None</td></tr>
+<tr><td>__author__</td></tr><tr><td>__copyright__</td></tr><tr><td>__license__</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Classes</h3>
 <table>
 <tr>
+<td><a style="color:#0000FF" href="#Connect">Connect</a></td>
+<td>Klasse fuer den RevPi Connect.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Core">Core</a></td>
 <td>Klasse fuer den RevPi Core.</td>
 </tr><tr>
@@ -40,6 +43,124 @@ Functions</h3>
 <tr><td>None</td></tr>
 </table>
 <hr /><hr />
+<a NAME="Connect" ID="Connect"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">Connect</h2>
+<p>
+Klasse fuer den RevPi Connect.
+</p><p>
+    Stellt Funktionen fuer die LEDs, Watchdog und den Status zur Verfuegung.
+</p><p>
+
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+Core
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>A3</td></tr><tr><td>__slots__</td></tr><tr><td>wdautotoggle</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#Connect.__wdtoggle">__wdtoggle</a></td>
+<td>WD Ausgang alle 10 Sekunden automatisch toggeln.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Connect._devconfigure">_devconfigure</a></td>
+<td>Connect-Klasse vorbereiten.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Connect._get_leda3">_get_leda3</a></td>
+<td>Gibt den Zustand der LED A3 vom Connect zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Connect._get_wdtoggle">_get_wdtoggle</a></td>
+<td>Ruft den Wert fuer Autowatchdog ab.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Connect._set_leda3">_set_leda3</a></td>
+<td>Setzt den Zustand der LED A3 vom Connect.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Connect._set_wdtoggle">_set_wdtoggle</a></td>
+<td>Setzt den Wert fuer Autowatchdog.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="Connect.__wdtoggle" ID="Connect.__wdtoggle"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Connect.__wdtoggle</h3>
+<b>__wdtoggle</b>(<i></i>)
+<p>
+WD Ausgang alle 10 Sekunden automatisch toggeln.
+</p><a NAME="Connect._devconfigure" ID="Connect._devconfigure"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Connect._devconfigure</h3>
+<b>_devconfigure</b>(<i></i>)
+<p>
+Connect-Klasse vorbereiten.
+</p><a NAME="Connect._get_leda3" ID="Connect._get_leda3"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Connect._get_leda3</h3>
+<b>_get_leda3</b>(<i></i>)
+<p>
+Gibt den Zustand der LED A3 vom Connect zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+0=aus, 1=gruen, 2=rot
+</dd>
+</dl><a NAME="Connect._get_wdtoggle" ID="Connect._get_wdtoggle"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Connect._get_wdtoggle</h3>
+<b>_get_wdtoggle</b>(<i></i>)
+<p>
+Ruft den Wert fuer Autowatchdog ab.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn Autowatchdog aktiv ist
+</dd>
+</dl><a NAME="Connect._set_leda3" ID="Connect._set_leda3"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Connect._set_leda3</h3>
+<b>_set_leda3</b>(<i>value</i>)
+<p>
+Setzt den Zustand der LED A3 vom Connect.
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+0=aus, 1=gruen, 2=rot
+</dd>
+</dl><a NAME="Connect._set_wdtoggle" ID="Connect._set_wdtoggle"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Connect._set_wdtoggle</h3>
+<b>_set_wdtoggle</b>(<i>value</i>)
+<p>
+Setzt den Wert fuer Autowatchdog.
+</p><p>
+        Wird dieser Wert auf True gesetzt, wechselt im Hintergrund das noetige
+        Bit zum toggeln des Watchdogs alle 10 Sekunden zwichen True und False.
+        Dieses Bit wird bei autorefresh=True natuerlich automatisch in das
+        Prozessabbild geschrieben.
+</p><p>
+        WICHTIG: Sollte autorefresh=False sein, muss zyklisch
+                 .writeprocimg() aufgerufen werden, um den Wert in das
+                 Prozessabbild zu schreiben!!!
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+True zum aktivieren, Fals zum beenden
+</dd>
+</dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
 <a NAME="Core" ID="Core"></a>
 <h2 style="background-color:#FFFFFF;color:#0000FF">Core</h2>
 <p>
@@ -55,7 +176,7 @@ Device
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>A1</td></tr><tr><td>A2</td></tr><tr><td>status</td></tr>
+<tr><td>A1</td></tr><tr><td>A2</td></tr><tr><td>__slots__</td></tr><tr><td>status</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -73,19 +194,22 @@ Methods</h3>
 <td>Core-Klasse vorbereiten.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core._get_leda1">_get_leda1</a></td>
-<td>Gibt den Zustand der LED A1 vom core zurueck.</td>
+<td>Gibt den Zustand der LED A1 vom Core zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core._get_leda2">_get_leda2</a></td>
-<td>Gibt den Zustand der LED A2 vom core zurueck.</td>
+<td>Gibt den Zustand der LED A2 vom Core zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core._get_status">_get_status</a></td>
 <td>Gibt den RevPi Core Status zurueck.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#Core._set_calculatedled">_set_calculatedled</a></td>
+<td>Berechnet und setzt neuen Bytewert fuer LED byte.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Core._set_leda1">_set_leda1</a></td>
-<td>Setzt den Zustand der LED A1 vom core.</td>
+<td>Setzt den Zustand der LED A1 vom Core.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core._set_leda2">_set_leda2</a></td>
-<td>Setzt den Zustand der LED A2 vom core.</td>
+<td>Setzt den Zustand der LED A2 vom Core.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core.errorlimit1">errorlimit1</a></td>
 <td>Setzt RS485 ErrorLimit1 auf neuen Wert.</td>
@@ -132,13 +256,13 @@ Static Methods</h3>
 <a NAME="Core.__errorlimit" ID="Core.__errorlimit"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Core.__errorlimit</h3>
-<b>__errorlimit</b>(<i>io_id, errorlimit</i>)
+<b>__errorlimit</b>(<i>io, errorlimit</i>)
 <p>
 Verwaltet das Lesen und Schreiben der ErrorLimits.
 </p><dl>
-<dt><i>io_id</i></dt>
+<dt><i>io</i></dt>
 <dd>
-Index des IOs fuer ErrorLimit
+IOs Objekt fuer ErrorLimit
 </dd>
 </dl><dl>
 <dt>Returns:</dt>
@@ -156,7 +280,7 @@ Core-Klasse vorbereiten.
 Core._get_leda1</h3>
 <b>_get_leda1</b>(<i></i>)
 <p>
-Gibt den Zustand der LED A1 vom core zurueck.
+Gibt den Zustand der LED A1 vom Core zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
@@ -167,7 +291,7 @@ Gibt den Zustand der LED A1 vom core zurueck.
 Core._get_leda2</h3>
 <b>_get_leda2</b>(<i></i>)
 <p>
-Gibt den Zustand der LED A2 vom core zurueck.
+Gibt den Zustand der LED A2 vom Core zurueck.
 </p><dl>
 <dt>Returns:</dt>
 <dd>
@@ -184,12 +308,26 @@ Gibt den RevPi Core Status zurueck.
 <dd>
 Status als <class 'int'>
 </dd>
+</dl><a NAME="Core._set_calculatedled" ID="Core._set_calculatedled"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Core._set_calculatedled</h3>
+<b>_set_calculatedled</b>(<i>addresslist, shifted_value</i>)
+<p>
+Berechnet und setzt neuen Bytewert fuer LED byte.
+</p><dl>
+<dt><i>addresslist</i></dt>
+<dd>
+Liste der Vergleicher
+</dd><dt><i>shifed_value</i></dt>
+<dd>
+Bits vergleichen
+</dd>
 </dl><a NAME="Core._set_leda1" ID="Core._set_leda1"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Core._set_leda1</h3>
 <b>_set_leda1</b>(<i>value</i>)
 <p>
-Setzt den Zustand der LED A1 vom core.
+Setzt den Zustand der LED A1 vom Core.
 </p><dl>
 <dt><i>value</i></dt>
 <dd>
@@ -200,7 +338,7 @@ Setzt den Zustand der LED A1 vom core.
 Core._set_leda2</h3>
 <b>_set_leda2</b>(<i>value</i>)
 <p>
-Setzt den Zustand der LED A2 vom core.
+Setzt den Zustand der LED A2 vom Core.
 </p><dl>
 <dt><i>value</i></dt>
 <dd>
@@ -358,7 +496,7 @@ object
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>length</td></tr><tr><td>name</td></tr><tr><td>offset</td></tr><tr><td>position</td></tr><tr><td>producttype</td></tr>
+<tr><td>__slots__</td></tr><tr><td>length</td></tr><tr><td>name</td></tr><tr><td>offset</td></tr><tr><td>position</td></tr><tr><td>producttype</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -415,7 +553,7 @@ Methods</h3>
 <td>Gibt eine Liste aller Inputs zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Device.get_memories">get_memories</a></td>
-<td>Gibt eine Liste aller mems zurueck.</td>
+<td>Gibt eine Liste aller Memoryobjekte zurueck.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Device.get_outputs">get_outputs</a></td>
 <td>Gibt eine Liste aller Outputs zurueck.</td>
@@ -485,13 +623,16 @@ True, wenn IO auf Device vorhanden
 </dl><a NAME="Device.__getioiter" ID="Device.__getioiter"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Device.__getioiter</h3>
-<b>__getioiter</b>(<i>ioslc</i>)
+<b>__getioiter</b>(<i>ioslc, export</i>)
 <p>
 Gibt <class 'iter'> mit allen IOs zurueck.
 </p><dl>
 <dt><i>ioslc</i></dt>
 <dd>
 IO Abschnitt <class 'slice'>
+</dd><dt><i>export</i></dt>
+<dd>
+Filter fuer 'Export' Flag in piCtory
 </dd>
 </dl><dl>
 <dt>Returns:</dt>
@@ -603,10 +744,20 @@ Default True fuegt Device zur Synchronisierung hinzu
 </dl><a NAME="Device.get_allios" ID="Device.get_allios"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Device.get_allios</h3>
-<b>get_allios</b>(<i></i>)
+<b>get_allios</b>(<i>export=None</i>)
 <p>
 Gibt eine Liste aller Inputs und Outputs zurueck, keine MEMs.
+</p><p>
+        Bleibt Parameter 'export' auf None werden alle Inputs und Outputs
+        zurueckgegeben. Wird 'export' auf True/False gesetzt, werden nur Inputs
+        und Outputs zurueckgegeben, bei denen der Wert 'Export' in piCtory
+        uebereinstimmt.
 </p><dl>
+<dt><i>export</i></dt>
+<dd>
+Nur In-/Outputs mit angegebenen 'Export' Wert in piCtory
+</dd>
+</dl><dl>
 <dt>Returns:</dt>
 <dd>
 <class 'list'> Input und Output, keine MEMs
@@ -614,10 +765,19 @@ Gibt eine Liste aller Inputs und Outputs zurueck, keine MEMs.
 </dl><a NAME="Device.get_inputs" ID="Device.get_inputs"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Device.get_inputs</h3>
-<b>get_inputs</b>(<i></i>)
+<b>get_inputs</b>(<i>export=None</i>)
 <p>
 Gibt eine Liste aller Inputs zurueck.
+</p><p>
+        Bleibt Parameter 'export' auf None werden alle Inputs zurueckgegeben.
+        Wird 'export' auf True/False gesetzt, werden nur Inputs zurueckgegeben,
+        bei denen der Wert 'Export' in piCtory uebereinstimmt.
 </p><dl>
+<dt><i>export</i></dt>
+<dd>
+Nur Inputs mit angegebenen 'Export' Wert in piCtory
+</dd>
+</dl><dl>
 <dt>Returns:</dt>
 <dd>
 <class 'list'> Inputs
@@ -625,10 +785,19 @@ Gibt eine Liste aller Inputs zurueck.
 </dl><a NAME="Device.get_memories" ID="Device.get_memories"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Device.get_memories</h3>
-<b>get_memories</b>(<i></i>)
+<b>get_memories</b>(<i>export=None</i>)
 <p>
-Gibt eine Liste aller mems zurueck.
+Gibt eine Liste aller Memoryobjekte zurueck.
+</p><p>
+        Bleibt Parameter 'export' auf None werden alle Mems zurueckgegeben.
+        Wird 'export' auf True/False gesetzt, werden nur Mems zurueckgegeben,
+        bei denen der Wert 'Export' in piCtory uebereinstimmt.
 </p><dl>
+<dt><i>export</i></dt>
+<dd>
+Nur Mems mit angegebenen 'Export' Wert in piCtory
+</dd>
+</dl><dl>
 <dt>Returns:</dt>
 <dd>
 <class 'list'> Mems
@@ -636,10 +805,19 @@ Gibt eine Liste aller mems zurueck.
 </dl><a NAME="Device.get_outputs" ID="Device.get_outputs"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Device.get_outputs</h3>
-<b>get_outputs</b>(<i></i>)
+<b>get_outputs</b>(<i>export=None</i>)
 <p>
 Gibt eine Liste aller Outputs zurueck.
+</p><p>
+        Bleibt Parameter 'export' auf None werden alle Outputs zurueckgegeben.
+        Wird 'export' auf True/False gesetzt, werden nur Outputs
+        zurueckgegeben, bei denen der Wert 'Export' in piCtory uebereinstimmt.
 </p><dl>
+<dt><i>export</i></dt>
+<dd>
+Nur Outputs mit angegebenen 'Export' Wert in piCtory
+</dd>
+</dl><dl>
 <dt>Returns:</dt>
 <dd>
 <class 'list'> Outputs
@@ -886,7 +1064,7 @@ Device
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>None</td></tr>
+<tr><td>__slots__</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -955,7 +1133,7 @@ Gateway
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>None</td></tr>
+<tr><td>__slots__</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>

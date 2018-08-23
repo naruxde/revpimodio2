@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
-#
-# python3-RevPiModIO
-#
-# Webpage: https://revpimodio.org/
-# (c) Sven Sager, License: LGPLv3
-#
 """Stellt alle Klassen fuer den RevolutionPi zur Verfuegung.
+
+Webpage: https://revpimodio.org/
 
 Stellt Klassen fuer die einfache Verwendung des Revolution Pis der
 Kunbus GmbH (https://revolution.kunbus.de/) zur Verfuegung. Alle I/Os werden
@@ -23,9 +19,10 @@ __all__ = [
     "RevPiNetIO", "RevPiNetIOSelected", "RevPiNetIODriver"
 ]
 __author__ = "Sven Sager <akira@revpimodio.org>"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
 __name__ = "revpimodio2"
-__package__ = "revpimodio2"
-__version__ = "2.1.6"
+__version__ = "2.2.3"
 
 # Global package values
 OFF = 0
@@ -70,6 +67,7 @@ def consttostr(value):
         return "MEM"
     else:
         return ""
+
 
 # Benötigte Klassen importieren
 from .modio import RevPiModIO, RevPiModIOSelected, RevPiModIODriver

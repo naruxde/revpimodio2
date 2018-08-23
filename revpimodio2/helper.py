@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-#
-# python3-RevPiModIO
-#
-# Webpage: https://revpimodio.org/
-# (c) Sven Sager, License: LGPLv3
-#
 """RevPiModIO Helperklassen und Tools."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
+
 import queue
 import warnings
 from math import ceil
@@ -38,6 +36,8 @@ class EventCallback(Thread):
         th.exit.wait(0.5)
 
     """
+
+    __slots__ = "daemon", "exit", "func", "ioname", "iovalue"
 
     def __init__(self, func, name, value):
         """Init EventCallback class.
@@ -87,6 +87,11 @@ class Cycletools():
 
     """
 
+    __slots__ = "__cycle", "__cycletime", "__ucycle", \
+        "__dict_ton", "__dict_tof", "__dict_tp", "first", \
+        "flag1c", "flag5c", "flag10c", "flag15c", "flag20c", \
+        "flank5c", "flank10c", "flank15c", "flank20c", "var"
+
     def __init__(self, cycletime):
         """Init Cycletools class."""
         self.__cycle = 0
@@ -109,6 +114,11 @@ class Cycletools():
         self.flank10c = True
         self.flank15c = True
         self.flank20c = True
+
+        # Benutzerdaten
+        class Var:
+            pass
+        self.var = Var()
 
     def _docycle(self):
         """Zyklusarbeiten."""
@@ -279,6 +289,10 @@ class ProcimgWriter(Thread):
 
     """
 
+    __slots__ = "__dict_delay", "__eventth", "__eventqth", "__eventwork", \
+        "_adjwait", "_eventq", "_ioerror", "_maxioerrors", "_modio", \
+        "_refresh", "_work", "daemon", "lck_refresh", "newdata"
+
     def __init__(self, parentmodio):
         """Init ProcimgWriter class.
         @param parentmodio Parent Object"""
@@ -386,9 +400,15 @@ class ProcimgWriter(Thread):
 
     def _collect_events(self, value):
         """Aktiviert oder Deaktiviert die Eventueberwachung.
-        @param value True aktiviert / False deaktiviert"""
+        @param value True aktiviert / False deaktiviert
+        @return True, wenn Anforderung erfolgreich war"""
         if type(value) != bool:
             raise ValueError("value must be <class 'bool'>")
+
+        # Nur starten, wenn System läuft
+        if not self.is_alive():
+            self.__eventwork = False
+            return False
 
         if self.__eventwork != value:
             with self.lck_refresh:
@@ -403,6 +423,8 @@ class ProcimgWriter(Thread):
                 self.__eventth.daemon = True
                 self.__eventth.start()
 
+        return True
+
     def _get_ioerrors(self):
         """Ruft aktuelle Anzahl der Fehler ab.
         @return Aktuelle Fehleranzahl"""
@@ -413,12 +435,12 @@ class ProcimgWriter(Thread):
         self._ioerror += 1
         if self._maxioerrors != 0 and self._ioerror >= self._maxioerrors:
             raise RuntimeError(
-                "reach max io error count {} on process image".format(
+                "reach max io error count {0} on process image".format(
                     self._maxioerrors
                 )
             )
         warnings.warn(
-            "count {} io errors on process image".format(self._ioerror),
+            "count {0} io errors on process image".format(self._ioerror),
             RuntimeWarning
         )
 
@@ -443,7 +465,7 @@ class ProcimgWriter(Thread):
             # Lockobjekt holen und Fehler werfen, wenn nicht schnell genug
             if not self.lck_refresh.acquire(timeout=self._adjwait):
                 warnings.warn(
-                    "cycle time of {} ms exceeded on lock".format(
+                    "cycle time of {0} ms exceeded on lock".format(
                         int(self._refresh * 1000)
                     ),
                     RuntimeWarning
@@ -458,13 +480,13 @@ class ProcimgWriter(Thread):
                 if self._modio._monitoring:
                     # Inputs und Outputs in Puffer
                     for dev in self._modio._lst_refresh:
-                        dev._filelock.acquire()
-                        dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
-                        if self.__eventwork \
-                                and len(dev._dict_events) > 0 \
-                                and dev._ba_datacp != dev._ba_devdata:
-                            self.__check_change(dev)
-                        dev._filelock.release()
+                        with dev._filelock:
+                            dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
+                            if self.__eventwork \
+                                    and len(dev._dict_events) > 0 \
+                                    and dev._ba_datacp != dev._ba_devdata:
+                                self.__check_change(dev)
+
                 else:
                     # Inputs in Puffer, Outputs in Prozessabbild
                     for dev in self._modio._lst_refresh:
@@ -495,9 +517,9 @@ class ProcimgWriter(Thread):
             finally:
                 # Verzögerte Events prüfen
                 if self.__eventwork:
-                    for tup_fire in list(self.__dict_delay.keys()):
-                        if tup_fire[0].overwrite \
-                                and getattr(self._modio.io, tup_fire[1]).value != \
+                    for tup_fire in tuple(self.__dict_delay.keys()):
+                        if tup_fire[0].overwrite and \
+                                getattr(self._modio.io, tup_fire[1]).value != \
                                 tup_fire[2]:
                             del self.__dict_delay[tup_fire]
                         else:
@@ -518,7 +540,7 @@ class ProcimgWriter(Thread):
                 self._adjwait -= 0.001
                 if self._adjwait < 0:
                     warnings.warn(
-                        "cycle time of {} ms exceeded".format(
+                        "cycle time of {0} ms exceeded".format(
                             int(self._refresh * 1000)
                         ),
                         RuntimeWarning
@@ -534,7 +556,6 @@ class ProcimgWriter(Thread):
 
     def stop(self):
         """Beendet die automatische Prozessabbildsynchronisierung."""
-        self._collect_events(False)
         self._work.set()
 
     def set_maxioerrors(self, value):
@@ -548,13 +569,13 @@ class ProcimgWriter(Thread):
     def set_refresh(self, value):
         """Setzt die Zykluszeit in Millisekunden.
         @param value <class 'int'> Millisekunden"""
-        if type(value) == int and 10 <= value <= 2000:
+        if type(value) == int and 5 <= value <= 2000:
             waitdiff = self._refresh - self._adjwait
             self._refresh = value / 1000
-            self._adjwait = self._refresh - waitdiff
+            self._adjwait = 0 if waitdiff < 0 else self._refresh - waitdiff
         else:
             raise ValueError(
-                "refresh time must be 10 to 2000 milliseconds"
+                "refresh time must be 5 to 2000 milliseconds"
             )
 
     ioerrors = property(_get_ioerrors)

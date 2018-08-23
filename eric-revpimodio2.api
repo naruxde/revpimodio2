@@ -9,12 +9,20 @@ revpimodio2.RED?7
 revpimodio2.RISING?7
 revpimodio2.app.App?1(app)
 revpimodio2.consttostr?4(value)
+revpimodio2.device.Connect.A3?7
+revpimodio2.device.Connect._devconfigure?5()
+revpimodio2.device.Connect._get_leda3?5()
+revpimodio2.device.Connect._get_wdtoggle?5()
+revpimodio2.device.Connect._set_leda3?5(value)
+revpimodio2.device.Connect._set_wdtoggle?5(value)
+revpimodio2.device.Connect.wdautotoggle?7
 revpimodio2.device.Core.A1?7
 revpimodio2.device.Core.A2?7
 revpimodio2.device.Core._devconfigure?5()
 revpimodio2.device.Core._get_leda1?5()
 revpimodio2.device.Core._get_leda2?5()
 revpimodio2.device.Core._get_status?5()
+revpimodio2.device.Core._set_calculatedled?5(addresslist, shifted_value)
 revpimodio2.device.Core._set_leda1?5(value)
 revpimodio2.device.Core._set_leda2?5(value)
 revpimodio2.device.Core.errorlimit1?4(value)
@@ -35,10 +43,10 @@ revpimodio2.device.Device._devconfigure?5()
 revpimodio2.device.Device._get_offset?5()
 revpimodio2.device.Device._get_producttype?5()
 revpimodio2.device.Device.autorefresh?4(activate=True)
-revpimodio2.device.Device.get_allios?4()
-revpimodio2.device.Device.get_inputs?4()
-revpimodio2.device.Device.get_memories?4()
-revpimodio2.device.Device.get_outputs?4()
+revpimodio2.device.Device.get_allios?4(export=None)
+revpimodio2.device.Device.get_inputs?4(export=None)
+revpimodio2.device.Device.get_memories?4(export=None)
+revpimodio2.device.Device.get_outputs?4(export=None)
 revpimodio2.device.Device.length?7
 revpimodio2.device.Device.name?7
 revpimodio2.device.Device.offset?7
@@ -144,7 +152,7 @@ revpimodio2.modio.RevPiModIO._set_maxioerrors?5(value)
 revpimodio2.modio.RevPiModIO.autorefresh_all?4()
 revpimodio2.modio.RevPiModIO.cleanup?4()
 revpimodio2.modio.RevPiModIO.configrsc?7
-revpimodio2.modio.RevPiModIO.cycleloop?4(func, cycletime=None)
+revpimodio2.modio.RevPiModIO.cycleloop?4(func, cycletime=50)
 revpimodio2.modio.RevPiModIO.cycletime?7
 revpimodio2.modio.RevPiModIO.exit?4(full=True)
 revpimodio2.modio.RevPiModIO.get_jconfigrsc?4()

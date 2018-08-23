@@ -1,9 +1,10 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
-#
-# (c) Sven Sager, License: LGPLv3
-#
 """Setupscript fuer python3-revpimodio."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
+
 from distutils.core import setup
 
 setup(
@@ -16,7 +17,7 @@ setup(
 
     license="LGPLv3",
     name="revpimodio2",
-    version="2.1.6",
+    version="2.2.3",
 
     packages=["revpimodio2"],
     python_requires="~=3.2",

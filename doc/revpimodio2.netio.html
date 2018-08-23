@@ -12,7 +12,7 @@ RevPiModIO Hauptklasse fuer Netzwerkzugriff.
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Global Attributes</h3>
 <table>
-<tr><td>_sysdeldirty</td></tr><tr><td>_sysexit</td></tr><tr><td>_sysflush</td></tr><tr><td>_syspictory</td></tr><tr><td>_syssync</td></tr>
+<tr><td>__author__</td></tr><tr><td>__copyright__</td></tr><tr><td>__license__</td></tr><tr><td>_sysdeldirty</td></tr><tr><td>_sysexit</td></tr><tr><td>_sysflush</td></tr><tr><td>_syspictory</td></tr><tr><td>_syssync</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Classes</h3>
@@ -54,7 +54,7 @@ Thread
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>closed</td></tr><tr><td>name</td></tr><tr><td>timeout</td></tr>
+<tr><td>__slots__</td></tr><tr><td>closed</td></tr><tr><td>name</td></tr><tr><td>timeout</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -128,7 +128,15 @@ NetFH (Constructor)</h3>
 <b>NetFH</b>(<i>address, timeout=500</i>)
 <p>
 Init NetFH-class.
-</p><a NAME="NetFH.__del__" ID="NetFH.__del__"></a>
+</p><dl>
+<dt><i>address</i></dt>
+<dd>
+IP Adresse des RevPi
+</dd><dt><i>timeout</i></dt>
+<dd>
+Timeout in Millisekunden der Verbindung
+</dd>
+</dl><a NAME="NetFH.__del__" ID="NetFH.__del__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 NetFH.__del__</h3>
 <b>__del__</b>(<i></i>)
@@ -315,7 +323,7 @@ _RevPiModIO
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>None</td></tr>
+<tr><td>__slots__</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -440,7 +448,7 @@ RevPiNetIOSelected
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>None</td></tr>
+<tr><td>__slots__</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -503,7 +511,7 @@ RevPiNetIO
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>None</td></tr>
+<tr><td>__slots__</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>

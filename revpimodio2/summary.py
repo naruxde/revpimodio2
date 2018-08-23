@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
-#
-# python3-RevPiModIO
-#
-# Webpage: https://revpimodio.org/
-# (c) Sven Sager, License: LGPLv3
-#
 """Bildet die Summary-Sektion von piCtory ab."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
 
 
 class Summary(object):
 
     """Bildet die Summary-Sektion der config.rsc ab."""
+
+    __slots__ = "inptotal", "outtotal"
 
     def __init__(self, summary):
         """Instantiiert die RevPiSummary-Klasse.
