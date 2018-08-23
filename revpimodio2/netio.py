@@ -43,8 +43,15 @@ class NetFH(Thread):
 
     def __init__(self, address, timeout=500):
         """Init NetFH-class.
-        @param address IP Adresse des RevPi
+        @param address IP Adresse, Port des RevPi als <class 'tuple'>
         @param timeout Timeout in Millisekunden der Verbindung"""
+        if not isinstance(address, tuple):
+            raise ValueError(
+                "parameter address must be <class 'tuple'> ('IP', PORT)"
+            )
+        if not isinstance(timeout, int):
+            raise ValueError("parameter timeout must be <class 'int'>")
+
         super().__init__()
         self.daemon = True
 
@@ -60,11 +67,11 @@ class NetFH(Thread):
         self.__trigger = False
         self.__waitsync = None
 
-        self.__set_systimeout(timeout)
-
         # Verbindung herstellen
         self._address = address
         self._slavesock = None
+
+        self.__set_systimeout(timeout)
         self._connect()
 
         if self._slavesock is None:
@@ -78,16 +85,35 @@ class NetFH(Thread):
         """NetworkFileHandler beenden."""
         self.close()
 
+    def __check_acl(self, bytecode):
+        """Pueft ob ACL auf RevPi den Vorgang erlaubt oder wirft exception."""
+        if bytecode == b'\x18':
+
+            # Alles beenden, wenn nicht erlaubt
+            self.__sockend = True
+            self.__sockerr.set()
+            self._slavesock.close()
+            raise RuntimeError(
+                "write access to the process image is not permitted - use "
+                "monitoring=True or check aclplcslave.conf on RevPi and "
+                "reload revpipyload!"
+            )
+
     def __set_systimeout(self, value):
         """Systemfunktion fuer Timeoutberechnung.
         @param value Timeout in Millisekunden 100 - 60000"""
 
         if isinstance(value, int) and (100 <= value <= 60000):
             self.__timeout = value / 1000
+
             socket.setdefaulttimeout(self.__timeout)
 
-            # 70 Prozent vom Timeout für Synctimer verwenden
-            self.__waitsync = self.__timeout / 10 * 7
+            # Timeouts in Socket setzen
+            if self._slavesock is not None:
+                self._slavesock.settimeout(self.__timeout)
+
+            # 45 Prozent vom Timeout für Synctimer verwenden
+            self.__waitsync = self.__timeout / 10 * 4.5
 
         else:
             raise ValueError("value must between 10 and 60000 milliseconds")
@@ -108,6 +134,7 @@ class NetFH(Thread):
 
                 self._slavesock = so
                 self.__sockerr.clear()
+                self.__flusherr = False
 
             # Timeout setzen
             self.set_timeout(int(self.__timeout * 1000))
@@ -136,6 +163,10 @@ class NetFH(Thread):
 
             check = self._slavesock.recv(1)
             if check != b'\x1e':
+
+                # ACL prüfen und ggf Fehler werfen
+                self.__check_acl(check)
+
                 self.__sockerr.set()
                 raise IOError("clear dirtybytes error on network")
 
@@ -149,6 +180,9 @@ class NetFH(Thread):
 
     def close(self):
         """Verbindung trennen."""
+        if self.__sockend:
+            return
+
         self.__sockend = True
         self.__sockerr.set()
 
@@ -176,16 +210,21 @@ class NetFH(Thread):
 
             # Rückmeldebyte auswerten
             blockok = self._slavesock.recv(1)
+
+            # Puffer immer leeren
+            self.__int_buff = 0
+            self.__by_buff = b''
+
             if blockok != b'\x1e':
-                self.__sockerr.set()
+
+                # ACL prüfen und ggf Fehler werfen
+                self.__check_acl(blockok)
+
                 self.__flusherr = True
+                self.__sockerr.set()
                 raise IOError("flush error on network")
             else:
                 self.__flusherr = False
-
-                # Puffer leeren
-                self.__int_buff = 0
-                self.__by_buff = b''
 
             self.__trigger = True
 
@@ -260,20 +299,18 @@ class NetFH(Thread):
         """Handler fuer Synchronisierung."""
         while not self.__sockend:
 
-            # Auf Fehlermeldung warten
-            if self.__sockerr.wait(self.__waitsync):
-                if not self.__sockend:
-                    # Im Fehlerfall neu verbinden
-                    self._connect()
+            # Bei Fehlermeldung neu verbinden
+            if self.__sockerr.is_set():
+                self._connect()
 
-            elif not self.__sockend:
+            else:
                 # Kein Fehler aufgetreten, sync durchführen wenn socket frei
                 if not self.__trigger and \
                         self.__socklock.acquire(blocking=False):
                     try:
                         self._slavesock.send(_syssync)
                         data = self._slavesock.recv(2)
-                    except IOError:
+                    except IOError as e:
                         warnings.warn(
                             "network error in sync of NetFH", RuntimeWarning
                         )
@@ -286,7 +323,11 @@ class NetFH(Thread):
                             self.__sockerr.set()
 
                     self.__socklock.release()
+
                 self.__trigger = False
+
+            # Warten nach Sync damit Instantiierung funktioniert
+            self.__sockerr.wait(self.__waitsync)
 
     def seek(self, position):
         """Springt an angegebene Position.
@@ -313,6 +354,10 @@ class NetFH(Thread):
 
             check = self._slavesock.recv(1)
             if check != b'\x1e':
+
+                # ACL prüfen und ggf Fehler werfen
+                self.__check_acl(check)
+
                 self.__sockerr.set()
                 raise IOError("set dirtybytes error on network")
 
@@ -329,9 +374,6 @@ class NetFH(Thread):
 
         # Timeoutwert verarbeiten (könnte Exception auslösen)
         self.__set_systimeout(value)
-
-        # Timeouts in Socket setzen
-        self._slavesock.settimeout(self.__timeout)
 
         with self.__socklock:
             self._slavesock.send(
@@ -439,11 +481,12 @@ class RevPiNetIO(_RevPiModIO):
         # IP-Adresse prüfen und ggf. auflösen
         if check_ip.match(self._address[0]) is None:
             try:
-                ipv4 = socket.gethostname(self._address[0])
+                ipv4 = socket.gethostbyname(self._address[0])
                 self._address = (ipv4, self._address[1])
-            except:
+            except Exception:
                 raise ValueError(
-                    "ip '{}' is no valid ip address".format(self._address[0])
+                    "ip '{0}' is no valid IPv4 address"
+                    "".format(self._address[0])
                 )
 
         # Vererben

@@ -68,8 +68,14 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#NetFH.__init__">NetFH</a></td>
 <td>Init NetFH-class.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.__check_acl">__check_acl</a></td>
+<td>Pueft ob ACL auf RevPi den Vorgang erlaubt oder wirft exception.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#NetFH.__del__">__del__</a></td>
 <td>NetworkFileHandler beenden.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.__set_systimeout">__set_systimeout</a></td>
+<td>Systemfunktion fuer Timeoutberechnung.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#NetFH._connect">_connect</a></td>
 <td>Stellt die Verbindung zu einem RevPiSlave her.</td>
@@ -131,18 +137,35 @@ Init NetFH-class.
 </p><dl>
 <dt><i>address</i></dt>
 <dd>
-IP Adresse des RevPi
+IP Adresse, Port des RevPi als <class 'tuple'>
 </dd><dt><i>timeout</i></dt>
 <dd>
 Timeout in Millisekunden der Verbindung
 </dd>
-</dl><a NAME="NetFH.__del__" ID="NetFH.__del__"></a>
+</dl><a NAME="NetFH.__check_acl" ID="NetFH.__check_acl"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.__check_acl</h3>
+<b>__check_acl</b>(<i>bytecode</i>)
+<p>
+Pueft ob ACL auf RevPi den Vorgang erlaubt oder wirft exception.
+</p><a NAME="NetFH.__del__" ID="NetFH.__del__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 NetFH.__del__</h3>
 <b>__del__</b>(<i></i>)
 <p>
 NetworkFileHandler beenden.
-</p><a NAME="NetFH._connect" ID="NetFH._connect"></a>
+</p><a NAME="NetFH.__set_systimeout" ID="NetFH.__set_systimeout"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.__set_systimeout</h3>
+<b>__set_systimeout</b>(<i>value</i>)
+<p>
+Systemfunktion fuer Timeoutberechnung.
+</p><dl>
+<dt><i>value</i></dt>
+<dd>
+Timeout in Millisekunden 100 - 60000
+</dd>
+</dl><a NAME="NetFH._connect" ID="NetFH._connect"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 NetFH._connect</h3>
 <b>_connect</b>(<i></i>)
