@@ -487,20 +487,20 @@ class Core(Device):
 
         # Echte IOs erzeugen
         self.a1green = IOBase(self, [
-            "a1green", 0, 1, self._ioled._slc_address.start,
-            False, None, "LED_A1_GREEN", "0"
+            "core.a1green", 0, 1, self._ioled._slc_address.start,
+            self._ioled.export, None, "LED_A1_GREEN", "0"
         ], OUT, "little", False)
         self.a1red = IOBase(self, [
-            "a1red", 0, 1, self._ioled._slc_address.start,
-            False, None, "LED_A1_RED", "1"
+            "core.a1red", 0, 1, self._ioled._slc_address.start,
+            self._ioled.export, None, "LED_A1_RED", "1"
         ], OUT, "little", False)
         self.a2green = IOBase(self, [
-            "a2green", 0, 1, self._ioled._slc_address.start,
-            False, None, "LED_A2_GREEN", "2"
+            "core.a2green", 0, 1, self._ioled._slc_address.start,
+            self._ioled.export, None, "LED_A2_GREEN", "2"
         ], OUT, "little", False)
         self.a2red = IOBase(self, [
-            "a2red", 0, 1, self._ioled._slc_address.start,
-            False, None, "LED_A2_RED", "3"
+            "core.a2red", 0, 1, self._ioled._slc_address.start,
+            self._ioled.export, None, "LED_A2_RED", "3"
         ], OUT, "little", False)
 
     def __errorlimit(self, io, errorlimit):
@@ -718,26 +718,26 @@ class Connect(Core):
 
         # Echte IOs erzeugen
         self.a3green = IOBase(self, [
-            "a3green", 0, 1, self._ioled._slc_address.start,
-            False, None, "LED_A3_GREEN", "4"
+            "core.a3green", 0, 1, self._ioled._slc_address.start,
+            self._ioled.export, None, "LED_A3_GREEN", "4"
         ], OUT, "little", False)
         self.a3red = IOBase(self, [
-            "a3red", 0, 1, self._ioled._slc_address.start,
-            False, None, "LED_A3_RED", "5"
+            "core.a3red", 0, 1, self._ioled._slc_address.start,
+            self._ioled.export, None, "LED_A3_RED", "5"
         ], OUT, "little", False)
 
         # IO Objekte für WD und X2 in/out erzeugen
         self.wd = IOBase(self, [
-            "wd", 0, 1, self._ioled._slc_address.start,
-            False, None, "Connect_WatchDog", "7"
+            "core.wd", 0, 1, self._ioled._slc_address.start,
+            self._ioled.export, None, "Connect_WatchDog", "7"
         ], OUT, "little", False)
         self.x2in = IOBase(self, [
-            "x2in", 0, 1, self._iostatusbyte._slc_address.start,
-            False, None, "Connect_X2_IN", "6"
+            "core.x2in", 0, 1, self._iostatusbyte._slc_address.start,
+            self._ioled.export, None, "Connect_X2_IN", "6"
         ], INP, "little", False)
         self.x2out = IOBase(self, [
-            "x2out", 0, 1, self._ioled._slc_address.start,
-            False, None, "Connect_X2_OUT", "6"
+            "core.x2out", 0, 1, self._ioled._slc_address.start,
+            self._ioled.export, None, "Connect_X2_OUT", "6"
         ], OUT, "little", False)
 
     def _get_leda3(self):
