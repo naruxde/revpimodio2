@@ -188,7 +188,7 @@ Methods</h3>
 <table>
 <tr>
 <td><a style="color:#0000FF" href="#Core.__errorlimit">__errorlimit</a></td>
-<td>Verwaltet das Lesen und Schreiben der ErrorLimits.</td>
+<td>Verwaltet das Schreiben der ErrorLimits.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Core._devconfigure">_devconfigure</a></td>
 <td>Core-Klasse vorbereiten.</td>
@@ -256,13 +256,13 @@ Static Methods</h3>
 <a NAME="Core.__errorlimit" ID="Core.__errorlimit"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Core.__errorlimit</h3>
-<b>__errorlimit</b>(<i>io, errorlimit</i>)
+<b>__errorlimit</b>(<i>slc_io, errorlimit</i>)
 <p>
-Verwaltet das Lesen und Schreiben der ErrorLimits.
+Verwaltet das Schreiben der ErrorLimits.
 </p><dl>
-<dt><i>io</i></dt>
+<dt><i>slc_io</i></dt>
 <dd>
-IOs Objekt fuer ErrorLimit
+Byte Slice vom ErrorLimit
 </dd>
 </dl><dl>
 <dt>Returns:</dt>

@@ -236,14 +236,16 @@ class RevPiModIO(object):
 
         # Für RS485 errors am core defaults laden sollte procimg NULL sein
         if not (self.core is None or self._monitoring or self._simulator):
-            if self.core._ioerrorlimit1 is not None:
-                self.core._ioerrorlimit1.set_value(
-                    self.core._ioerrorlimit1._defaultvalue
-                )
-            if self.core._ioerrorlimit2 is not None:
-                self.core._ioerrorlimit2.set_value(
-                    self.core._ioerrorlimit2._defaultvalue
-                )
+            if self.core._slc_errorlimit1 is not None:
+                io = self.io[
+                    self.core.offset + self.core._slc_errorlimit1.start
+                ][0]
+                io.set_value(io._defaultvalue)
+            if self.core._slc_errorlimit2 is not None:
+                io = self.io[
+                    self.core.offset + self.core._slc_errorlimit2.start
+                ][0]
+                io.set_value(io._defaultvalue)
 
             # RS485 errors schreiben
             self.writeprocimg(self.core)
