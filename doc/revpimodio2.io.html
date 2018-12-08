@@ -33,6 +33,12 @@ Classes</h3>
 <td><a style="color:#0000FF" href="#IntIO">IntIO</a></td>
 <td>Klasse fuer den Zugriff auf die Daten mit Konvertierung in int.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#IntIOCounter">IntIOCounter</a></td>
+<td>Erweitert die IntIO-Klasse um die .reset() Funktion fuer Counter.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#IntIOReplaceable">IntIOReplaceable</a></td>
+<td>Erweitert die IntIO-Klasse um die .replace_io Funktion.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#StructIO">StructIO</a></td>
 <td>Klasse fuer den Zugriff auf Daten ueber ein definierten struct.</td>
 </tr>
@@ -97,7 +103,7 @@ Stellt Funktion fuer weiter Bit-Ersetzungen bereit.
 </p><dl>
 <dt><b>See Also:</b></dt>
 <dd>
-<a style="color:#0000FF" href="#IOBase.replace_io">replace_io(...)</a>
+<a style="color:#0000FF" href="#IntIOReplaceable.replace_io">replace_io(...)</a>
 </dd>
 </dl>
 <div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
@@ -170,9 +176,6 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.reg_timerevent">reg_timerevent</a></td>
 <td>Registriert fuer IO einen Timer, welcher nach delay func ausfuehrt.</td>
-</tr><tr>
-<td><a style="color:#0000FF" href="#IOBase.replace_io">replace_io</a></td>
-<td>Ersetzt bestehenden IO mit Neuem.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#IOBase.set_value">set_value</a></td>
 <td>Setzt den Wert des IOs.</td>
@@ -380,50 +383,6 @@ Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
 </dd><dt><i>as_thread</i></dt>
 <dd>
 Bei True, Funktion als EventCallback-Thread ausfuehren
-</dd>
-</dl><a NAME="IOBase.replace_io" ID="IOBase.replace_io"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-IOBase.replace_io</h3>
-<b>replace_io</b>(<i>name, frm, **kwargs</i>)
-<p>
-Ersetzt bestehenden IO mit Neuem.
-</p><p>
-        Wenn die kwargs fuer byteorder und defaultvalue nicht angegeben werden,
-        uebernimmt das System die Daten aus dem ersetzten IO.
-</p><p>
-        Es darf nur ein einzelnes Formatzeichen 'frm' uebergeben werden. Daraus
-        wird dann die benoetigte Laenge an Bytes berechnet und der Datentyp
-        festgelegt.
-        Eine Ausnahme ist die Formatierung 's'. Hier koennen mehrere Bytes
-        zu einem langen IO zusammengefasst werden. Die Formatierung muss
-        '8s' fuer z.B. 8 Bytes sein - NICHT 'ssssssss'!
-</p><p>
-        Wenn durch die Formatierung mehr Bytes benoetigt werden, als
-        der urspruenglige IO hat, werden die nachfolgenden IOs ebenfalls
-        verwendet und entfernt.
-</p><dl>
-<dt><i>name</i></dt>
-<dd>
-Name des neuen Inputs
-</dd><dt><i>frm</i></dt>
-<dd>
-struct formatierung (1 Zeichen) oder 'ANZAHLs' z.B. '8s'
-</dd><dt><i>kwargs</i></dt>
-<dd>
-Weitere Parameter:
-            - bmk: interne Bezeichnung fuer IO
-            - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer den IO, Standardwert=little
-            - defaultvalue: Standardwert fuer IO
-            - event: Funktion fuer Eventhandling registrieren
-            - delay: Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
-            - edge: Event ausfuehren bei RISING, FALLING or BOTH Wertaenderung
-            - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
-</dd>
-</dl><dl>
-<dt><b>See Also:</b></dt>
-<dd>
-<a style="color:#0000FF" target="_blank"        href="https://docs.python.org/3/library/struct.html#format-characters"        >Python3 struct</a>
 </dd>
 </dl><a NAME="IOBase.set_value" ID="IOBase.set_value"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -866,6 +825,124 @@ Setzt IO mit Beachtung byteorder/signed.
 <dt><i>value</i></dt>
 <dd>
 <class 'int'> Wert
+</dd>
+</dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="IntIOCounter" ID="IntIOCounter"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">IntIOCounter</h2>
+<p>
+Erweitert die IntIO-Klasse um die .reset() Funktion fuer Counter.
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+IntIO
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>__slots__</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#IntIOCounter.reset">reset</a></td>
+<td>Setzt den Counter des Inputs zurueck.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="IntIOCounter.reset" ID="IntIOCounter.reset"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IntIOCounter.reset</h3>
+<b>reset</b>(<i></i>)
+<p>
+Setzt den Counter des Inputs zurueck.
+</p>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="IntIOReplaceable" ID="IntIOReplaceable"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">IntIOReplaceable</h2>
+<p>
+Erweitert die IntIO-Klasse um die .replace_io Funktion.
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+IntIO
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>__slots__</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#IntIOReplaceable.replace_io">replace_io</a></td>
+<td>Ersetzt bestehenden IO mit Neuem.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="IntIOReplaceable.replace_io" ID="IntIOReplaceable.replace_io"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IntIOReplaceable.replace_io</h3>
+<b>replace_io</b>(<i>name, frm, **kwargs</i>)
+<p>
+Ersetzt bestehenden IO mit Neuem.
+</p><p>
+        Wenn die kwargs fuer byteorder und defaultvalue nicht angegeben werden,
+        uebernimmt das System die Daten aus dem ersetzten IO.
+</p><p>
+        Es darf nur ein einzelnes Formatzeichen 'frm' uebergeben werden. Daraus
+        wird dann die benoetigte Laenge an Bytes berechnet und der Datentyp
+        festgelegt.
+        Eine Ausnahme ist die Formatierung 's'. Hier koennen mehrere Bytes
+        zu einem langen IO zusammengefasst werden. Die Formatierung muss
+        '8s' fuer z.B. 8 Bytes sein - NICHT 'ssssssss'!
+</p><p>
+        Wenn durch die Formatierung mehr Bytes benoetigt werden, als
+        der urspruenglige IO hat, werden die nachfolgenden IOs ebenfalls
+        verwendet und entfernt.
+</p><dl>
+<dt><i>name</i></dt>
+<dd>
+Name des neuen Inputs
+</dd><dt><i>frm</i></dt>
+<dd>
+struct formatierung (1 Zeichen) oder 'ANZAHLs' z.B. '8s'
+</dd><dt><i>kwargs</i></dt>
+<dd>
+Weitere Parameter:
+            - bmk: interne Bezeichnung fuer IO
+            - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
+            - byteorder: Byteorder fuer den IO, Standardwert=little
+            - defaultvalue: Standardwert fuer IO
+            - event: Funktion fuer Eventhandling registrieren
+            - delay: Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
+            - edge: Event ausfuehren bei RISING, FALLING or BOTH Wertaenderung
+            - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
+</dd>
+</dl><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" target="_blank"        href="https://docs.python.org/3/library/struct.html#format-characters"        >Python3 struct</a>
 </dd>
 </dl>
 <div align="right"><a style="color:#0000FF" href="#top">Up</a></div>

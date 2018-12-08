@@ -106,7 +106,6 @@ revpimodio2.io.IOBase.length?7
 revpimodio2.io.IOBase.name?7
 revpimodio2.io.IOBase.reg_event?4(func, delay=0, edge=BOTH, as_thread=False)
 revpimodio2.io.IOBase.reg_timerevent?4(func, delay, edge=BOTH, as_thread=False)
-revpimodio2.io.IOBase.replace_io?4(name, frm, **kwargs)
 revpimodio2.io.IOBase.set_value?4(value)
 revpimodio2.io.IOBase.type?7
 revpimodio2.io.IOBase.unreg_event?4(func=None, edge=None)
@@ -126,6 +125,8 @@ revpimodio2.io.IntIO.get_intvalue?4()
 revpimodio2.io.IntIO.set_intvalue?4(value)
 revpimodio2.io.IntIO.signed?7
 revpimodio2.io.IntIO.value?7
+revpimodio2.io.IntIOCounter.reset?4()
+revpimodio2.io.IntIOReplaceable.replace_io?4(name, frm, **kwargs)
 revpimodio2.io.StructIO._get_frm?5()
 revpimodio2.io.StructIO._get_signed?5()
 revpimodio2.io.StructIO.defaultvalue?7

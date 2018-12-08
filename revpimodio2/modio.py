@@ -162,14 +162,19 @@ class RevPiModIO(object):
 
             if device["type"] == "BASE":
                 pt = int(device["productType"])
-                if pt == 105:
+                if pt == 95:
+                    # RevPi Core
+                    dev_new = devicemodule.Core(
+                        self, device, simulator=self._simulator
+                    )
+                elif pt == 105:
                     # RevPi Connect
                     dev_new = devicemodule.Connect(
                         self, device, simulator=self._simulator
                     )
                 else:
-                    # RevPi Core immer als Fallback verwenden
-                    dev_new = devicemodule.Core(
+                    # Base immer als Fallback verwenden
+                    dev_new = devicemodule.Base(
                         self, device, simulator=self._simulator
                     )
                 self.core = dev_new

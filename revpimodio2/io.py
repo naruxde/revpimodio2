@@ -231,7 +231,7 @@ class DeadIO(object):
 
     def replace_io(self, name, frm, **kwargs):
         """Stellt Funktion fuer weiter Bit-Ersetzungen bereit.
-        @see #IOBase.replace_io replace_io(...)"""
+        @see #IntIOReplaceable.replace_io replace_io(...)"""
         self.__deadio.replace_io(name, frm, **kwargs)
 
     _parentdevice = property(lambda self: None)
@@ -495,70 +495,6 @@ class IOBase(object):
 
         """
         self.__reg_xevent(func, delay, edge, as_thread, False)
-
-    def replace_io(self, name, frm, **kwargs):
-        """Ersetzt bestehenden IO mit Neuem.
-
-        Wenn die kwargs fuer byteorder und defaultvalue nicht angegeben werden,
-        uebernimmt das System die Daten aus dem ersetzten IO.
-
-        Es darf nur ein einzelnes Formatzeichen 'frm' uebergeben werden. Daraus
-        wird dann die benoetigte Laenge an Bytes berechnet und der Datentyp
-        festgelegt.
-        Eine Ausnahme ist die Formatierung 's'. Hier koennen mehrere Bytes
-        zu einem langen IO zusammengefasst werden. Die Formatierung muss
-        '8s' fuer z.B. 8 Bytes sein - NICHT 'ssssssss'!
-
-        Wenn durch die Formatierung mehr Bytes benoetigt werden, als
-        der urspruenglige IO hat, werden die nachfolgenden IOs ebenfalls
-        verwendet und entfernt.
-
-        @param name Name des neuen Inputs
-        @param frm struct formatierung (1 Zeichen) oder 'ANZAHLs' z.B. '8s'
-        @param kwargs Weitere Parameter:
-            - bmk: interne Bezeichnung fuer IO
-            - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer den IO, Standardwert=little
-            - defaultvalue: Standardwert fuer IO
-            - event: Funktion fuer Eventhandling registrieren
-            - delay: Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
-            - edge: Event ausfuehren bei RISING, FALLING or BOTH Wertaenderung
-            - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
-        @see <a target="_blank"
-        href="https://docs.python.org/3/library/struct.html#format-characters"
-        >Python3 struct</a>
-
-        """
-        if not isinstance(self._parentdevice, Gateway):
-            raise RuntimeError(
-                "this function can be used for ios on gatway or virtual "
-                "devices only"
-            )
-        if type(self) == StructIO:
-            raise RuntimeError(
-                "this io is already a replaced one"
-            )
-
-        # StructIO erzeugen
-        io_new = StructIO(
-            self,
-            name,
-            frm,
-            **kwargs
-        )
-
-        # StructIO in IO-Liste einfügen
-        self._parentdevice._modio.io._private_register_new_io_object(io_new)
-
-        # Optional Event eintragen
-        reg_event = kwargs.get("event", None)
-        if reg_event is not None:
-            io_new.reg_event(
-                reg_event,
-                kwargs.get("delay", 0),
-                kwargs.get("edge", BOTH),
-                kwargs.get("as_thread", False)
-            )
 
     def set_value(self, value):
         """Setzt den Wert des IOs.
@@ -849,6 +785,80 @@ class IntIO(IOBase):
     value = property(get_intvalue, set_intvalue)
 
 
+class IntIOCounter(IntIO):
+
+    """Erweitert die IntIO-Klasse um die .reset() Funktion fuer Counter."""
+
+    __slots__ = ()
+
+    def reset(self):
+        """Setzt den Counter des Inputs zurueck."""
+        # TODO: Counter ID ermitteln
+        # TODO: Counter reset durchführen
+        pass
+
+
+class IntIOReplaceable(IntIO):
+
+    """Erweitert die IntIO-Klasse um die .replace_io Funktion."""
+
+    __slots__ = ()
+
+    def replace_io(self, name, frm, **kwargs):
+        """Ersetzt bestehenden IO mit Neuem.
+
+        Wenn die kwargs fuer byteorder und defaultvalue nicht angegeben werden,
+        uebernimmt das System die Daten aus dem ersetzten IO.
+
+        Es darf nur ein einzelnes Formatzeichen 'frm' uebergeben werden. Daraus
+        wird dann die benoetigte Laenge an Bytes berechnet und der Datentyp
+        festgelegt.
+        Eine Ausnahme ist die Formatierung 's'. Hier koennen mehrere Bytes
+        zu einem langen IO zusammengefasst werden. Die Formatierung muss
+        '8s' fuer z.B. 8 Bytes sein - NICHT 'ssssssss'!
+
+        Wenn durch die Formatierung mehr Bytes benoetigt werden, als
+        der urspruenglige IO hat, werden die nachfolgenden IOs ebenfalls
+        verwendet und entfernt.
+
+        @param name Name des neuen Inputs
+        @param frm struct formatierung (1 Zeichen) oder 'ANZAHLs' z.B. '8s'
+        @param kwargs Weitere Parameter:
+            - bmk: interne Bezeichnung fuer IO
+            - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
+            - byteorder: Byteorder fuer den IO, Standardwert=little
+            - defaultvalue: Standardwert fuer IO
+            - event: Funktion fuer Eventhandling registrieren
+            - delay: Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
+            - edge: Event ausfuehren bei RISING, FALLING or BOTH Wertaenderung
+            - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
+        @see <a target="_blank"
+        href="https://docs.python.org/3/library/struct.html#format-characters"
+        >Python3 struct</a>
+
+        """
+        # StructIO erzeugen
+        io_new = StructIO(
+            self,
+            name,
+            frm,
+            **kwargs
+        )
+
+        # StructIO in IO-Liste einfügen
+        self._parentdevice._modio.io._private_register_new_io_object(io_new)
+
+        # Optional Event eintragen
+        reg_event = kwargs.get("event", None)
+        if reg_event is not None:
+            io_new.reg_event(
+                reg_event,
+                kwargs.get("delay", 0),
+                kwargs.get("edge", BOTH),
+                kwargs.get("as_thread", False)
+            )
+
+
 class StructIO(IOBase):
 
     """Klasse fuer den Zugriff auf Daten ueber ein definierten struct.
@@ -980,7 +990,3 @@ class StructIO(IOBase):
     frm = property(_get_frm)
     signed = property(_get_signed)
     value = property(get_structvalue, set_structvalue)
-
-
-# Nachträglicher Import
-from .device import Gateway

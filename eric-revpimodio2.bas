@@ -1,8 +1,11 @@
+Base Device
 Connect Core
-Core Device
+Core Base
 EventCallback Thread
 Gateway Device
 IntIO IOBase
+IntIOCounter IntIO
+IntIOReplaceable IntIO
 NetFH Thread
 ProcimgWriter Thread
 RevPiModIODriver RevPiModIOSelected

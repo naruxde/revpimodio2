@@ -253,10 +253,19 @@ class Device(object):
         for key in sorted(dict_io, key=lambda x: int(x)):
 
             # Neuen IO anlegen
-            if bool(dict_io[key][7]) or isinstance(self, Core):
-                # Bei Bitwerten oder Core RevPiIOBase verwenden
+            if bool(dict_io[key][7]) or isinstance(self, Base):
+                # Bei Bitwerten oder Base IOBase verwenden
                 io_new = IOBase(
                     self, dict_io[key], iotype, "little", False
+                )
+            elif isinstance(self, Gateway) and iotype != MEM:
+                # Ersetzbare IOs erzeugen
+                io_new = IntIOReplaceable(
+                    self, dict_io[key],
+                    iotype,
+                    "little",
+                    # Bei AIO (103) signed auf True setzen
+                    self._producttype == 103
                 )
             else:
                 io_new = IntIO(
@@ -441,7 +450,16 @@ class Device(object):
     producttype = property(_get_producttype)
 
 
-class Core(Device):
+class Base(Device):
+
+    """Klasse fuer alle Base-Devices wie Core / Connect usw."""
+
+    __slots__ = ()
+
+    pass
+
+
+class Core(Base):
 
     """Klasse fuer den RevPi Core.
 
@@ -849,7 +867,7 @@ class Gateway(Device):
     zur verfuegung, ueber die eigene IOs definiert werden, die ein
     RevPiStructIO-Objekt abbilden.
     Dieser IO-Typ kann Werte ueber mehrere Bytes verarbeiten und zurueckgeben.
-    @see revpimodio2.io#IOBase.replace_io replace_io(name, frm, **kwargs)
+    @see revpimodio2.io#IntIOReplaceable.replace_io replace_io(...)
 
     """
 
@@ -925,5 +943,5 @@ class Virtual(Gateway):
 
 
 # Nachträglicher Import
-from .io import IOBase, IntIO
+from .io import IOBase, IntIO, IntIOReplaceable
 from revpimodio2 import INP, OUT, MEM
