@@ -33,6 +33,9 @@ Classes</h3>
 <td><a style="color:#0000FF" href="#DeviceList">DeviceList</a></td>
 <td>Basisklasse fuer direkten Zugriff auf Device Objekte.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#DioModule">DioModule</a></td>
+<td>Stellt ein DIO / DI / DO Modul dar.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Gateway">Gateway</a></td>
 <td>Klasse fuer die RevPi Gateway-Devices.</td>
 </tr><tr>
@@ -1072,6 +1075,51 @@ Attributname
 </dd><dt><i>value</i></dt>
 <dd>
 Attributobjekt
+</dd>
+</dl>
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="DioModule" ID="DioModule"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">DioModule</h2>
+<p>
+Stellt ein DIO / DI / DO Modul dar.
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+Device
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>__slots__</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr>
+<td><a style="color:#0000FF" href="#DioModule.__init__">DioModule</a></td>
+<td>Erweitert Device-Klasse zum Erkennen von IntIOCounter.</td>
+</tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<a NAME="DioModule.__init__" ID="DioModule.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+DioModule (Constructor)</h3>
+<b>DioModule</b>(<i>parentmodio, dict_device, simulator=False</i>)
+<p>
+Erweitert Device-Klasse zum Erkennen von IntIOCounter.
+</p><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" href="#Device.__init__">Device.__init__(...)</a>
 </dd>
 </dl>
 <div align="right"><a style="color:#0000FF" href="#top">Up</a></div>

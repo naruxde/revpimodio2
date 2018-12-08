@@ -13,12 +13,6 @@ from signal import signal, SIG_DFL, SIGINT, SIGTERM
 from threading import Thread, Event
 from timeit import default_timer
 
-from . import app as appmodule
-from . import device as devicemodule
-from . import helper as helpermodule
-from . import summary as summarymodule
-from .io import IOList
-
 
 class RevPiModIO(object):
 
@@ -161,6 +155,7 @@ class RevPiModIO(object):
                     device["position"] += 1
 
             if device["type"] == "BASE":
+                # Basedevices
                 pt = int(device["productType"])
                 if pt == 95:
                     # RevPi Core
@@ -180,9 +175,17 @@ class RevPiModIO(object):
                 self.core = dev_new
             elif device["type"] == "LEFT_RIGHT":
                 # IOs
-                dev_new = devicemodule.Device(
-                    self, device, simulator=self._simulator
-                )
+                pt = int(device["productType"])
+                if pt == 96 or pt == 97 or pt == 98:
+                    # DIO / DI / DO
+                    dev_new = devicemodule.DioModule(
+                        self, device, simulator=self._simulator
+                    )
+                else:
+                    # Alle anderen IO-Devices
+                    dev_new = devicemodule.Device(
+                        self, device, simulator=self._simulator
+                    )
             elif device["type"] == "VIRTUAL":
                 # Virtuals
                 dev_new = devicemodule.Virtual(
@@ -934,4 +937,10 @@ class RevPiModIODriver(RevPiModIOSelected):
 
 
 # Nachträglicher Import
+from . import app as appmodule
+from . import device as devicemodule
+from . import helper as helpermodule
+from . import summary as summarymodule
+from .io import IOList
+
 from .netio import RevPiNetIODriver, RevPiNetIO

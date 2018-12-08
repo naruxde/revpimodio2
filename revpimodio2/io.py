@@ -5,9 +5,16 @@ __copyright__ = "Copyright (C) 2018 Sven Sager"
 __license__ = "LGPLv3"
 
 import struct
+import warnings
 from re import match as rematch
 from threading import Event
 from revpimodio2 import RISING, FALLING, BOTH, INP, OUT, MEM, consttostr
+from .netio import RevPiNetIO
+try:
+    # Funktioniert nur auf Unix
+    from fcntl import ioctl
+except Exception:
+    ioctl = None
 
 
 class IOEvent(object):
@@ -789,13 +796,56 @@ class IntIOCounter(IntIO):
 
     """Erweitert die IntIO-Klasse um die .reset() Funktion fuer Counter."""
 
-    __slots__ = ()
+    __slots__ = ("__ioctl_arg")
+
+    def __init__(
+            self, counter_id,
+            parentdevice, valuelist, iotype, byteorder, signed):
+        """Instantiierung der IntIOCounter-Klasse.
+
+        @param counter_id ID fuer den Counter, zu dem der IO gehoert (0-15)
+        @see #IOBase.__init__ IOBase.__init__(...)
+
+        """
+        if not (isinstance(counter_id, int) and 0 <= counter_id <= 15):
+            raise ValueError("counter_id must be <class 'int'> and 0 - 15")
+
+        # Deviceposition + Counter_ID
+        self.__ioctl_arg = \
+            parentdevice._position.to_bytes(1, "little") + \
+            (1 << counter_id).to_bytes(2, "big")
+
+        # Basisklasse laden
+        super().__init__(parentdevice, valuelist, iotype, byteorder, signed)
 
     def reset(self):
         """Setzt den Counter des Inputs zurueck."""
-        # TODO: Counter ID ermitteln
-        # TODO: Counter reset durchführen
-        pass
+        if self._parentdevice._modio._monitoring:
+            raise RuntimeError(
+                "can not reset counter, while system is in monitoring mode"
+            )
+        if self._parentdevice._modio._simulator:
+            raise AttributeError(
+                "can not reset counter, while system is in simulator mode"
+            )
+
+        if isinstance(self._parentdevice._modio, RevPiNetIO):
+            # TODO: NetFH ansprechen und an RevPiPyLoad senden
+            warnings.warn("not jet implemented", FutureWarning)
+
+        elif self._parentdevice._modio._procimg != "/dev/piControl0":
+            # NOTE: Soll hier eine 0 in den Input geschrieben werden?
+            warnings.warn("this will work on a revolution pi only")
+
+        elif ioctl is None:
+            raise RuntimeError(
+                "can not reset counter on this system without ioctl"
+            )
+
+        else:
+            # Counter reset durchführen (Funktion K+20)
+            # TODO: globalen FileHandler absichern
+            ioctl(self._parentdevice._modio._myfh, 19220, self.__ioctl_arg)
 
 
 class IntIOReplaceable(IntIO):

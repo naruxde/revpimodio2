@@ -1,6 +1,7 @@
 Base Device
 Connect Core
 Core Base
+DioModule Device
 EventCallback Thread
 Gateway Device
 IntIO IOBase

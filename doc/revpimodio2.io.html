@@ -851,6 +851,9 @@ Class Methods</h3>
 Methods</h3>
 <table>
 <tr>
+<td><a style="color:#0000FF" href="#IntIOCounter.__init__">IntIOCounter</a></td>
+<td>Instantiierung der IntIOCounter-Klasse.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#IntIOCounter.reset">reset</a></td>
 <td>Setzt den Counter des Inputs zurueck.</td>
 </tr>
@@ -860,7 +863,23 @@ Static Methods</h3>
 <table>
 <tr><td>None</td></tr>
 </table>
-<a NAME="IntIOCounter.reset" ID="IntIOCounter.reset"></a>
+<a NAME="IntIOCounter.__init__" ID="IntIOCounter.__init__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+IntIOCounter (Constructor)</h3>
+<b>IntIOCounter</b>(<i>counter_id, parentdevice, valuelist, iotype, byteorder, signed</i>)
+<p>
+Instantiierung der IntIOCounter-Klasse.
+</p><dl>
+<dt><i>counter_id</i></dt>
+<dd>
+ID fuer den Counter, zu dem der IO gehoert (0-15)
+</dd>
+</dl><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" href="#IOBase.__init__">IOBase.__init__(...)</a>
+</dd>
+</dl><a NAME="IntIOCounter.reset" ID="IntIOCounter.reset"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 IntIOCounter.reset</h3>
 <b>reset</b>(<i></i>)

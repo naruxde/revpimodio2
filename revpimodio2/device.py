@@ -258,14 +258,23 @@ class Device(object):
                 io_new = IOBase(
                     self, dict_io[key], iotype, "little", False
                 )
+            elif isinstance(self, DioModule) and \
+                    dict_io[key][3] in self._lst_counter:
+                # Counter IO auf einem DI oder DIO
+                io_new = IntIOCounter(
+                    self._lst_counter.index(dict_io[key][3]),
+                    self, dict_io[key],
+                    iotype,
+                    "little",
+                    False
+                )
             elif isinstance(self, Gateway) and iotype != MEM:
                 # Ersetzbare IOs erzeugen
                 io_new = IntIOReplaceable(
                     self, dict_io[key],
                     iotype,
                     "little",
-                    # Bei AIO (103) signed auf True setzen
-                    self._producttype == 103
+                    False
                 )
             else:
                 io_new = IntIO(
@@ -858,6 +867,32 @@ class Connect(Core):
     wdautotoggle = property(_get_wdtoggle, _set_wdtoggle)
 
 
+class DioModule(Device):
+
+    """Stellt ein DIO / DI / DO Modul dar."""
+
+    __slots__ = ("_lst_counter")
+
+    def __init__(self, parentmodio, dict_device, simulator=False):
+        """Erweitert Device-Klasse zum Erkennen von IntIOCounter.
+        @see #Device.__init__ Device.__init__(...)"""
+
+        # Stringliste der Byteadressen
+        self._lst_counter = []
+
+        # Counter sind 4 Byte lang
+        producttype = int(dict_device.get("productType"))
+        if producttype == 96:
+            # DIO - Counter auf DINT 6 - 66
+            self._lst_counter = list(map(str, range(6, 70, 4)))
+        elif producttype == 97:
+            # DI - Counter auf DINT 4 - 64
+            self._lst_counter = list(map(str, range(4, 68, 4)))
+
+        # Basisklasse laden
+        super().__init__(parentmodio, dict_device, simulator=simulator)
+
+
 class Gateway(Device):
 
     """Klasse fuer die RevPi Gateway-Devices.
@@ -930,6 +965,7 @@ class Virtual(Gateway):
 
         # Outputs auf Bus schreiben
         try:
+            # TODO: globalen FileHandler absichern
             self._modio._myfh.seek(self._slc_inpoff.start)
             self._modio._myfh.write(self._ba_devdata[self._slc_inp])
             if self._modio._buffedwrite:
@@ -943,5 +979,5 @@ class Virtual(Gateway):
 
 
 # Nachträglicher Import
-from .io import IOBase, IntIO, IntIOReplaceable
+from .io import IOBase, IntIO, IntIOCounter, IntIOReplaceable
 from revpimodio2 import INP, OUT, MEM
