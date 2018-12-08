@@ -86,7 +86,7 @@ class IOList(object):
         """
         if type(key) == int:
             if key not in self.__dict_iobyte:
-                raise KeyError("byte '{0}' does not exist".format(key))
+                raise IndexError("byte '{0}' does not exist".format(key))
             return self.__dict_iobyte[key]
         elif type(key) == slice:
             return [

@@ -63,7 +63,7 @@ class DeviceList(object):
         @return Gefundenes <class 'Device'>-Objekt"""
         if type(key) == int:
             if key not in self.__dict_position:
-                raise KeyError("no device on position {0}".format(key))
+                raise IndexError("no device on position {0}".format(key))
             return self.__dict_position[key]
         else:
             return getattr(self, key)
