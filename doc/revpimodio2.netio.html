@@ -98,6 +98,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#NetFH.get_timeout">get_timeout</a></td>
 <td>Gibt aktuellen Timeout zurueck.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.ioctl">ioctl</a></td>
+<td>IOCTL Befehle ueber das Netzwerk senden.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#NetFH.read">read</a></td>
 <td>Daten ueber das Netzwerk lesen.</td>
 </tr><tr>
@@ -226,6 +229,20 @@ Gibt aktuellen Timeout zurueck.
 <dt>Returns:</dt>
 <dd>
 <class 'int'> in Millisekunden
+</dd>
+</dl><a NAME="NetFH.ioctl" ID="NetFH.ioctl"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.ioctl</h3>
+<b>ioctl</b>(<i>request, arg=b''</i>)
+<p>
+IOCTL Befehle ueber das Netzwerk senden.
+</p><dl>
+<dt><i>request</i></dt>
+<dd>
+Request as <class 'int'>
+</dd><dt><i>arg</i></dt>
+<dd>
+Argument as <class 'byte'>
 </dd>
 </dl><a NAME="NetFH.read" ID="NetFH.read"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">

@@ -10,7 +10,7 @@ from multiprocessing import cpu_count
 from os import access, F_OK, R_OK
 from queue import Empty
 from signal import signal, SIG_DFL, SIGINT, SIGTERM
-from threading import Thread, Event
+from threading import Thread, Event, Lock
 from timeit import default_timer
 
 
@@ -30,8 +30,8 @@ class RevPiModIO(object):
     __slots__ = "__cleanupfunc", "_autorefresh", "_buffedwrite", \
         "_configrsc", "_exit", "_imgwriter", "_ioerror", "_length", \
         "_looprunning", "_lst_devselect", "_lst_refresh", "_maxioerrors", \
-        "_myfh", "_monitoring", "_procimg", "_simulator", "_syncoutputs", \
-        "_th_mainloop", "_waitexit", \
+        "_myfh", "_myfh_lck", "_monitoring", "_procimg", "_simulator", \
+        "_syncoutputs", "_th_mainloop", "_waitexit", \
         "core", "app", "device", "exitsignal", "io", "summary"
 
     def __init__(
@@ -68,6 +68,7 @@ class RevPiModIO(object):
         self._lst_refresh = []
         self._maxioerrors = 0
         self._myfh = None
+        self._myfh_lck = Lock()
         self._th_mainloop = None
         self._waitexit = Event()
 
@@ -162,17 +163,18 @@ class RevPiModIO(object):
                     dev_new = devicemodule.Core(
                         self, device, simulator=self._simulator
                     )
+                    self.core = dev_new
                 elif pt == 105:
                     # RevPi Connect
                     dev_new = devicemodule.Connect(
                         self, device, simulator=self._simulator
                     )
+                    self.core = dev_new
                 else:
                     # Base immer als Fallback verwenden
                     dev_new = devicemodule.Base(
                         self, device, simulator=self._simulator
                     )
-                self.core = dev_new
             elif device["type"] == "LEFT_RIGHT":
                 # IOs
                 pt = int(device["productType"])
@@ -687,12 +689,15 @@ class RevPiModIO(object):
             mylist = [dev]
 
         # Daten komplett einlesen
+        self._myfh_lck.acquire()
         try:
             self._myfh.seek(0)
             bytesbuff = self._myfh.read(self._length)
         except IOError:
             self._gotioerror("read")
             return False
+        finally:
+            self._myfh_lck.release()
 
         for dev in mylist:
             if not dev._selfupdate:
@@ -761,12 +766,15 @@ class RevPiModIO(object):
                 )
             mylist = [dev]
 
+        self._myfh_lck.acquire()
         try:
             self._myfh.seek(0)
             bytesbuff = self._myfh.read(self._length)
         except IOError:
             self._gotioerror("read")
             return False
+        finally:
+            self._myfh_lck.release()
 
         for dev in mylist:
             if not dev._selfupdate:
@@ -810,11 +818,14 @@ class RevPiModIO(object):
                 dev._filelock.acquire()
 
                 # Outpus auf Bus schreiben
+                self._myfh_lck.acquire()
                 try:
                     self._myfh.seek(dev._slc_outoff.start)
                     self._myfh.write(dev._ba_devdata[dev._slc_out])
                 except IOError:
                     workokay = False
+                finally:
+                    self._myfh_lck.release()
 
                 dev._filelock.release()
 

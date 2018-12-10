@@ -830,22 +830,30 @@ class IntIOCounter(IntIO):
             )
 
         if isinstance(self._parentdevice._modio, RevPiNetIO):
-            # TODO: NetFH ansprechen und an RevPiPyLoad senden
-            warnings.warn("not jet implemented", FutureWarning)
+            # IOCTL über Netzwerk
+            with self._parentdevice._modio._myfh_lck:
+                try:
+                    self._parentdevice._modio._myfh.ioctl(
+                        19220, self.__ioctl_arg
+                    )
+                except Exception:
+                    self._parentdevice._modio._gotioerror("net_ioctl")
 
         elif self._parentdevice._modio._procimg != "/dev/piControl0":
             # NOTE: Soll hier eine 0 in den Input geschrieben werden?
             warnings.warn("this will work on a revolution pi only")
 
-        elif ioctl is None:
-            raise RuntimeError(
-                "can not reset counter on this system without ioctl"
-            )
-
         else:
-            # Counter reset durchführen (Funktion K+20)
-            # TODO: globalen FileHandler absichern
-            ioctl(self._parentdevice._modio._myfh, 19220, self.__ioctl_arg)
+            # IOCTL auf dem RevPi
+            with self._parentdevice._modio._myfh_lck:
+                try:
+                    # Counter reset durchführen (Funktion K+20)
+                    ioctl(
+                        self._parentdevice._modio._myfh,
+                        19220, self.__ioctl_arg
+                    )
+                except Exception:
+                    self._parentdevice._modio._gotioerror("ioctl")
 
 
 class IntIOReplaceable(IntIO):

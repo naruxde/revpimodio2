@@ -243,6 +243,37 @@ class NetFH(Thread):
         @return <class 'int'> in Millisekunden"""
         return int(self.__timeout * 1000)
 
+    def ioctl(self, request, arg=b''):
+        """IOCTL Befehle ueber das Netzwerk senden.
+        @param request Request as <class 'int'>
+        @param arg Argument as <class 'byte'>"""
+        if self.__sockend:
+            raise ValueError("read of closed file")
+
+        if not (isinstance(arg, bytes) and len(arg) <= 1024):
+            raise ValueError("arg must be <class 'bytes'>")
+
+        with self.__socklock:
+            self._slavesock.send(
+                b'\x01IC' +
+                request.to_bytes(length=4, byteorder="little") +
+                len(arg).to_bytes(length=2, byteorder="little") +
+                b'\x00\x00\x00\x00\x00\x00\x17'
+            )
+            self._slavesock.sendall(arg)
+
+            # Rückmeldebyte auswerten
+            check = self._slavesock.recv(1)
+            if check != b'\x1e':
+
+                # ACL prüfen und ggf Fehler werfen
+                self.__check_acl(check)
+
+                self.__sockerr.set()
+                raise IOError("ioctl error on network")
+
+            self.__trigger = True
+
     def read(self, length):
         """Daten ueber das Netzwerk lesen.
         @param length Anzahl der Bytes

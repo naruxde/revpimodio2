@@ -877,17 +877,8 @@ class DioModule(Device):
         """Erweitert Device-Klasse zum Erkennen von IntIOCounter.
         @see #Device.__init__ Device.__init__(...)"""
 
-        # Stringliste der Byteadressen
-        self._lst_counter = []
-
-        # Counter sind 4 Byte lang
-        producttype = int(dict_device.get("productType"))
-        if producttype == 96:
-            # DIO - Counter auf DINT 6 - 66
-            self._lst_counter = list(map(str, range(6, 70, 4)))
-        elif producttype == 97:
-            # DI - Counter auf DINT 4 - 64
-            self._lst_counter = list(map(str, range(4, 68, 4)))
+        # Stringliste der Byteadressen (alle Module sind gleich)
+        self._lst_counter = list(map(str, range(6, 70, 4)))
 
         # Basisklasse laden
         super().__init__(parentmodio, dict_device, simulator=simulator)
@@ -964,8 +955,8 @@ class Virtual(Gateway):
             self._ba_devdata[io._slc_address] = io._defaultvalue
 
         # Outputs auf Bus schreiben
+        self._modio._myfh_lck.acquire()
         try:
-            # TODO: globalen FileHandler absichern
             self._modio._myfh.seek(self._slc_inpoff.start)
             self._modio._myfh.write(self._ba_devdata[self._slc_inp])
             if self._modio._buffedwrite:
@@ -973,6 +964,8 @@ class Virtual(Gateway):
         except IOError:
             self._modio._gotioerror("write")
             workokay = False
+        finally:
+            self._modio._myfh_lck.release()
 
         self._filelock.release()
         return workokay

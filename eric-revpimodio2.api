@@ -183,6 +183,7 @@ revpimodio2.netio.NetFH.flush?4()
 revpimodio2.netio.NetFH.get_closed?4()
 revpimodio2.netio.NetFH.get_name?4()
 revpimodio2.netio.NetFH.get_timeout?4()
+revpimodio2.netio.NetFH.ioctl?4(request, arg=b'')
 revpimodio2.netio.NetFH.name?7
 revpimodio2.netio.NetFH.read?4(length)
 revpimodio2.netio.NetFH.readpictory?4()
