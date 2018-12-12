@@ -403,7 +403,7 @@ class ProcimgWriter(Thread):
         @param value True aktiviert / False deaktiviert
         @return True, wenn Anforderung erfolgreich war"""
         if type(value) != bool:
-            raise ValueError("value must be <class 'bool'>")
+            raise TypeError("value must be <class 'bool'>")
 
         # Nur starten, wenn System läuft
         if not self.is_alive():
@@ -561,10 +561,13 @@ class ProcimgWriter(Thread):
     def set_maxioerrors(self, value):
         """Setzt die Anzahl der maximal erlaubten Fehler.
         @param value Anzahl erlaubte Fehler"""
-        if type(value) == int and value >= 0:
-            self._maxioerrors = value
+        if type(value) == int:
+            if value >= 0:
+                self._maxioerrors = value
+            else:
+                raise ValueError("value must be 0 or a positive integer")
         else:
-            raise ValueError("value must be 0 or a positive integer")
+            raise TypeError("value must be <class 'int'>")
 
     def set_refresh(self, value):
         """Setzt die Zykluszeit in Millisekunden.

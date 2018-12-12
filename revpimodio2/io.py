@@ -131,7 +131,7 @@ class IOList(object):
                 ]:
             object.__setattr__(self, key, value)
         else:
-            raise ValueError(
+            raise AttributeError(
                 "direct assignment is not supported - use .value Attribute"
             )
 
@@ -222,7 +222,7 @@ class IOList(object):
                     ]
                 self.__dict_iobyte[new_io.address][new_io._bitaddress] = new_io
         else:
-            raise AttributeError("io must be <class 'IOBase'> or sub class")
+            raise TypeError("io must be <class 'IOBase'> or sub class")
 
 
 class DeadIO(object):
@@ -380,15 +380,15 @@ class IOBase(object):
         """
         # Prüfen ob Funktion callable ist
         if not callable(func):
-            raise AttributeError(
+            raise ValueError(
                 "registered function '{0}' is not callable".format(func)
             )
         if type(delay) != int or delay < 0:
-            raise AttributeError(
+            raise ValueError(
                 "'delay' must be <class 'int'> and greater or equal 0"
             )
         if edge != BOTH and self._bitaddress < 0:
-            raise AttributeError(
+            raise ValueError(
                 "parameter 'edge' can be used with bit io objects only"
             )
 
@@ -405,12 +405,12 @@ class IOBase(object):
 
                 if edge == BOTH or regfunc.edge == BOTH:
                     if self._bitaddress < 0:
-                        raise AttributeError(
+                        raise RuntimeError(
                             "io '{0}' with function '{1}' already in list."
                             "".format(self._name, func)
                         )
                     else:
-                        raise AttributeError(
+                        raise RuntimeError(
                             "io '{0}' with function '{1}' already in list "
                             "with edge '{2}' - edge '{3}' not allowed anymore"
                             "".format(
@@ -419,7 +419,7 @@ class IOBase(object):
                             )
                         )
                 elif regfunc.edge == edge:
-                    raise AttributeError(
+                    raise RuntimeError(
                         "io '{0}' with function '{1}' for given edge '{2}' "
                         "already in list".format(
                             self._name, func, consttostr(edge)
@@ -543,24 +543,24 @@ class IOBase(object):
                             )
                         )
                 else:
-                    raise ValueError(
+                    raise TypeError(
                         "'{0}' requires a <class 'bytes'> object, not {1}"
                         "".format(self._name, type(value))
                     )
 
         elif self._iotype == INP:
             if self._parentdevice._modio._simulator:
-                raise AttributeError(
+                raise RuntimeError(
                     "can not write to output '{0}' in simulator mode"
                     "".format(self._name)
                 )
             else:
-                raise AttributeError(
+                raise RuntimeError(
                     "can not write to input '{0}'".format(self._name)
                 )
 
         elif self._iotype == MEM:
-            raise AttributeError(
+            raise RuntimeError(
                 "can not write to memory '{0}'".format(self._name)
             )
 
@@ -640,20 +640,20 @@ class IOBase(object):
                 )
             )
         if not (RISING <= edge <= BOTH):
-            raise AttributeError(
+            raise ValueError(
                 "parameter 'edge' must be revpimodio2.RISING, "
                 "revpimodio2.FALLING or revpimodio2.BOTH"
             )
         if not (exitevent is None or type(exitevent) == Event):
-            raise AttributeError(
+            raise TypeError(
                 "parameter 'exitevent' must be <class 'threading.Event'>"
             )
         if type(timeout) != int or timeout < 0:
-            raise AttributeError(
+            raise ValueError(
                 "parameter 'timeout' must be <class 'int'> and greater than 0"
             )
         if edge != BOTH and self._bitaddress < 0:
-            raise AttributeError(
+            raise ValueError(
                 "parameter 'edge' can be used with bit Inputs only"
             )
 
@@ -752,7 +752,7 @@ class IntIO(IOBase):
         """Left fest, ob der Wert Vorzeichenbehaftet behandelt werden soll.
         @param value True, wenn mit Vorzeichen behandel"""
         if type(value) != bool:
-            raise ValueError("signed must be <class 'bool'> True or False")
+            raise TypeError("signed must be <class 'bool'> True or False")
         self._signed = value
 
     def get_intdefaultvalue(self):
@@ -781,7 +781,7 @@ class IntIO(IOBase):
                 signed=self._signed
             ))
         else:
-            raise ValueError(
+            raise TypeError(
                 "'{0}' need a <class 'int'> value, but {1} was given"
                 "".format(self._name, type(value))
             )
@@ -825,7 +825,7 @@ class IntIOCounter(IntIO):
                 "can not reset counter, while system is in monitoring mode"
             )
         if self._parentdevice._modio._simulator:
-            raise AttributeError(
+            raise RuntimeError(
                 "can not reset counter, while system is in simulator mode"
             )
 
@@ -841,7 +841,10 @@ class IntIOCounter(IntIO):
 
         elif self._parentdevice._modio._procimg != "/dev/piControl0":
             # NOTE: Soll hier eine 0 in den Input geschrieben werden?
-            warnings.warn("this will work on a revolution pi only")
+            warnings.warn(
+                "this will work on a revolution pi only",
+                RuntimeWarning
+            )
 
         else:
             # IOCTL auf dem RevPi
@@ -957,7 +960,7 @@ class StructIO(IOBase):
                 bitaddress = kwargs.get("bit", 0)
                 max_bits = parentio._length * 8
                 if not (0 <= bitaddress < max_bits):
-                    raise AttributeError(
+                    raise ValueError(
                         "bitaddress must be a value between 0 and {0}"
                         "".format(max_bits - 1)
                     )
@@ -986,7 +989,7 @@ class StructIO(IOBase):
                 bitaddress
             ]
         else:
-            raise AttributeError(
+            raise ValueError(
                 "parameter frm has to be a single sign or 'COUNTs' e.g. '8s'"
             )
 

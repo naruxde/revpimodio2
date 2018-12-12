@@ -80,6 +80,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#NetFH._connect">_connect</a></td>
 <td>Stellt die Verbindung zu einem RevPiSlave her.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#NetFH._direct_send">_direct_send</a></td>
+<td>Fuer debugging direktes Senden von Daten.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#NetFH.clear_dirtybytes">clear_dirtybytes</a></td>
 <td>Entfernt die konfigurierten Dirtybytes vom RevPi Slave.</td>
 </tr><tr>
@@ -174,7 +177,26 @@ NetFH._connect</h3>
 <b>_connect</b>(<i></i>)
 <p>
 Stellt die Verbindung zu einem RevPiSlave her.
-</p><a NAME="NetFH.clear_dirtybytes" ID="NetFH.clear_dirtybytes"></a>
+</p><a NAME="NetFH._direct_send" ID="NetFH._direct_send"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH._direct_send</h3>
+<b>_direct_send</b>(<i>send_bytes, recv_count</i>)
+<p>
+Fuer debugging direktes Senden von Daten.
+</p><dl>
+<dt><i>send_bytes</i></dt>
+<dd>
+Bytes, die gesendet werden sollen
+</dd><dt><i>recv_count</i></dt>
+<dd>
+Anzahl der Empfangsbytes
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+Empfangende Bytes
+</dd>
+</dl><a NAME="NetFH.clear_dirtybytes" ID="NetFH.clear_dirtybytes"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 NetFH.clear_dirtybytes</h3>
 <b>clear_dirtybytes</b>(<i>position=None</i>)

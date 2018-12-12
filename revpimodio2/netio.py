@@ -45,13 +45,6 @@ class NetFH(Thread):
         """Init NetFH-class.
         @param address IP Adresse, Port des RevPi als <class 'tuple'>
         @param timeout Timeout in Millisekunden der Verbindung"""
-        if not isinstance(address, tuple):
-            raise ValueError(
-                "parameter address must be <class 'tuple'> ('IP', PORT)"
-            )
-        if not isinstance(timeout, int):
-            raise ValueError("parameter timeout must be <class 'int'>")
-
         super().__init__()
         self.daemon = True
 
@@ -66,11 +59,18 @@ class NetFH(Thread):
         self.__timeout = None
         self.__trigger = False
         self.__waitsync = None
-
-        # Verbindung herstellen
         self._address = address
         self._slavesock = None
 
+        # Parameterprüfung
+        if not isinstance(address, tuple):
+            raise TypeError(
+                "parameter address must be <class 'tuple'> ('IP', PORT)"
+            )
+        if not isinstance(timeout, int):
+            raise TypeError("parameter timeout must be <class 'int'>")
+
+        # Verbindung herstellen
         self.__set_systimeout(timeout)
         self._connect()
 
@@ -142,6 +142,23 @@ class NetFH(Thread):
             # DirtyBytes übertragen
             for pos in self.__dictdirty:
                 self.set_dirtybytes(pos, self.__dictdirty[pos])
+
+    def _direct_send(self, send_bytes, recv_count):
+        """Fuer debugging direktes Senden von Daten.
+
+        @param send_bytes Bytes, die gesendet werden sollen
+        @param recv_count Anzahl der Empfangsbytes
+        @returns Empfangende Bytes
+
+        """
+        if self.__sockend:
+            raise ValueError("I/O operation on closed file")
+
+        with self.__socklock:
+            self._slavesock.sendall(send_bytes)
+            recv = self._slavesock.recv(recv_count)
+            self.__trigger = True
+            return recv
 
     def clear_dirtybytes(self, position=None):
         """Entfernt die konfigurierten Dirtybytes vom RevPi Slave.
@@ -251,7 +268,7 @@ class NetFH(Thread):
             raise ValueError("read of closed file")
 
         if not (isinstance(arg, bytes) and len(arg) <= 1024):
-            raise ValueError("arg must be <class 'bytes'>")
+            raise TypeError("arg must be <class 'bytes'>")
 
         with self.__socklock:
             self._slavesock.send(
@@ -500,11 +517,11 @@ class RevPiNetIO(_RevPiModIO):
 
                 self._address = address
             else:
-                raise ValueError(
+                raise TypeError(
                     "address tuple must be (<class 'str'>, <class 'int'>)"
                 )
         else:
-            raise ValueError(
+            raise TypeError(
                 "parameter address must be <class 'str'> or <class 'tuple'> "
                 "like (<class 'str'>, <class 'int'>)"
             )
@@ -663,7 +680,7 @@ class RevPiNetIOSelected(RevPiNetIO):
 
         for vdev in self._lst_devselect:
             if type(vdev) != int and type(vdev) != str:
-                raise ValueError(
+                raise TypeError(
                     "need device position as <class 'int'> or device name as "
                     "<class 'str'>"
                 )

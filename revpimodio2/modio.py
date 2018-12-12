@@ -321,14 +321,12 @@ class RevPiModIO(object):
         self._ioerror += 1
         if self._maxioerrors != 0 and self._ioerror >= self._maxioerrors:
             raise RuntimeError(
-                "reach max io error count {0} on process image".format(
-                    self._maxioerrors
-                )
+                "reach max io error count {0} on process image"
+                "".format(self._maxioerrors)
             )
         warnings.warn(
-            "got io error during {0} and count {1} errors now".format(
-                action, self._ioerror
-            ),
+            "got io error during {0} and count {1} errors now"
+            "".format(action, self._ioerror),
             RuntimeWarning
         )
 
