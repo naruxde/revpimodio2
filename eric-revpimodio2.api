@@ -162,7 +162,7 @@ revpimodio2.modio.RevPiModIO.get_jconfigrsc?4()
 revpimodio2.modio.RevPiModIO.handlesignalend?4(cleanupfunc=None)
 revpimodio2.modio.RevPiModIO.ioerrors?7
 revpimodio2.modio.RevPiModIO.length?7
-revpimodio2.modio.RevPiModIO.mainloop?4(blocking=True)
+revpimodio2.modio.RevPiModIO.mainloop?4(blocking=True, no_warn=False)
 revpimodio2.modio.RevPiModIO.maxioerrors?7
 revpimodio2.modio.RevPiModIO.monitoring?7
 revpimodio2.modio.RevPiModIO.procimg?7

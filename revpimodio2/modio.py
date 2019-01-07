@@ -565,7 +565,7 @@ class RevPiModIO(object):
         signal(SIGINT, self.__evt_exit)
         signal(SIGTERM, self.__evt_exit)
 
-    def mainloop(self, blocking=True):
+    def mainloop(self, blocking=True, no_warn=False):
         """Startet den Mainloop mit Eventueberwachung.
 
         Der aktuelle Programmthread wird hier bis Aufruf von
@@ -581,6 +581,7 @@ class RevPiModIO(object):
         werden soll.
 
         @param blocking Wenn False, blockiert das Programm NICHT
+        @param no_warn Keine Warnungen bei langsamen Funktionen ausgeben
         @return None
 
         """
@@ -620,13 +621,13 @@ class RevPiModIO(object):
         # ImgWriter mit Eventüberwachung aktivieren
         self._imgwriter._collect_events(True)
         e = None
-        runtime = 0
+        runtime = -1 if no_warn else 0
 
         while not self._exit.is_set():
 
             # Laufzeit der Eventqueue auf 0 setzen
             if self._imgwriter._eventq.qsize() == 0:
-                runtime = 0
+                runtime = -1 if no_warn else 0
 
             try:
                 tup_fire = self._imgwriter._eventq.get(timeout=1)

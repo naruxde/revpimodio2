@@ -441,7 +441,7 @@ Funktion wird nach dem letzten Lesen der Inputs
 </dl><a NAME="RevPiModIO.mainloop" ID="RevPiModIO.mainloop"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO.mainloop</h3>
-<b>mainloop</b>(<i>blocking=True</i>)
+<b>mainloop</b>(<i>blocking=True, no_warn=False</i>)
 <p>
 Startet den Mainloop mit Eventueberwachung.
 </p><p>
@@ -460,6 +460,9 @@ Startet den Mainloop mit Eventueberwachung.
 <dt><i>blocking</i></dt>
 <dd>
 Wenn False, blockiert das Programm NICHT
+</dd><dt><i>no_warn</i></dt>
+<dd>
+Keine Warnungen bei langsamen Funktionen ausgeben
 </dd>
 </dl><dl>
 <dt>Returns:</dt>

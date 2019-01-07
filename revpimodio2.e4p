@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project revpimodio2 -->
-<!-- Saved: 2018-12-08, 20:13:17 -->
-<!-- Copyright (C) 2018 Sven Sager, akira@narux.de -->
+<!-- Saved: 2019-01-07, 19:30:29 -->
+<!-- Copyright (C) 2019 Sven Sager, akira@narux.de -->
 <Project version="5.1">
   <Language>en_US</Language>
   <Hash>7ea159534ad3516e9069331120048abf9b00151e</Hash>
   <ProgLanguage mixed="0">Python3</ProgLanguage>
   <ProjectType>Console</ProjectType>
   <Description>Das Modul stellt alle Devices und IOs aus der piCtory Konfiguration in Python3 zur Verfügung. Es ermöglicht den direkten Zugriff auf die Werte über deren vergebenen Namen. Lese- und Schreibaktionen mit dem Prozessabbild werden von dem Modul selbst verwaltet, ohne dass sich der Programmierer um Offsets und Adressen kümmern muss. Für die Gatewaymodule wie ModbusTCP oder Profinet sind eigene 'Inputs' und 'Outputs' über einen bestimmten Adressbereich definierbar. Auf diese IOs kann mit Python3 über den Namen direkt auf die Werte zugegriffen werden.</Description>
-  <Version>2.3.0</Version>
+  <Version>2.3.1</Version>
   <Author>Sven Sager</Author>
   <Email>akira@narux.de</Email>
   <Eol index="1"/>
@@ -17,6 +17,7 @@
     <Source>revpimodio2/__init__.py</Source>
     <Source>revpimodio2/app.py</Source>
     <Source>revpimodio2/device.py</Source>
+    <Source>revpimodio2/devicecon.py</Source>
     <Source>revpimodio2/helper.py</Source>
     <Source>revpimodio2/io.py</Source>
     <Source>revpimodio2/modio.py</Source>
@@ -186,6 +187,7 @@
             <value>
               <list>
                 <string>setup.py</string>
+                <string>devicecon.py</string>
               </list>
             </value>
             <key>
@@ -232,6 +234,7 @@
             <value>
               <list>
                 <string>setup.py</string>
+                <string>devicecon.py</string>
               </list>
             </value>
             <key>
