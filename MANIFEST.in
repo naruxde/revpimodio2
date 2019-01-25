@@ -1,2 +1,4 @@
 global-exclude test/*
 global-exclude *.pyc
+include LICENSE.txt
+include README.md
