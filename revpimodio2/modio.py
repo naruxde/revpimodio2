@@ -32,11 +32,11 @@ class RevPiModIO(object):
         "_looprunning", "_lst_devselect", "_lst_refresh", "_maxioerrors", \
         "_myfh", "_myfh_lck", "_monitoring", "_procimg", "_simulator", \
         "_syncoutputs", "_th_mainloop", "_waitexit", \
-        "core", "app", "device", "exitsignal", "io", "summary"
+        "core", "app", "device", "exitsignal", "io", "summary", "_debug"
 
     def __init__(
             self, autorefresh=False, monitoring=False, syncoutputs=True,
-            procimg=None, configrsc=None, simulator=False):
+            procimg=None, configrsc=None, simulator=False, debug=False):
         """Instantiiert die Grundfunktionen.
 
         @param autorefresh Wenn True, alle Devices zu autorefresh hinzufuegen
@@ -59,6 +59,7 @@ class RevPiModIO(object):
         # Private Variablen
         self.__cleanupfunc = None
         self._buffedwrite = False
+        self._debug = debug
         self._exit = Event()
         self._imgwriter = None
         self._ioerror = 0
@@ -316,8 +317,13 @@ class RevPiModIO(object):
         @return True, wenn als Simulator gestartet"""
         return self._simulator
 
-    def _gotioerror(self, action):
-        """IOError Verwaltung fuer Prozessabbildzugriff."""
+    def _gotioerror(self, action, e=None):
+        """IOError Verwaltung fuer Prozessabbildzugriff.
+
+        @param action Zusatzinformationen zum loggen
+        @param e Exception to log if debug is enabled
+
+        """
         self._ioerror += 1
         if self._maxioerrors != 0 and self._ioerror >= self._maxioerrors:
             raise RuntimeError(
@@ -329,6 +335,8 @@ class RevPiModIO(object):
             "".format(action, self._ioerror),
             RuntimeWarning
         )
+        if self._debug and e is not None:
+            warnings.warn(str(e))
 
     def _set_cycletime(self, milliseconds):
         """Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.
@@ -692,8 +700,8 @@ class RevPiModIO(object):
         try:
             self._myfh.seek(0)
             bytesbuff = self._myfh.read(self._length)
-        except IOError:
-            self._gotioerror("read")
+        except IOError as e:
+            self._gotioerror("readprocimg", e)
             return False
         finally:
             self._myfh_lck.release()
@@ -769,8 +777,8 @@ class RevPiModIO(object):
         try:
             self._myfh.seek(0)
             bytesbuff = self._myfh.read(self._length)
-        except IOError:
-            self._gotioerror("read")
+        except IOError as e:
+            self._gotioerror("syncoutputs", e)
             return False
         finally:
             self._myfh_lck.release()
@@ -811,6 +819,7 @@ class RevPiModIO(object):
                 )
             mylist = [dev]
 
+        e = None
         workokay = True
         for dev in mylist:
             if not dev._selfupdate:
@@ -821,7 +830,8 @@ class RevPiModIO(object):
                 try:
                     self._myfh.seek(dev._slc_outoff.start)
                     self._myfh.write(dev._ba_devdata[dev._slc_out])
-                except IOError:
+                except IOError as e:
+                    e = e
                     workokay = False
                 finally:
                     self._myfh_lck.release()
@@ -831,11 +841,12 @@ class RevPiModIO(object):
         if self._buffedwrite:
             try:
                 self._myfh.flush()
-            except IOError:
+            except IOError as e:
+                e = e
                 workokay = False
 
         if not workokay:
-            self._gotioerror("write")
+            self._gotioerror("writeprocimg", e)
 
         return workokay
 

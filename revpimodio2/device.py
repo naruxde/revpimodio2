@@ -961,8 +961,8 @@ class Virtual(Gateway):
             self._modio._myfh.write(self._ba_devdata[self._slc_inp])
             if self._modio._buffedwrite:
                 self._modio._myfh.flush()
-        except IOError:
-            self._modio._gotioerror("write")
+        except IOError as e:
+            self._modio._gotioerror("write_inp_def", e)
             workokay = False
         finally:
             self._modio._myfh_lck.release()

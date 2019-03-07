@@ -836,8 +836,8 @@ class IntIOCounter(IntIO):
                     self._parentdevice._modio._myfh.ioctl(
                         19220, self.__ioctl_arg
                     )
-                except Exception:
-                    self._parentdevice._modio._gotioerror("net_ioctl")
+                except Exception as e:
+                    self._parentdevice._modio._gotioerror("net_ioctl", e)
 
         elif self._parentdevice._modio._procimg != "/dev/piControl0":
             # NOTE: Soll hier eine 0 in den Input geschrieben werden?
@@ -855,8 +855,8 @@ class IntIOCounter(IntIO):
                         self._parentdevice._modio._myfh,
                         19220, self.__ioctl_arg
                     )
-                except Exception:
-                    self._parentdevice._modio._gotioerror("ioctl")
+                except Exception as e:
+                    self._parentdevice._modio._gotioerror("ioctl", e)
 
 
 class IntIOReplaceable(IntIO):

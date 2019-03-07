@@ -430,8 +430,10 @@ class ProcimgWriter(Thread):
         @return Aktuelle Fehleranzahl"""
         return self._ioerror
 
-    def _gotioerror(self):
-        """IOError Verwaltung fuer autorefresh."""
+    def _gotioerror(self, e=None):
+        """IOError Verwaltung fuer autorefresh.
+        @param e Exception to log if debug is enabled
+        """
         self._ioerror += 1
         if self._maxioerrors != 0 and self._ioerror >= self._maxioerrors:
             raise RuntimeError(
@@ -443,6 +445,8 @@ class ProcimgWriter(Thread):
             "count {0} io errors on process image".format(self._ioerror),
             RuntimeWarning
         )
+        if self._modio._debug and e is not None:
+            warnings.warn(str(e))
 
     def get_maxioerrors(self):
         """Gibt die Anzahl der maximal erlaubten Fehler zurueck.
@@ -504,8 +508,8 @@ class ProcimgWriter(Thread):
                     if self._modio._buffedwrite:
                         fh.flush()
 
-            except IOError:
-                self._gotioerror()
+            except IOError as e:
+                self._gotioerror(e)
                 self.lck_refresh.release()
                 continue
 
