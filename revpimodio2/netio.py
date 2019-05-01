@@ -489,7 +489,7 @@ class RevPiNetIO(_RevPiModIO):
 
     def __init__(
             self, address, autorefresh=False, monitoring=False,
-            syncoutputs=True, simulator=False):
+            syncoutputs=True, simulator=False, debug=False):
         """Instantiiert die Grundfunktionen.
 
         @param address: IP-Adresse <class 'str'> / (IP, Port) <class 'tuple'>
@@ -497,6 +497,7 @@ class RevPiNetIO(_RevPiModIO):
         @param monitoring In- und Outputs werden gelesen, niemals geschrieben
         @param syncoutputs Aktuell gesetzte Outputs vom Prozessabbild einlesen
         @param simulator Laedt das Modul als Simulator und vertauscht IOs
+        @param debug Gibt bei allen Fehlern komplette Meldungen aus
 
         """
         check_ip = compile(
@@ -544,7 +545,8 @@ class RevPiNetIO(_RevPiModIO):
             syncoutputs,
             "{0}:{1}".format(*self._address),
             None,
-            simulator
+            simulator,
+            debug
         )
 
         # Netzwerkfilehandler anlegen
@@ -655,7 +657,7 @@ class RevPiNetIOSelected(RevPiNetIO):
 
     def __init__(
             self, address, deviceselection, autorefresh=False,
-            monitoring=False, syncoutputs=True, simulator=False):
+            monitoring=False, syncoutputs=True, simulator=False, debug=False):
         """Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 
         Der Parameter deviceselection kann eine einzelne
@@ -668,7 +670,7 @@ class RevPiNetIOSelected(RevPiNetIO):
 
         """
         super().__init__(
-            address, autorefresh, monitoring, syncoutputs, simulator
+            address, autorefresh, monitoring, syncoutputs, simulator, debug
         )
 
         # Device liste erstellen
@@ -722,7 +724,7 @@ class RevPiNetIODriver(RevPiNetIOSelected):
 
     def __init__(
             self, address, virtdev, autorefresh=False, monitoring=False,
-            syncoutputs=True):
+            syncoutputs=True, debug=False):
         """Instantiiert die Grundfunktionen.
 
         Parameter 'monitoring' und 'simulator' stehen hier nicht zur
@@ -735,5 +737,5 @@ class RevPiNetIODriver(RevPiNetIOSelected):
         """
         # Parent mit monitoring=False und simulator=True laden
         super().__init__(
-            address, virtdev, autorefresh, False, syncoutputs, True
+            address, virtdev, autorefresh, False, syncoutputs, True, debug
         )

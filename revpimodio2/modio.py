@@ -9,6 +9,7 @@ from json import load as jload
 from multiprocessing import cpu_count
 from os import access, F_OK, R_OK
 from queue import Empty
+from revpimodio2 import acheck
 from signal import signal, SIG_DFL, SIGINT, SIGTERM
 from threading import Thread, Event, Lock
 from timeit import default_timer
@@ -45,8 +46,18 @@ class RevPiModIO(object):
         @param procimg Abweichender Pfad zum Prozessabbild
         @param configrsc Abweichender Pfad zur piCtory Konfigurationsdatei
         @param simulator Laedt das Modul als Simulator und vertauscht IOs
+        @param debug Gibt bei allen Fehlern komplette Meldungen aus
 
         """
+        # Parameterprüfung
+        acheck(
+            bool, autorefresh=autorefresh, monitoring=monitoring,
+            syncoutputs=syncoutputs, simulator=simulator, debug=debug
+        )
+        acheck(
+            str, procimg_noneok=procimg, configrsc_noneok=configrsc
+        )
+
         self._autorefresh = autorefresh
         self._configrsc = configrsc
         self._monitoring = monitoring
@@ -336,7 +347,7 @@ class RevPiModIO(object):
             RuntimeWarning
         )
         if self._debug and e is not None:
-            warnings.warn(str(e))
+            warnings.warn(str(e), RuntimeWarning)
 
     def _set_cycletime(self, milliseconds):
         """Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.
@@ -819,7 +830,7 @@ class RevPiModIO(object):
                 )
             mylist = [dev]
 
-        e = None
+        global_ex = None
         workokay = True
         for dev in mylist:
             if not dev._selfupdate:
@@ -831,7 +842,7 @@ class RevPiModIO(object):
                     self._myfh.seek(dev._slc_outoff.start)
                     self._myfh.write(dev._ba_devdata[dev._slc_out])
                 except IOError as e:
-                    e = e
+                    global_ex = e
                     workokay = False
                 finally:
                     self._myfh_lck.release()
@@ -842,11 +853,11 @@ class RevPiModIO(object):
             try:
                 self._myfh.flush()
             except IOError as e:
-                e = e
+                global_ex = e
                 workokay = False
 
         if not workokay:
-            self._gotioerror("writeprocimg", e)
+            self._gotioerror("writeprocimg", global_ex)
 
         return workokay
 
@@ -875,7 +886,8 @@ class RevPiModIOSelected(RevPiModIO):
 
     def __init__(
             self, deviceselection, autorefresh=False, monitoring=False,
-            syncoutputs=True, procimg=None, configrsc=None, simulator=False):
+            syncoutputs=True, procimg=None, configrsc=None,
+            simulator=False, debug=False):
         """Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 
         Der Parameter deviceselection kann eine einzelne
@@ -887,7 +899,8 @@ class RevPiModIOSelected(RevPiModIO):
 
         """
         super().__init__(
-            autorefresh, monitoring, syncoutputs, procimg, configrsc, simulator
+            autorefresh, monitoring, syncoutputs, procimg, configrsc,
+            simulator, debug
         )
 
         # Device liste erstellen
@@ -941,7 +954,7 @@ class RevPiModIODriver(RevPiModIOSelected):
 
     def __init__(
             self, virtdev, autorefresh=False, monitoring=False,
-            syncoutputs=True, procimg=None, configrsc=None):
+            syncoutputs=True, procimg=None, configrsc=None, debug=False):
         """Instantiiert die Grundfunktionen.
 
         Parameter 'monitoring' und 'simulator' stehen hier nicht zur
@@ -953,7 +966,8 @@ class RevPiModIODriver(RevPiModIOSelected):
         """
         # Parent mit monitoring=False und simulator=True laden
         super().__init__(
-            virtdev, autorefresh, False, syncoutputs, procimg, configrsc, True
+            virtdev, autorefresh, False, syncoutputs, procimg, configrsc,
+            True, debug
         )
 
 

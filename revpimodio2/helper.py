@@ -446,7 +446,7 @@ class ProcimgWriter(Thread):
             RuntimeWarning
         )
         if self._modio._debug and e is not None:
-            warnings.warn(str(e))
+            warnings.warn(str(e), RuntimeWarning)
 
     def get_maxioerrors(self):
         """Gibt die Anzahl der maximal erlaubten Fehler zurueck.

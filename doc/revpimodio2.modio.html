@@ -180,6 +180,9 @@ Abweichender Pfad zur piCtory Konfigurationsdatei
 </dd><dt><i>simulator</i></dt>
 <dd>
 Laedt das Modul als Simulator und vertauscht IOs
+</dd><dt><i>debug</i></dt>
+<dd>
+Gibt bei allen Fehlern komplette Meldungen aus
 </dd>
 </dl><a NAME="RevPiModIO.__del__" ID="RevPiModIO.__del__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -592,7 +595,7 @@ Static Methods</h3>
 <a NAME="RevPiModIODriver.__init__" ID="RevPiModIODriver.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIODriver (Constructor)</h3>
-<b>RevPiModIODriver</b>(<i>virtdev, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None</i>)
+<b>RevPiModIODriver</b>(<i>virtdev, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, debug=False</i>)
 <p>
 Instantiiert die Grundfunktionen.
 </p><p>
@@ -652,7 +655,7 @@ Static Methods</h3>
 <a NAME="RevPiModIOSelected.__init__" ID="RevPiModIOSelected.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIOSelected (Constructor)</h3>
-<b>RevPiModIOSelected</b>(<i>deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False</i>)
+<b>RevPiModIOSelected</b>(<i>deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=False</i>)
 <p>
 Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 </p><p>
