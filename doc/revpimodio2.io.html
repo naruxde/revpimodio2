@@ -931,7 +931,11 @@ Ersetzt bestehenden IO mit Neuem.
 </p><p>
         Es darf nur ein einzelnes Formatzeichen 'frm' uebergeben werden. Daraus
         wird dann die benoetigte Laenge an Bytes berechnet und der Datentyp
-        festgelegt.
+        festgelegt. Moeglich sind:
+            Bits / Bytes: ?, c, s
+            Integer     : bB, hH, iI, lL, qQ
+            Float       : e, f, d
+</p><p>
         Eine Ausnahme ist die Formatierung 's'. Hier koennen mehrere Bytes
         zu einem langen IO zusammengefasst werden. Die Formatierung muss
         '8s' fuer z.B. 8 Bytes sein - NICHT 'ssssssss'!

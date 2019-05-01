@@ -807,13 +807,28 @@ class IntIOCounter(IntIO):
         @see #IOBase.__init__ IOBase.__init__(...)
 
         """
-        if not (isinstance(counter_id, int) and 0 <= counter_id <= 15):
-            raise ValueError("counter_id must be <class 'int'> and 0 - 15")
+        if not isinstance(counter_id, int):
+            raise TypeError("counter_id must be <class 'int'>")
+        if not 0 <= counter_id <= 15:
+            raise ValueError("counter_id must be 0 - 15")
 
-        # Deviceposition + Counter_ID
+        # Deviceposition + leer + Counter_ID
+        # ID-Bits: 7|6|5|4|3|2|1|0|15|14|13|12|11|10|9|8
         self.__ioctl_arg = \
-            parentdevice._position.to_bytes(1, "little") + \
-            (1 << counter_id).to_bytes(2, "big")
+            parentdevice._position.to_bytes(1, "little") + b'\x00' + \
+            (1 << counter_id).to_bytes(2, "little")
+
+        """
+        IOCTL fuellt dieses struct, welches durch padding im Speicher nach
+        uint8_t ein byte frei hat. Es muessen also 4 Byte uebergeben werden
+        wobei das Bitfield die Byteorder little hat!!!
+
+        typedef struct SDIOResetCounterStr
+        {
+            uint8_t     i8uAddress;   // Address of module
+            uint16_t    i16uBitfield; // bitfield, if bit n is 1, reset
+        } SDIOResetCounter;
+        """
 
         # Basisklasse laden
         super().__init__(parentdevice, valuelist, iotype, byteorder, signed)
@@ -873,7 +888,11 @@ class IntIOReplaceable(IntIO):
 
         Es darf nur ein einzelnes Formatzeichen 'frm' uebergeben werden. Daraus
         wird dann die benoetigte Laenge an Bytes berechnet und der Datentyp
-        festgelegt.
+        festgelegt. Moeglich sind:
+            Bits / Bytes: ?, c, s
+            Integer     : bB, hH, iI, lL, qQ
+            Float       : e, f, d
+
         Eine Ausnahme ist die Formatierung 's'. Hier koennen mehrere Bytes
         zu einem langen IO zusammengefasst werden. Die Formatierung muss
         '8s' fuer z.B. 8 Bytes sein - NICHT 'ssssssss'!
@@ -946,10 +965,10 @@ class StructIO(IOBase):
             - defaultvalue: Standardwert fuer IO, Standard vom ersetzter IO
 
         """
-        # Mehrfach s prüfen 8s
-        regex = rematch("[0-9]*s", frm)
+        # Structformatierung prüfen
+        regex = rematch("^([0-9]*s|[cbB?hHiIlLqQefd])$", frm)
 
-        if len(frm) == 1 or regex is not None and regex.end() == len(frm):
+        if regex is not None:
             # Byteorder prüfen und übernehmen
             byteorder = kwargs.get("byteorder", parentio._byteorder)
             if not (byteorder == "little" or byteorder == "big"):
@@ -990,7 +1009,8 @@ class StructIO(IOBase):
             ]
         else:
             raise ValueError(
-                "parameter frm has to be a single sign or 'COUNTs' e.g. '8s'"
+                "parameter frm has to be a single sign from [cbB?hHiIlLqQefd] "
+                "or 'COUNTs' e.g. '8s'"
             )
 
         # Basisklasse instantiieren
