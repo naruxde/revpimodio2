@@ -779,7 +779,7 @@ class Connect(Core):
             exp_x2out = exp_a3green
             exp_wd = exp_a3green
         lst_status = lst_myios[self._slc_statusbyte.start]
-        if len(lst_led) == 8:
+        if len(lst_status) == 8:
             exp_x2in = lst_status[6].export
         else:
             exp_x2in = lst_status[0].export
