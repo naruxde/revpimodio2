@@ -5,6 +5,7 @@ __copyright__ = "Copyright (C) 2018 Sven Sager"
 __license__ = "LGPLv3"
 
 import warnings
+from configparser import ConfigParser
 from json import load as jload
 from multiprocessing import cpu_count
 from os import access, F_OK, R_OK
@@ -519,6 +520,36 @@ class RevPiModIO(object):
                 if not self._monitoring:
                     self.writeprocimg(dev)
 
+    def export_replaced_ios(self, filename):
+        """Exportiert ersetzte IOs dieser Instanz.
+
+        Exportiert alle ersetzten IOs, welche mit .replace_io(...) angelegt
+        wurden. Die Datei kann z.B. fuer RevPiPyLoad verwndet werden um Daten
+        in den neuen Formaten per MQTT zu uebertragen oder mit RevPiPyControl
+        anzusehen.
+
+        @param filename Dateiname fuer Exportdatei"""
+        acheck(str, filename=filename)
+
+        cp = ConfigParser()
+        for io in self.io:
+            if isinstance(io, StructIO):
+                cp.add_section(io.name)
+                cp[io.name]["parentio_name"] = io._parentio_name
+                cp[io.name]["frm"] = io.frm
+                cp[io.name]["bmk"] = io.bmk
+                cp[io.name]["bitaddress"] = str(io._bitaddress)
+                cp[io.name]["byteorder"] = io._byteorder
+                cp[io.name]["defaultvalue"] = str(io.defaultvalue)
+        try:
+            with open(filename, "w") as fh:
+                cp.write(fh)
+        except Exception as e:
+            raise RuntimeError(
+                "could not write export file '{0}' | {1}"
+                "".format(filename, e)
+            )
+
     def get_jconfigrsc(self):
         """Laedt die piCtory Konfiguration und erstellt ein <class 'dict'>.
         @return <class 'dict'> der piCtory Konfiguration"""
@@ -583,6 +614,39 @@ class RevPiModIO(object):
         self.__cleanupfunc = cleanupfunc
         signal(SIGINT, self.__evt_exit)
         signal(SIGTERM, self.__evt_exit)
+
+    def import_replaced_ios(self, filename):
+        """Importiert ersetzte IOs in diese Instanz.
+
+        Importiert ersetzte IOs, welche vorher mit .export_replaced_ios(...)
+        in eine Datei exportiert worden sind. Diese IOs werden in dieser
+        Instanz wieder hergestellt.
+
+        @param filename Dateiname der Exportdatei"""
+        acheck(str, filename=filename)
+
+        cp = ConfigParser()
+        try:
+            with open(filename, "r") as fh:
+                cp.read_file(fh)
+        except Exception as e:
+            raise RuntimeError(
+                "could not read export file '{0}' | {1}"
+                "".format(filename, e)
+            )
+
+        for io in cp:
+            if io == "DEFAULT":
+                continue
+
+            self.io[cp[io].get("parentio_name")].replace_io(
+                io,
+                frm=cp[io].get("frm"),
+                bmk=cp[io].get("bmk"),
+                bit=cp[io].getint("bitaddress"),
+                byteorder=cp[io].get("byteorder", "little"),
+                defaultvalue=cp[io].getint("defaultvalue")
+            )
 
     def mainloop(self, blocking=True, no_warn=False):
         """Startet den Mainloop mit Eventueberwachung.
@@ -977,5 +1041,6 @@ from . import device as devicemodule
 from . import helper as helpermodule
 from . import summary as summarymodule
 from .io import IOList
+from .io import StructIO
 
 from .netio import RevPiNetIODriver, RevPiNetIO

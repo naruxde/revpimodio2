@@ -950,7 +950,7 @@ class StructIO(IOBase):
     """
 
     __slots__ = "__frm", "_parentio_address", "_parentio_defaultvalue", \
-        "_parentio_length"
+        "_parentio_length", "_parentio_name"
 
     def __init__(self, parentio, name, frm, **kwargs):
         """Erstellt einen IO mit struct-Formatierung.
@@ -975,6 +975,9 @@ class StructIO(IOBase):
                 raise ValueError("byteorder must be 'little' or 'big'")
             bofrm = "<" if byteorder == "little" else ">"
 
+            # Namen des parent fuer export merken
+            self._parentio_name = parentio._name
+
             if frm == "?":
                 bitaddress = kwargs.get("bit", 0)
                 max_bits = parentio._length * 8
@@ -995,6 +998,9 @@ class StructIO(IOBase):
             else:
                 bitaddress = ""
                 bitlength = struct.calcsize(bofrm + frm) * 8
+                self._parentio_address = None
+                self._parentio_defaultvalue = None
+                self._parentio_length = None
 
             # [name,default,anzbits,adressbyte,export,adressid,bmk,bitaddress]
             valuelist = [
