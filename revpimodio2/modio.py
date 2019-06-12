@@ -534,13 +534,20 @@ class RevPiModIO(object):
         cp = ConfigParser()
         for io in self.io:
             if isinstance(io, StructIO):
+
+                # Required values
                 cp.add_section(io.name)
-                cp[io.name]["parentio_name"] = io._parentio_name
+                cp[io.name]["replace"] = io._parentio_name
                 cp[io.name]["frm"] = io.frm
-                cp[io.name]["bmk"] = io.bmk
-                cp[io.name]["bitaddress"] = str(io._bitaddress)
+
+                # Optional values
+                if io._bitaddress >= 0:
+                    cp[io.name]["bitaddress"] = str(io._bitaddress)
                 cp[io.name]["byteorder"] = io._byteorder
                 cp[io.name]["defaultvalue"] = str(io.defaultvalue)
+                if io.bmk != "":
+                    cp[io.name]["bmk"] = io.bmk
+
         try:
             with open(filename, "w") as fh:
                 cp.write(fh)
@@ -625,6 +632,7 @@ class RevPiModIO(object):
         @param filename Dateiname der Exportdatei"""
         acheck(str, filename=filename)
 
+        # Load config file
         cp = ConfigParser()
         try:
             with open(filename, "r") as fh:
@@ -635,17 +643,38 @@ class RevPiModIO(object):
                 "".format(filename, e)
             )
 
+        # Pre-check
         for io in cp:
             if io == "DEFAULT":
                 continue
 
-            self.io[cp[io].get("parentio_name")].replace_io(
+            do_replace_io = cp[io].get("replace", "")
+            if do_replace_io not in self.io:
+                raise RuntimeError(
+                    "can not find io '{0}' to replace".format(do_replace_io)
+                )
+
+        # Replace IOs
+        for io in cp:
+            if io == "DEFAULT":
+                continue
+
+            replace_io = cp[io].get("replace", "")
+            replace_frm = cp[io].get("frm")
+
+            # Convert defaultvalue from config file
+            if replace_frm == "?":
+                replace_defaultvalue = cp[io].getboolean("defaultvalue")
+            else:
+                replace_defaultvalue = cp[io].getint("defaultvalue")
+
+            self.io[replace_io].replace_io(
                 io,
-                frm=cp[io].get("frm"),
-                bmk=cp[io].get("bmk"),
-                bit=cp[io].getint("bitaddress"),
+                frm=replace_frm,
+                bmk=cp[io].get("bmk", ""),
+                bit=cp[io].getint("bitaddress", 0),
                 byteorder=cp[io].get("byteorder", "little"),
-                defaultvalue=cp[io].getint("defaultvalue")
+                defaultvalue=replace_defaultvalue
             )
 
     def mainloop(self, blocking=True, no_warn=False):

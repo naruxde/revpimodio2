@@ -159,8 +159,10 @@ revpimodio2.modio.RevPiModIO.configrsc?7
 revpimodio2.modio.RevPiModIO.cycleloop?4(func, cycletime=50)
 revpimodio2.modio.RevPiModIO.cycletime?7
 revpimodio2.modio.RevPiModIO.exit?4(full=True)
+revpimodio2.modio.RevPiModIO.export_replaced_ios?4(filename)
 revpimodio2.modio.RevPiModIO.get_jconfigrsc?4()
 revpimodio2.modio.RevPiModIO.handlesignalend?4(cleanupfunc=None)
+revpimodio2.modio.RevPiModIO.import_replaced_ios?4(filename)
 revpimodio2.modio.RevPiModIO.ioerrors?7
 revpimodio2.modio.RevPiModIO.length?7
 revpimodio2.modio.RevPiModIO.mainloop?4(blocking=True, no_warn=False)

@@ -961,8 +961,8 @@ class StructIO(IOBase):
         @param kwargs Weitere Parameter:
             - bmk: Bezeichnung fuer IO
             - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer IO, Standardwert vom ersetzter IO
-            - defaultvalue: Standardwert fuer IO, Standard vom ersetzter IO
+            - byteorder: Byteorder fuer IO, Standardwert vom ersetzten IO
+            - defaultvalue: Standardwert fuer IO, Standard vom ersetzten IO
 
         """
         # Structformatierung prüfen
@@ -1005,6 +1005,7 @@ class StructIO(IOBase):
             # [name,default,anzbits,adressbyte,export,adressid,bmk,bitaddress]
             valuelist = [
                 name,
+                # Darf nur bei StructIO None sein, wird nur dann berechnet
                 kwargs.get("defaultvalue", None),
                 bitlength,
                 parentio._slc_address.start,

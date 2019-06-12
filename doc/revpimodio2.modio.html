@@ -125,11 +125,17 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#RevPiModIO.exit">exit</a></td>
 <td>Beendet mainloop() und optional autorefresh.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#RevPiModIO.export_replaced_ios">export_replaced_ios</a></td>
+<td>Exportiert ersetzte IOs dieser Instanz.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.get_jconfigrsc">get_jconfigrsc</a></td>
 <td>Laedt die piCtory Konfiguration und erstellt ein <class 'dict'>.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.handlesignalend">handlesignalend</a></td>
 <td>Signalhandler fuer Programmende verwalten.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#RevPiModIO.import_replaced_ios">import_replaced_ios</a></td>
+<td>Importiert ersetzte IOs in diese Instanz.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.mainloop">mainloop</a></td>
 <td>Startet den Mainloop mit Eventueberwachung.</td>
@@ -411,6 +417,22 @@ Beendet mainloop() und optional autorefresh.
 <dd>
 Entfernt auch alle Devices aus autorefresh
 </dd>
+</dl><a NAME="RevPiModIO.export_replaced_ios" ID="RevPiModIO.export_replaced_ios"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiModIO.export_replaced_ios</h3>
+<b>export_replaced_ios</b>(<i>filename</i>)
+<p>
+Exportiert ersetzte IOs dieser Instanz.
+</p><p>
+        Exportiert alle ersetzten IOs, welche mit .replace_io(...) angelegt
+        wurden. Die Datei kann z.B. fuer RevPiPyLoad verwndet werden um Daten
+        in den neuen Formaten per MQTT zu uebertragen oder mit RevPiPyControl
+        anzusehen.
+</p><dl>
+<dt><i>filename</i></dt>
+<dd>
+Dateiname fuer Exportdatei
+</dd>
 </dl><a NAME="RevPiModIO.get_jconfigrsc" ID="RevPiModIO.get_jconfigrsc"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO.get_jconfigrsc</h3>
@@ -448,6 +470,21 @@ Signalhandler fuer Programmende verwalten.
 <dd>
 Funktion wird nach dem letzten Lesen der Inputs
         ausgefuehrt, gefolgt vom letzten Schreiben der Outputs
+</dd>
+</dl><a NAME="RevPiModIO.import_replaced_ios" ID="RevPiModIO.import_replaced_ios"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiModIO.import_replaced_ios</h3>
+<b>import_replaced_ios</b>(<i>filename</i>)
+<p>
+Importiert ersetzte IOs in diese Instanz.
+</p><p>
+        Importiert ersetzte IOs, welche vorher mit .export_replaced_ios(...)
+        in eine Datei exportiert worden sind. Diese IOs werden in dieser
+        Instanz wieder hergestellt.
+</p><dl>
+<dt><i>filename</i></dt>
+<dd>
+Dateiname der Exportdatei
 </dd>
 </dl><a NAME="RevPiModIO.mainloop" ID="RevPiModIO.mainloop"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
