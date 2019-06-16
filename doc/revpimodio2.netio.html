@@ -423,7 +423,7 @@ Static Methods</h3>
 <a NAME="RevPiNetIO.__init__" ID="RevPiNetIO.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiNetIO (Constructor)</h3>
-<b>RevPiNetIO</b>(<i>address, autorefresh=False, monitoring=False, syncoutputs=True, simulator=False, debug=False</i>)
+<b>RevPiNetIO</b>(<i>address, autorefresh=False, monitoring=False, syncoutputs=True, simulator=False, debug=False, replace_io_file=None</i>)
 <p>
 Instantiiert die Grundfunktionen.
 </p><dl>
@@ -445,6 +445,9 @@ Laedt das Modul als Simulator und vertauscht IOs
 </dd><dt><i>debug</i></dt>
 <dd>
 Gibt bei allen Fehlern komplette Meldungen aus
+</dd><dt><i>replace_io_file</i></dt>
+<dd>
+Replace IO Konfiguration aus Datei laden
 </dd>
 </dl><a NAME="RevPiNetIO._create_myfh" ID="RevPiNetIO._create_myfh"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -536,7 +539,7 @@ Static Methods</h3>
 <a NAME="RevPiNetIODriver.__init__" ID="RevPiNetIODriver.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiNetIODriver (Constructor)</h3>
-<b>RevPiNetIODriver</b>(<i>address, virtdev, autorefresh=False, monitoring=False, syncoutputs=True, debug=False</i>)
+<b>RevPiNetIODriver</b>(<i>address, virtdev, autorefresh=False, monitoring=False, syncoutputs=True, debug=False, replace_io_file=None</i>)
 <p>
 Instantiiert die Grundfunktionen.
 </p><p>
@@ -599,7 +602,7 @@ Static Methods</h3>
 <a NAME="RevPiNetIOSelected.__init__" ID="RevPiNetIOSelected.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiNetIOSelected (Constructor)</h3>
-<b>RevPiNetIOSelected</b>(<i>address, deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, simulator=False, debug=False</i>)
+<b>RevPiNetIOSelected</b>(<i>address, deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, simulator=False, debug=False, replace_io_file=None</i>)
 <p>
 Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 </p><p>

@@ -77,6 +77,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#RevPiModIO._configure">_configure</a></td>
 <td>Verarbeitet die piCtory Konfigurationsdatei.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#RevPiModIO._configure_replace_io">_configure_replace_io</a></td>
+<td>Importiert ersetzte IOs in diese Instanz.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO._create_myfh">_create_myfh</a></td>
 <td>Erstellt FileObject mit Pfad zum procimg.</td>
 </tr><tr>
@@ -134,9 +137,6 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#RevPiModIO.handlesignalend">handlesignalend</a></td>
 <td>Signalhandler fuer Programmende verwalten.</td>
 </tr><tr>
-<td><a style="color:#0000FF" href="#RevPiModIO.import_replaced_ios">import_replaced_ios</a></td>
-<td>Importiert ersetzte IOs in diese Instanz.</td>
-</tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.mainloop">mainloop</a></td>
 <td>Startet den Mainloop mit Eventueberwachung.</td>
 </tr><tr>
@@ -164,7 +164,7 @@ Static Methods</h3>
 <a NAME="RevPiModIO.__init__" ID="RevPiModIO.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO (Constructor)</h3>
-<b>RevPiModIO</b>(<i>autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=False</i>)
+<b>RevPiModIO</b>(<i>autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=False, replace_io_file=None</i>)
 <p>
 Instantiiert die Grundfunktionen.
 </p><dl>
@@ -189,6 +189,9 @@ Laedt das Modul als Simulator und vertauscht IOs
 </dd><dt><i>debug</i></dt>
 <dd>
 Gibt bei allen Fehlern komplette Meldungen aus
+</dd><dt><i>replace_io_file</i></dt>
+<dd>
+Replace IO Konfiguration aus Datei laden
 </dd>
 </dl><a NAME="RevPiModIO.__del__" ID="RevPiModIO.__del__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -216,6 +219,18 @@ RevPiModIO._configure</h3>
 <b>_configure</b>(<i>jconfigrsc</i>)
 <p>
 Verarbeitet die piCtory Konfigurationsdatei.
+</p><a NAME="RevPiModIO._configure_replace_io" ID="RevPiModIO._configure_replace_io"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiModIO._configure_replace_io</h3>
+<b>_configure_replace_io</b>(<i></i>)
+<p>
+Importiert ersetzte IOs in diese Instanz.
+</p><p>
+        Importiert ersetzte IOs, welche vorher mit .export_replaced_ios(...)
+        in eine Datei exportiert worden sind. Diese IOs werden in dieser
+        Instanz wiederhergestellt.
+</p><p>
+
 </p><a NAME="RevPiModIO._create_myfh" ID="RevPiModIO._create_myfh"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO._create_myfh</h3>
@@ -471,21 +486,6 @@ Signalhandler fuer Programmende verwalten.
 Funktion wird nach dem letzten Lesen der Inputs
         ausgefuehrt, gefolgt vom letzten Schreiben der Outputs
 </dd>
-</dl><a NAME="RevPiModIO.import_replaced_ios" ID="RevPiModIO.import_replaced_ios"></a>
-<h3 style="background-color:#FFFFFF;color:#FF0000">
-RevPiModIO.import_replaced_ios</h3>
-<b>import_replaced_ios</b>(<i>filename</i>)
-<p>
-Importiert ersetzte IOs in diese Instanz.
-</p><p>
-        Importiert ersetzte IOs, welche vorher mit .export_replaced_ios(...)
-        in eine Datei exportiert worden sind. Diese IOs werden in dieser
-        Instanz wieder hergestellt.
-</p><dl>
-<dt><i>filename</i></dt>
-<dd>
-Dateiname der Exportdatei
-</dd>
 </dl><a NAME="RevPiModIO.mainloop" ID="RevPiModIO.mainloop"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO.mainloop</h3>
@@ -632,7 +632,7 @@ Static Methods</h3>
 <a NAME="RevPiModIODriver.__init__" ID="RevPiModIODriver.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIODriver (Constructor)</h3>
-<b>RevPiModIODriver</b>(<i>virtdev, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, debug=False</i>)
+<b>RevPiModIODriver</b>(<i>virtdev, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, debug=False, replace_io_file=None</i>)
 <p>
 Instantiiert die Grundfunktionen.
 </p><p>
@@ -692,7 +692,7 @@ Static Methods</h3>
 <a NAME="RevPiModIOSelected.__init__" ID="RevPiModIOSelected.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIOSelected (Constructor)</h3>
-<b>RevPiModIOSelected</b>(<i>deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=False</i>)
+<b>RevPiModIOSelected</b>(<i>deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=False, replace_io_file=None</i>)
 <p>
 Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 </p><p>
