@@ -5,6 +5,7 @@ __copyright__ = "Copyright (C) 2018 Sven Sager"
 __license__ = "LGPLv3"
 
 import warnings
+from configparser import ConfigParser
 from json import load as jload
 from multiprocessing import cpu_count
 from os import access, F_OK, R_OK
@@ -33,11 +34,13 @@ class RevPiModIO(object):
         "_looprunning", "_lst_devselect", "_lst_refresh", "_maxioerrors", \
         "_myfh", "_myfh_lck", "_monitoring", "_procimg", "_simulator", \
         "_syncoutputs", "_th_mainloop", "_waitexit", \
-        "core", "app", "device", "exitsignal", "io", "summary", "_debug"
+        "core", "app", "device", "exitsignal", "io", "summary", "_debug", \
+        "_lck_replace_io", "_replace_io_file"
 
     def __init__(
             self, autorefresh=False, monitoring=False, syncoutputs=True,
-            procimg=None, configrsc=None, simulator=False, debug=False):
+            procimg=None, configrsc=None, simulator=False, debug=False,
+            replace_io_file=None):
         """Instantiiert die Grundfunktionen.
 
         @param autorefresh Wenn True, alle Devices zu autorefresh hinzufuegen
@@ -47,6 +50,7 @@ class RevPiModIO(object):
         @param configrsc Abweichender Pfad zur piCtory Konfigurationsdatei
         @param simulator Laedt das Modul als Simulator und vertauscht IOs
         @param debug Gibt bei allen Fehlern komplette Meldungen aus
+        @param replace_io_file Replace IO Konfiguration aus Datei laden
 
         """
         # Parameterprüfung
@@ -55,7 +59,8 @@ class RevPiModIO(object):
             syncoutputs=syncoutputs, simulator=simulator, debug=debug
         )
         acheck(
-            str, procimg_noneok=procimg, configrsc_noneok=configrsc
+            str, procimg_noneok=procimg, configrsc_noneok=configrsc,
+            replace_io_file_noneok=replace_io_file
         )
 
         self._autorefresh = autorefresh
@@ -75,12 +80,14 @@ class RevPiModIO(object):
         self._imgwriter = None
         self._ioerror = 0
         self._length = 0
+        self._lck_replace_io = False
         self._looprunning = False
         self._lst_devselect = []
         self._lst_refresh = []
         self._maxioerrors = 0
         self._myfh = None
         self._myfh_lck = Lock()
+        self._replace_io_file = replace_io_file
         self._th_mainloop = None
         self._waitexit = Event()
 
@@ -245,6 +252,11 @@ class RevPiModIO(object):
                 Warning
             )
 
+        # Replace IO aus Datei verarbeiten
+        if self._replace_io_file is not None:
+            self._configure_replace_io()
+            self._lck_replace_io = True
+
         # ImgWriter erstellen
         self._imgwriter = helpermodule.ProcimgWriter(self)
 
@@ -278,6 +290,88 @@ class RevPiModIO(object):
 
         # Summary Klasse instantiieren
         self.summary = summarymodule.Summary(jconfigrsc["Summary"])
+
+    def _configure_replace_io(self):
+        """Importiert ersetzte IOs in diese Instanz.
+
+        Importiert ersetzte IOs, welche vorher mit .export_replaced_ios(...)
+        in eine Datei exportiert worden sind. Diese IOs werden in dieser
+        Instanz wiederhergestellt.
+
+        """
+        cp = ConfigParser()
+
+        try:
+            with open(self._replace_io_file, "r") as fh:
+                cp.read_file(fh)
+        except Exception as e:
+            raise RuntimeError(
+                "replace_io_file: could not read file '{0}' | {1}"
+                "".format(self._replace_io_file, e)
+            )
+
+        for io in cp:
+            if io == "DEFAULT":
+                continue
+
+            # IO prüfen
+            parentio = cp[io].get("replace", "")
+
+            # Funktionsaufruf vorbereiten
+            dict_replace = {
+                "frm": cp[io].get("frm"),
+            }
+
+            # Convert defaultvalue from config file
+            if "defaultvalue" in cp[io]:
+                if dict_replace["frm"] == "?":
+                    try:
+                        dict_replace["defaultvalue"] = \
+                            cp[io].getboolean("defaultvalue")
+                    except Exception:
+                        raise ValueError(
+                            "replace_io_file: could not convert '{0}' "
+                            "defaultvalue '{1}' to boolean"
+                            "".format(io, cp[io].get("defaultvalue"))
+                        )
+                else:
+                    try:
+                        dict_replace["defaultvalue"] = \
+                            cp[io].getint("defaultvalue")
+                    except Exception:
+                        raise ValueError(
+                            "replace_io_file: could not convert '{0}' "
+                            "defaultvalue '{1}' to integer"
+                            "".format(io, cp[io].get("bit"))
+                        )
+
+            # Get bitaddress from config file
+            if "bit" in cp[io]:
+                try:
+                    dict_replace["bit"] = cp[io].getint("bit", 0)
+                except Exception:
+                    raise ValueError(
+                        "replace_io_file: could not convert '{0}' "
+                        "bit '{1}' to integer"
+                        "".format(io, cp[io].get("bit"))
+                    )
+
+            # Sonstige Werte laden, wenn vorhanden
+            if "bmk" in cp[io]:
+                dict_replace["bmk"] = cp[io].get("bmk")
+            if "byteorder" in cp[io]:
+                dict_replace["byteorder"] = cp[io].get("byteorder")
+
+            # IO ersetzen
+            try:
+                self.io[parentio].replace_io(name=io, **dict_replace)
+            except Exception as e:
+                raise RuntimeError(
+                    "replace_io_file: can not replace '{0}' with '{1}' "
+                    "| RevPiModIO message: {2}".format(
+                    parentio, io, e
+                    )
+                )
 
     def _create_myfh(self):
         """Erstellt FileObject mit Pfad zum procimg.
@@ -518,6 +612,43 @@ class RevPiModIO(object):
                 dev._selfupdate = False
                 if not self._monitoring:
                     self.writeprocimg(dev)
+
+    def export_replaced_ios(self, filename):
+        """Exportiert ersetzte IOs dieser Instanz.
+
+        Exportiert alle ersetzten IOs, welche mit .replace_io(...) angelegt
+        wurden. Die Datei kann z.B. fuer RevPiPyLoad verwndet werden um Daten
+        in den neuen Formaten per MQTT zu uebertragen oder mit RevPiPyControl
+        anzusehen.
+
+        @param filename Dateiname fuer Exportdatei"""
+        acheck(str, filename=filename)
+
+        cp = ConfigParser()
+        for io in self.io:
+            if isinstance(io, StructIO):
+
+                # Required values
+                cp.add_section(io.name)
+                cp[io.name]["replace"] = io._parentio_name
+                cp[io.name]["frm"] = io.frm
+
+                # Optional values
+                if io._bitaddress >= 0:
+                    cp[io.name]["bitaddress"] = str(io._bitaddress)
+                cp[io.name]["byteorder"] = io._byteorder
+                cp[io.name]["defaultvalue"] = str(io.defaultvalue)
+                if io.bmk != "":
+                    cp[io.name]["bmk"] = io.bmk
+
+        try:
+            with open(filename, "w") as fh:
+                cp.write(fh)
+        except Exception as e:
+            raise RuntimeError(
+                "could not write export file '{0}' | {1}"
+                "".format(filename, e)
+            )
 
     def get_jconfigrsc(self):
         """Laedt die piCtory Konfiguration und erstellt ein <class 'dict'>.
@@ -887,7 +1018,7 @@ class RevPiModIOSelected(RevPiModIO):
     def __init__(
             self, deviceselection, autorefresh=False, monitoring=False,
             syncoutputs=True, procimg=None, configrsc=None,
-            simulator=False, debug=False):
+            simulator=False, debug=False, replace_io_file=None):
         """Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 
         Der Parameter deviceselection kann eine einzelne
@@ -900,7 +1031,7 @@ class RevPiModIOSelected(RevPiModIO):
         """
         super().__init__(
             autorefresh, monitoring, syncoutputs, procimg, configrsc,
-            simulator, debug
+            simulator, debug, replace_io_file
         )
 
         # Device liste erstellen
@@ -954,7 +1085,8 @@ class RevPiModIODriver(RevPiModIOSelected):
 
     def __init__(
             self, virtdev, autorefresh=False, monitoring=False,
-            syncoutputs=True, procimg=None, configrsc=None, debug=False):
+            syncoutputs=True, procimg=None, configrsc=None, debug=False,
+            replace_io_file=None):
         """Instantiiert die Grundfunktionen.
 
         Parameter 'monitoring' und 'simulator' stehen hier nicht zur
@@ -967,7 +1099,7 @@ class RevPiModIODriver(RevPiModIOSelected):
         # Parent mit monitoring=False und simulator=True laden
         super().__init__(
             virtdev, autorefresh, False, syncoutputs, procimg, configrsc,
-            True, debug
+            True, debug, replace_io_file
         )
 
 
@@ -977,5 +1109,6 @@ from . import device as devicemodule
 from . import helper as helpermodule
 from . import summary as summarymodule
 from .io import IOList
+from .io import StructIO
 
 from .netio import RevPiNetIODriver, RevPiNetIO
