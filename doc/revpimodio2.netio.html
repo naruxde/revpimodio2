@@ -12,7 +12,7 @@ RevPiModIO Hauptklasse fuer Netzwerkzugriff.
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Global Attributes</h3>
 <table>
-<tr><td>__author__</td></tr><tr><td>__copyright__</td></tr><tr><td>__license__</td></tr><tr><td>_sysdeldirty</td></tr><tr><td>_sysexit</td></tr><tr><td>_sysflush</td></tr><tr><td>_syspictory</td></tr><tr><td>_syssync</td></tr>
+<tr><td>__author__</td></tr><tr><td>__copyright__</td></tr><tr><td>__license__</td></tr><tr><td>_sysdeldirty</td></tr><tr><td>_sysexit</td></tr><tr><td>_sysflush</td></tr><tr><td>_syspictory</td></tr><tr><td>_sysreplaceio</td></tr><tr><td>_syssync</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Classes</h3>
@@ -109,6 +109,9 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#NetFH.readpictory">readpictory</a></td>
 <td>Ruft die piCtory Konfiguration ab.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.readreplaceio">readreplaceio</a></td>
+<td>Ruft die replace_io Konfiguration ab.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#NetFH.run">run</a></td>
 <td>Handler fuer Synchronisierung.</td>
@@ -293,6 +296,17 @@ Ruft die piCtory Konfiguration ab.
 <dd>
 <class 'bytes'> piCtory Datei
 </dd>
+</dl><a NAME="NetFH.readreplaceio" ID="NetFH.readreplaceio"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.readreplaceio</h3>
+<b>readreplaceio</b>(<i></i>)
+<p>
+Ruft die replace_io Konfiguration ab.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+<class 'bytes'> replace_io_file
+</dd>
 </dl><a NAME="NetFH.run" ID="NetFH.run"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 NetFH.run</h3>
@@ -402,6 +416,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#RevPiNetIO._create_myfh">_create_myfh</a></td>
 <td>Erstellt NetworkFileObject.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#RevPiNetIO._get_cpreplaceio">_get_cpreplaceio</a></td>
+<td>Laed die replace_io Konfiguration ueber das Netzwerk.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#RevPiNetIO.disconnect">disconnect</a></td>
 <td>Trennt Verbindungen und beendet autorefresh inkl.</td>
 </tr><tr>
@@ -456,7 +473,18 @@ RevPiNetIO._create_myfh</h3>
 <p>
 Erstellt NetworkFileObject.
         return FileObject
-</p><a NAME="RevPiNetIO.disconnect" ID="RevPiNetIO.disconnect"></a>
+</p><a NAME="RevPiNetIO._get_cpreplaceio" ID="RevPiNetIO._get_cpreplaceio"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiNetIO._get_cpreplaceio</h3>
+<b>_get_cpreplaceio</b>(<i></i>)
+<p>
+Laed die replace_io Konfiguration ueber das Netzwerk.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+<class 'ConfigParser'> der replace io daten
+</dd>
+</dl><a NAME="RevPiNetIO.disconnect" ID="RevPiNetIO.disconnect"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiNetIO.disconnect</h3>
 <b>disconnect</b>(<i></i>)
