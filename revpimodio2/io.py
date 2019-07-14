@@ -8,7 +8,7 @@ import struct
 import warnings
 from re import match as rematch
 from threading import Event
-from revpimodio2 import RISING, FALLING, BOTH, INP, OUT, MEM, consttostr
+from revpimodio2 import RISING, FALLING, BOTH, INP, MEM, consttostr
 from .netio import RevPiNetIO
 try:
     # Funktioniert nur auf Unix
@@ -259,7 +259,8 @@ class IOBase(object):
 
     """
 
-    __slots__ = "_bitaddress", "_bitlength", "_byteorder", "_defaultvalue", \
+    __slots__ = "__bit_ioctl_off", "__bit_ioctl_on", \
+        "_bitaddress", "_bitlength", "_byteorder", "_defaultvalue", \
         "_iotype", "_length", "_name", "_parentdevice", \
         "_signed", "_slc_address", "bmk", "export"
 
@@ -285,6 +286,8 @@ class IOBase(object):
         self._bitlength = int(valuelist[2])
         self._length = 1 if self._bitaddress == 0 else int(self._bitlength / 8)
 
+        self.__bit_ioctl_off = None
+        self.__bit_ioctl_on = None
         self._byteorder = byteorder
         self._iotype = iotype
         self._name = valuelist[0]
@@ -344,6 +347,12 @@ class IOBase(object):
                     self._defaultvalue = bool(int(valuelist[1]))
                 except Exception:
                     self._defaultvalue = False
+
+            # Ioctl für Bitsetzung setzen
+            self.__bit_ioctl_off = \
+                self._get_address().to_bytes(2, "little") \
+                + self._bitaddress.to_bytes(1, "little")
+            self.__bit_ioctl_on = self.__bit_ioctl_off + b'\x01'
 
     def __bool__(self):
         """<class 'bool'>-Wert der Klasse.
@@ -506,10 +515,60 @@ class IOBase(object):
     def set_value(self, value):
         """Setzt den Wert des IOs.
         @param value IO-Wert als <class bytes'> oder <class 'bool'>"""
-        if self._iotype == OUT:
-            if self._bitaddress >= 0:
-                # Versuchen egal welchen Typ in Bool zu konvertieren
-                value = bool(value)
+        if self._iotype == INP:
+            if self._parentdevice._modio._simulator:
+                raise RuntimeError(
+                    "can not write to output '{0}' in simulator mode"
+                    "".format(self._name)
+                )
+            else:
+                raise RuntimeError(
+                    "can not write to input '{0}'".format(self._name)
+                )
+        if self._iotype == MEM:
+            raise RuntimeError(
+                "can not write to memory '{0}'".format(self._name)
+            )
+
+        if self._bitaddress >= 0:
+            # Versuchen egal welchen Typ in Bool zu konvertieren
+            value = bool(value)
+
+            if self._parentdevice._modio._direct_output:
+                # Direktes Schreiben der Outputs
+                # TODO: Abfragen minimieren für Schreiben der Outputs
+
+                if isinstance(self._parentdevice._modio, RevPiNetIO):
+                    # IOCTL über Netzwerk
+                    with self._parentdevice._modio._myfh_lck:
+                        try:
+                            self._parentdevice._modio._myfh.ioctl(
+                                19216,
+                                self.__bit_ioctl_on if value
+                                else self.__bit_ioctl_off
+                            )
+                        except Exception as e:
+                            self._parentdevice._modio._gotioerror(
+                                "net_ioctl", e)
+                else:
+                    # IOCTL auf dem RevPi
+                    with self._parentdevice._modio._myfh_lck:
+                        try:
+                            # Set value durchführen (Funktion K+16)
+                            ioctl(
+                                self._parentdevice._modio._myfh,
+                                19216,
+                                self.__bit_ioctl_on if value
+                                else self.__bit_ioctl_off
+                            )
+                        except Exception as e:
+                            self._parentdevice._modio._gotioerror("ioset", e)
+
+            else:
+                # Gepuffertes Schreiben der Outputs
+
+                # Für Bitoperationen sperren
+                self._parentdevice._filelock.acquire()
 
                 # ganzes Byte laden
                 byte_buff = self._parentdevice._ba_devdata[self._slc_address]
@@ -530,39 +589,37 @@ class IOBase(object):
                     self._parentdevice._ba_devdata[self._slc_address] = \
                         int_byte.to_bytes(int_len, byteorder=self._byteorder)
 
-            else:
-                if type(value) == bytes:
-                    if self._length == len(value):
-                        self._parentdevice._ba_devdata[self._slc_address] = \
-                            value
-                    else:
-                        raise ValueError(
-                            "'{0}' requires a <class 'bytes'> object of "
-                            "length {1}, but {2} was given".format(
-                                self._name, self._length, len(value)
-                            )
-                        )
-                else:
-                    raise TypeError(
-                        "'{0}' requires a <class 'bytes'> object, not {1}"
-                        "".format(self._name, type(value))
+                self._parentdevice._filelock.release()
+
+        else:
+            if type(value) != bytes:
+                raise TypeError(
+                    "'{0}' requires a <class 'bytes'> object, not {1}".format(
+                        self._name, type(value)
                     )
-
-        elif self._iotype == INP:
-            if self._parentdevice._modio._simulator:
-                raise RuntimeError(
-                    "can not write to output '{0}' in simulator mode"
-                    "".format(self._name)
                 )
+
+            if self._length != len(value):
+                raise ValueError(
+                    "'{0}' requires a <class 'bytes'> object of "
+                    "length {1}, but {2} was given".format(
+                        self._name, self._length, len(value)
+                    )
+                )
+
+            if self._parentdevice._modio._direct_output:
+                with self._parentdevice._modio._myfh_lck:
+                    try:
+                        self._parentdevice._modio._myfh.seek(
+                            self._get_address()
+                        )
+                        self._parentdevice._modio._myfh.write(value)
+                        if self._parentdevice._modio._buffedwrite:
+                            self._parentdevice._modio._myfh.flush()
+                    except IOError as e:
+                        self._parentdevice._modio._gotioerror("ioset", e)
             else:
-                raise RuntimeError(
-                    "can not write to input '{0}'".format(self._name)
-                )
-
-        elif self._iotype == MEM:
-            raise RuntimeError(
-                "can not write to memory '{0}'".format(self._name)
-            )
+                self._parentdevice._ba_devdata[self._slc_address] = value
 
     def unreg_event(self, func=None, edge=None):
         """Entfernt ein Event aus der Eventueberwachung.

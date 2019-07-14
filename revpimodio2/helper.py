@@ -481,7 +481,7 @@ class ProcimgWriter(Thread):
                 fh.seek(0)
                 bytesbuff = bytearray(fh.read(self._modio._length))
 
-                if self._modio._monitoring:
+                if self._modio._monitoring or self._modio._direct_output:
                     # Inputs und Outputs in Puffer
                     for dev in self._modio._lst_refresh:
                         with dev._filelock:
