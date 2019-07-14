@@ -5,11 +5,9 @@ __copyright__ = "Copyright (C) 2018 Sven Sager"
 __license__ = "LGPLv3"
 
 import struct
-import warnings
 from re import match as rematch
 from threading import Event
 from revpimodio2 import RISING, FALLING, BOTH, INP, MEM, consttostr
-from .netio import RevPiNetIO
 try:
     # Funktioniert nur auf Unix
     from fcntl import ioctl
@@ -536,21 +534,8 @@ class IOBase(object):
 
             if self._parentdevice._modio._direct_output:
                 # Direktes Schreiben der Outputs
-                # TODO: Abfragen minimieren für Schreiben der Outputs
 
-                if isinstance(self._parentdevice._modio, RevPiNetIO):
-                    # IOCTL über Netzwerk
-                    with self._parentdevice._modio._myfh_lck:
-                        try:
-                            self._parentdevice._modio._myfh.ioctl(
-                                19216,
-                                self.__bit_ioctl_on if value
-                                else self.__bit_ioctl_off
-                            )
-                        except Exception as e:
-                            self._parentdevice._modio._gotioerror(
-                                "net_ioctl", e)
-                else:
+                if self._parentdevice._modio._run_on_pi:
                     # IOCTL auf dem RevPi
                     with self._parentdevice._modio._myfh_lck:
                         try:
@@ -563,6 +548,31 @@ class IOBase(object):
                             )
                         except Exception as e:
                             self._parentdevice._modio._gotioerror("ioset", e)
+
+                elif hasattr(self._parentdevice._modio._myfh, "ioctl"):
+                    # IOCTL über Netzwerk
+                    with self._parentdevice._modio._myfh_lck:
+                        try:
+                            self._parentdevice._modio._myfh.ioctl(
+                                19216,
+                                self.__bit_ioctl_on if value
+                                else self.__bit_ioctl_off
+                            )
+                        except Exception as e:
+                            self._parentdevice._modio._gotioerror(
+                                "net_ioset", e)
+
+                else:
+                    # IOCTL in Datei simulieren
+                    try:
+                        # Set value durchführen (Funktion K+16)
+                        self._parentdevice._modio._simulate_ioctl(
+                            19216,
+                            self.__bit_ioctl_on if value
+                            else self.__bit_ioctl_off
+                        )
+                    except Exception as e:
+                        self._parentdevice._modio._gotioerror("file_ioset", e)
 
             else:
                 # Gepuffertes Schreiben der Outputs
@@ -901,24 +911,7 @@ class IntIOCounter(IntIO):
                 "can not reset counter, while system is in simulator mode"
             )
 
-        if isinstance(self._parentdevice._modio, RevPiNetIO):
-            # IOCTL über Netzwerk
-            with self._parentdevice._modio._myfh_lck:
-                try:
-                    self._parentdevice._modio._myfh.ioctl(
-                        19220, self.__ioctl_arg
-                    )
-                except Exception as e:
-                    self._parentdevice._modio._gotioerror("net_ioctl", e)
-
-        elif self._parentdevice._modio._procimg != "/dev/piControl0":
-            # NOTE: Soll hier eine 0 in den Input geschrieben werden?
-            warnings.warn(
-                "this will work on a revolution pi only",
-                RuntimeWarning
-            )
-
-        else:
+        if self._parentdevice._modio._run_on_pi:
             # IOCTL auf dem RevPi
             with self._parentdevice._modio._myfh_lck:
                 try:
@@ -928,7 +921,27 @@ class IntIOCounter(IntIO):
                         19220, self.__ioctl_arg
                     )
                 except Exception as e:
-                    self._parentdevice._modio._gotioerror("ioctl", e)
+                    self._parentdevice._modio._gotioerror("iorst", e)
+
+        elif hasattr(self._parentdevice._modio._myfh, "ioctl"):
+            # IOCTL über Netzwerk
+            with self._parentdevice._modio._myfh_lck:
+                try:
+                    self._parentdevice._modio._myfh.ioctl(
+                        19220, self.__ioctl_arg
+                    )
+                except Exception as e:
+                    self._parentdevice._modio._gotioerror("net_iorst", e)
+
+        else:
+            # IOCTL in Datei simulieren
+            try:
+                # Set value durchführen (Funktion K+20)
+                self._parentdevice._modio._simulate_ioctl(
+                    19220, self.__ioctl_arg
+                )
+            except Exception as e:
+                self._parentdevice._modio._gotioerror("file_iorst", e)
 
 
 class IntIOReplaceable(IntIO):

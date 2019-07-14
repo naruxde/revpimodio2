@@ -9,9 +9,11 @@ from configparser import ConfigParser
 from json import load as jload
 from multiprocessing import cpu_count
 from os import access, F_OK, R_OK
+from os import stat as osstat
 from queue import Empty
 from revpimodio2 import acheck
 from signal import signal, SIG_DFL, SIGINT, SIGTERM
+from stat import S_ISCHR
 from threading import Thread, Event, Lock
 from timeit import default_timer
 
@@ -35,7 +37,7 @@ class RevPiModIO(object):
         "_maxioerrors", "_myfh", "_myfh_lck", "_monitoring", "_procimg", \
         "_simulator", "_syncoutputs", "_th_mainloop", "_waitexit", \
         "core", "app", "device", "exitsignal", "io", "summary", "_debug", \
-        "_lck_replace_io", "_replace_io_file"
+        "_lck_replace_io", "_replace_io_file", "_run_on_pi"
 
     def __init__(
             self, autorefresh=False, monitoring=False, syncoutputs=True,
@@ -106,12 +108,10 @@ class RevPiModIO(object):
         # Event für Benutzeraktionen
         self.exitsignal = Event()
 
-        if self._direct_output and not \
-                (self._procimg == "/dev/piControl0" or
-                isinstance(self, RevPiNetIO)):
-            raise RuntimeError(
-                "use direct_output with piControl0 or RevPiNetIO only"
-            )
+        try:
+            self._run_on_pi = S_ISCHR(osstat(self._procimg).st_mode)
+        except Exception:
+            self._run_on_pi = False
 
         # Nur Konfigurieren, wenn nicht vererbt
         if type(self) == RevPiModIO:
@@ -470,6 +470,57 @@ class RevPiModIO(object):
             self._imgwriter.maxioerrors = value
         else:
             raise ValueError("value must be 0 or a positive integer")
+
+    def _simulate_ioctl(self, request, arg=b''):
+        """Simuliert IOCTL Funktionen auf procimg Datei.
+        @param request IO Request
+        @param arg: Request argument"""
+        if request == 19216:
+            # Einzelnes Bit setzen
+            byte_address = int.from_bytes(arg[:2], byteorder="little")
+            bit_address = arg[2]
+            new_value = bool(0 if len(arg) <= 3 else arg[3])
+
+            # Simulatonsmodus schreibt direkt in Datei
+            with self._myfh_lck:
+                self._myfh.seek(byte_address)
+                int_byte = int.from_bytes(
+                    self._myfh.read(1), byteorder="little"
+                )
+                int_bit = 1 << bit_address
+
+                if not bool(int_byte & int_bit) == new_value:
+                    if new_value:
+                        int_byte += int_bit
+                    else:
+                        int_byte -= int_bit
+
+                    self._myfh.seek(byte_address)
+                    self._myfh.write(int_byte.to_bytes(1, byteorder="little"))
+                    if self._buffedwrite:
+                        self._myfh.flush()
+
+        elif request == 19220:
+            # FIXME: Implement
+            # Counterwert auf 0 setzen
+            dev_position = arg[0]
+            bit_field = int.from_bytes(arg[2:], byteorder="little")
+            io_byte = -1
+
+            for i in range(16):
+                if bool(bit_field & 1 << i):
+                    io_byte = self.device[dev_position].offset \
+                        + int(self.device[dev_position]._lst_counter[i])
+                    break
+
+            if io_byte == -1:
+                raise RuntimeError("count not reset counter io in file")
+
+            with self._myfh_lck:
+                self._myfh.seek(io_byte)
+                self._myfh.write(b'\x00\x00\x00\x00')
+                if self._buffedwrite:
+                    self._myfh.flush()
 
     def autorefresh_all(self):
         """Setzt alle Devices in autorefresh Funktion."""
@@ -951,7 +1002,6 @@ class RevPiModIO(object):
 
         """
         if self._direct_output:
-            # TODO: Wie soll das bei direct_output umgesetzt werden?
             return True
 
         if self._monitoring:

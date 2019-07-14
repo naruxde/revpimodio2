@@ -116,6 +116,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#RevPiModIO._set_maxioerrors">_set_maxioerrors</a></td>
 <td>Setzt Anzahl der maximal erlaubten Fehler bei Prozessabbildzugriff.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#RevPiModIO._simulate_ioctl">_simulate_ioctl</a></td>
+<td>Simuliert IOCTL Funktionen auf procimg Datei.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.autorefresh_all">autorefresh_all</a></td>
 <td>Setzt alle Devices in autorefresh Funktion.</td>
 </tr><tr>
@@ -364,6 +367,20 @@ Setzt Anzahl der maximal erlaubten Fehler bei Prozessabbildzugriff.
 <dt><i>value</i></dt>
 <dd>
 Anzahl erlaubte Fehler
+</dd>
+</dl><a NAME="RevPiModIO._simulate_ioctl" ID="RevPiModIO._simulate_ioctl"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiModIO._simulate_ioctl</h3>
+<b>_simulate_ioctl</b>(<i>request, arg=b''</i>)
+<p>
+Simuliert IOCTL Funktionen auf procimg Datei.
+</p><dl>
+<dt><i>request</i></dt>
+<dd>
+IO Request
+</dd><dt><i>arg:</i></dt>
+<dd>
+Request argument
 </dd>
 </dl><a NAME="RevPiModIO.autorefresh_all" ID="RevPiModIO.autorefresh_all"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
