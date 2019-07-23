@@ -3,11 +3,11 @@
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2018 Sven Sager"
 __license__ = "LGPLv3"
-
 import socket
 import warnings
 from json import loads as jloads
 from re import compile
+from revpimodio2 import DeviceNotFoundError
 from threading import Thread, Event, Lock
 
 from .device import Device
@@ -696,20 +696,20 @@ class RevPiNetIOSelected(RevPiNetIO):
 
         if len(self.device) == 0:
             if type(self) == RevPiNetIODriver:
-                raise RuntimeError(
+                raise DeviceNotFoundError(
                     "could not find any given VIRTUAL devices in config"
                 )
             else:
-                raise RuntimeError(
+                raise DeviceNotFoundError(
                     "could not find any given devices in config"
                 )
         elif len(self.device) != len(self._lst_devselect):
             if type(self) == RevPiNetIODriver:
-                raise RuntimeError(
+                raise DeviceNotFoundError(
                     "could not find all given VIRTUAL devices in config"
                 )
             else:
-                raise RuntimeError(
+                raise DeviceNotFoundError(
                     "could not find all given devices in config"
                 )
 

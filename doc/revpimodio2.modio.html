@@ -54,7 +54,7 @@ object
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>__slots__</td></tr><tr><td>configrsc</td></tr><tr><td>cycletime</td></tr><tr><td>ioerrors</td></tr><tr><td>length</td></tr><tr><td>maxioerrors</td></tr><tr><td>monitoring</td></tr><tr><td>procimg</td></tr><tr><td>simulator</td></tr>
+<tr><td>__slots__</td></tr><tr><td>configrsc</td></tr><tr><td>cycletime</td></tr><tr><td>debug</td></tr><tr><td>ioerrors</td></tr><tr><td>length</td></tr><tr><td>maxioerrors</td></tr><tr><td>monitoring</td></tr><tr><td>procimg</td></tr><tr><td>replace_io_file</td></tr><tr><td>simulator</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -89,6 +89,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#RevPiModIO._get_cycletime">_get_cycletime</a></td>
 <td>Gibt Aktualisierungsrate in ms der Prozessabbildsynchronisierung aus.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#RevPiModIO._get_debug">_get_debug</a></td>
+<td>Gibt Status des Debugflags zurueck.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO._get_ioerrors">_get_ioerrors</a></td>
 <td>Getter function.</td>
 </tr><tr>
@@ -103,6 +106,9 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO._get_procimg">_get_procimg</a></td>
 <td>Getter function.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#RevPiModIO._get_replace_io_file">_get_replace_io_file</a></td>
+<td>Gibt Pfad zur verwendeten replace IO Datei aus.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO._get_simulator">_get_simulator</a></td>
 <td>Getter function.</td>
@@ -260,6 +266,17 @@ Gibt Aktualisierungsrate in ms der Prozessabbildsynchronisierung aus.
 <dd>
 Millisekunden
 </dd>
+</dl><a NAME="RevPiModIO._get_debug" ID="RevPiModIO._get_debug"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiModIO._get_debug</h3>
+<b>_get_debug</b>(<i></i>)
+<p>
+Gibt Status des Debugflags zurueck.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Status des Debugflags
+</dd>
 </dl><a NAME="RevPiModIO._get_ioerrors" ID="RevPiModIO._get_ioerrors"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO._get_ioerrors</h3>
@@ -314,6 +331,17 @@ Getter function.
 <dt>Returns:</dt>
 <dd>
 Pfad des verwendeten Prozessabbilds
+</dd>
+</dl><a NAME="RevPiModIO._get_replace_io_file" ID="RevPiModIO._get_replace_io_file"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiModIO._get_replace_io_file</h3>
+<b>_get_replace_io_file</b>(<i></i>)
+<p>
+Gibt Pfad zur verwendeten replace IO Datei aus.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+Pfad zur replace IO Datei
 </dd>
 </dl><a NAME="RevPiModIO._get_simulator" ID="RevPiModIO._get_simulator"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">

@@ -145,11 +145,13 @@ revpimodio2.modio.RevPiModIO._configure_replace_io?5()
 revpimodio2.modio.RevPiModIO._create_myfh?5()
 revpimodio2.modio.RevPiModIO._get_configrsc?5()
 revpimodio2.modio.RevPiModIO._get_cycletime?5()
+revpimodio2.modio.RevPiModIO._get_debug?5()
 revpimodio2.modio.RevPiModIO._get_ioerrors?5()
 revpimodio2.modio.RevPiModIO._get_length?5()
 revpimodio2.modio.RevPiModIO._get_maxioerrors?5()
 revpimodio2.modio.RevPiModIO._get_monitoring?5()
 revpimodio2.modio.RevPiModIO._get_procimg?5()
+revpimodio2.modio.RevPiModIO._get_replace_io_file?5()
 revpimodio2.modio.RevPiModIO._get_simulator?5()
 revpimodio2.modio.RevPiModIO._gotioerror?5(action, e=None)
 revpimodio2.modio.RevPiModIO._set_cycletime?5(milliseconds)
@@ -159,6 +161,7 @@ revpimodio2.modio.RevPiModIO.cleanup?4()
 revpimodio2.modio.RevPiModIO.configrsc?7
 revpimodio2.modio.RevPiModIO.cycleloop?4(func, cycletime=50)
 revpimodio2.modio.RevPiModIO.cycletime?7
+revpimodio2.modio.RevPiModIO.debug?7
 revpimodio2.modio.RevPiModIO.exit?4(full=True)
 revpimodio2.modio.RevPiModIO.export_replaced_ios?4(filename)
 revpimodio2.modio.RevPiModIO.get_jconfigrsc?4()
@@ -170,6 +173,7 @@ revpimodio2.modio.RevPiModIO.maxioerrors?7
 revpimodio2.modio.RevPiModIO.monitoring?7
 revpimodio2.modio.RevPiModIO.procimg?7
 revpimodio2.modio.RevPiModIO.readprocimg?4(device=None)
+revpimodio2.modio.RevPiModIO.replace_io_file?7
 revpimodio2.modio.RevPiModIO.resetioerrors?4()
 revpimodio2.modio.RevPiModIO.setdefaultvalues?4(device=None)
 revpimodio2.modio.RevPiModIO.simulator?7

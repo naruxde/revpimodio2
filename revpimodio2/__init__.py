@@ -38,6 +38,13 @@ MEM = 302
 warnings.simplefilter(action="always")
 
 
+class DeviceNotFoundError(Exception):
+
+    """Fehler wenn ein Device nicht gefunden wird."""
+
+    pass
+
+
 def acheck(check_type, **kwargs):
     """Check type of given arguments.
 

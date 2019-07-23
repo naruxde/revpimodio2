@@ -10,7 +10,7 @@ from json import load as jload
 from multiprocessing import cpu_count
 from os import access, F_OK, R_OK
 from queue import Empty
-from revpimodio2 import acheck
+from revpimodio2 import acheck, DeviceNotFoundError
 from signal import signal, SIG_DFL, SIGINT, SIGTERM
 from threading import Thread, Event, Lock
 from timeit import default_timer
@@ -368,9 +368,7 @@ class RevPiModIO(object):
             except Exception as e:
                 raise RuntimeError(
                     "replace_io_file: can not replace '{0}' with '{1}' "
-                    "| RevPiModIO message: {2}".format(
-                    parentio, io, e
-                    )
+                    "| RevPiModIO message: {2}".format(parentio, io, e)
                 )
 
     def _create_myfh(self):
@@ -388,6 +386,11 @@ class RevPiModIO(object):
         """Gibt Aktualisierungsrate in ms der Prozessabbildsynchronisierung aus.
         @return Millisekunden"""
         return self._imgwriter.refresh
+
+    def _get_debug(self):
+        """Gibt Status des Debugflags zurueck.
+        @return Status des Debugflags"""
+        return self._debug
 
     def _get_ioerrors(self):
         """Getter function.
@@ -416,6 +419,11 @@ class RevPiModIO(object):
         """Getter function.
         @return Pfad des verwendeten Prozessabbilds"""
         return self._procimg
+
+    def _get_replace_io_file(self):
+        """Gibt Pfad zur verwendeten replace IO Datei aus.
+        @return Pfad zur replace IO Datei"""
+        return self._replace_io_file
 
     def _get_simulator(self):
         """Getter function.
@@ -992,6 +1000,7 @@ class RevPiModIO(object):
 
         return workokay
 
+    debug = property(_get_debug)
     configrsc = property(_get_configrsc)
     cycletime = property(_get_cycletime, _set_cycletime)
     ioerrors = property(_get_ioerrors)
@@ -999,6 +1008,7 @@ class RevPiModIO(object):
     maxioerrors = property(_get_maxioerrors, _set_maxioerrors)
     monitoring = property(_get_monitoring)
     procimg = property(_get_procimg)
+    replace_io_file = property(_get_replace_io_file)
     simulator = property(_get_simulator)
 
 
@@ -1052,20 +1062,20 @@ class RevPiModIOSelected(RevPiModIO):
 
         if len(self.device) == 0:
             if type(self) == RevPiModIODriver:
-                raise RuntimeError(
+                raise DeviceNotFoundError(
                     "could not find any given VIRTUAL devices in config"
                 )
             else:
-                raise RuntimeError(
+                raise DeviceNotFoundError(
                     "could not find any given devices in config"
                 )
         elif len(self.device) != len(self._lst_devselect):
             if type(self) == RevPiModIODriver:
-                raise RuntimeError(
+                raise DeviceNotFoundError(
                     "could not find all given VIRTUAL devices in config"
                 )
             else:
-                raise RuntimeError(
+                raise DeviceNotFoundError(
                     "could not find all given devices in config"
                 )
 
