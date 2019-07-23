@@ -68,6 +68,7 @@ class IOList(object):
                 self.__dict_iobyte[io_del.address] = []
 
         object.__delattr__(self, key)
+        io_del._parentdevice._update_my_io_list()
 
     def __getattr__(self, key):
         """Verwaltet geloeschte IOs (Attribute, die nicht existieren).
@@ -125,10 +126,10 @@ class IOList(object):
 
     def __setattr__(self, key, value):
         """Verbietet aus Leistungsguenden das direkte Setzen von Attributen."""
-        if key in [
+        if key in (
                 "_IOList__dict_iobyte",
                 "_IOList__dict_iorefname"
-                ]:
+                ):
             object.__setattr__(self, key, value)
         else:
             raise AttributeError(
@@ -221,6 +222,9 @@ class IOList(object):
                         None, None, None, None, None, None, None, None
                     ]
                 self.__dict_iobyte[new_io.address][new_io._bitaddress] = new_io
+
+            if type(new_io) is StructIO:
+                new_io._parentdevice._update_my_io_list()
         else:
             raise TypeError("io must be <class 'IOBase'> or sub class")
 

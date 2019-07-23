@@ -72,7 +72,7 @@ class DeviceList(object):
         """Gibt Iterator aller Devices zurueck.
 
         Die Reihenfolge ist nach Position im Prozessabbild sortiert und nicht
-        nach Position (Dies entspricht der Positionierung aus piCtory)!
+        nach Positionsnummer (Dies entspricht der Positionierung aus piCtory)!
 
         @return <class 'iter'> aller Devices"""
         for dev in sorted(
@@ -106,7 +106,7 @@ class Device(object):
 
     """
 
-    __slots__ = "_ba_devdata", "_ba_datacp",  \
+    __slots__ = "__my_io_list", "_ba_devdata", "_ba_datacp",  \
         "_dict_events", "_filelock", "_length", "_modio", "_name", "_offset", \
         "_position", "_producttype", "_selfupdate", "_slc_devoff", \
         "_slc_inp", "_slc_inpoff", "_slc_mem", "_slc_memoff", \
@@ -126,6 +126,7 @@ class Device(object):
         self._dict_events = {}
         self._filelock = Lock()
         self._length = 0
+        self.__my_io_list = []
         self._selfupdate = False
 
         # Wertzuweisung aus dict_device
@@ -182,6 +183,9 @@ class Device(object):
         # Spezielle Konfiguration von abgeleiteten Klassen durchführen
         self._devconfigure()
 
+        # IO Liste aktualisieren für schnellen Indexzugriff
+        self._update_my_io_list()
+
     def __bytes__(self):
         """Gibt alle Daten des Devices als <class 'bytes'> zurueck.
         @return Devicedaten als <class 'bytes'>"""
@@ -204,6 +208,12 @@ class Device(object):
         else:
             return key in self._modio.io \
                 and getattr(self._modio.io, key)._parentdevice == self
+
+    def __getitem__(self, key):
+        """Gibt IO an angegebener Stelle zurueck.
+        @param key Index des IOs auf dem device als <class 'int'>
+        @return Gefundenes IO-Objekt"""
+        return self.__my_io_list[key]
 
     def __int__(self):
         """Gibt die Positon im RevPi Bus zurueck.
@@ -311,6 +321,10 @@ class Device(object):
         """Gibt den Produkttypen des device zurueck.
         @return Deviceprodukttyp"""
         return self._producttype
+
+    def _update_my_io_list(self):
+        """Erzeugt eine neue IO Liste fuer schnellen Zugriff."""
+        self.__my_io_list = list(self.__iter__())
 
     def autorefresh(self, activate=True):
         """Registriert dieses Device fuer die automatische Synchronisierung.
