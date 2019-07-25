@@ -10,7 +10,7 @@ from json import load as jload
 from multiprocessing import cpu_count
 from os import access, F_OK, R_OK
 from queue import Empty
-from revpimodio2 import acheck, DeviceNotFoundError
+from revpimodio2 import acheck, DeviceNotFoundError, BOTH, RISING, FALLING
 from signal import signal, SIG_DFL, SIGINT, SIGTERM
 from threading import Thread, Event, Lock
 from timeit import default_timer
@@ -771,10 +771,28 @@ class RevPiModIO(object):
         self._exit.clear()
         self._looprunning = True
 
-        # Beim Eintritt in mainloop Bytecopy erstellen
+        # Beim Eintritt in mainloop Bytecopy erstellen und prefire anhängen
         for dev in self._lst_refresh:
             with dev._filelock:
                 dev._ba_datacp = dev._ba_devdata[:]
+
+                # Prefire Events vorbereiten
+                for io in dev._dict_events:
+                    for regfunc in dev._dict_events[io]:
+                        if not regfunc.prefire:
+                            continue
+
+                        if regfunc.edge == BOTH \
+                                or regfunc.edge == RISING and io.value \
+                                or regfunc.edge == FALLING and not io.value:
+                            if regfunc.as_thread:
+                                self._imgwriter.__eventqth.put(
+                                    (regfunc, io._name, io.value), False
+                                )
+                            else:
+                                self._imgwriter._eventq.put(
+                                    (regfunc, io._name, io.value), False
+                                )
 
         # ImgWriter mit Eventüberwachung aktivieren
         self._imgwriter._collect_events(True)
