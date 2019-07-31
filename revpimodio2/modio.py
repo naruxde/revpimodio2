@@ -643,7 +643,7 @@ class RevPiModIO(object):
 
                 # Optional values
                 if io._bitaddress >= 0:
-                    cp[io.name]["bitaddress"] = str(io._bitaddress)
+                    cp[io.name]["bit"] = str(io._bitaddress)
                 cp[io.name]["byteorder"] = io._byteorder
                 cp[io.name]["defaultvalue"] = str(io.defaultvalue)
                 if io.bmk != "":
