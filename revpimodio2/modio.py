@@ -9,9 +9,11 @@ from configparser import ConfigParser
 from json import load as jload
 from multiprocessing import cpu_count
 from os import access, F_OK, R_OK
+from os import stat as osstat
 from queue import Empty
 from revpimodio2 import acheck, DeviceNotFoundError, BOTH, RISING, FALLING
 from signal import signal, SIG_DFL, SIGINT, SIGTERM
+from stat import S_ISCHR
 from threading import Thread, Event, Lock
 from timeit import default_timer
 
@@ -30,17 +32,17 @@ class RevPiModIO(object):
     """
 
     __slots__ = "__cleanupfunc", "_autorefresh", "_buffedwrite", \
-        "_configrsc", "_exit", "_imgwriter", "_ioerror", "_length", \
-        "_looprunning", "_lst_devselect", "_lst_refresh", "_maxioerrors", \
-        "_myfh", "_myfh_lck", "_monitoring", "_procimg", "_simulator", \
-        "_syncoutputs", "_th_mainloop", "_waitexit", \
+        "_configrsc", "_direct_output", "_exit", "_imgwriter", "_ioerror", \
+        "_length", "_looprunning", "_lst_devselect", "_lst_refresh", \
+        "_maxioerrors", "_myfh", "_myfh_lck", "_monitoring", "_procimg", \
+        "_simulator", "_syncoutputs", "_th_mainloop", "_waitexit", \
         "core", "app", "device", "exitsignal", "io", "summary", "_debug", \
-        "_lck_replace_io", "_replace_io_file"
+        "_lck_replace_io", "_replace_io_file", "_run_on_pi"
 
     def __init__(
             self, autorefresh=False, monitoring=False, syncoutputs=True,
             procimg=None, configrsc=None, simulator=False, debug=False,
-            replace_io_file=None):
+            replace_io_file=None, direct_output=False):
         """Instantiiert die Grundfunktionen.
 
         @param autorefresh Wenn True, alle Devices zu autorefresh hinzufuegen
@@ -51,12 +53,14 @@ class RevPiModIO(object):
         @param simulator Laedt das Modul als Simulator und vertauscht IOs
         @param debug Gibt bei allen Fehlern komplette Meldungen aus
         @param replace_io_file Replace IO Konfiguration aus Datei laden
+        @param direct_output Write outputs immediately to process image (slow)
 
         """
         # Parameterprüfung
         acheck(
             bool, autorefresh=autorefresh, monitoring=monitoring,
-            syncoutputs=syncoutputs, simulator=simulator, debug=debug
+            syncoutputs=syncoutputs, simulator=simulator, debug=debug,
+            direct_output=direct_output
         )
         acheck(
             str, procimg_noneok=procimg, configrsc_noneok=configrsc,
@@ -65,6 +69,7 @@ class RevPiModIO(object):
 
         self._autorefresh = autorefresh
         self._configrsc = configrsc
+        self._direct_output = direct_output
         self._monitoring = monitoring
         self._procimg = "/dev/piControl0" if procimg is None else procimg
         self._simulator = simulator
@@ -102,6 +107,11 @@ class RevPiModIO(object):
 
         # Event für Benutzeraktionen
         self.exitsignal = Event()
+
+        try:
+            self._run_on_pi = S_ISCHR(osstat(self._procimg).st_mode)
+        except Exception:
+            self._run_on_pi = False
 
         # Nur Konfigurieren, wenn nicht vererbt
         if type(self) == RevPiModIO:
@@ -470,6 +480,57 @@ class RevPiModIO(object):
             self._imgwriter.maxioerrors = value
         else:
             raise ValueError("value must be 0 or a positive integer")
+
+    def _simulate_ioctl(self, request, arg=b''):
+        """Simuliert IOCTL Funktionen auf procimg Datei.
+        @param request IO Request
+        @param arg: Request argument"""
+        if request == 19216:
+            # Einzelnes Bit setzen
+            byte_address = int.from_bytes(arg[:2], byteorder="little")
+            bit_address = arg[2]
+            new_value = bool(0 if len(arg) <= 3 else arg[3])
+
+            # Simulatonsmodus schreibt direkt in Datei
+            with self._myfh_lck:
+                self._myfh.seek(byte_address)
+                int_byte = int.from_bytes(
+                    self._myfh.read(1), byteorder="little"
+                )
+                int_bit = 1 << bit_address
+
+                if not bool(int_byte & int_bit) == new_value:
+                    if new_value:
+                        int_byte += int_bit
+                    else:
+                        int_byte -= int_bit
+
+                    self._myfh.seek(byte_address)
+                    self._myfh.write(int_byte.to_bytes(1, byteorder="little"))
+                    if self._buffedwrite:
+                        self._myfh.flush()
+
+        elif request == 19220:
+            # FIXME: Implement
+            # Counterwert auf 0 setzen
+            dev_position = arg[0]
+            bit_field = int.from_bytes(arg[2:], byteorder="little")
+            io_byte = -1
+
+            for i in range(16):
+                if bool(bit_field & 1 << i):
+                    io_byte = self.device[dev_position].offset \
+                        + int(self.device[dev_position]._lst_counter[i])
+                    break
+
+            if io_byte == -1:
+                raise RuntimeError("count not reset counter io in file")
+
+            with self._myfh_lck:
+                self._myfh.seek(io_byte)
+                self._myfh.write(b'\x00\x00\x00\x00')
+                if self._buffedwrite:
+                    self._myfh.flush()
 
     def autorefresh_all(self):
         """Setzt alle Devices in autorefresh Funktion."""
@@ -880,7 +941,7 @@ class RevPiModIO(object):
                 # FileHandler sperren
                 dev._filelock.acquire()
 
-                if self._monitoring:
+                if self._monitoring or self._direct_output:
                     # Alles vom Bus einlesen
                     dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
                 else:
@@ -968,6 +1029,9 @@ class RevPiModIO(object):
         @return True, wenn Arbeiten an allen Devices erfolgreich waren
 
         """
+        if self._direct_output:
+            return True
+
         if self._monitoring:
             raise RuntimeError(
                 "can not write process image, while system is in monitoring "
@@ -1046,7 +1110,8 @@ class RevPiModIOSelected(RevPiModIO):
     def __init__(
             self, deviceselection, autorefresh=False, monitoring=False,
             syncoutputs=True, procimg=None, configrsc=None,
-            simulator=False, debug=False, replace_io_file=None):
+            simulator=False, debug=False, replace_io_file=None,
+            direct_output=False):
         """Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 
         Der Parameter deviceselection kann eine einzelne
@@ -1059,7 +1124,7 @@ class RevPiModIOSelected(RevPiModIO):
         """
         super().__init__(
             autorefresh, monitoring, syncoutputs, procimg, configrsc,
-            simulator, debug, replace_io_file
+            simulator, debug, replace_io_file, direct_output
         )
 
         # Device liste erstellen
@@ -1114,7 +1179,7 @@ class RevPiModIODriver(RevPiModIOSelected):
     def __init__(
             self, virtdev, autorefresh=False, monitoring=False,
             syncoutputs=True, procimg=None, configrsc=None, debug=False,
-            replace_io_file=None):
+            replace_io_file=None, direct_output=False):
         """Instantiiert die Grundfunktionen.
 
         Parameter 'monitoring' und 'simulator' stehen hier nicht zur
@@ -1127,7 +1192,7 @@ class RevPiModIODriver(RevPiModIOSelected):
         # Parent mit monitoring=False und simulator=True laden
         super().__init__(
             virtdev, autorefresh, False, syncoutputs, procimg, configrsc,
-            True, debug, replace_io_file
+            True, debug, replace_io_file, direct_output
         )
 
 

@@ -122,6 +122,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#RevPiModIO._set_maxioerrors">_set_maxioerrors</a></td>
 <td>Setzt Anzahl der maximal erlaubten Fehler bei Prozessabbildzugriff.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#RevPiModIO._simulate_ioctl">_simulate_ioctl</a></td>
+<td>Simuliert IOCTL Funktionen auf procimg Datei.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO.autorefresh_all">autorefresh_all</a></td>
 <td>Setzt alle Devices in autorefresh Funktion.</td>
 </tr><tr>
@@ -170,7 +173,7 @@ Static Methods</h3>
 <a NAME="RevPiModIO.__init__" ID="RevPiModIO.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO (Constructor)</h3>
-<b>RevPiModIO</b>(<i>autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=False, replace_io_file=None</i>)
+<b>RevPiModIO</b>(<i>autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=False, replace_io_file=None, direct_output=False</i>)
 <p>
 Instantiiert die Grundfunktionen.
 </p><dl>
@@ -198,6 +201,9 @@ Gibt bei allen Fehlern komplette Meldungen aus
 </dd><dt><i>replace_io_file</i></dt>
 <dd>
 Replace IO Konfiguration aus Datei laden
+</dd><dt><i>direct_output</i></dt>
+<dd>
+Write outputs immediately to process image (slow)
 </dd>
 </dl><a NAME="RevPiModIO.__del__" ID="RevPiModIO.__del__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -389,6 +395,20 @@ Setzt Anzahl der maximal erlaubten Fehler bei Prozessabbildzugriff.
 <dt><i>value</i></dt>
 <dd>
 Anzahl erlaubte Fehler
+</dd>
+</dl><a NAME="RevPiModIO._simulate_ioctl" ID="RevPiModIO._simulate_ioctl"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiModIO._simulate_ioctl</h3>
+<b>_simulate_ioctl</b>(<i>request, arg=b''</i>)
+<p>
+Simuliert IOCTL Funktionen auf procimg Datei.
+</p><dl>
+<dt><i>request</i></dt>
+<dd>
+IO Request
+</dd><dt><i>arg:</i></dt>
+<dd>
+Request argument
 </dd>
 </dl><a NAME="RevPiModIO.autorefresh_all" ID="RevPiModIO.autorefresh_all"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -660,7 +680,7 @@ Static Methods</h3>
 <a NAME="RevPiModIODriver.__init__" ID="RevPiModIODriver.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIODriver (Constructor)</h3>
-<b>RevPiModIODriver</b>(<i>virtdev, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, debug=False, replace_io_file=None</i>)
+<b>RevPiModIODriver</b>(<i>virtdev, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, debug=False, replace_io_file=None, direct_output=False</i>)
 <p>
 Instantiiert die Grundfunktionen.
 </p><p>
@@ -720,7 +740,7 @@ Static Methods</h3>
 <a NAME="RevPiModIOSelected.__init__" ID="RevPiModIOSelected.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIOSelected (Constructor)</h3>
-<b>RevPiModIOSelected</b>(<i>deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=False, replace_io_file=None</i>)
+<b>RevPiModIOSelected</b>(<i>deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=False, replace_io_file=None, direct_output=False</i>)
 <p>
 Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 </p><p>
