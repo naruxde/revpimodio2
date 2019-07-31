@@ -556,6 +556,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#Device.__getioiter">__getioiter</a></td>
 <td>Gibt <class 'iter'> mit allen IOs zurueck.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#Device.__getitem__">__getitem__</a></td>
+<td>Gibt IO an angegebener Stelle zurueck.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Device.__int__">__int__</a></td>
 <td>Gibt die Positon im RevPi Bus zurueck.</td>
 </tr><tr>
@@ -579,6 +582,9 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Device._get_producttype">_get_producttype</a></td>
 <td>Gibt den Produkttypen des device zurueck.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#Device._update_my_io_list">_update_my_io_list</a></td>
+<td>Erzeugt eine neue IO Liste fuer schnellen Zugriff.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#Device.autorefresh">autorefresh</a></td>
 <td>Registriert dieses Device fuer die automatische Synchronisierung.</td>
@@ -676,6 +682,22 @@ Filter fuer 'Export' Flag in piCtory
 <dd>
 IOs als Iterator
 </dd>
+</dl><a NAME="Device.__getitem__" ID="Device.__getitem__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Device.__getitem__</h3>
+<b>__getitem__</b>(<i>key</i>)
+<p>
+Gibt IO an angegebener Stelle zurueck.
+</p><dl>
+<dt><i>key</i></dt>
+<dd>
+Index des IOs auf dem device als <class 'int'>
+</dd>
+</dl><dl>
+<dt>Returns:</dt>
+<dd>
+Gefundenes IO-Objekt
+</dd>
 </dl><a NAME="Device.__int__" ID="Device.__int__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Device.__int__</h3>
@@ -767,7 +789,13 @@ Gibt den Produkttypen des device zurueck.
 <dd>
 Deviceprodukttyp
 </dd>
-</dl><a NAME="Device.autorefresh" ID="Device.autorefresh"></a>
+</dl><a NAME="Device._update_my_io_list" ID="Device._update_my_io_list"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Device._update_my_io_list</h3>
+<b>_update_my_io_list</b>(<i></i>)
+<p>
+Erzeugt eine neue IO Liste fuer schnellen Zugriff.
+</p><a NAME="Device.autorefresh" ID="Device.autorefresh"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Device.autorefresh</h3>
 <b>autorefresh</b>(<i>activate=True</i>)
@@ -1049,7 +1077,7 @@ DeviceList.__iter__</h3>
 Gibt Iterator aller Devices zurueck.
 </p><p>
         Die Reihenfolge ist nach Position im Prozessabbild sortiert und nicht
-        nach Position (Dies entspricht der Positionierung aus piCtory)!
+        nach Positionsnummer (Dies entspricht der Positionierung aus piCtory)!
 </p><dl>
 <dt>Returns:</dt>
 <dd>
