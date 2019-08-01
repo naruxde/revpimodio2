@@ -511,7 +511,6 @@ class RevPiModIO(object):
                         self._myfh.flush()
 
         elif request == 19220:
-            # FIXME: Implement
             # Counterwert auf 0 setzen
             dev_position = arg[0]
             bit_field = int.from_bytes(arg[2:], byteorder="little")
@@ -524,7 +523,7 @@ class RevPiModIO(object):
                     break
 
             if io_byte == -1:
-                raise RuntimeError("count not reset counter io in file")
+                raise RuntimeError("could not reset counter io in file")
 
             with self._myfh_lck:
                 self._myfh.seek(io_byte)
