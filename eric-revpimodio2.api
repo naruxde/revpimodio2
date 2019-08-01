@@ -107,7 +107,7 @@ revpimodio2.io.IOBase.get_defaultvalue?4()
 revpimodio2.io.IOBase.get_value?4()
 revpimodio2.io.IOBase.length?7
 revpimodio2.io.IOBase.name?7
-revpimodio2.io.IOBase.reg_event?4(func, delay=0, edge=BOTH, as_thread=False)
+revpimodio2.io.IOBase.reg_event?4(func, delay=0, edge=BOTH, as_thread=False, prefire=False)
 revpimodio2.io.IOBase.reg_timerevent?4(func, delay, edge=BOTH, as_thread=False)
 revpimodio2.io.IOBase.set_value?4(value)
 revpimodio2.io.IOBase.type?7
@@ -115,7 +115,7 @@ revpimodio2.io.IOBase.unreg_event?4(func=None, edge=None)
 revpimodio2.io.IOBase.value?7
 revpimodio2.io.IOBase.wait?4(edge=BOTH, exitevent=None, okvalue=None, timeout=0)
 revpimodio2.io.IOBase?1(parentdevice, valuelist, iotype, byteorder, signed)
-revpimodio2.io.IOEvent?1(func, edge, as_thread, delay, overwrite)
+revpimodio2.io.IOEvent?1(func, edge, as_thread, delay, overwrite, prefire)
 revpimodio2.io.IOList._private_register_new_io_object?5(new_io)
 revpimodio2.io.IOList?1()
 revpimodio2.io.IntIO._get_signed?5()

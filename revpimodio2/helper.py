@@ -413,9 +413,11 @@ class ProcimgWriter(Thread):
         if self.__eventwork != value:
             with self.lck_refresh:
                 self.__eventwork = value
-                self.__eventqth = queue.Queue()
-                self._eventq = queue.Queue()
-                self.__dict_delay = {}
+                if not value:
+                    # Nur leeren beim deaktivieren
+                    self.__eventqth = queue.Queue()
+                    self._eventq = queue.Queue()
+                    self.__dict_delay = {}
 
             # Threadmanagement
             if value and not self.__eventth.is_alive():
