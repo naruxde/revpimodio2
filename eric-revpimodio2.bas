@@ -1,6 +1,7 @@
 Base Device
 Connect Core
 Core Base
+DeviceNotFoundError Exception
 DioModule Device
 EventCallback Thread
 Gateway Device

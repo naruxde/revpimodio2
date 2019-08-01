@@ -19,15 +19,16 @@ class IOEvent(object):
 
     """Basisklasse fuer IO-Events."""
 
-    __slots__ = "as_thread", "delay", "edge", "func", "overwrite"
+    __slots__ = "as_thread", "delay", "edge", "func", "overwrite", "prefire"
 
-    def __init__(self, func, edge, as_thread, delay, overwrite):
+    def __init__(self, func, edge, as_thread, delay, overwrite, prefire):
         """Init IOEvent class."""
         self.as_thread = as_thread
         self.delay = delay
         self.edge = edge
         self.func = func
         self.overwrite = overwrite
+        self.prefire = prefire
 
 
 class IOList(object):
@@ -66,6 +67,7 @@ class IOList(object):
                 self.__dict_iobyte[io_del.address] = []
 
         object.__delattr__(self, key)
+        io_del._parentdevice._update_my_io_list()
 
     def __getattr__(self, key):
         """Verwaltet geloeschte IOs (Attribute, die nicht existieren).
@@ -123,10 +125,10 @@ class IOList(object):
 
     def __setattr__(self, key, value):
         """Verbietet aus Leistungsguenden das direkte Setzen von Attributen."""
-        if key in [
+        if key in (
                 "_IOList__dict_iobyte",
                 "_IOList__dict_iorefname"
-                ]:
+                ):
             object.__setattr__(self, key, value)
         else:
             raise AttributeError(
@@ -219,6 +221,9 @@ class IOList(object):
                         None, None, None, None, None, None, None, None
                     ]
                 self.__dict_iobyte[new_io.address][new_io._bitaddress] = new_io
+
+            if type(new_io) is StructIO:
+                new_io._parentdevice._update_my_io_list()
         else:
             raise TypeError("io must be <class 'IOBase'> or sub class")
 
@@ -375,7 +380,7 @@ class IOBase(object):
         @return Namen des IOs"""
         return self._name
 
-    def __reg_xevent(self, func, delay, edge, as_thread, overwrite):
+    def __reg_xevent(self, func, delay, edge, as_thread, overwrite, prefire):
         """Verwaltet reg_event und reg_timerevent.
 
         @param func Funktion die bei Aenderung aufgerufen werden soll
@@ -383,6 +388,7 @@ class IOBase(object):
         @param edge Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
         @param as_thread Bei True, Funktion als EventCallback-Thread ausfuehren
         @param overwrite Wenn True, wird Event bei ueberschrieben
+        @param prefire Ausloesen mit aktuellem Wert, wenn mainloop startet
 
         """
         # Prüfen ob Funktion callable ist
@@ -398,11 +404,15 @@ class IOBase(object):
             raise ValueError(
                 "parameter 'edge' can be used with bit io objects only"
             )
+        if prefire and self._parentdevice._modio._looprunning:
+            raise RuntimeError(
+                "prefire can not be used if mainloop is running"
+            )
 
         if self not in self._parentdevice._dict_events:
             with self._parentdevice._filelock:
                 self._parentdevice._dict_events[self] = \
-                    [IOEvent(func, edge, as_thread, delay, overwrite)]
+                    [IOEvent(func, edge, as_thread, delay, overwrite, prefire)]
         else:
             # Prüfen ob Funktion schon registriert ist
             for regfunc in self._parentdevice._dict_events[self]:
@@ -436,7 +446,7 @@ class IOBase(object):
             # Eventfunktion einfügen
             with self._parentdevice._filelock:
                 self._parentdevice._dict_events[self].append(
-                    IOEvent(func, edge, as_thread, delay, overwrite)
+                    IOEvent(func, edge, as_thread, delay, overwrite, prefire)
                 )
 
     def _get_address(self):
@@ -471,7 +481,8 @@ class IOBase(object):
         else:
             return bytes(self._parentdevice._ba_devdata[self._slc_address])
 
-    def reg_event(self, func, delay=0, edge=BOTH, as_thread=False):
+    def reg_event(
+            self, func, delay=0, edge=BOTH, as_thread=False, prefire=False):
         """Registriert fuer IO ein Event bei der Eventueberwachung.
 
         Die uebergebene Funktion wird ausgefuehrt, wenn sich der IO Wert
@@ -485,9 +496,10 @@ class IOBase(object):
         @param delay Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
         @param edge Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
         @param as_thread Bei True, Funktion als EventCallback-Thread ausfuehren
+        @param prefire Ausloesen mit aktuellem Wert, wenn mainloop startet
 
         """
-        self.__reg_xevent(func, delay, edge, as_thread, True)
+        self.__reg_xevent(func, delay, edge, as_thread, True, prefire)
 
     def reg_timerevent(self, func, delay, edge=BOTH, as_thread=False):
         """Registriert fuer IO einen Timer, welcher nach delay func ausfuehrt.
@@ -508,7 +520,7 @@ class IOBase(object):
         @param as_thread Bei True, Funktion als EventCallback-Thread ausfuehren
 
         """
-        self.__reg_xevent(func, delay, edge, as_thread, False)
+        self.__reg_xevent(func, delay, edge, as_thread, False, False)
 
     def set_value(self, value):
         """Setzt den Wert des IOs.
@@ -982,6 +994,7 @@ class IntIOReplaceable(IntIO):
             - delay: Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
             - edge: Event ausfuehren bei RISING, FALLING or BOTH Wertaenderung
             - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
+            - prefire: Ausloesen mit aktuellem Wert, wenn mainloop startet
         @see <a target="_blank"
         href="https://docs.python.org/3/library/struct.html#format-characters"
         >Python3 struct</a>

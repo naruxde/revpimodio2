@@ -11,7 +11,7 @@ from multiprocessing import cpu_count
 from os import access, F_OK, R_OK
 from os import stat as osstat
 from queue import Empty
-from revpimodio2 import acheck
+from revpimodio2 import acheck, DeviceNotFoundError, BOTH, RISING, FALLING
 from signal import signal, SIG_DFL, SIGINT, SIGTERM
 from stat import S_ISCHR
 from threading import Thread, Event, Lock
@@ -397,6 +397,11 @@ class RevPiModIO(object):
         @return Millisekunden"""
         return self._imgwriter.refresh
 
+    def _get_debug(self):
+        """Gibt Status des Debugflags zurueck.
+        @return Status des Debugflags"""
+        return self._debug
+
     def _get_ioerrors(self):
         """Getter function.
         @return Aktuelle Anzahl gezaehlter Fehler"""
@@ -424,6 +429,11 @@ class RevPiModIO(object):
         """Getter function.
         @return Pfad des verwendeten Prozessabbilds"""
         return self._procimg
+
+    def _get_replace_io_file(self):
+        """Gibt Pfad zur verwendeten replace IO Datei aus.
+        @return Pfad zur replace IO Datei"""
+        return self._replace_io_file
 
     def _get_simulator(self):
         """Getter function.
@@ -694,7 +704,7 @@ class RevPiModIO(object):
 
                 # Optional values
                 if io._bitaddress >= 0:
-                    cp[io.name]["bitaddress"] = str(io._bitaddress)
+                    cp[io.name]["bit"] = str(io._bitaddress)
                 cp[io.name]["byteorder"] = io._byteorder
                 cp[io.name]["defaultvalue"] = str(io.defaultvalue)
                 if io.bmk != "":
@@ -822,10 +832,28 @@ class RevPiModIO(object):
         self._exit.clear()
         self._looprunning = True
 
-        # Beim Eintritt in mainloop Bytecopy erstellen
+        # Beim Eintritt in mainloop Bytecopy erstellen und prefire anhängen
         for dev in self._lst_refresh:
             with dev._filelock:
                 dev._ba_datacp = dev._ba_devdata[:]
+
+                # Prefire Events vorbereiten
+                for io in dev._dict_events:
+                    for regfunc in dev._dict_events[io]:
+                        if not regfunc.prefire:
+                            continue
+
+                        if regfunc.edge == BOTH \
+                                or regfunc.edge == RISING and io.value \
+                                or regfunc.edge == FALLING and not io.value:
+                            if regfunc.as_thread:
+                                self._imgwriter.__eventqth.put(
+                                    (regfunc, io._name, io.value), False
+                                )
+                            else:
+                                self._imgwriter._eventq.put(
+                                    (regfunc, io._name, io.value), False
+                                )
 
         # ImgWriter mit Eventüberwachung aktivieren
         self._imgwriter._collect_events(True)
@@ -1054,6 +1082,7 @@ class RevPiModIO(object):
 
         return workokay
 
+    debug = property(_get_debug)
     configrsc = property(_get_configrsc)
     cycletime = property(_get_cycletime, _set_cycletime)
     ioerrors = property(_get_ioerrors)
@@ -1061,6 +1090,7 @@ class RevPiModIO(object):
     maxioerrors = property(_get_maxioerrors, _set_maxioerrors)
     monitoring = property(_get_monitoring)
     procimg = property(_get_procimg)
+    replace_io_file = property(_get_replace_io_file)
     simulator = property(_get_simulator)
 
 
@@ -1115,20 +1145,20 @@ class RevPiModIOSelected(RevPiModIO):
 
         if len(self.device) == 0:
             if type(self) == RevPiModIODriver:
-                raise RuntimeError(
+                raise DeviceNotFoundError(
                     "could not find any given VIRTUAL devices in config"
                 )
             else:
-                raise RuntimeError(
+                raise DeviceNotFoundError(
                     "could not find any given devices in config"
                 )
         elif len(self.device) != len(self._lst_devselect):
             if type(self) == RevPiModIODriver:
-                raise RuntimeError(
+                raise DeviceNotFoundError(
                     "could not find all given VIRTUAL devices in config"
                 )
             else:
-                raise RuntimeError(
+                raise DeviceNotFoundError(
                     "could not find all given devices in config"
                 )
 
