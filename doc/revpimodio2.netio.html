@@ -18,6 +18,9 @@ Global Attributes</h3>
 Classes</h3>
 <table>
 <tr>
+<td><a style="color:#0000FF" href="#AclException">AclException</a></td>
+<td>Probleme mit Berechtigungen.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#NetFH">NetFH</a></td>
 <td>Netzwerk File Handler fuer das Prozessabbild.</td>
 </tr><tr>
@@ -37,6 +40,37 @@ Functions</h3>
 <tr><td>None</td></tr>
 </table>
 <hr /><hr />
+<a NAME="AclException" ID="AclException"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">AclException</h2>
+<p>
+Probleme mit Berechtigungen.
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+Exception
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
 <a NAME="NetFH" ID="NetFH"></a>
 <h2 style="background-color:#FFFFFF;color:#0000FF">NetFH</h2>
 <p>
@@ -54,7 +88,7 @@ Thread
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>__slots__</td></tr><tr><td>closed</td></tr><tr><td>name</td></tr><tr><td>timeout</td></tr>
+<tr><td>__slots__</td></tr><tr><td>closed</td></tr><tr><td>name</td></tr><tr><td>reconnecting</td></tr><tr><td>timeout</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -97,6 +131,9 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#NetFH.get_name">get_name</a></td>
 <td>Verbindugnsnamen zurueckgeben.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.get_reconnecting">get_reconnecting</a></td>
+<td>Interner reconnect aktiv wegen Netzwerkfehlern.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#NetFH.get_timeout">get_timeout</a></td>
 <td>Gibt aktuellen Timeout zurueck.</td>
@@ -240,6 +277,17 @@ Verbindugnsnamen zurueckgeben.
 <dt>Returns:</dt>
 <dd>
 <class 'str'> IP:PORT
+</dd>
+</dl><a NAME="NetFH.get_reconnecting" ID="NetFH.get_reconnecting"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.get_reconnecting</h3>
+<b>get_reconnecting</b>(<i></i>)
+<p>
+Interner reconnect aktiv wegen Netzwerkfehlern.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn reconnect aktiv
 </dd>
 </dl><a NAME="NetFH.get_timeout" ID="NetFH.get_timeout"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -385,7 +433,7 @@ _RevPiModIO
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>__slots__</td></tr>
+<tr><td>__slots__</td></tr><tr><td>reconnecting</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -407,6 +455,9 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiNetIO.get_jconfigrsc">get_jconfigrsc</a></td>
 <td>Laedt die piCotry Konfiguration und erstellt ein <class 'dict'>.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#RevPiNetIO.get_reconnecting">get_reconnecting</a></td>
+<td>Interner reconnect aktiv wegen Netzwerkfehlern.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiNetIO.net_cleardefaultvalues">net_cleardefaultvalues</a></td>
 <td>Loescht Defaultwerte vom PLC Slave.</td>
@@ -475,6 +526,17 @@ Laedt die piCotry Konfiguration und erstellt ein <class 'dict'>.
 <dt>Returns:</dt>
 <dd>
 <class 'dict'> der piCtory Konfiguration
+</dd>
+</dl><a NAME="RevPiNetIO.get_reconnecting" ID="RevPiNetIO.get_reconnecting"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiNetIO.get_reconnecting</h3>
+<b>get_reconnecting</b>(<i></i>)
+<p>
+Interner reconnect aktiv wegen Netzwerkfehlern.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn reconnect aktiv
 </dd>
 </dl><a NAME="RevPiNetIO.net_cleardefaultvalues" ID="RevPiNetIO.net_cleardefaultvalues"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
