@@ -5,6 +5,7 @@ __copyright__ = "Copyright (C) 2018 Sven Sager"
 __license__ = "LGPLv3"
 import socket
 import warnings
+from configparser import ConfigParser
 from json import loads as jloads
 from re import compile
 from revpimodio2 import DeviceNotFoundError
@@ -21,6 +22,8 @@ _sysexit = b'\x01EX\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
 _sysdeldirty = b'\x01EY\x00\x00\x00\x00\xFF\x00\x00\x00\x00\x00\x00\x00\x17'
 # piCtory Konfiguration laden
 _syspictory = b'\x01PI\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
+# ReplaceIO Konfiguration laden
+_sysreplaceio = b'\x01RP\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
 # Übertragene Bytes schreiben
 _sysflush = b'\x01SD\x00\x00\x00\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x17'
 
@@ -330,16 +333,45 @@ class NetFH(Thread):
             self._slavesock.send(_syspictory)
 
             byte_buff = bytearray()
-            while not self.__sockend:
-                data = self._slavesock.recv(1024)
+            zero_byte = 0
+            while not self.__sockend and zero_byte < 100:
+                data = self._slavesock.recv(128)
+                if data == b'':
+                    zero_byte += 1
 
                 byte_buff += data
                 if data.find(b'\x04') >= 0:
                     # NOTE: Nur suchen oder Ende prüfen?
-                    return byte_buff[:-1]
+                    return bytes(byte_buff[:-1])
 
             self.__sockerr.set()
             raise IOError("readpictory error on network")
+
+            self.__trigger = True
+
+    def readreplaceio(self):
+        """Ruft die replace_io Konfiguration ab.
+        @return <class 'bytes'> replace_io_file"""
+        if self.__sockend:
+            raise ValueError("read of closed file")
+
+        with self.__socklock:
+            self._slavesock.send(_sysreplaceio)
+
+            byte_buff = bytearray()
+            zero_byte = 0
+            while not self.__sockend and zero_byte < 100:
+                data = self._slavesock.recv(128)
+                if data == b'':
+                    zero_byte += 1
+
+                byte_buff += data
+                if data.find(b'\x04') >= 0:
+                    # NOTE: Nur suchen oder Ende prüfen?
+                    return bytes(byte_buff[:-1])
+
+            self.__sockerr.set()
+            raise IOError("readreplaceio error on network")
 
             self.__trigger = True
 
@@ -543,14 +575,14 @@ class RevPiNetIO(_RevPiModIO):
 
         # Vererben
         super().__init__(
-            autorefresh,
-            monitoring,
-            syncoutputs,
-            "{0}:{1}".format(*self._address),
-            None,
-            simulator,
-            debug,
-            replace_io_file,
+            autorefresh=autorefresh,
+            monitoring=monitoring,
+            syncoutputs=syncoutputs,
+            procimg="{0}:{1}".format(*self._address),
+            configrsc=None,
+            simulator=simulator,
+            debug=debug,
+            replace_io_file=replace_io_file
             direct_output
         )
 
@@ -560,12 +592,34 @@ class RevPiNetIO(_RevPiModIO):
         # Nur Konfigurieren, wenn nicht vererbt
         if type(self) == RevPiNetIO:
             self._configure(self.get_jconfigrsc())
+            self._configure_replace_io(self._get_cpreplaceio())
 
     def _create_myfh(self):
         """Erstellt NetworkFileObject.
         return FileObject"""
         self._buffedwrite = True
         return NetFH(self._address)
+
+    def _get_cpreplaceio(self):
+        """Laed die replace_io Konfiguration ueber das Netzwerk.
+        @return <class 'ConfigParser'> der replace io daten"""
+
+        # Normale Verwendung über Elternklasse erledigen
+        if self._replace_io_file != ":network:":
+            return super()._get_cpreplaceio()
+
+        # Replace IO Daten über das Netzwerk beziehen
+        byte_buff = self._myfh.readreplaceio()
+
+        cp = ConfigParser()
+        try:
+            cp.read_string(byte_buff.decode("utf-8"))
+        except Exception as e:
+            raise RuntimeError(
+                "replace_io_file: could not read/parse network data | {0}"
+                "".format(e)
+            )
+        return cp
 
     def disconnect(self):
         """Trennt Verbindungen und beendet autorefresh inkl. alle Threads."""
@@ -695,6 +749,7 @@ class RevPiNetIOSelected(RevPiNetIO):
                 )
 
         self._configure(self.get_jconfigrsc())
+        self._configure_replace_io(self._get_cpreplaceio())
 
         if len(self.device) == 0:
             if type(self) == RevPiNetIODriver:

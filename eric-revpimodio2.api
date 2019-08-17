@@ -142,9 +142,10 @@ revpimodio2.io.StructIO.signed?7
 revpimodio2.io.StructIO.value?7
 revpimodio2.io.StructIO?1(parentio, name, frm, **kwargs)
 revpimodio2.modio.RevPiModIO._configure?5(jconfigrsc)
-revpimodio2.modio.RevPiModIO._configure_replace_io?5()
+revpimodio2.modio.RevPiModIO._configure_replace_io?5(creplaceio)
 revpimodio2.modio.RevPiModIO._create_myfh?5()
 revpimodio2.modio.RevPiModIO._get_configrsc?5()
+revpimodio2.modio.RevPiModIO._get_cpreplaceio?5()
 revpimodio2.modio.RevPiModIO._get_cycletime?5()
 revpimodio2.modio.RevPiModIO._get_debug?5()
 revpimodio2.modio.RevPiModIO._get_ioerrors?5()
@@ -197,6 +198,7 @@ revpimodio2.netio.NetFH.ioctl?4(request, arg=b'')
 revpimodio2.netio.NetFH.name?7
 revpimodio2.netio.NetFH.read?4(length)
 revpimodio2.netio.NetFH.readpictory?4()
+revpimodio2.netio.NetFH.readreplaceio?4()
 revpimodio2.netio.NetFH.run?4()
 revpimodio2.netio.NetFH.seek?4(position)
 revpimodio2.netio.NetFH.set_dirtybytes?4(position, dirtybytes)
@@ -206,6 +208,7 @@ revpimodio2.netio.NetFH.timeout?7
 revpimodio2.netio.NetFH.write?4(bytebuff)
 revpimodio2.netio.NetFH?1(address, timeout=500)
 revpimodio2.netio.RevPiNetIO._create_myfh?5()
+revpimodio2.netio.RevPiNetIO._get_cpreplaceio?5()
 revpimodio2.netio.RevPiNetIO.disconnect?4()
 revpimodio2.netio.RevPiNetIO.get_jconfigrsc?4()
 revpimodio2.netio.RevPiNetIO.net_cleardefaultvalues?4(device=None)
@@ -217,5 +220,6 @@ revpimodio2.netio._sysdeldirty?8
 revpimodio2.netio._sysexit?8
 revpimodio2.netio._sysflush?8
 revpimodio2.netio._syspictory?8
+revpimodio2.netio._sysreplaceio?8
 revpimodio2.netio._syssync?8
 revpimodio2.summary.Summary?1(summary)
