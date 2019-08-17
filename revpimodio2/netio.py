@@ -380,7 +380,7 @@ class NetFH(Thread):
     def readreplaceio(self):
         """Ruft die replace_io Konfiguration ab.
         @return <class 'bytes'> replace_io_file"""
-        if self.__sockend:
+        if self.__sockend.is_set():
             raise ValueError("read of closed file")
 
         with self.__socklock:
@@ -388,20 +388,20 @@ class NetFH(Thread):
 
             byte_buff = bytearray()
             zero_byte = 0
-            while not self.__sockend and zero_byte < 100:
+            while not self.__sockend.is_set() and zero_byte < 100:
                 data = self._slavesock.recv(128)
                 if data == b'':
                     zero_byte += 1
 
                 byte_buff += data
                 if data.find(b'\x04') >= 0:
+                    self.__trigger = True
+
                     # NOTE: Nur suchen oder Ende prüfen?
                     return bytes(byte_buff[:-1])
 
             self.__sockerr.set()
             raise IOError("readreplaceio error on network")
-
-            self.__trigger = True
 
     def run(self):
         """Handler fuer Synchronisierung."""

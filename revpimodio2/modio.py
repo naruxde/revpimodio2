@@ -687,7 +687,7 @@ class RevPiModIO(object):
                 if not self._monitoring:
                     self.writeprocimg(dev)
 
-    def export_replaced_ios(self, filename):
+    def export_replaced_ios(self, filename="replace_ios.conf"):
         """Exportiert ersetzte IOs dieser Instanz.
 
         Exportiert alle ersetzten IOs, welche mit .replace_io(...) angelegt
