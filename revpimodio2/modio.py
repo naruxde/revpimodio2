@@ -37,7 +37,7 @@ class RevPiModIO(object):
         "_maxioerrors", "_myfh", "_myfh_lck", "_monitoring", "_procimg", \
         "_simulator", "_syncoutputs", "_th_mainloop", "_waitexit", \
         "core", "app", "device", "exitsignal", "io", "summary", "_debug", \
-        "_lck_replace_io", "_replace_io_file", "_run_on_pi"
+        "_replace_io_file", "_run_on_pi"
 
     def __init__(
             self, autorefresh=False, monitoring=False, syncoutputs=True,
@@ -85,7 +85,6 @@ class RevPiModIO(object):
         self._imgwriter = None
         self._ioerror = 0
         self._length = 0
-        self._lck_replace_io = False
         self._looprunning = False
         self._lst_devselect = []
         self._lst_refresh = []
@@ -308,8 +307,6 @@ class RevPiModIO(object):
         @param ireplaceio: Data to replace ios as <class 'ConfigParser'>
 
         """
-        need_replace_lock = False
-
         for io in creplaceio:
             if io == "DEFAULT":
                 continue
@@ -365,15 +362,11 @@ class RevPiModIO(object):
             # IO ersetzen
             try:
                 self.io[parentio].replace_io(name=io, **dict_replace)
-                need_replace_lock = True
             except Exception as e:
                 raise RuntimeError(
                     "replace_io_file: can not replace '{0}' with '{1}' "
                     "| RevPiModIO message: {2}".format(parentio, io, e)
                 )
-
-        # Sperre für weiter .replace_io Aufrufe setzen
-        self._lck_replace_io = need_replace_lock
 
     def _create_myfh(self):
         """Erstellt FileObject mit Pfad zum procimg.

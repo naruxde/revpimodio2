@@ -582,8 +582,8 @@ class RevPiNetIO(_RevPiModIO):
             configrsc=None,
             simulator=simulator,
             debug=debug,
-            replace_io_file=replace_io_file
-            direct_output
+            replace_io_file=replace_io_file,
+            direct_output=direct_output,
         )
 
         # Netzwerkfilehandler anlegen
