@@ -86,6 +86,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#RevPiModIO._get_configrsc">_get_configrsc</a></td>
 <td>Getter function.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#RevPiModIO._get_cpreplaceio">_get_cpreplaceio</a></td>
+<td>Laed die replace_io_file Konfiguration und verarbeitet sie.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#RevPiModIO._get_cycletime">_get_cycletime</a></td>
 <td>Gibt Aktualisierungsrate in ms der Prozessabbildsynchronisierung aus.</td>
 </tr><tr>
@@ -231,19 +234,27 @@ RevPiModIO._configure</h3>
 <b>_configure</b>(<i>jconfigrsc</i>)
 <p>
 Verarbeitet die piCtory Konfigurationsdatei.
-</p><a NAME="RevPiModIO._configure_replace_io" ID="RevPiModIO._configure_replace_io"></a>
+</p><dl>
+<dt><i>jconfigrsc:</i></dt>
+<dd>
+Data to build IOs as <class 'dict'> of JSON
+</dd>
+</dl><a NAME="RevPiModIO._configure_replace_io" ID="RevPiModIO._configure_replace_io"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO._configure_replace_io</h3>
-<b>_configure_replace_io</b>(<i></i>)
+<b>_configure_replace_io</b>(<i>creplaceio</i>)
 <p>
 Importiert ersetzte IOs in diese Instanz.
 </p><p>
         Importiert ersetzte IOs, welche vorher mit .export_replaced_ios(...)
         in eine Datei exportiert worden sind. Diese IOs werden in dieser
         Instanz wiederhergestellt.
-</p><p>
-
-</p><a NAME="RevPiModIO._create_myfh" ID="RevPiModIO._create_myfh"></a>
+</p><dl>
+<dt><i>ireplaceio:</i></dt>
+<dd>
+Data to replace ios as <class 'ConfigParser'>
+</dd>
+</dl><a NAME="RevPiModIO._create_myfh" ID="RevPiModIO._create_myfh"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO._create_myfh</h3>
 <b>_create_myfh</b>(<i></i>)
@@ -260,6 +271,17 @@ Getter function.
 <dt>Returns:</dt>
 <dd>
 Pfad der verwendeten piCtory Konfiguration
+</dd>
+</dl><a NAME="RevPiModIO._get_cpreplaceio" ID="RevPiModIO._get_cpreplaceio"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiModIO._get_cpreplaceio</h3>
+<b>_get_cpreplaceio</b>(<i></i>)
+<p>
+Laed die replace_io_file Konfiguration und verarbeitet sie.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+<class 'ConfigParser'> der replace io daten
 </dd>
 </dl><a NAME="RevPiModIO._get_cycletime" ID="RevPiModIO._get_cycletime"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
