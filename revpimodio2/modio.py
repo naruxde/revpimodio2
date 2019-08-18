@@ -317,7 +317,20 @@ class RevPiModIO(object):
             # Funktionsaufruf vorbereiten
             dict_replace = {
                 "frm": creplaceio[io].get("frm"),
+                "byteorder": creplaceio[io].get("byteorder", "little"),
+                "bmk": creplaceio[io].get("bmk", ""),
             }
+
+            # Get bitaddress from config file
+            if "bit" in creplaceio[io]:
+                try:
+                    dict_replace["bit"] = creplaceio[io].getint("bit")
+                except Exception:
+                    raise ValueError(
+                        "replace_io_file: could not convert '{0}' "
+                        "bit '{1}' to integer"
+                        "".format(io, creplaceio[io]["bit"])
+                    )
 
             # Convert defaultvalue from config file
             if "defaultvalue" in creplaceio[io]:
@@ -329,7 +342,7 @@ class RevPiModIO(object):
                         raise ValueError(
                             "replace_io_file: could not convert '{0}' "
                             "defaultvalue '{1}' to boolean"
-                            "".format(io, creplaceio[io].get("defaultvalue"))
+                            "".format(io, creplaceio[io]["defaultvalue"])
                         )
                 else:
                     try:
@@ -339,25 +352,8 @@ class RevPiModIO(object):
                         raise ValueError(
                             "replace_io_file: could not convert '{0}' "
                             "defaultvalue '{1}' to integer"
-                            "".format(io, creplaceio[io].get("bit"))
+                            "".format(io, creplaceio[io]["defaultvalue"])
                         )
-
-            # Get bitaddress from config file
-            if "bit" in creplaceio[io]:
-                try:
-                    dict_replace["bit"] = creplaceio[io].getint("bit", 0)
-                except Exception:
-                    raise ValueError(
-                        "replace_io_file: could not convert '{0}' "
-                        "bit '{1}' to integer"
-                        "".format(io, creplaceio[io].get("bit"))
-                    )
-
-            # Sonstige Werte laden, wenn vorhanden
-            if "bmk" in creplaceio[io]:
-                dict_replace["bmk"] = creplaceio[io].get("bmk")
-            if "byteorder" in creplaceio[io]:
-                dict_replace["byteorder"] = creplaceio[io].get("byteorder")
 
             # IO ersetzen
             try:
@@ -710,8 +706,10 @@ class RevPiModIO(object):
                 # Optional values
                 if io._bitaddress >= 0:
                     cp[io.name]["bit"] = str(io._bitaddress)
-                cp[io.name]["byteorder"] = io._byteorder
-                cp[io.name]["defaultvalue"] = str(io.defaultvalue)
+                if io._byteorder != "little":
+                    cp[io.name]["byteorder"] = io._byteorder
+                if io.defaultvalue != 0:
+                    cp[io.name]["defaultvalue"] = str(io.defaultvalue)
                 if io.bmk != "":
                     cp[io.name]["bmk"] = io.bmk
 
