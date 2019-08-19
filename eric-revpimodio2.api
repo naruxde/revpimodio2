@@ -208,7 +208,7 @@ revpimodio2.netio.NetFH.set_timeout?4(value)
 revpimodio2.netio.NetFH.tell?4()
 revpimodio2.netio.NetFH.timeout?7
 revpimodio2.netio.NetFH.write?4(bytebuff)
-revpimodio2.netio.NetFH?1(address, timeout=500)
+revpimodio2.netio.NetFH?1(address, check_replace_ios, timeout=500)
 revpimodio2.netio.RevPiNetIO._create_myfh?5()
 revpimodio2.netio.RevPiNetIO._get_cpreplaceio?5()
 revpimodio2.netio.RevPiNetIO.disconnect?4()

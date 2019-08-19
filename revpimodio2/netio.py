@@ -54,20 +54,25 @@ class NetFH(Thread):
 
     """
 
-    __slots__ = "__by_buff", "__int_buff", "__dictdirty", "__flusherr", \
-        "__position", "__sockact", "__sockerr", "__sockend", "__socklock", \
-        "__timeout", "__trigger", "__waitsync", \
-        "_address", "_slavesock", \
-        "daemon"
+    __slots__ = "__by_buff", "__check_replace_ios", "__config_changed", \
+        "__int_buff", "__dictdirty", "__flusherr", "__replace_ios_h", \
+        "__pictory_h",  "__position", "__sockact", "__sockerr", "__sockend", \
+        "__socklock", "__timeout", "__trigger", "__waitsync", "_address", \
+        "_slavesock", "daemon"
 
-    def __init__(self, address, timeout=500):
+    def __init__(self, address, check_replace_ios, timeout=500):
         """Init NetFH-class.
+
         @param address IP Adresse, Port des RevPi als <class 'tuple'>
-        @param timeout Timeout in Millisekunden der Verbindung"""
+        @param check_replace_ios Prueft auf veraenderungen der Datei
+        @param timeout Timeout in Millisekunden der Verbindung
+
+        """
         super().__init__()
         self.daemon = True
 
         self.__by_buff = b''
+        self.__check_replace_ios = check_replace_ios
         self.__config_changed = False
         self.__int_buff = 0
         self.__dictdirty = {}
@@ -148,14 +153,18 @@ class NetFH(Thread):
             so.connect(self._address)
 
             # Hashwerte anfordern
-            so.sendall(_syspictoryh + _sysreplaceioh)
+            recv_len = 16
+            so.sendall(_syspictoryh)
+            if self.__check_replace_ios:
+                so.sendall(_sysreplaceioh)
+                recv_len += 16
 
             # Hashwerte empfangen
             byte_buff = bytearray()
             zero_byte = 0
             while not self.__sockend.is_set() and zero_byte < 100 \
-                    and len(byte_buff) < 32:
-                data = so.recv(32)
+                    and len(byte_buff) < recv_len:
+                data = so.recv(recv_len)
                 if data == b'':
                     zero_byte += 1
                 byte_buff += data
@@ -170,7 +179,8 @@ class NetFH(Thread):
                 self.__pictory_h = byte_buff[:16]
 
             # Änderung an replace_ios prüfen
-            if self.__replace_ios_h and byte_buff[16:] != self.__replace_ios_h:
+            if self.__check_replace_ios and self.__replace_ios_h \
+                    and byte_buff[16:] != self.__replace_ios_h:
                 self.__config_changed = True
                 self.close()
                 raise ConfigChanged(
@@ -710,7 +720,7 @@ class RevPiNetIO(_RevPiModIO):
         """Erstellt NetworkFileObject.
         return FileObject"""
         self._buffedwrite = True
-        return NetFH(self._address)
+        return NetFH(self._address, self._replace_io_file == ":network:")
 
     def _get_cpreplaceio(self):
         """Laed die replace_io Konfiguration ueber das Netzwerk.
@@ -748,7 +758,7 @@ class RevPiNetIO(_RevPiModIO):
     def get_jconfigrsc(self):
         """Laedt die piCotry Konfiguration und erstellt ein <class 'dict'>.
         @return <class 'dict'> der piCtory Konfiguration"""
-        mynh = NetFH(self._address)
+        mynh = NetFH(self._address, False)
         byte_buff = mynh.readpictory()
         mynh.close()
         return jloads(byte_buff.decode("utf-8"))
