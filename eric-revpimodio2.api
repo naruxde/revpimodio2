@@ -212,6 +212,7 @@ revpimodio2.netio.NetFH?1(address, timeout=500)
 revpimodio2.netio.RevPiNetIO._create_myfh?5()
 revpimodio2.netio.RevPiNetIO._get_cpreplaceio?5()
 revpimodio2.netio.RevPiNetIO.disconnect?4()
+revpimodio2.netio.RevPiNetIO.exit?4(full=True)
 revpimodio2.netio.RevPiNetIO.get_jconfigrsc?4()
 revpimodio2.netio.RevPiNetIO.get_reconnecting?4()
 revpimodio2.netio.RevPiNetIO.net_cleardefaultvalues?4(device=None)
@@ -224,6 +225,8 @@ revpimodio2.netio._sysdeldirty?8
 revpimodio2.netio._sysexit?8
 revpimodio2.netio._sysflush?8
 revpimodio2.netio._syspictory?8
+revpimodio2.netio._syspictoryh?8
 revpimodio2.netio._sysreplaceio?8
+revpimodio2.netio._sysreplaceioh?8
 revpimodio2.netio._syssync?8
 revpimodio2.summary.Summary?1(summary)

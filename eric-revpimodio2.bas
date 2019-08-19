@@ -1,5 +1,6 @@
 AclException Exception
 Base Device
+ConfigChanged Exception
 Connect Core
 Core Base
 DeviceNotFoundError Exception

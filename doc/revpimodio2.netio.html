@@ -12,7 +12,7 @@ RevPiModIO Hauptklasse fuer Netzwerkzugriff.
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Global Attributes</h3>
 <table>
-<tr><td>__author__</td></tr><tr><td>__copyright__</td></tr><tr><td>__license__</td></tr><tr><td>_sysdeldirty</td></tr><tr><td>_sysexit</td></tr><tr><td>_sysflush</td></tr><tr><td>_syspictory</td></tr><tr><td>_sysreplaceio</td></tr><tr><td>_syssync</td></tr>
+<tr><td>__author__</td></tr><tr><td>__copyright__</td></tr><tr><td>__license__</td></tr><tr><td>_sysdeldirty</td></tr><tr><td>_sysexit</td></tr><tr><td>_sysflush</td></tr><tr><td>_syspictory</td></tr><tr><td>_syspictoryh</td></tr><tr><td>_sysreplaceio</td></tr><tr><td>_sysreplaceioh</td></tr><tr><td>_syssync</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Classes</h3>
@@ -20,6 +20,9 @@ Classes</h3>
 <tr>
 <td><a style="color:#0000FF" href="#AclException">AclException</a></td>
 <td>Probleme mit Berechtigungen.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#ConfigChanged">ConfigChanged</a></td>
+<td>Aenderung der piCtory oder replace_ios Datei.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#NetFH">NetFH</a></td>
 <td>Netzwerk File Handler fuer das Prozessabbild.</td>
@@ -44,6 +47,37 @@ Functions</h3>
 <h2 style="background-color:#FFFFFF;color:#0000FF">AclException</h2>
 <p>
 Probleme mit Berechtigungen.
+</p>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Derived from</h3>
+Exception
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Attributes</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Class Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Static Methods</h3>
+<table>
+<tr><td>None</td></tr>
+</table>
+
+<div align="right"><a style="color:#0000FF" href="#top">Up</a></div>
+<hr /><hr />
+<a NAME="ConfigChanged" ID="ConfigChanged"></a>
+<h2 style="background-color:#FFFFFF;color:#0000FF">ConfigChanged</h2>
+<p>
+Aenderung der piCtory oder replace_ios Datei.
 </p>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Derived from</h3>
@@ -470,6 +504,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#RevPiNetIO.disconnect">disconnect</a></td>
 <td>Trennt Verbindungen und beendet autorefresh inkl.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#RevPiNetIO.exit">exit</a></td>
+<td>Beendet mainloop() und optional autorefresh.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#RevPiNetIO.get_jconfigrsc">get_jconfigrsc</a></td>
 <td>Laedt die piCotry Konfiguration und erstellt ein <class 'dict'>.</td>
 </tr><tr>
@@ -544,7 +581,18 @@ RevPiNetIO.disconnect</h3>
 <b>disconnect</b>(<i></i>)
 <p>
 Trennt Verbindungen und beendet autorefresh inkl. alle Threads.
-</p><a NAME="RevPiNetIO.get_jconfigrsc" ID="RevPiNetIO.get_jconfigrsc"></a>
+</p><a NAME="RevPiNetIO.exit" ID="RevPiNetIO.exit"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiNetIO.exit</h3>
+<b>exit</b>(<i>full=True</i>)
+<p>
+Beendet mainloop() und optional autorefresh.
+</p><dl>
+<dt><b>See Also:</b></dt>
+<dd>
+<a style="color:#0000FF" href="#RevPiModIO.exit(...)">#RevPiModIO.exit(...)</a>
+</dd>
+</dl><a NAME="RevPiNetIO.get_jconfigrsc" ID="RevPiNetIO.get_jconfigrsc"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiNetIO.get_jconfigrsc</h3>
 <b>get_jconfigrsc</b>(<i></i>)

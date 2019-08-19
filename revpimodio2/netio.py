@@ -22,8 +22,10 @@ _sysexit = b'\x01EX\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
 _sysdeldirty = b'\x01EY\x00\x00\x00\x00\xFF\x00\x00\x00\x00\x00\x00\x00\x17'
 # piCtory Konfiguration laden
 _syspictory = b'\x01PI\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
+_syspictoryh = b'\x01PH\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
 # ReplaceIO Konfiguration laden
 _sysreplaceio = b'\x01RP\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
+_sysreplaceioh = b'\x01RH\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
 # Übertragene Bytes schreiben
 _sysflush = b'\x01SD\x00\x00\x00\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x17'
 
@@ -31,6 +33,13 @@ _sysflush = b'\x01SD\x00\x00\x00\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x17'
 class AclException(Exception):
 
     """Probleme mit Berechtigungen."""
+
+    pass
+
+
+class ConfigChanged(Exception):
+
+    """Aenderung der piCtory oder replace_ios Datei."""
 
     pass
 
@@ -59,9 +68,12 @@ class NetFH(Thread):
         self.daemon = True
 
         self.__by_buff = b''
+        self.__config_changed = False
         self.__int_buff = 0
         self.__dictdirty = {}
         self.__flusherr = False
+        self.__replace_ios_h = b''
+        self.__pictory_h = b''
         self.__sockact = False
         self.__sockerr = Event()
         self.__sockend = Event()
@@ -134,6 +146,37 @@ class NetFH(Thread):
         so = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             so.connect(self._address)
+
+            # Hashwerte anfordern
+            so.sendall(_syspictoryh + _sysreplaceioh)
+
+            # Hashwerte empfangen
+            byte_buff = bytearray()
+            zero_byte = 0
+            while not self.__sockend.is_set() and zero_byte < 100 \
+                    and len(byte_buff) < 32:
+                data = so.recv(32)
+                if data == b'':
+                    zero_byte += 1
+                byte_buff += data
+
+            # Änderung an piCtory prüfen
+            if self.__pictory_h and byte_buff[:16] != self.__pictory_h:
+                self.__config_changed = True
+                self.close()
+                raise ConfigChanged(
+                    "configuration on revolution pi was changed")
+            else:
+                self.__pictory_h = byte_buff[:16]
+
+            # Änderung an replace_ios prüfen
+            if self.__replace_ios_h and byte_buff[16:] != self.__replace_ios_h:
+                self.__config_changed = True
+                self.close()
+                raise ConfigChanged(
+                    "configuration on revolution pi was changed")
+            else:
+                self.__replace_ios_h = byte_buff[16:]
         except Exception:
             so.close()
         else:
@@ -174,6 +217,10 @@ class NetFH(Thread):
     def clear_dirtybytes(self, position=None):
         """Entfernt die konfigurierten Dirtybytes vom RevPi Slave.
         @param position Startposition der Dirtybytes"""
+        if self.__config_changed:
+            raise ConfigChanged(
+                "configuration on revolution pi was changed"
+            )
         if self.__sockend.is_set():
             raise ValueError("I/O operation on closed file")
 
@@ -243,6 +290,10 @@ class NetFH(Thread):
 
     def flush(self):
         """Schreibpuffer senden."""
+        if self.__config_changed:
+            raise ConfigChanged(
+                "configuration on revolution pi was changed"
+            )
         if self.__sockend.is_set():
             raise ValueError("flush of closed file")
 
@@ -295,6 +346,8 @@ class NetFH(Thread):
         """IOCTL Befehle ueber das Netzwerk senden.
         @param request Request as <class 'int'>
         @param arg Argument as <class 'byte'>"""
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
         if self.__sockend.is_set():
             raise ValueError("read of closed file")
 
@@ -326,6 +379,8 @@ class NetFH(Thread):
         """Daten ueber das Netzwerk lesen.
         @param length Anzahl der Bytes
         @return Gelesene <class 'bytes'>"""
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
         if self.__sockend.is_set():
             raise ValueError("read of closed file")
 
@@ -443,6 +498,8 @@ class NetFH(Thread):
     def seek(self, position):
         """Springt an angegebene Position.
         @param position An diese Position springen"""
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
         if self.__sockend.is_set():
             raise ValueError("seek of closed file")
         self.__position = int(position)
@@ -451,6 +508,8 @@ class NetFH(Thread):
         """Konfiguriert Dirtybytes fuer Prozessabbild bei Verbindungsfehler.
         @param positon Startposition zum Schreiben
         @param dirtybytes <class 'bytes'> die geschrieben werden sollen"""
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
         if self.__sockend.is_set():
             raise ValueError("I/O operation on closed file")
 
@@ -519,6 +578,8 @@ class NetFH(Thread):
     def tell(self):
         """Gibt aktuelle Position zurueck.
         @return int aktuelle Position"""
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
         if self.__sockend.is_set():
             raise ValueError("I/O operation on closed file")
         return self.__position
@@ -527,6 +588,8 @@ class NetFH(Thread):
         """Daten ueber das Netzwerk schreiben.
         @param bytebuff Bytes zum schreiben
         @return <class 'int'> Anzahl geschriebener bytes"""
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
         if self.__sockend.is_set():
             raise ValueError("write to closed file")
 
@@ -673,6 +736,14 @@ class RevPiNetIO(_RevPiModIO):
     def disconnect(self):
         """Trennt Verbindungen und beendet autorefresh inkl. alle Threads."""
         self.cleanup()
+
+    def exit(self, full=True):
+        """Beendet mainloop() und optional autorefresh.
+        @see #RevPiModIO.exit(...)"""
+        try:
+            super().exit(full)
+        except ConfigChanged:
+            pass
 
     def get_jconfigrsc(self):
         """Laedt die piCotry Konfiguration und erstellt ein <class 'dict'>.
