@@ -187,6 +187,9 @@ class NetFH(Thread):
                     "configuration on revolution pi was changed")
             else:
                 self.__replace_ios_h = byte_buff[16:]
+        except ConfigChanged:
+            so.close()
+            raise
         except Exception:
             so.close()
         else:
@@ -228,9 +231,7 @@ class NetFH(Thread):
         """Entfernt die konfigurierten Dirtybytes vom RevPi Slave.
         @param position Startposition der Dirtybytes"""
         if self.__config_changed:
-            raise ConfigChanged(
-                "configuration on revolution pi was changed"
-            )
+            raise ConfigChanged("configuration on revolution pi was changed")
         if self.__sockend.is_set():
             raise ValueError("I/O operation on closed file")
 
@@ -301,9 +302,7 @@ class NetFH(Thread):
     def flush(self):
         """Schreibpuffer senden."""
         if self.__config_changed:
-            raise ConfigChanged(
-                "configuration on revolution pi was changed"
-            )
+            raise ConfigChanged("configuration on revolution pi was changed")
         if self.__sockend.is_set():
             raise ValueError("flush of closed file")
 
@@ -336,6 +335,11 @@ class NetFH(Thread):
         """Pruefen ob Verbindung geschlossen ist.
         @return True, wenn Verbindung geschlossen ist"""
         return self.__sockend.is_set()
+
+    def get_config_changed(self):
+        """Pruefen ob RevPi Konfiguration geaendert wurde.
+        @return True, wenn RevPi Konfiguration geaendert ist"""
+        return self.__config_changed
 
     def get_name(self):
         """Verbindugnsnamen zurueckgeben.
@@ -621,6 +625,7 @@ class NetFH(Thread):
         return len(bytebuff)
 
     closed = property(get_closed)
+    config_changed = property(get_config_changed)
     name = property(get_name)
     reconnecting = property(get_reconnecting)
     timeout = property(get_timeout, set_timeout)
@@ -755,6 +760,15 @@ class RevPiNetIO(_RevPiModIO):
         except ConfigChanged:
             pass
 
+    def get_config_changed(self):
+        """Pruefen ob RevPi Konfiguration geaendert wurde.
+
+        In diesem Fall ist die Verbindung geschlossen und RevPiNetIO muss
+        neu instanziert werden.
+
+        @return True, wenn RevPi Konfiguration geaendert ist"""
+        return self._myfh.config_changed
+
     def get_jconfigrsc(self):
         """Laedt die piCotry Konfiguration und erstellt ein <class 'dict'>.
         @return <class 'dict'> der piCtory Konfiguration"""
@@ -765,6 +779,10 @@ class RevPiNetIO(_RevPiModIO):
 
     def get_reconnecting(self):
         """Interner reconnect aktiv wegen Netzwerkfehlern.
+
+        Das Modul versucht intern die Verbindung neu herzustellen. Es ist
+        kein weiteres Zutun noetig.
+
         @return True, wenn reconnect aktiv"""
         return self._myfh.reconnecting
 
@@ -835,6 +853,7 @@ class RevPiNetIO(_RevPiModIO):
                 dev._offset + dev._slc_out.start, dirtybytes
             )
 
+    config_changed = property(get_config_changed)
     reconnecting = property(get_reconnecting)
 
 

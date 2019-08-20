@@ -122,7 +122,7 @@ Thread
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>__slots__</td></tr><tr><td>closed</td></tr><tr><td>name</td></tr><tr><td>reconnecting</td></tr><tr><td>timeout</td></tr>
+<tr><td>__slots__</td></tr><tr><td>closed</td></tr><tr><td>config_changed</td></tr><tr><td>name</td></tr><tr><td>reconnecting</td></tr><tr><td>timeout</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -162,6 +162,9 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#NetFH.get_closed">get_closed</a></td>
 <td>Pruefen ob Verbindung geschlossen ist.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#NetFH.get_config_changed">get_config_changed</a></td>
+<td>Pruefen ob RevPi Konfiguration geaendert wurde.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#NetFH.get_name">get_name</a></td>
 <td>Verbindugnsnamen zurueckgeben.</td>
@@ -306,6 +309,17 @@ Pruefen ob Verbindung geschlossen ist.
 <dt>Returns:</dt>
 <dd>
 True, wenn Verbindung geschlossen ist
+</dd>
+</dl><a NAME="NetFH.get_config_changed" ID="NetFH.get_config_changed"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+NetFH.get_config_changed</h3>
+<b>get_config_changed</b>(<i></i>)
+<p>
+Pruefen ob RevPi Konfiguration geaendert wurde.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn RevPi Konfiguration geaendert ist
 </dd>
 </dl><a NAME="NetFH.get_name" ID="NetFH.get_name"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -484,7 +498,7 @@ _RevPiModIO
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Attributes</h3>
 <table>
-<tr><td>__slots__</td></tr><tr><td>reconnecting</td></tr>
+<tr><td>__slots__</td></tr><tr><td>config_changed</td></tr><tr><td>reconnecting</td></tr>
 </table>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Class Methods</h3>
@@ -509,6 +523,9 @@ Methods</h3>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiNetIO.exit">exit</a></td>
 <td>Beendet mainloop() und optional autorefresh.</td>
+</tr><tr>
+<td><a style="color:#0000FF" href="#RevPiNetIO.get_config_changed">get_config_changed</a></td>
+<td>Pruefen ob RevPi Konfiguration geaendert wurde.</td>
 </tr><tr>
 <td><a style="color:#0000FF" href="#RevPiNetIO.get_jconfigrsc">get_jconfigrsc</a></td>
 <td>Laedt die piCotry Konfiguration und erstellt ein <class 'dict'>.</td>
@@ -595,6 +612,20 @@ Beendet mainloop() und optional autorefresh.
 <dd>
 <a style="color:#0000FF" href="#RevPiModIO.exit(...)">#RevPiModIO.exit(...)</a>
 </dd>
+</dl><a NAME="RevPiNetIO.get_config_changed" ID="RevPiNetIO.get_config_changed"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+RevPiNetIO.get_config_changed</h3>
+<b>get_config_changed</b>(<i></i>)
+<p>
+Pruefen ob RevPi Konfiguration geaendert wurde.
+</p><p>
+        In diesem Fall ist die Verbindung geschlossen und RevPiNetIO muss
+        neu instanziert werden.
+</p><dl>
+<dt>Returns:</dt>
+<dd>
+True, wenn RevPi Konfiguration geaendert ist
+</dd>
 </dl><a NAME="RevPiNetIO.get_jconfigrsc" ID="RevPiNetIO.get_jconfigrsc"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiNetIO.get_jconfigrsc</h3>
@@ -612,6 +643,9 @@ RevPiNetIO.get_reconnecting</h3>
 <b>get_reconnecting</b>(<i></i>)
 <p>
 Interner reconnect aktiv wegen Netzwerkfehlern.
+</p><p>
+        Das Modul versucht intern die Verbindung neu herzustellen. Es ist
+        kein weiteres Zutun noetig.
 </p><dl>
 <dt>Returns:</dt>
 <dd>

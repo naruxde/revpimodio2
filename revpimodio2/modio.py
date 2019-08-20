@@ -850,7 +850,7 @@ class RevPiModIO(object):
                                 or regfunc.edge == RISING and io.value \
                                 or regfunc.edge == FALLING and not io.value:
                             if regfunc.as_thread:
-                                self._imgwriter.__eventqth.put(
+                                self._imgwriter._eventqth.put(
                                     (regfunc, io._name, io.value), False
                                 )
                             else:
