@@ -359,10 +359,12 @@ class RevPiModIO(object):
             try:
                 self.io[parentio].replace_io(name=io, **dict_replace)
             except Exception as e:
-                raise RuntimeError(
-                    "replace_io_file: can not replace '{0}' with '{1}' "
-                    "| RevPiModIO message: {2}".format(parentio, io, e)
-                )
+                # NOTE: Bei Selected/Driver kann nicht geprüft werden
+                if len(self._lst_devselect) == 0:
+                    raise RuntimeError(
+                        "replace_io_file: can not replace '{0}' with '{1}' "
+                        "| RevPiModIO message: {2}".format(parentio, io, e)
+                    )
 
     def _create_myfh(self):
         """Erstellt FileObject mit Pfad zum procimg.

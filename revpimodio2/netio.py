@@ -28,6 +28,8 @@ _sysreplaceio = b'\x01RP\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
 _sysreplaceioh = b'\x01RH\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
 # Übertragene Bytes schreiben
 _sysflush = b'\x01SD\x00\x00\x00\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x17'
+# Hashvalues
+HASH_FAIL = b'\xff' * 16
 
 
 class AclException(Exception):
@@ -451,6 +453,11 @@ class NetFH(Thread):
         @return <class 'bytes'> replace_io_file"""
         if self.__sockend.is_set():
             raise ValueError("read of closed file")
+
+        if self.__replace_ios_h == HASH_FAIL:
+            raise RuntimeError(
+                "replace_io_file: could not read/parse over network"
+            )
 
         with self.__socklock:
             self._slavesock.send(_sysreplaceio)
