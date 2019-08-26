@@ -289,7 +289,7 @@ class ProcimgWriter(Thread):
 
     """
 
-    __slots__ = "__dict_delay", "__eventth", "__eventqth", "__eventwork", \
+    __slots__ = "__dict_delay", "__eventth", "_eventqth", "__eventwork", \
         "_adjwait", "_eventq", "_ioerror", "_maxioerrors", "_modio", \
         "_refresh", "_work", "daemon", "lck_refresh", "newdata"
 
@@ -299,7 +299,7 @@ class ProcimgWriter(Thread):
         super().__init__()
         self.__dict_delay = {}
         self.__eventth = Thread(target=self.__exec_th)
-        self.__eventqth = queue.Queue()
+        self._eventqth = queue.Queue()
         self.__eventwork = False
         self._adjwait = 0
         self._eventq = queue.Queue()
@@ -340,7 +340,7 @@ class ProcimgWriter(Thread):
                             or regfunc.edge == FALLING and not boolor:
                         if regfunc.delay == 0:
                             if regfunc.as_thread:
-                                self.__eventqth.put(
+                                self._eventqth.put(
                                     (regfunc, io_event._name, io_event.value),
                                     False
                                 )
@@ -363,7 +363,7 @@ class ProcimgWriter(Thread):
                 for regfunc in dev._dict_events[io_event]:
                     if regfunc.delay == 0:
                         if regfunc.as_thread:
-                            self.__eventqth.put(
+                            self._eventqth.put(
                                 (regfunc, io_event._name, io_event.value),
                                 False
                             )
@@ -390,7 +390,7 @@ class ProcimgWriter(Thread):
         """Laeuft als Thread, der Events als Thread startet."""
         while self.__eventwork:
             try:
-                tup_fireth = self.__eventqth.get(timeout=1)
+                tup_fireth = self._eventqth.get(timeout=1)
                 th = EventCallback(
                     tup_fireth[0].func, tup_fireth[1], tup_fireth[2]
                 )
@@ -415,7 +415,7 @@ class ProcimgWriter(Thread):
                 self.__eventwork = value
                 if not value:
                     # Nur leeren beim deaktivieren
-                    self.__eventqth = queue.Queue()
+                    self._eventqth = queue.Queue()
                     self._eventq = queue.Queue()
                     self.__dict_delay = {}
 
@@ -533,7 +533,7 @@ class ProcimgWriter(Thread):
                             if self.__dict_delay[tup_fire] <= 0:
                                 # Verzögertes Event übernehmen und löschen
                                 if tup_fire[0].as_thread:
-                                    self.__eventqth.put(tup_fire, False)
+                                    self._eventqth.put(tup_fire, False)
                                 else:
                                     self._eventq.put(tup_fire, False)
                                 del self.__dict_delay[tup_fire]

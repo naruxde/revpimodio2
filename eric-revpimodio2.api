@@ -142,9 +142,10 @@ revpimodio2.io.StructIO.signed?7
 revpimodio2.io.StructIO.value?7
 revpimodio2.io.StructIO?1(parentio, name, frm, **kwargs)
 revpimodio2.modio.RevPiModIO._configure?5(jconfigrsc)
-revpimodio2.modio.RevPiModIO._configure_replace_io?5()
+revpimodio2.modio.RevPiModIO._configure_replace_io?5(creplaceio)
 revpimodio2.modio.RevPiModIO._create_myfh?5()
 revpimodio2.modio.RevPiModIO._get_configrsc?5()
+revpimodio2.modio.RevPiModIO._get_cpreplaceio?5()
 revpimodio2.modio.RevPiModIO._get_cycletime?5()
 revpimodio2.modio.RevPiModIO._get_debug?5()
 revpimodio2.modio.RevPiModIO._get_ioerrors?5()
@@ -165,7 +166,7 @@ revpimodio2.modio.RevPiModIO.cycleloop?4(func, cycletime=50)
 revpimodio2.modio.RevPiModIO.cycletime?7
 revpimodio2.modio.RevPiModIO.debug?7
 revpimodio2.modio.RevPiModIO.exit?4(full=True)
-revpimodio2.modio.RevPiModIO.export_replaced_ios?4(filename)
+revpimodio2.modio.RevPiModIO.export_replaced_ios?4(filename="replace_ios.conf")
 revpimodio2.modio.RevPiModIO.get_jconfigrsc?4()
 revpimodio2.modio.RevPiModIO.handlesignalend?4(cleanupfunc=None)
 revpimodio2.modio.RevPiModIO.ioerrors?7
@@ -184,19 +185,25 @@ revpimodio2.modio.RevPiModIO.writeprocimg?4(device=None)
 revpimodio2.modio.RevPiModIO?1(autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=False, replace_io_file=None, direct_output=False)
 revpimodio2.modio.RevPiModIODriver?1(virtdev, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, debug=False, replace_io_file=None, direct_output=False)
 revpimodio2.modio.RevPiModIOSelected?1(deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=False, replace_io_file=None, direct_output=False)
+revpimodio2.netio.HASH_FAIL?7
 revpimodio2.netio.NetFH._connect?5()
 revpimodio2.netio.NetFH._direct_send?5(send_bytes, recv_count)
 revpimodio2.netio.NetFH.clear_dirtybytes?4(position=None)
 revpimodio2.netio.NetFH.close?4()
 revpimodio2.netio.NetFH.closed?7
+revpimodio2.netio.NetFH.config_changed?7
 revpimodio2.netio.NetFH.flush?4()
 revpimodio2.netio.NetFH.get_closed?4()
+revpimodio2.netio.NetFH.get_config_changed?4()
 revpimodio2.netio.NetFH.get_name?4()
+revpimodio2.netio.NetFH.get_reconnecting?4()
 revpimodio2.netio.NetFH.get_timeout?4()
 revpimodio2.netio.NetFH.ioctl?4(request, arg=b'')
 revpimodio2.netio.NetFH.name?7
 revpimodio2.netio.NetFH.read?4(length)
 revpimodio2.netio.NetFH.readpictory?4()
+revpimodio2.netio.NetFH.readreplaceio?4()
+revpimodio2.netio.NetFH.reconnecting?7
 revpimodio2.netio.NetFH.run?4()
 revpimodio2.netio.NetFH.seek?4(position)
 revpimodio2.netio.NetFH.set_dirtybytes?4(position, dirtybytes)
@@ -204,12 +211,18 @@ revpimodio2.netio.NetFH.set_timeout?4(value)
 revpimodio2.netio.NetFH.tell?4()
 revpimodio2.netio.NetFH.timeout?7
 revpimodio2.netio.NetFH.write?4(bytebuff)
-revpimodio2.netio.NetFH?1(address, timeout=500)
+revpimodio2.netio.NetFH?1(address, check_replace_ios, timeout=500)
 revpimodio2.netio.RevPiNetIO._create_myfh?5()
+revpimodio2.netio.RevPiNetIO._get_cpreplaceio?5()
+revpimodio2.netio.RevPiNetIO.config_changed?7
 revpimodio2.netio.RevPiNetIO.disconnect?4()
+revpimodio2.netio.RevPiNetIO.exit?4(full=True)
+revpimodio2.netio.RevPiNetIO.get_config_changed?4()
 revpimodio2.netio.RevPiNetIO.get_jconfigrsc?4()
+revpimodio2.netio.RevPiNetIO.get_reconnecting?4()
 revpimodio2.netio.RevPiNetIO.net_cleardefaultvalues?4(device=None)
 revpimodio2.netio.RevPiNetIO.net_setdefaultvalues?4(device=None)
+revpimodio2.netio.RevPiNetIO.reconnecting?7
 revpimodio2.netio.RevPiNetIO?1(address, autorefresh=False, monitoring=False, syncoutputs=True, simulator=False, debug=False, replace_io_file=None, direct_output=False)
 revpimodio2.netio.RevPiNetIODriver?1(address, virtdev, autorefresh=False, monitoring=False, syncoutputs=True, debug=False, replace_io_file=None, direct_output=False)
 revpimodio2.netio.RevPiNetIOSelected?1(address, deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, simulator=False, debug=False, replace_io_file=None, direct_output=False)
@@ -217,5 +230,8 @@ revpimodio2.netio._sysdeldirty?8
 revpimodio2.netio._sysexit?8
 revpimodio2.netio._sysflush?8
 revpimodio2.netio._syspictory?8
+revpimodio2.netio._syspictoryh?8
+revpimodio2.netio._sysreplaceio?8
+revpimodio2.netio._sysreplaceioh?8
 revpimodio2.netio._syssync?8
 revpimodio2.summary.Summary?1(summary)

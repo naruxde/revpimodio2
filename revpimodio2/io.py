@@ -1000,13 +1000,6 @@ class IntIOReplaceable(IntIO):
         >Python3 struct</a>
 
         """
-        # Sperre prüfen
-        if self._parentdevice._modio._lck_replace_io:
-            raise RuntimeError(
-                "can not use this function while using an external "
-                "replace_io_file"
-            )
-
         # StructIO erzeugen
         io_new = StructIO(
             self,

@@ -5,6 +5,7 @@ __copyright__ = "Copyright (C) 2018 Sven Sager"
 __license__ = "LGPLv3"
 import socket
 import warnings
+from configparser import ConfigParser
 from json import loads as jloads
 from re import compile
 from revpimodio2 import DeviceNotFoundError
@@ -21,8 +22,28 @@ _sysexit = b'\x01EX\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
 _sysdeldirty = b'\x01EY\x00\x00\x00\x00\xFF\x00\x00\x00\x00\x00\x00\x00\x17'
 # piCtory Konfiguration laden
 _syspictory = b'\x01PI\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
+_syspictoryh = b'\x01PH\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
+# ReplaceIO Konfiguration laden
+_sysreplaceio = b'\x01RP\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
+_sysreplaceioh = b'\x01RH\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
 # Übertragene Bytes schreiben
 _sysflush = b'\x01SD\x00\x00\x00\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x17'
+# Hashvalues
+HASH_FAIL = b'\xff' * 16
+
+
+class AclException(Exception):
+
+    """Probleme mit Berechtigungen."""
+
+    pass
+
+
+class ConfigChanged(Exception):
+
+    """Aenderung der piCtory oder replace_ios Datei."""
+
+    pass
 
 
 class NetFH(Thread):
@@ -35,26 +56,34 @@ class NetFH(Thread):
 
     """
 
-    __slots__ = "__by_buff", "__int_buff", "__dictdirty", "__flusherr", \
-        "__position", "__sockact", "__sockerr", "__sockend", "__socklock", \
-        "__timeout", "__trigger", "__waitsync", \
-        "_address", "_slavesock", \
-        "daemon"
+    __slots__ = "__by_buff", "__check_replace_ios", "__config_changed", \
+        "__int_buff", "__dictdirty", "__flusherr", "__replace_ios_h", \
+        "__pictory_h",  "__position", "__sockact", "__sockerr", "__sockend", \
+        "__socklock", "__timeout", "__trigger", "__waitsync", "_address", \
+        "_slavesock", "daemon"
 
-    def __init__(self, address, timeout=500):
+    def __init__(self, address, check_replace_ios, timeout=500):
         """Init NetFH-class.
+
         @param address IP Adresse, Port des RevPi als <class 'tuple'>
-        @param timeout Timeout in Millisekunden der Verbindung"""
+        @param check_replace_ios Prueft auf Veraenderungen der Datei
+        @param timeout Timeout in Millisekunden der Verbindung
+
+        """
         super().__init__()
         self.daemon = True
 
         self.__by_buff = b''
+        self.__check_replace_ios = check_replace_ios
+        self.__config_changed = False
         self.__int_buff = 0
         self.__dictdirty = {}
         self.__flusherr = False
+        self.__replace_ios_h = b''
+        self.__pictory_h = b''
         self.__sockact = False
         self.__sockerr = Event()
-        self.__sockend = False
+        self.__sockend = Event()
         self.__socklock = Lock()
         self.__timeout = None
         self.__trigger = False
@@ -90,10 +119,10 @@ class NetFH(Thread):
         if bytecode == b'\x18':
 
             # Alles beenden, wenn nicht erlaubt
-            self.__sockend = True
+            self.__sockend.set()
             self.__sockerr.set()
             self._slavesock.close()
-            raise RuntimeError(
+            raise AclException(
                 "write access to the process image is not permitted - use "
                 "monitoring=True or check aclplcslave.conf on RevPi and "
                 "reload revpipyload!"
@@ -124,6 +153,45 @@ class NetFH(Thread):
         so = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             so.connect(self._address)
+
+            # Hashwerte anfordern
+            recv_len = 16
+            so.sendall(_syspictoryh)
+            if self.__check_replace_ios:
+                so.sendall(_sysreplaceioh)
+                recv_len += 16
+
+            # Hashwerte empfangen
+            byte_buff = bytearray()
+            zero_byte = 0
+            while not self.__sockend.is_set() and zero_byte < 100 \
+                    and len(byte_buff) < recv_len:
+                data = so.recv(recv_len)
+                if data == b'':
+                    zero_byte += 1
+                byte_buff += data
+
+            # Änderung an piCtory prüfen
+            if self.__pictory_h and byte_buff[:16] != self.__pictory_h:
+                self.__config_changed = True
+                self.close()
+                raise ConfigChanged(
+                    "configuration on revolution pi was changed")
+            else:
+                self.__pictory_h = byte_buff[:16]
+
+            # Änderung an replace_ios prüfen
+            if self.__check_replace_ios and self.__replace_ios_h \
+                    and byte_buff[16:] != self.__replace_ios_h:
+                self.__config_changed = True
+                self.close()
+                raise ConfigChanged(
+                    "configuration on revolution pi was changed")
+            else:
+                self.__replace_ios_h = byte_buff[16:]
+        except ConfigChanged:
+            so.close()
+            raise
         except Exception:
             so.close()
         else:
@@ -151,11 +219,12 @@ class NetFH(Thread):
         @returns Empfangende Bytes
 
         """
-        if self.__sockend:
+        if self.__sockend.is_set():
             raise ValueError("I/O operation on closed file")
 
         with self.__socklock:
             self._slavesock.sendall(send_bytes)
+            # FIXME: Schleife bis Daten empfangen sind einbauen
             recv = self._slavesock.recv(recv_count)
             self.__trigger = True
             return recv
@@ -163,10 +232,15 @@ class NetFH(Thread):
     def clear_dirtybytes(self, position=None):
         """Entfernt die konfigurierten Dirtybytes vom RevPi Slave.
         @param position Startposition der Dirtybytes"""
-        if self.__sockend:
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
+        if self.__sockend.is_set():
             raise ValueError("I/O operation on closed file")
 
-        with self.__socklock:
+        error = False
+        try:
+            self.__socklock.acquire()
+
             if position is None:
                 # Alle Dirtybytes löschen
                 self._slavesock.sendall(_sysdeldirty)
@@ -184,40 +258,54 @@ class NetFH(Thread):
                 # ACL prüfen und ggf Fehler werfen
                 self.__check_acl(check)
 
-                self.__sockerr.set()
                 raise IOError("clear dirtybytes error on network")
+        except AclException:
+            raise
+        except Exception:
+            error = True
+        finally:
+            self.__socklock.release()
 
-        # Daten bei Erfolg übernehmen
+        # Daten immer übernehmen
         if position is None:
             self.__dictdirty = {}
         elif position in self.__dictdirty:
             del self.__dictdirty[position]
 
+        if error:
+            # Fehler nach übernahme der Daten auslösen um diese zu setzen
+            self.__sockerr.set()
+
         self.__trigger = True
 
     def close(self):
         """Verbindung trennen."""
-        if self.__sockend:
+        if self.__sockend.is_set():
             return
 
-        self.__sockend = True
+        self.__sockend.set()
         self.__sockerr.set()
 
         # Vom Socket sauber trennen
         if self._slavesock is not None:
-            with self.__socklock:
-                try:
-                    if self.__sockend:
-                        self._slavesock.send(_sysexit)
-                    else:
-                        self._slavesock.shutdown(socket.SHUT_RDWR)
-                except Exception:
-                    pass
+            try:
+                self.__socklock.acquire()
+                self._slavesock.send(_sysexit)
+
+                # NOTE: Wird das benötigt?
+                self._slavesock.shutdown(socket.SHUT_RDWR)
+            except Exception:
+                pass
+            finally:
+                self.__socklock.release()
+
             self._slavesock.close()
 
     def flush(self):
         """Schreibpuffer senden."""
-        if self.__sockend:
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
+        if self.__sockend.is_set():
             raise ValueError("flush of closed file")
 
         with self.__socklock:
@@ -248,12 +336,22 @@ class NetFH(Thread):
     def get_closed(self):
         """Pruefen ob Verbindung geschlossen ist.
         @return True, wenn Verbindung geschlossen ist"""
-        return self.__sockend
+        return self.__sockend.is_set()
+
+    def get_config_changed(self):
+        """Pruefen ob RevPi Konfiguration geaendert wurde.
+        @return True, wenn RevPi Konfiguration geaendert ist"""
+        return self.__config_changed
 
     def get_name(self):
         """Verbindugnsnamen zurueckgeben.
         @return <class 'str'> IP:PORT"""
         return "{0}:{1}".format(*self._address)
+
+    def get_reconnecting(self):
+        """Interner reconnect aktiv wegen Netzwerkfehlern.
+        @return True, wenn reconnect aktiv"""
+        return self.__sockerr.is_set()
 
     def get_timeout(self):
         """Gibt aktuellen Timeout zurueck.
@@ -264,7 +362,9 @@ class NetFH(Thread):
         """IOCTL Befehle ueber das Netzwerk senden.
         @param request Request as <class 'int'>
         @param arg Argument as <class 'byte'>"""
-        if self.__sockend:
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
+        if self.__sockend.is_set():
             raise ValueError("read of closed file")
 
         if not (isinstance(arg, bytes) and len(arg) <= 1024):
@@ -295,7 +395,9 @@ class NetFH(Thread):
         """Daten ueber das Netzwerk lesen.
         @param length Anzahl der Bytes
         @return Gelesene <class 'bytes'>"""
-        if self.__sockend:
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
+        if self.__sockend.is_set():
             raise ValueError("read of closed file")
 
         with self.__socklock:
@@ -307,8 +409,8 @@ class NetFH(Thread):
             )
 
             bytesbuff = bytearray()
-            while not self.__sockend and len(bytesbuff) < length:
-                rbytes = self._slavesock.recv(1024)
+            while not self.__sockend.is_set() and len(bytesbuff) < length:
+                rbytes = self._slavesock.recv(256)
 
                 if rbytes == b'':
                     self.__sockerr.set()
@@ -323,33 +425,75 @@ class NetFH(Thread):
     def readpictory(self):
         """Ruft die piCtory Konfiguration ab.
         @return <class 'bytes'> piCtory Datei"""
-        if self.__sockend:
+        if self.__sockend.is_set():
             raise ValueError("read of closed file")
+
+        if self.__pictory_h == HASH_FAIL:
+            raise RuntimeError(
+                "could not read/parse piCtory configuration over network"
+            )
 
         with self.__socklock:
             self._slavesock.send(_syspictory)
 
             byte_buff = bytearray()
-            while not self.__sockend:
-                data = self._slavesock.recv(1024)
+            zero_byte = 0
+            while not self.__sockend.is_set() and zero_byte < 100:
+                data = self._slavesock.recv(128)
+                if data == b'':
+                    zero_byte += 1
 
                 byte_buff += data
                 if data.find(b'\x04') >= 0:
+                    self.__trigger = True
+
                     # NOTE: Nur suchen oder Ende prüfen?
-                    return byte_buff[:-1]
+                    return bytes(byte_buff[:-1])
 
             self.__sockerr.set()
             raise IOError("readpictory error on network")
 
-            self.__trigger = True
+    def readreplaceio(self):
+        """Ruft die replace_io Konfiguration ab.
+        @return <class 'bytes'> replace_io_file"""
+        if self.__sockend.is_set():
+            raise ValueError("read of closed file")
+
+        if self.__replace_ios_h == HASH_FAIL:
+            raise RuntimeError(
+                "replace_io_file: could not read/parse over network"
+            )
+
+        with self.__socklock:
+            self._slavesock.send(_sysreplaceio)
+
+            byte_buff = bytearray()
+            zero_byte = 0
+            while not self.__sockend.is_set() and zero_byte < 100:
+                data = self._slavesock.recv(128)
+                if data == b'':
+                    zero_byte += 1
+
+                byte_buff += data
+                if data.find(b'\x04') >= 0:
+                    self.__trigger = True
+
+                    # NOTE: Nur suchen oder Ende prüfen?
+                    return bytes(byte_buff[:-1])
+
+            self.__sockerr.set()
+            raise IOError("readreplaceio error on network")
 
     def run(self):
         """Handler fuer Synchronisierung."""
-        while not self.__sockend:
+        while not self.__sockend.is_set():
 
             # Bei Fehlermeldung neu verbinden
             if self.__sockerr.is_set():
                 self._connect()
+                if self.__sockerr.is_set():
+                    # Verhindert bei Scheitern 100% CPU last
+                    self.__sockend.wait(self.__waitsync)
 
             else:
                 # Kein Fehler aufgetreten, sync durchführen wenn socket frei
@@ -380,7 +524,9 @@ class NetFH(Thread):
     def seek(self, position):
         """Springt an angegebene Position.
         @param position An diese Position springen"""
-        if self.__sockend:
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
+        if self.__sockend.is_set():
             raise ValueError("seek of closed file")
         self.__position = int(position)
 
@@ -388,10 +534,15 @@ class NetFH(Thread):
         """Konfiguriert Dirtybytes fuer Prozessabbild bei Verbindungsfehler.
         @param positon Startposition zum Schreiben
         @param dirtybytes <class 'bytes'> die geschrieben werden sollen"""
-        if self.__sockend:
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
+        if self.__sockend.is_set():
             raise ValueError("I/O operation on closed file")
 
-        with self.__socklock:
+        error = False
+        try:
+            self.__socklock.acquire()
+
             self._slavesock.sendall(
                 b'\x01EY' +
                 position.to_bytes(length=2, byteorder="little") +
@@ -406,24 +557,35 @@ class NetFH(Thread):
                 # ACL prüfen und ggf Fehler werfen
                 self.__check_acl(check)
 
-                self.__sockerr.set()
                 raise IOError("set dirtybytes error on network")
+        except AclException:
+            raise
+        except Exception:
+            error = True
+        finally:
+            self.__socklock.release()
 
-            # Daten erfolgreich übernehmen
-            self.__dictdirty[position] = dirtybytes
+        # Daten immer übernehmen
+        self.__dictdirty[position] = dirtybytes
 
-            self.__trigger = True
+        if error:
+            # Fehler nach übernahme der Daten auslösen um diese zu setzen
+            self.__sockerr.set()
+
+        self.__trigger = True
 
     def set_timeout(self, value):
         """Setzt Timeoutwert fuer Verbindung.
         @param value Timeout in Millisekunden"""
-        if self.__sockend:
+        if self.__sockend.is_set():
             raise ValueError("I/O operation on closed file")
 
         # Timeoutwert verarbeiten (könnte Exception auslösen)
         self.__set_systimeout(value)
 
-        with self.__socklock:
+        try:
+            self.__socklock.acquire()
+
             self._slavesock.send(
                 b'\x01CF' +
                 value.to_bytes(length=2, byteorder="little") +
@@ -431,15 +593,20 @@ class NetFH(Thread):
             )
             check = self._slavesock.recv(1)
             if check != b'\x1e':
-                self.__sockerr.set()
                 raise IOError("set timeout error on network")
+        except Exception:
+            self.__sockerr.set()
+        finally:
+            self.__socklock.release()
 
-            self.__trigger = True
+        self.__trigger = True
 
     def tell(self):
         """Gibt aktuelle Position zurueck.
         @return int aktuelle Position"""
-        if self.__sockend:
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
+        if self.__sockend.is_set():
             raise ValueError("I/O operation on closed file")
         return self.__position
 
@@ -447,7 +614,9 @@ class NetFH(Thread):
         """Daten ueber das Netzwerk schreiben.
         @param bytebuff Bytes zum schreiben
         @return <class 'int'> Anzahl geschriebener bytes"""
-        if self.__sockend:
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
+        if self.__sockend.is_set():
             raise ValueError("write to closed file")
 
         if self.__flusherr:
@@ -468,7 +637,9 @@ class NetFH(Thread):
         return len(bytebuff)
 
     closed = property(get_closed)
+    config_changed = property(get_config_changed)
     name = property(get_name)
+    reconnecting = property(get_reconnecting)
     timeout = property(get_timeout, set_timeout)
 
 
@@ -543,15 +714,15 @@ class RevPiNetIO(_RevPiModIO):
 
         # Vererben
         super().__init__(
-            autorefresh,
-            monitoring,
-            syncoutputs,
-            "{0}:{1}".format(*self._address),
-            None,
-            simulator,
-            debug,
-            replace_io_file,
-            direct_output
+            autorefresh=autorefresh,
+            monitoring=monitoring,
+            syncoutputs=syncoutputs,
+            procimg="{0}:{1}".format(*self._address),
+            configrsc=None,
+            simulator=simulator,
+            debug=debug,
+            replace_io_file=replace_io_file,
+            direct_output=direct_output,
         )
 
         # Netzwerkfilehandler anlegen
@@ -560,24 +731,72 @@ class RevPiNetIO(_RevPiModIO):
         # Nur Konfigurieren, wenn nicht vererbt
         if type(self) == RevPiNetIO:
             self._configure(self.get_jconfigrsc())
+            self._configure_replace_io(self._get_cpreplaceio())
 
     def _create_myfh(self):
         """Erstellt NetworkFileObject.
         return FileObject"""
         self._buffedwrite = True
-        return NetFH(self._address)
+        return NetFH(self._address, self._replace_io_file == ":network:")
+
+    def _get_cpreplaceio(self):
+        """Laed die replace_io Konfiguration ueber das Netzwerk.
+        @return <class 'ConfigParser'> der replace io daten"""
+
+        # Normale Verwendung über Elternklasse erledigen
+        if self._replace_io_file != ":network:":
+            return super()._get_cpreplaceio()
+
+        # Replace IO Daten über das Netzwerk beziehen
+        byte_buff = self._myfh.readreplaceio()
+
+        cp = ConfigParser()
+        try:
+            cp.read_string(byte_buff.decode("utf-8"))
+        except Exception as e:
+            raise RuntimeError(
+                "replace_io_file: could not read/parse network data | {0}"
+                "".format(e)
+            )
+        return cp
 
     def disconnect(self):
         """Trennt Verbindungen und beendet autorefresh inkl. alle Threads."""
         self.cleanup()
 
+    def exit(self, full=True):
+        """Beendet mainloop() und optional autorefresh.
+        @see #RevPiModIO.exit(...)"""
+        try:
+            super().exit(full)
+        except ConfigChanged:
+            pass
+
+    def get_config_changed(self):
+        """Pruefen ob RevPi Konfiguration geaendert wurde.
+
+        In diesem Fall ist die Verbindung geschlossen und RevPiNetIO muss
+        neu instanziert werden.
+
+        @return True, wenn RevPi Konfiguration geaendert ist"""
+        return self._myfh.config_changed
+
     def get_jconfigrsc(self):
         """Laedt die piCotry Konfiguration und erstellt ein <class 'dict'>.
         @return <class 'dict'> der piCtory Konfiguration"""
-        mynh = NetFH(self._address)
+        mynh = NetFH(self._address, False)
         byte_buff = mynh.readpictory()
         mynh.close()
         return jloads(byte_buff.decode("utf-8"))
+
+    def get_reconnecting(self):
+        """Interner reconnect aktiv wegen Netzwerkfehlern.
+
+        Das Modul versucht intern die Verbindung neu herzustellen. Es ist
+        kein weiteres Zutun noetig.
+
+        @return True, wenn reconnect aktiv"""
+        return self._myfh.reconnecting
 
     def net_cleardefaultvalues(self, device=None):
         """Loescht Defaultwerte vom PLC Slave.
@@ -646,6 +865,9 @@ class RevPiNetIO(_RevPiModIO):
                 dev._offset + dev._slc_out.start, dirtybytes
             )
 
+    config_changed = property(get_config_changed)
+    reconnecting = property(get_reconnecting)
+
 
 class RevPiNetIOSelected(RevPiNetIO):
 
@@ -695,6 +917,7 @@ class RevPiNetIOSelected(RevPiNetIO):
                 )
 
         self._configure(self.get_jconfigrsc())
+        self._configure_replace_io(self._get_cpreplaceio())
 
         if len(self.device) == 0:
             if type(self) == RevPiNetIODriver:

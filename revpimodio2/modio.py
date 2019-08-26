@@ -37,7 +37,7 @@ class RevPiModIO(object):
         "_maxioerrors", "_myfh", "_myfh_lck", "_monitoring", "_procimg", \
         "_simulator", "_syncoutputs", "_th_mainloop", "_waitexit", \
         "core", "app", "device", "exitsignal", "io", "summary", "_debug", \
-        "_lck_replace_io", "_replace_io_file", "_run_on_pi"
+        "_replace_io_file", "_run_on_pi"
 
     def __init__(
             self, autorefresh=False, monitoring=False, syncoutputs=True,
@@ -85,7 +85,6 @@ class RevPiModIO(object):
         self._imgwriter = None
         self._ioerror = 0
         self._length = 0
-        self._lck_replace_io = False
         self._looprunning = False
         self._lst_devselect = []
         self._lst_refresh = []
@@ -116,6 +115,7 @@ class RevPiModIO(object):
         # Nur Konfigurieren, wenn nicht vererbt
         if type(self) == RevPiModIO:
             self._configure(self.get_jconfigrsc())
+            self._configure_replace_io(self._get_cpreplaceio())
 
     def __del__(self):
         """Zerstoert alle Klassen um aufzuraeumen."""
@@ -138,7 +138,8 @@ class RevPiModIO(object):
                 self.writeprocimg()
 
     def _configure(self, jconfigrsc):
-        """Verarbeitet die piCtory Konfigurationsdatei."""
+        """Verarbeitet die piCtory Konfigurationsdatei.
+        @param jconfigrsc: Data to build IOs as <class 'dict'> of JSON"""
 
         # Filehandler konfigurieren, wenn er noch nicht existiert
         if self._myfh is None:
@@ -262,11 +263,6 @@ class RevPiModIO(object):
                 Warning
             )
 
-        # Replace IO aus Datei verarbeiten
-        if self._replace_io_file is not None:
-            self._configure_replace_io()
-            self._lck_replace_io = True
-
         # ImgWriter erstellen
         self._imgwriter = helpermodule.ProcimgWriter(self)
 
@@ -301,85 +297,74 @@ class RevPiModIO(object):
         # Summary Klasse instantiieren
         self.summary = summarymodule.Summary(jconfigrsc["Summary"])
 
-    def _configure_replace_io(self):
+    def _configure_replace_io(self, creplaceio):
         """Importiert ersetzte IOs in diese Instanz.
 
         Importiert ersetzte IOs, welche vorher mit .export_replaced_ios(...)
         in eine Datei exportiert worden sind. Diese IOs werden in dieser
         Instanz wiederhergestellt.
 
+        @param ireplaceio: Data to replace ios as <class 'ConfigParser'>
+
         """
-        cp = ConfigParser()
-
-        try:
-            with open(self._replace_io_file, "r") as fh:
-                cp.read_file(fh)
-        except Exception as e:
-            raise RuntimeError(
-                "replace_io_file: could not read file '{0}' | {1}"
-                "".format(self._replace_io_file, e)
-            )
-
-        for io in cp:
+        for io in creplaceio:
             if io == "DEFAULT":
                 continue
 
             # IO prüfen
-            parentio = cp[io].get("replace", "")
+            parentio = creplaceio[io].get("replace", "")
 
             # Funktionsaufruf vorbereiten
             dict_replace = {
-                "frm": cp[io].get("frm"),
+                "frm": creplaceio[io].get("frm"),
+                "byteorder": creplaceio[io].get("byteorder", "little"),
+                "bmk": creplaceio[io].get("bmk", ""),
             }
 
-            # Convert defaultvalue from config file
-            if "defaultvalue" in cp[io]:
-                if dict_replace["frm"] == "?":
-                    try:
-                        dict_replace["defaultvalue"] = \
-                            cp[io].getboolean("defaultvalue")
-                    except Exception:
-                        raise ValueError(
-                            "replace_io_file: could not convert '{0}' "
-                            "defaultvalue '{1}' to boolean"
-                            "".format(io, cp[io].get("defaultvalue"))
-                        )
-                else:
-                    try:
-                        dict_replace["defaultvalue"] = \
-                            cp[io].getint("defaultvalue")
-                    except Exception:
-                        raise ValueError(
-                            "replace_io_file: could not convert '{0}' "
-                            "defaultvalue '{1}' to integer"
-                            "".format(io, cp[io].get("bit"))
-                        )
-
             # Get bitaddress from config file
-            if "bit" in cp[io]:
+            if "bit" in creplaceio[io]:
                 try:
-                    dict_replace["bit"] = cp[io].getint("bit", 0)
+                    dict_replace["bit"] = creplaceio[io].getint("bit")
                 except Exception:
                     raise ValueError(
                         "replace_io_file: could not convert '{0}' "
                         "bit '{1}' to integer"
-                        "".format(io, cp[io].get("bit"))
+                        "".format(io, creplaceio[io]["bit"])
                     )
 
-            # Sonstige Werte laden, wenn vorhanden
-            if "bmk" in cp[io]:
-                dict_replace["bmk"] = cp[io].get("bmk")
-            if "byteorder" in cp[io]:
-                dict_replace["byteorder"] = cp[io].get("byteorder")
+            # Convert defaultvalue from config file
+            if "defaultvalue" in creplaceio[io]:
+                if dict_replace["frm"] == "?":
+                    try:
+                        dict_replace["defaultvalue"] = \
+                            creplaceio[io].getboolean("defaultvalue")
+                    except Exception:
+                        raise ValueError(
+                            "replace_io_file: could not convert '{0}' "
+                            "defaultvalue '{1}' to boolean"
+                            "".format(io, creplaceio[io]["defaultvalue"])
+                        )
+                else:
+                    try:
+                        dict_replace["defaultvalue"] = \
+                            creplaceio[io].getint("defaultvalue")
+                    except Exception:
+                        raise ValueError(
+                            "replace_io_file: could not convert '{0}' "
+                            "defaultvalue '{1}' to integer"
+                            "".format(io, creplaceio[io]["defaultvalue"])
+                        )
 
             # IO ersetzen
             try:
                 self.io[parentio].replace_io(name=io, **dict_replace)
             except Exception as e:
-                raise RuntimeError(
-                    "replace_io_file: can not replace '{0}' with '{1}' "
-                    "| RevPiModIO message: {2}".format(parentio, io, e)
-                )
+                # NOTE: Bei Selected/Driver kann nicht geprüft werden
+                if len(self._lst_devselect) == 0:
+                    raise RuntimeError(
+                        "replace_io_file: can not replace '{0}' with '{1}' "
+                        "| RevPiModIO message: {2}".format(parentio, io, e)
+                    )
 
     def _create_myfh(self):
         """Erstellt FileObject mit Pfad zum procimg.
@@ -391,6 +376,25 @@ class RevPiModIO(object):
         """Getter function.
         @return Pfad der verwendeten piCtory Konfiguration"""
         return self._configrsc
+
+    def _get_cpreplaceio(self):
+        """Laed die replace_io_file Konfiguration und verarbeitet sie.
+        @return <class 'ConfigParser'> der replace io daten"""
+        cp = ConfigParser()
+
+        # TODO: verfeinern!
+
+        if self._replace_io_file:
+            try:
+                with open(self._replace_io_file, "r") as fh:
+                    cp.read_file(fh)
+            except Exception as e:
+                raise RuntimeError(
+                    "replace_io_file: could not read/parse file '{0}' | {1}"
+                    "".format(self._replace_io_file, e)
+                )
+
+        return cp
 
     def _get_cycletime(self):
         """Gibt Aktualisierungsrate in ms der Prozessabbildsynchronisierung aus.
@@ -681,7 +685,7 @@ class RevPiModIO(object):
                 if not self._monitoring:
                     self.writeprocimg(dev)
 
-    def export_replaced_ios(self, filename):
+    def export_replaced_ios(self, filename="replace_ios.conf"):
         """Exportiert ersetzte IOs dieser Instanz.
 
         Exportiert alle ersetzten IOs, welche mit .replace_io(...) angelegt
@@ -704,8 +708,10 @@ class RevPiModIO(object):
                 # Optional values
                 if io._bitaddress >= 0:
                     cp[io.name]["bit"] = str(io._bitaddress)
-                cp[io.name]["byteorder"] = io._byteorder
-                cp[io.name]["defaultvalue"] = str(io.defaultvalue)
+                if io._byteorder != "little":
+                    cp[io.name]["byteorder"] = io._byteorder
+                if io.defaultvalue != 0:
+                    cp[io.name]["defaultvalue"] = str(io.defaultvalue)
                 if io.bmk != "":
                     cp[io.name]["bmk"] = io.bmk
 
@@ -846,7 +852,7 @@ class RevPiModIO(object):
                                 or regfunc.edge == RISING and io.value \
                                 or regfunc.edge == FALLING and not io.value:
                             if regfunc.as_thread:
-                                self._imgwriter.__eventqth.put(
+                                self._imgwriter._eventqth.put(
                                     (regfunc, io._name, io.value), False
                                 )
                             else:
@@ -1141,6 +1147,7 @@ class RevPiModIOSelected(RevPiModIO):
                 )
 
         self._configure(self.get_jconfigrsc())
+        self._configure_replace_io(self._get_cpreplaceio())
 
         if len(self.device) == 0:
             if type(self) == RevPiModIODriver:
