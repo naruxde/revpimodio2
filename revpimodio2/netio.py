@@ -66,7 +66,7 @@ class NetFH(Thread):
         """Init NetFH-class.
 
         @param address IP Adresse, Port des RevPi als <class 'tuple'>
-        @param check_replace_ios Prueft auf veraenderungen der Datei
+        @param check_replace_ios Prueft auf Veraenderungen der Datei
         @param timeout Timeout in Millisekunden der Verbindung
 
         """
@@ -427,6 +427,11 @@ class NetFH(Thread):
         @return <class 'bytes'> piCtory Datei"""
         if self.__sockend.is_set():
             raise ValueError("read of closed file")
+
+        if self.__pictory_h == HASH_FAIL:
+            raise RuntimeError(
+                "could not read/parse piCtory configuration over network"
+            )
 
         with self.__socklock:
             self._slavesock.send(_syspictory)
