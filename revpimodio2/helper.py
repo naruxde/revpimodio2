@@ -443,12 +443,17 @@ class ProcimgWriter(Thread):
                     self._maxioerrors
                 )
             )
-        warnings.warn(
-            "count {0} io errors on process image".format(self._ioerror),
-            RuntimeWarning
-        )
-        if self._modio._debug and e is not None:
-            warnings.warn(str(e), RuntimeWarning)
+        if self._modio._debug:
+            warnings.warn(
+                "count {0} io errors on process image | {1}"
+                "".format(self._ioerror, str(e)),
+                RuntimeWarning
+            )
+        else:
+            warnings.warn(
+                "got io error on process image",
+                RuntimeWarning
+            )
 
     def get_maxioerrors(self):
         """Gibt die Anzahl der maximal erlaubten Fehler zurueck.
@@ -471,9 +476,8 @@ class ProcimgWriter(Thread):
             # Lockobjekt holen und Fehler werfen, wenn nicht schnell genug
             if not self.lck_refresh.acquire(timeout=self._adjwait):
                 warnings.warn(
-                    "cycle time of {0} ms exceeded on lock".format(
-                        int(self._refresh * 1000)
-                    ),
+                    "cycle time of {0} ms exceeded during executing function"
+                    "".format(int(self._refresh * 1000)),
                     RuntimeWarning
                 )
                 # Verzögerte Events pausieren an dieser Stelle
@@ -546,9 +550,8 @@ class ProcimgWriter(Thread):
                 self._adjwait -= 0.001
                 if self._adjwait < 0:
                     warnings.warn(
-                        "cycle time of {0} ms exceeded".format(
-                            int(self._refresh * 1000)
-                        ),
+                        "cycle time of {0} ms exceeded several times - can not"
+                        " hold cycle time!".format(int(self._refresh * 1000)),
                         RuntimeWarning
                     )
                     self._adjwait = 0

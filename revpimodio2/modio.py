@@ -80,7 +80,7 @@ class RevPiModIO(object):
         # Private Variablen
         self.__cleanupfunc = None
         self._buffedwrite = False
-        self._debug = debug
+        self._debug = False
         self._exit = Event()
         self._imgwriter = None
         self._ioerror = 0
@@ -106,6 +106,9 @@ class RevPiModIO(object):
 
         # Event für Benutzeraktionen
         self.exitsignal = Event()
+
+        # Wert über setter setzen
+        self.debug = debug
 
         try:
             self._run_on_pi = S_ISCHR(osstat(self._procimg).st_mode)
@@ -234,7 +237,8 @@ class RevPiModIO(object):
             else:
                 # Device-Type nicht gefunden
                 warnings.warn(
-                    "device type '{0}' unknown".format(device["type"]),
+                    "device type '{0}' on position {1} unknown"
+                    "".format(device["type"], device["position"]),
                     Warning
                 )
                 dev_new = None
@@ -457,13 +461,15 @@ class RevPiModIO(object):
                 "reach max io error count {0} on process image"
                 "".format(self._maxioerrors)
             )
-        warnings.warn(
-            "got io error during {0} and count {1} errors now"
-            "".format(action, self._ioerror),
-            RuntimeWarning
-        )
-        if self._debug and e is not None:
-            warnings.warn(str(e), RuntimeWarning)
+
+        if self._debug:
+            warnings.warn(
+                "got io error during '{0}' and count {1} errors now | {2}"
+                "".format(action, self._ioerror, str(e)),
+                RuntimeWarning
+            )
+        else:
+            warnings.warn("got io error on process image", RuntimeWarning)
 
     def _set_cycletime(self, milliseconds):
         """Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.
@@ -475,6 +481,18 @@ class RevPiModIO(object):
             )
         else:
             self._imgwriter.refresh = milliseconds
+
+    def _set_debug(self, value):
+        """Setzt debugging Status um mehr Meldungen zu erhalten oder nicht.
+        @param value Wenn True, werden umfangreiche Medungen angezeigt"""
+        if not isinstance(value,  bool):
+            raise TypeError("value must be <class 'bool'>")
+        self._debug = value
+
+        if value:
+            warnings.filterwarnings("always", module="revpimodio2")
+        else:
+            warnings.filterwarnings("default", module="revpimodio2")
 
     def _set_maxioerrors(self, value):
         """Setzt Anzahl der maximal erlaubten Fehler bei Prozessabbildzugriff.
@@ -1087,7 +1105,7 @@ class RevPiModIO(object):
 
         return workokay
 
-    debug = property(_get_debug)
+    debug = property(_get_debug, _set_debug)
     configrsc = property(_get_configrsc)
     cycletime = property(_get_cycletime, _set_cycletime)
     ioerrors = property(_get_ioerrors)
