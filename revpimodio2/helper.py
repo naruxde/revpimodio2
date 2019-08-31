@@ -351,12 +351,13 @@ class ProcimgWriter(Thread):
                                 )
                         else:
                             # Verzögertes Event in dict einfügen
-                            tupfire = (
-                                regfunc, io_event._name, io_event.value
+                            tup_fire = (
+                                regfunc, io_event._name, io_event.value,
+                                io_event,
                             )
                             if regfunc.overwrite \
-                                    or tupfire not in self.__dict_delay:
-                                self.__dict_delay[tupfire] = ceil(
+                                    or tup_fire not in self.__dict_delay:
+                                self.__dict_delay[tup_fire] = ceil(
                                     regfunc.delay / 1000 / self._refresh
                                 )
             else:
@@ -374,12 +375,13 @@ class ProcimgWriter(Thread):
                             )
                     else:
                         # Verzögertes Event in dict einfügen
-                        tupfire = (
-                            regfunc, io_event._name, io_event.value
+                        tup_fire = (
+                            regfunc, io_event._name, io_event.value,
+                            io_event,
                         )
                         if regfunc.overwrite \
-                                or tupfire not in self.__dict_delay:
-                            self.__dict_delay[tupfire] = ceil(
+                                or tup_fire not in self.__dict_delay:
+                            self.__dict_delay[tup_fire] = ceil(
                                 regfunc.delay / 1000 / self._refresh
                             )
 
@@ -525,8 +527,7 @@ class ProcimgWriter(Thread):
                 if self.__eventwork:
                     for tup_fire in tuple(self.__dict_delay.keys()):
                         if tup_fire[0].overwrite and \
-                                getattr(self._modio.io, tup_fire[1]).value != \
-                                tup_fire[2]:
+                                tup_fire[3].value != tup_fire[2]:
                             del self.__dict_delay[tup_fire]
                         else:
                             self.__dict_delay[tup_fire] -= 1

@@ -106,6 +106,9 @@ Class Methods</h3>
 Methods</h3>
 <table>
 <tr>
+<td><a style="color:#0000FF" href="#Connect.__setattr__">__setattr__</a></td>
+<td>Verhindert Ueberschreibung der LEDs.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Connect.__wdtoggle">__wdtoggle</a></td>
 <td>WD Ausgang alle 10 Sekunden automatisch toggeln.</td>
 </tr><tr>
@@ -130,7 +133,13 @@ Static Methods</h3>
 <table>
 <tr><td>None</td></tr>
 </table>
-<a NAME="Connect.__wdtoggle" ID="Connect.__wdtoggle"></a>
+<a NAME="Connect.__setattr__" ID="Connect.__setattr__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Connect.__setattr__</h3>
+<b>__setattr__</b>(<i>key, value</i>)
+<p>
+Verhindert Ueberschreibung der LEDs.
+</p><a NAME="Connect.__wdtoggle" ID="Connect.__wdtoggle"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Connect.__wdtoggle</h3>
 <b>__wdtoggle</b>(<i></i>)
@@ -227,6 +236,9 @@ Methods</h3>
 <td><a style="color:#0000FF" href="#Core.__errorlimit">__errorlimit</a></td>
 <td>Verwaltet das Schreiben der ErrorLimits.</td>
 </tr><tr>
+<td><a style="color:#0000FF" href="#Core.__setattr__">__setattr__</a></td>
+<td>Verhindert Ueberschreibung der LEDs.</td>
+</tr><tr>
 <td><a style="color:#0000FF" href="#Core._devconfigure">_devconfigure</a></td>
 <td>Core-Klasse vorbereiten.</td>
 </tr><tr>
@@ -306,7 +318,13 @@ Byte Slice vom ErrorLimit
 <dd>
 Aktuellen ErrorLimit oder None wenn nicht verfuegbar
 </dd>
-</dl><a NAME="Core._devconfigure" ID="Core._devconfigure"></a>
+</dl><a NAME="Core.__setattr__" ID="Core.__setattr__"></a>
+<h3 style="background-color:#FFFFFF;color:#FF0000">
+Core.__setattr__</h3>
+<b>__setattr__</b>(<i>key, value</i>)
+<p>
+Verhindert Ueberschreibung der LEDs.
+</p><a NAME="Core._devconfigure" ID="Core._devconfigure"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 Core._devconfigure</h3>
 <b>_devconfigure</b>(<i></i>)

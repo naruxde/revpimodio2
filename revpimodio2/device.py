@@ -494,6 +494,16 @@ class Core(Base):
         "_slc_temperature", "_slc_errorlimit1", "_slc_errorlimit2", \
         "_slc_frequency", "_slc_led", "a1green", "a1red", "a2green", "a2red"
 
+    def __setattr__(self, key, value):
+        """Verhindert Ueberschreibung der LEDs."""
+        if hasattr(self, key) and key in (
+                "a1green", "a1red", "a2green", "a2red"):
+            raise AttributeError(
+                "direct assignment is not supported - use .value Attribute"
+            )
+        else:
+            object.__setattr__(self, key, value)
+
     def _devconfigure(self):
         """Core-Klasse vorbereiten."""
 
@@ -766,6 +776,17 @@ class Connect(Core):
 
     __slots__ = "__evt_wdtoggle", "__th_wdtoggle", "a3green", "a3red", "wd", \
         "x2in", "x2out"
+
+    def __setattr__(self, key, value):
+        """Verhindert Ueberschreibung der LEDs."""
+        if hasattr(self, key) and key in (
+                "a1green", "a1red", "a2green", "a2red", "a3green", "a3red",
+                "wd", "x2in", "x2out"):
+            raise AttributeError(
+                "direct assignment is not supported - use .value Attribute"
+            )
+        else:
+            object.__setattr__(self, key, value)
 
     def __wdtoggle(self):
         """WD Ausgang alle 10 Sekunden automatisch toggeln."""

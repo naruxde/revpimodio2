@@ -164,11 +164,12 @@ class NetFH(Thread):
             # Hashwerte empfangen
             byte_buff = bytearray()
             zero_byte = 0
-            while not self.__sockend.is_set() and zero_byte < 100 \
-                    and len(byte_buff) < recv_len:
+            while not self.__sockend.is_set() and len(byte_buff) < recv_len:
                 data = so.recv(recv_len)
                 if data == b'':
                     zero_byte += 1
+                    if zero_byte == 100:
+                        raise OSError("too many zero bytes on hash load")
                 byte_buff += data
 
             # Änderung an piCtory prüfen
