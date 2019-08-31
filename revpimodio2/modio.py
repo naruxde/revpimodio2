@@ -41,7 +41,7 @@ class RevPiModIO(object):
 
     def __init__(
             self, autorefresh=False, monitoring=False, syncoutputs=True,
-            procimg=None, configrsc=None, simulator=False, debug=False,
+            procimg=None, configrsc=None, simulator=False, debug=True,
             replace_io_file=None, direct_output=False):
         """Instantiiert die Grundfunktionen.
 
@@ -51,7 +51,7 @@ class RevPiModIO(object):
         @param procimg Abweichender Pfad zum Prozessabbild
         @param configrsc Abweichender Pfad zur piCtory Konfigurationsdatei
         @param simulator Laedt das Modul als Simulator und vertauscht IOs
-        @param debug Gibt bei allen Fehlern komplette Meldungen aus
+        @param debug Gibt alle Warnungen inkl. Zyklusprobleme aus
         @param replace_io_file Replace IO Konfiguration aus Datei laden
         @param direct_output Write outputs immediately to process image (slow)
 
@@ -445,11 +445,12 @@ class RevPiModIO(object):
         @return True, wenn als Simulator gestartet"""
         return self._simulator
 
-    def _gotioerror(self, action, e=None):
+    def _gotioerror(self, action, e=None, show_warn=True):
         """IOError Verwaltung fuer Prozessabbildzugriff.
 
         @param action Zusatzinformationen zum loggen
         @param e Exception to log if debug is enabled
+        @param show_warn Warnung anzeigen
 
         """
         self._ioerror += 1
@@ -459,6 +460,9 @@ class RevPiModIO(object):
                 "".format(self._maxioerrors)
             )
 
+        if not show_warn:
+            return
+
         if self._debug:
             warnings.warn(
                 "got io error during '{0}' and count {1} errors now | {2}"
@@ -466,7 +470,10 @@ class RevPiModIO(object):
                 RuntimeWarning
             )
         else:
-            warnings.warn("got io error on process image", RuntimeWarning)
+            warnings.warn(
+                "got io error on process image",
+                RuntimeWarning
+            )
 
     def _set_cycletime(self, milliseconds):
         """Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.
@@ -803,7 +810,7 @@ class RevPiModIO(object):
         signal(SIGINT, self.__evt_exit)
         signal(SIGTERM, self.__evt_exit)
 
-    def mainloop(self, blocking=True, no_warn=False):
+    def mainloop(self, blocking=True):
         """Startet den Mainloop mit Eventueberwachung.
 
         Der aktuelle Programmthread wird hier bis Aufruf von
@@ -818,8 +825,7 @@ class RevPiModIO(object):
         Events vom RevPi benoetigt werden, aber das Programm weiter ausgefuehrt
         werden soll.
 
-        @param blocking Wenn False, blockiert das Programm NICHT
-        @param no_warn Keine Warnungen bei langsamen Funktionen ausgeben
+        @param blocking Wenn False, blockiert das Programm hier NICHT
         @return None
 
         """
@@ -877,13 +883,13 @@ class RevPiModIO(object):
         # ImgWriter mit Eventüberwachung aktivieren
         self._imgwriter._collect_events(True)
         e = None
-        runtime = -1 if no_warn else 0
+        runtime = 0
 
         while not self._exit.is_set():
 
             # Laufzeit der Eventqueue auf 0 setzen
             if self._imgwriter._eventq.qsize() == 0:
-                runtime = -1 if no_warn else 0
+                runtime = 0
 
             try:
                 tup_fire = self._imgwriter._eventq.get(timeout=1)
@@ -901,7 +907,7 @@ class RevPiModIO(object):
                     runtime = -1
                     warnings.warn(
                         "can not execute all event functions in one cycle - "
-                        "rise .cycletime or optimize your event functions",
+                        "optimize your event functions or rise .cycletime",
                         RuntimeWarning
                     )
             except Empty:
@@ -1128,7 +1134,7 @@ class RevPiModIOSelected(RevPiModIO):
     def __init__(
             self, deviceselection, autorefresh=False, monitoring=False,
             syncoutputs=True, procimg=None, configrsc=None,
-            simulator=False, debug=False, replace_io_file=None,
+            simulator=False, debug=True, replace_io_file=None,
             direct_output=False):
         """Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 
@@ -1197,7 +1203,7 @@ class RevPiModIODriver(RevPiModIOSelected):
 
     def __init__(
             self, virtdev, autorefresh=False, monitoring=False,
-            syncoutputs=True, procimg=None, configrsc=None, debug=False,
+            syncoutputs=True, procimg=None, configrsc=None, debug=True,
             replace_io_file=None, direct_output=False):
         """Instantiiert die Grundfunktionen.
 

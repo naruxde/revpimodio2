@@ -487,14 +487,27 @@ class NetFH(Thread):
 
     def run(self):
         """Handler fuer Synchronisierung."""
+        state_reconnect = False
         while not self.__sockend.is_set():
 
             # Bei Fehlermeldung neu verbinden
             if self.__sockerr.is_set():
+                if not state_reconnect:
+                    state_reconnect = True
+                    warnings.warn(
+                        "got a network error and try to reconnect",
+                        RuntimeWarning
+                    )
                 self._connect()
                 if self.__sockerr.is_set():
                     # Verhindert bei Scheitern 100% CPU last
                     self.__sockend.wait(self.__waitsync)
+                else:
+                    state_reconnect = False
+                    warnings.warn(
+                        "successfully reconnected after network error",
+                        RuntimeWarning
+                    )
 
             else:
                 # Kein Fehler aufgetreten, sync durchführen wenn socket frei
@@ -504,9 +517,6 @@ class NetFH(Thread):
                         self._slavesock.send(_syssync)
                         data = self._slavesock.recv(2)
                     except IOError as e:
-                        warnings.warn(
-                            "network error in sync of NetFH", RuntimeWarning
-                        )
                         self.__sockerr.set()
                     else:
                         if data != b'\x06\x16':
@@ -661,7 +671,7 @@ class RevPiNetIO(_RevPiModIO):
 
     def __init__(
             self, address, autorefresh=False, monitoring=False,
-            syncoutputs=True, simulator=False, debug=False,
+            syncoutputs=True, simulator=False, debug=True,
             replace_io_file=None, direct_output=False):
         """Instantiiert die Grundfunktionen.
 
@@ -885,7 +895,7 @@ class RevPiNetIOSelected(RevPiNetIO):
 
     def __init__(
             self, address, deviceselection, autorefresh=False,
-            monitoring=False, syncoutputs=True, simulator=False, debug=False,
+            monitoring=False, syncoutputs=True, simulator=False, debug=True,
             replace_io_file=None, direct_output=False):
         """Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 
@@ -955,7 +965,7 @@ class RevPiNetIODriver(RevPiNetIOSelected):
 
     def __init__(
             self, address, virtdev, autorefresh=False, monitoring=False,
-            syncoutputs=True, debug=False, replace_io_file=None,
+            syncoutputs=True, debug=True, replace_io_file=None,
             direct_output=False):
         """Instantiiert die Grundfunktionen.
 

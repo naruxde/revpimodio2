@@ -179,7 +179,7 @@ Static Methods</h3>
 <a NAME="RevPiModIO.__init__" ID="RevPiModIO.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO (Constructor)</h3>
-<b>RevPiModIO</b>(<i>autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=False, replace_io_file=None, direct_output=False</i>)
+<b>RevPiModIO</b>(<i>autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=True, replace_io_file=None, direct_output=False</i>)
 <p>
 Instantiiert die Grundfunktionen.
 </p><dl>
@@ -203,7 +203,7 @@ Abweichender Pfad zur piCtory Konfigurationsdatei
 Laedt das Modul als Simulator und vertauscht IOs
 </dd><dt><i>debug</i></dt>
 <dd>
-Gibt bei allen Fehlern komplette Meldungen aus
+Gibt alle Warnungen inkl. Zyklusprobleme aus
 </dd><dt><i>replace_io_file</i></dt>
 <dd>
 Replace IO Konfiguration aus Datei laden
@@ -388,7 +388,7 @@ True, wenn als Simulator gestartet
 </dl><a NAME="RevPiModIO._gotioerror" ID="RevPiModIO._gotioerror"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO._gotioerror</h3>
-<b>_gotioerror</b>(<i>action, e=None</i>)
+<b>_gotioerror</b>(<i>action, e=None, show_warn=True</i>)
 <p>
 IOError Verwaltung fuer Prozessabbildzugriff.
 </p><dl>
@@ -398,6 +398,9 @@ Zusatzinformationen zum loggen
 </dd><dt><i>e</i></dt>
 <dd>
 Exception to log if debug is enabled
+</dd><dt><i>show_warn</i></dt>
+<dd>
+Warnung anzeigen
 </dd>
 </dl><a NAME="RevPiModIO._set_cycletime" ID="RevPiModIO._set_cycletime"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
@@ -573,7 +576,7 @@ Funktion wird nach dem letzten Lesen der Inputs
 </dl><a NAME="RevPiModIO.mainloop" ID="RevPiModIO.mainloop"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIO.mainloop</h3>
-<b>mainloop</b>(<i>blocking=True, no_warn=False</i>)
+<b>mainloop</b>(<i>blocking=True</i>)
 <p>
 Startet den Mainloop mit Eventueberwachung.
 </p><p>
@@ -591,10 +594,7 @@ Startet den Mainloop mit Eventueberwachung.
 </p><dl>
 <dt><i>blocking</i></dt>
 <dd>
-Wenn False, blockiert das Programm NICHT
-</dd><dt><i>no_warn</i></dt>
-<dd>
-Keine Warnungen bei langsamen Funktionen ausgeben
+Wenn False, blockiert das Programm hier NICHT
 </dd>
 </dl><dl>
 <dt>Returns:</dt>
@@ -716,7 +716,7 @@ Static Methods</h3>
 <a NAME="RevPiModIODriver.__init__" ID="RevPiModIODriver.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIODriver (Constructor)</h3>
-<b>RevPiModIODriver</b>(<i>virtdev, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, debug=False, replace_io_file=None, direct_output=False</i>)
+<b>RevPiModIODriver</b>(<i>virtdev, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, debug=True, replace_io_file=None, direct_output=False</i>)
 <p>
 Instantiiert die Grundfunktionen.
 </p><p>
@@ -776,7 +776,7 @@ Static Methods</h3>
 <a NAME="RevPiModIOSelected.__init__" ID="RevPiModIOSelected.__init__"></a>
 <h3 style="background-color:#FFFFFF;color:#FF0000">
 RevPiModIOSelected (Constructor)</h3>
-<b>RevPiModIOSelected</b>(<i>deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=False, replace_io_file=None, direct_output=False</i>)
+<b>RevPiModIOSelected</b>(<i>deviceselection, autorefresh=False, monitoring=False, syncoutputs=True, procimg=None, configrsc=None, simulator=False, debug=True, replace_io_file=None, direct_output=False</i>)
 <p>
 Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 </p><p>

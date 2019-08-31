@@ -437,6 +437,8 @@ class ProcimgWriter(Thread):
         fh = self._modio._create_myfh()
         self._adjwait = self._refresh
 
+        mrk_warn = True
+
         while not self._work.is_set():
             ot = default_timer()
 
@@ -447,7 +449,7 @@ class ProcimgWriter(Thread):
                     "".format(int(self._refresh * 1000)),
                     RuntimeWarning
                 )
-                # Verzögerte Events pausieren an dieser Stelle
+                # Nur durch cycleloop erreichbar - keine verzögerten Events
                 continue
 
             try:
@@ -482,11 +484,20 @@ class ProcimgWriter(Thread):
                         fh.flush()
 
             except IOError as e:
-                self._modio._gotioerror("autorefresh", e)
+                self._modio._gotioerror("autorefresh", e, mrk_warn)
+                mrk_warn = False
                 self.lck_refresh.release()
                 continue
 
             else:
+                if not mrk_warn:
+                    warnings.warn(
+                        "recover io errors on process image - total count "
+                        "of {0} errors now".format(self._modio._ioerror),
+                        RuntimeWarning
+                    )
+                mrk_warn = True
+
                 # Alle aufwecken
                 self.lck_refresh.release()
                 self.newdata.set()
