@@ -12,8 +12,6 @@ Auf alle IOs kann der Benutzer Funktionen als Events registrieren. Diese
 fuehrt das Modul bei Datenaenderung aus.
 
 """
-import warnings
-
 __all__ = [
     "RevPiModIO", "RevPiModIOSelected", "RevPiModIODriver",
     "RevPiNetIO", "RevPiNetIOSelected", "RevPiNetIODriver"
@@ -34,8 +32,6 @@ BOTH = 33
 INP = 300
 OUT = 301
 MEM = 302
-
-warnings.simplefilter(action="always")
 
 
 class DeviceNotFoundError(Exception):
