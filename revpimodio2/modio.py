@@ -413,10 +413,7 @@ class RevPiModIO(object):
     def _get_ioerrors(self):
         """Getter function.
         @return Aktuelle Anzahl gezaehlter Fehler"""
-        if self._looprunning:
-            return self._imgwriter._ioerror
-        else:
-            return self._ioerror
+        return self._ioerror
 
     def _get_length(self):
         """Getter function.
@@ -499,7 +496,6 @@ class RevPiModIO(object):
         @param value Anzahl erlaubte Fehler"""
         if type(value) == int and value >= 0:
             self._maxioerrors = value
-            self._imgwriter.maxioerrors = value
         else:
             raise ValueError("value must be 0 or a positive integer")
 
@@ -981,7 +977,6 @@ class RevPiModIO(object):
     def resetioerrors(self):
         """Setzt aktuellen IOError-Zaehler auf 0 zurueck."""
         self._ioerror = 0
-        self._imgwriter._ioerror = 0
 
     def setdefaultvalues(self, device=None):
         """Alle Outputbuffer werden auf die piCtory default Werte gesetzt.

@@ -290,7 +290,7 @@ class ProcimgWriter(Thread):
     """
 
     __slots__ = "__dict_delay", "__eventth", "_eventqth", "__eventwork", \
-        "_adjwait", "_eventq", "_ioerror", "_maxioerrors", "_modio", \
+        "_adjwait", "_eventq", "_modio", \
         "_refresh", "_work", "daemon", "lck_refresh", "newdata"
 
     def __init__(self, parentmodio):
@@ -303,8 +303,6 @@ class ProcimgWriter(Thread):
         self.__eventwork = False
         self._adjwait = 0
         self._eventq = queue.Queue()
-        self._ioerror = 0
-        self._maxioerrors = 0
         self._modio = parentmodio
         self._refresh = 0.05
         self._work = Event()
@@ -427,39 +425,6 @@ class ProcimgWriter(Thread):
 
         return True
 
-    def _get_ioerrors(self):
-        """Ruft aktuelle Anzahl der Fehler ab.
-        @return Aktuelle Fehleranzahl"""
-        return self._ioerror
-
-    def _gotioerror(self, e=None):
-        """IOError Verwaltung fuer autorefresh.
-        @param e Exception to log if debug is enabled
-        """
-        self._ioerror += 1
-        if self._maxioerrors != 0 and self._ioerror >= self._maxioerrors:
-            raise RuntimeError(
-                "reach max io error count {0} on process image".format(
-                    self._maxioerrors
-                )
-            )
-        if self._modio._debug:
-            warnings.warn(
-                "count {0} io errors on process image | {1}"
-                "".format(self._ioerror, str(e)),
-                RuntimeWarning
-            )
-        else:
-            warnings.warn(
-                "got io error on process image",
-                RuntimeWarning
-            )
-
-    def get_maxioerrors(self):
-        """Gibt die Anzahl der maximal erlaubten Fehler zurueck.
-        @return Anzahl erlaubte Fehler"""
-        return self._maxioerrors
-
     def get_refresh(self):
         """Gibt Zykluszeit zurueck.
         @return <class 'int'> Zykluszeit in Millisekunden"""
@@ -515,7 +480,7 @@ class ProcimgWriter(Thread):
                         fh.flush()
 
             except IOError as e:
-                self._gotioerror(e)
+                self._modio._gotioerror("autorefresh", e)
                 self.lck_refresh.release()
                 continue
 
@@ -567,17 +532,6 @@ class ProcimgWriter(Thread):
         """Beendet die automatische Prozessabbildsynchronisierung."""
         self._work.set()
 
-    def set_maxioerrors(self, value):
-        """Setzt die Anzahl der maximal erlaubten Fehler.
-        @param value Anzahl erlaubte Fehler"""
-        if type(value) == int:
-            if value >= 0:
-                self._maxioerrors = value
-            else:
-                raise ValueError("value must be 0 or a positive integer")
-        else:
-            raise TypeError("value must be <class 'int'>")
-
     def set_refresh(self, value):
         """Setzt die Zykluszeit in Millisekunden.
         @param value <class 'int'> Millisekunden"""
@@ -590,6 +544,4 @@ class ProcimgWriter(Thread):
                 "refresh time must be 5 to 2000 milliseconds"
             )
 
-    ioerrors = property(_get_ioerrors)
-    maxioerrors = property(get_maxioerrors, set_maxioerrors)
     refresh = property(get_refresh, set_refresh)

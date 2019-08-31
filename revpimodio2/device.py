@@ -348,12 +348,10 @@ class Device(object):
             if not self._modio._imgwriter.is_alive():
 
                 # Alte Einstellungen speichern
-                imgmaxioerrors = self._modio._imgwriter.maxioerrors
                 imgrefresh = self._modio._imgwriter.refresh
 
                 # ImgWriter mit alten Einstellungen erstellen
                 self._modio._imgwriter = ProcimgWriter(self._modio)
-                self._modio._imgwriter.maxioerrors = imgmaxioerrors
                 self._modio._imgwriter.refresh = imgrefresh
                 self._modio._imgwriter.start()
 
