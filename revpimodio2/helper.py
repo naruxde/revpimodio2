@@ -485,17 +485,24 @@ class ProcimgWriter(Thread):
 
             except IOError as e:
                 self._modio._gotioerror("autorefresh", e, mrk_warn)
-                mrk_warn = False
+                mrk_warn = self._modio._debug == -1
                 self.lck_refresh.release()
                 continue
 
             else:
                 if not mrk_warn:
-                    warnings.warn(
-                        "recover io errors on process image - total count "
-                        "of {0} errors now".format(self._modio._ioerror),
-                        RuntimeWarning
-                    )
+                    if self._modio._debug == 0:
+                        warnings.warn(
+                            "recover from io errors on process image",
+                            RuntimeWarning
+                        )
+                    else:
+                        warnings.warn(
+                            "recover from io errors on process image - total "
+                            "count of {0} errors now"
+                            "".format(self._modio._ioerror),
+                            RuntimeWarning
+                        )
                 mrk_warn = True
 
                 # Alle aufwecken

@@ -80,7 +80,7 @@ class RevPiModIO(object):
         # Private Variablen
         self.__cleanupfunc = None
         self._buffedwrite = False
-        self._debug = False
+        self._debug = 1
         self._exit = Event()
         self._imgwriter = None
         self._ioerror = 0
@@ -408,7 +408,7 @@ class RevPiModIO(object):
     def _get_debug(self):
         """Gibt Status des Debugflags zurueck.
         @return Status des Debugflags"""
-        return self._debug
+        return self._debug == 1
 
     def _get_ioerrors(self):
         """Getter function.
@@ -460,18 +460,18 @@ class RevPiModIO(object):
                 "".format(self._maxioerrors)
             )
 
-        if not show_warn:
+        if not show_warn or self._debug == -1:
             return
 
-        if self._debug:
+        if self._debug == 0:
             warnings.warn(
-                "got io error during '{0}' and count {1} errors now | {2}"
-                "".format(action, self._ioerror, str(e)),
+                "got io error on process image",
                 RuntimeWarning
             )
         else:
             warnings.warn(
-                "got io error on process image",
+                "got io error during '{0}' and count {1} errors now | {2}"
+                "".format(action, self._ioerror, str(e)),
                 RuntimeWarning
             )
 
@@ -489,14 +489,22 @@ class RevPiModIO(object):
     def _set_debug(self, value):
         """Setzt debugging Status um mehr Meldungen zu erhalten oder nicht.
         @param value Wenn True, werden umfangreiche Medungen angezeigt"""
-        if not isinstance(value,  bool):
-            raise TypeError("value must be <class 'bool'>")
+        if type(value) == bool:
+            value = int(value)
+        if not type(value) == int:
+            # Wert -1 ist zum kompletten deaktivieren versteckt
+            raise TypeError("value must be <class 'bool'> or <class 'int'>")
+        if not -1 <= value <= 1:
+            raise ValueError("value must be True/False or -1, 0, 1")
+
         self._debug = value
 
-        if value:
-            warnings.filterwarnings("always", module="revpimodio2")
-        else:
+        if value == -1:
+            warnings.filterwarnings("ignore", module="revpimodio2")
+        elif value == 0:
             warnings.filterwarnings("default", module="revpimodio2")
+        else:
+            warnings.filterwarnings("always", module="revpimodio2")
 
     def _set_maxioerrors(self, value):
         """Setzt Anzahl der maximal erlaubten Fehler bei Prozessabbildzugriff.
@@ -883,13 +891,13 @@ class RevPiModIO(object):
         # ImgWriter mit Eventüberwachung aktivieren
         self._imgwriter._collect_events(True)
         e = None
-        runtime = 0
+        runtime = -1 if self._debug == -1 else 0
 
         while not self._exit.is_set():
 
             # Laufzeit der Eventqueue auf 0 setzen
             if self._imgwriter._eventq.qsize() == 0:
-                runtime = 0
+                runtime = -1 if self._debug == -1 else 0
 
             try:
                 tup_fire = self._imgwriter._eventq.get(timeout=1)

@@ -516,12 +516,13 @@ class NetFH(Thread):
                     try:
                         self._slavesock.send(_syssync)
                         data = self._slavesock.recv(2)
-                    except IOError as e:
+                    except IOError:
                         self.__sockerr.set()
                     else:
                         if data != b'\x06\x16':
                             warnings.warn(
-                                "data error in sync of NetFH", RuntimeWarning
+                                "data error on network sync",
+                                RuntimeWarning
                             )
                             self.__sockerr.set()
 
