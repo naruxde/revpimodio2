@@ -495,29 +495,29 @@ class NetFH(Thread):
                 if self.__sockerr.is_set():
                     # Verhindert bei Scheitern 100% CPU last
                     self.__sockend.wait(self.__waitsync)
+                    continue
 
-            else:
-                # Kein Fehler aufgetreten, sync durchführen wenn socket frei
-                if not self.__trigger and \
-                        self.__socklock.acquire(blocking=False):
-                    try:
-                        self._slavesock.send(_syssync)
-                        data = self._slavesock.recv(2)
-                    except IOError as e:
+            # Kein Fehler aufgetreten, sync durchführen wenn socket frei
+            if not self.__trigger and \
+                    self.__socklock.acquire(blocking=False):
+                try:
+                    self._slavesock.send(_syssync)
+                    data = self._slavesock.recv(2)
+                except IOError as e:
+                    warnings.warn(
+                        "network error in sync of NetFH", RuntimeWarning
+                    )
+                    self.__sockerr.set()
+                else:
+                    if data != b'\x06\x16':
                         warnings.warn(
-                            "network error in sync of NetFH", RuntimeWarning
+                            "data error in sync of NetFH", RuntimeWarning
                         )
                         self.__sockerr.set()
-                    else:
-                        if data != b'\x06\x16':
-                            warnings.warn(
-                                "data error in sync of NetFH", RuntimeWarning
-                            )
-                            self.__sockerr.set()
 
-                    self.__socklock.release()
+                self.__socklock.release()
 
-                self.__trigger = False
+            self.__trigger = False
 
             # Warten nach Sync damit Instantiierung funktioniert
             self.__sockerr.wait(self.__waitsync)
