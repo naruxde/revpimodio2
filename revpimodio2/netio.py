@@ -509,26 +509,25 @@ class NetFH(Thread):
                         RuntimeWarning
                     )
 
-            else:
-                # Kein Fehler aufgetreten, sync durchführen wenn socket frei
-                if not self.__trigger and \
-                        self.__socklock.acquire(blocking=False):
-                    try:
-                        self._slavesock.send(_syssync)
-                        data = self._slavesock.recv(2)
-                    except IOError:
+            # Kein Fehler aufgetreten, sync durchführen wenn socket frei
+            if not self.__trigger and \
+                    self.__socklock.acquire(blocking=False):
+                try:
+                    self._slavesock.send(_syssync)
+                    data = self._slavesock.recv(2)
+                except IOError:
+                    self.__sockerr.set()
+                else:
+                    if data != b'\x06\x16':
+                        warnings.warn(
+                            "data error on network sync",
+                            RuntimeWarning
+                        )
                         self.__sockerr.set()
-                    else:
-                        if data != b'\x06\x16':
-                            warnings.warn(
-                                "data error on network sync",
-                                RuntimeWarning
-                            )
-                            self.__sockerr.set()
 
-                    self.__socklock.release()
+                self.__socklock.release()
 
-                self.__trigger = False
+            self.__trigger = False
 
             # Warten nach Sync damit Instantiierung funktioniert
             self.__sockerr.wait(self.__waitsync)
