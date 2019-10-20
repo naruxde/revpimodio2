@@ -605,7 +605,7 @@ class RevPiModIO(object):
 
         @param func Funktion, die ausgefuehrt werden soll
         @param cycletime Zykluszeit in Millisekunden - Standardwert 50 ms
-        @return None
+        @return None or the return value of the cycle function
 
         """
         # Prüfen ob ein Loop bereits läuft
