@@ -12,17 +12,16 @@ Auf alle IOs kann der Benutzer Funktionen als Events registrieren. Diese
 fuehrt das Modul bei Datenaenderung aus.
 
 """
-import warnings
-
 __all__ = [
     "RevPiModIO", "RevPiModIOSelected", "RevPiModIODriver",
-    "RevPiNetIO", "RevPiNetIOSelected", "RevPiNetIODriver"
+    "RevPiNetIO", "RevPiNetIOSelected", "RevPiNetIODriver",
+    "Cycletools",
 ]
 __author__ = "Sven Sager <akira@revpimodio.org>"
 __copyright__ = "Copyright (C) 2018 Sven Sager"
 __license__ = "LGPLv3"
 __name__ = "revpimodio2"
-__version__ = "2.3.3"
+__version__ = "2.4.2"
 
 # Global package values
 OFF = 0
@@ -34,8 +33,6 @@ BOTH = 33
 INP = 300
 OUT = 301
 MEM = 302
-
-warnings.simplefilter(action="always")
 
 
 class DeviceNotFoundError(Exception):
@@ -99,5 +96,6 @@ def consttostr(value):
 
 
 # Benötigte Klassen importieren
+from .helper import Cycletools
 from .modio import RevPiModIO, RevPiModIOSelected, RevPiModIODriver
 from .netio import RevPiNetIO, RevPiNetIOSelected, RevPiNetIODriver

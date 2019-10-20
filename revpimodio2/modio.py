@@ -37,11 +37,11 @@ class RevPiModIO(object):
         "_maxioerrors", "_myfh", "_myfh_lck", "_monitoring", "_procimg", \
         "_simulator", "_syncoutputs", "_th_mainloop", "_waitexit", \
         "core", "app", "device", "exitsignal", "io", "summary", "_debug", \
-        "_lck_replace_io", "_replace_io_file", "_run_on_pi"
+        "_replace_io_file", "_run_on_pi"
 
     def __init__(
             self, autorefresh=False, monitoring=False, syncoutputs=True,
-            procimg=None, configrsc=None, simulator=False, debug=False,
+            procimg=None, configrsc=None, simulator=False, debug=True,
             replace_io_file=None, direct_output=False):
         """Instantiiert die Grundfunktionen.
 
@@ -51,7 +51,7 @@ class RevPiModIO(object):
         @param procimg Abweichender Pfad zum Prozessabbild
         @param configrsc Abweichender Pfad zur piCtory Konfigurationsdatei
         @param simulator Laedt das Modul als Simulator und vertauscht IOs
-        @param debug Gibt bei allen Fehlern komplette Meldungen aus
+        @param debug Gibt alle Warnungen inkl. Zyklusprobleme aus
         @param replace_io_file Replace IO Konfiguration aus Datei laden
         @param direct_output Write outputs immediately to process image (slow)
 
@@ -80,12 +80,11 @@ class RevPiModIO(object):
         # Private Variablen
         self.__cleanupfunc = None
         self._buffedwrite = False
-        self._debug = debug
+        self._debug = 1
         self._exit = Event()
         self._imgwriter = None
         self._ioerror = 0
         self._length = 0
-        self._lck_replace_io = False
         self._looprunning = False
         self._lst_devselect = []
         self._lst_refresh = []
@@ -108,6 +107,9 @@ class RevPiModIO(object):
         # Event für Benutzeraktionen
         self.exitsignal = Event()
 
+        # Wert über setter setzen
+        self.debug = debug
+
         try:
             self._run_on_pi = S_ISCHR(osstat(self._procimg).st_mode)
         except Exception:
@@ -116,6 +118,7 @@ class RevPiModIO(object):
         # Nur Konfigurieren, wenn nicht vererbt
         if type(self) == RevPiModIO:
             self._configure(self.get_jconfigrsc())
+            self._configure_replace_io(self._get_cpreplaceio())
 
     def __del__(self):
         """Zerstoert alle Klassen um aufzuraeumen."""
@@ -138,7 +141,8 @@ class RevPiModIO(object):
                 self.writeprocimg()
 
     def _configure(self, jconfigrsc):
-        """Verarbeitet die piCtory Konfigurationsdatei."""
+        """Verarbeitet die piCtory Konfigurationsdatei.
+        @param jconfigrsc: Data to build IOs as <class 'dict'> of JSON"""
 
         # Filehandler konfigurieren, wenn er noch nicht existiert
         if self._myfh is None:
@@ -233,7 +237,8 @@ class RevPiModIO(object):
             else:
                 # Device-Type nicht gefunden
                 warnings.warn(
-                    "device type '{0}' unknown".format(device["type"]),
+                    "device type '{0}' on position {1} unknown"
+                    "".format(device["type"], device["position"]),
                     Warning
                 )
                 dev_new = None
@@ -261,11 +266,6 @@ class RevPiModIO(object):
                 "by position number .device[nn] only!",
                 Warning
             )
-
-        # Replace IO aus Datei verarbeiten
-        if self._replace_io_file is not None:
-            self._configure_replace_io()
-            self._lck_replace_io = True
 
         # ImgWriter erstellen
         self._imgwriter = helpermodule.ProcimgWriter(self)
@@ -301,85 +301,74 @@ class RevPiModIO(object):
         # Summary Klasse instantiieren
         self.summary = summarymodule.Summary(jconfigrsc["Summary"])
 
-    def _configure_replace_io(self):
+    def _configure_replace_io(self, creplaceio):
         """Importiert ersetzte IOs in diese Instanz.
 
         Importiert ersetzte IOs, welche vorher mit .export_replaced_ios(...)
         in eine Datei exportiert worden sind. Diese IOs werden in dieser
         Instanz wiederhergestellt.
 
+        @param ireplaceio: Data to replace ios as <class 'ConfigParser'>
+
         """
-        cp = ConfigParser()
-
-        try:
-            with open(self._replace_io_file, "r") as fh:
-                cp.read_file(fh)
-        except Exception as e:
-            raise RuntimeError(
-                "replace_io_file: could not read file '{0}' | {1}"
-                "".format(self._replace_io_file, e)
-            )
-
-        for io in cp:
+        for io in creplaceio:
             if io == "DEFAULT":
                 continue
 
             # IO prüfen
-            parentio = cp[io].get("replace", "")
+            parentio = creplaceio[io].get("replace", "")
 
             # Funktionsaufruf vorbereiten
             dict_replace = {
-                "frm": cp[io].get("frm"),
+                "frm": creplaceio[io].get("frm"),
+                "byteorder": creplaceio[io].get("byteorder", "little"),
+                "bmk": creplaceio[io].get("bmk", ""),
             }
 
-            # Convert defaultvalue from config file
-            if "defaultvalue" in cp[io]:
-                if dict_replace["frm"] == "?":
-                    try:
-                        dict_replace["defaultvalue"] = \
-                            cp[io].getboolean("defaultvalue")
-                    except Exception:
-                        raise ValueError(
-                            "replace_io_file: could not convert '{0}' "
-                            "defaultvalue '{1}' to boolean"
-                            "".format(io, cp[io].get("defaultvalue"))
-                        )
-                else:
-                    try:
-                        dict_replace["defaultvalue"] = \
-                            cp[io].getint("defaultvalue")
-                    except Exception:
-                        raise ValueError(
-                            "replace_io_file: could not convert '{0}' "
-                            "defaultvalue '{1}' to integer"
-                            "".format(io, cp[io].get("bit"))
-                        )
-
             # Get bitaddress from config file
-            if "bit" in cp[io]:
+            if "bit" in creplaceio[io]:
                 try:
-                    dict_replace["bit"] = cp[io].getint("bit", 0)
+                    dict_replace["bit"] = creplaceio[io].getint("bit")
                 except Exception:
                     raise ValueError(
                         "replace_io_file: could not convert '{0}' "
                         "bit '{1}' to integer"
-                        "".format(io, cp[io].get("bit"))
+                        "".format(io, creplaceio[io]["bit"])
                     )
 
-            # Sonstige Werte laden, wenn vorhanden
-            if "bmk" in cp[io]:
-                dict_replace["bmk"] = cp[io].get("bmk")
-            if "byteorder" in cp[io]:
-                dict_replace["byteorder"] = cp[io].get("byteorder")
+            # Convert defaultvalue from config file
+            if "defaultvalue" in creplaceio[io]:
+                if dict_replace["frm"] == "?":
+                    try:
+                        dict_replace["defaultvalue"] = \
+                            creplaceio[io].getboolean("defaultvalue")
+                    except Exception:
+                        raise ValueError(
+                            "replace_io_file: could not convert '{0}' "
+                            "defaultvalue '{1}' to boolean"
+                            "".format(io, creplaceio[io]["defaultvalue"])
+                        )
+                else:
+                    try:
+                        dict_replace["defaultvalue"] = \
+                            creplaceio[io].getint("defaultvalue")
+                    except Exception:
+                        raise ValueError(
+                            "replace_io_file: could not convert '{0}' "
+                            "defaultvalue '{1}' to integer"
+                            "".format(io, creplaceio[io]["defaultvalue"])
+                        )
 
             # IO ersetzen
             try:
                 self.io[parentio].replace_io(name=io, **dict_replace)
             except Exception as e:
-                raise RuntimeError(
-                    "replace_io_file: can not replace '{0}' with '{1}' "
-                    "| RevPiModIO message: {2}".format(parentio, io, e)
-                )
+                # NOTE: Bei Selected/Driver kann nicht geprüft werden
+                if len(self._lst_devselect) == 0:
+                    raise RuntimeError(
+                        "replace_io_file: can not replace '{0}' with '{1}' "
+                        "| RevPiModIO message: {2}".format(parentio, io, e)
+                    )
 
     def _create_myfh(self):
         """Erstellt FileObject mit Pfad zum procimg.
@@ -392,6 +381,25 @@ class RevPiModIO(object):
         @return Pfad der verwendeten piCtory Konfiguration"""
         return self._configrsc
 
+    def _get_cpreplaceio(self):
+        """Laed die replace_io_file Konfiguration und verarbeitet sie.
+        @return <class 'ConfigParser'> der replace io daten"""
+        cp = ConfigParser()
+
+        # TODO: verfeinern!
+
+        if self._replace_io_file:
+            try:
+                with open(self._replace_io_file, "r") as fh:
+                    cp.read_file(fh)
+            except Exception as e:
+                raise RuntimeError(
+                    "replace_io_file: could not read/parse file '{0}' | {1}"
+                    "".format(self._replace_io_file, e)
+                )
+
+        return cp
+
     def _get_cycletime(self):
         """Gibt Aktualisierungsrate in ms der Prozessabbildsynchronisierung aus.
         @return Millisekunden"""
@@ -400,15 +408,12 @@ class RevPiModIO(object):
     def _get_debug(self):
         """Gibt Status des Debugflags zurueck.
         @return Status des Debugflags"""
-        return self._debug
+        return self._debug == 1
 
     def _get_ioerrors(self):
         """Getter function.
         @return Aktuelle Anzahl gezaehlter Fehler"""
-        if self._looprunning:
-            return self._imgwriter._ioerror
-        else:
-            return self._ioerror
+        return self._ioerror
 
     def _get_length(self):
         """Getter function.
@@ -440,11 +445,12 @@ class RevPiModIO(object):
         @return True, wenn als Simulator gestartet"""
         return self._simulator
 
-    def _gotioerror(self, action, e=None):
+    def _gotioerror(self, action, e=None, show_warn=True):
         """IOError Verwaltung fuer Prozessabbildzugriff.
 
         @param action Zusatzinformationen zum loggen
         @param e Exception to log if debug is enabled
+        @param show_warn Warnung anzeigen
 
         """
         self._ioerror += 1
@@ -453,13 +459,21 @@ class RevPiModIO(object):
                 "reach max io error count {0} on process image"
                 "".format(self._maxioerrors)
             )
-        warnings.warn(
-            "got io error during {0} and count {1} errors now"
-            "".format(action, self._ioerror),
-            RuntimeWarning
-        )
-        if self._debug and e is not None:
-            warnings.warn(str(e), RuntimeWarning)
+
+        if not show_warn or self._debug == -1:
+            return
+
+        if self._debug == 0:
+            warnings.warn(
+                "got io error on process image",
+                RuntimeWarning
+            )
+        else:
+            warnings.warn(
+                "got io error during '{0}' and count {1} errors now | {2}"
+                "".format(action, self._ioerror, str(e)),
+                RuntimeWarning
+            )
 
     def _set_cycletime(self, milliseconds):
         """Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.
@@ -472,12 +486,31 @@ class RevPiModIO(object):
         else:
             self._imgwriter.refresh = milliseconds
 
+    def _set_debug(self, value):
+        """Setzt debugging Status um mehr Meldungen zu erhalten oder nicht.
+        @param value Wenn True, werden umfangreiche Medungen angezeigt"""
+        if type(value) == bool:
+            value = int(value)
+        if not type(value) == int:
+            # Wert -1 ist zum kompletten deaktivieren versteckt
+            raise TypeError("value must be <class 'bool'> or <class 'int'>")
+        if not -1 <= value <= 1:
+            raise ValueError("value must be True/False or -1, 0, 1")
+
+        self._debug = value
+
+        if value == -1:
+            warnings.filterwarnings("ignore", module="revpimodio2")
+        elif value == 0:
+            warnings.filterwarnings("default", module="revpimodio2")
+        else:
+            warnings.filterwarnings("always", module="revpimodio2")
+
     def _set_maxioerrors(self, value):
         """Setzt Anzahl der maximal erlaubten Fehler bei Prozessabbildzugriff.
         @param value Anzahl erlaubte Fehler"""
         if type(value) == int and value >= 0:
             self._maxioerrors = value
-            self._imgwriter.maxioerrors = value
         else:
             raise ValueError("value must be 0 or a positive integer")
 
@@ -511,7 +544,6 @@ class RevPiModIO(object):
                         self._myfh.flush()
 
         elif request == 19220:
-            # FIXME: Implement
             # Counterwert auf 0 setzen
             dev_position = arg[0]
             bit_field = int.from_bytes(arg[2:], byteorder="little")
@@ -524,7 +556,7 @@ class RevPiModIO(object):
                     break
 
             if io_byte == -1:
-                raise RuntimeError("count not reset counter io in file")
+                raise RuntimeError("could not reset counter io in file")
 
             with self._myfh_lck:
                 self._myfh.seek(io_byte)
@@ -573,7 +605,7 @@ class RevPiModIO(object):
 
         @param func Funktion, die ausgefuehrt werden soll
         @param cycletime Zykluszeit in Millisekunden - Standardwert 50 ms
-        @return None
+        @return None or the return value of the cycle function
 
         """
         # Prüfen ob ein Loop bereits läuft
@@ -682,7 +714,7 @@ class RevPiModIO(object):
                 if not self._monitoring:
                     self.writeprocimg(dev)
 
-    def export_replaced_ios(self, filename):
+    def export_replaced_ios(self, filename="replace_ios.conf"):
         """Exportiert ersetzte IOs dieser Instanz.
 
         Exportiert alle ersetzten IOs, welche mit .replace_io(...) angelegt
@@ -705,8 +737,10 @@ class RevPiModIO(object):
                 # Optional values
                 if io._bitaddress >= 0:
                     cp[io.name]["bit"] = str(io._bitaddress)
-                cp[io.name]["byteorder"] = io._byteorder
-                cp[io.name]["defaultvalue"] = str(io.defaultvalue)
+                if io._byteorder != "little":
+                    cp[io.name]["byteorder"] = io._byteorder
+                if io.defaultvalue != 0:
+                    cp[io.name]["defaultvalue"] = str(io.defaultvalue)
                 if io.bmk != "":
                     cp[io.name]["bmk"] = io.bmk
 
@@ -784,7 +818,7 @@ class RevPiModIO(object):
         signal(SIGINT, self.__evt_exit)
         signal(SIGTERM, self.__evt_exit)
 
-    def mainloop(self, blocking=True, no_warn=False):
+    def mainloop(self, blocking=True):
         """Startet den Mainloop mit Eventueberwachung.
 
         Der aktuelle Programmthread wird hier bis Aufruf von
@@ -799,8 +833,7 @@ class RevPiModIO(object):
         Events vom RevPi benoetigt werden, aber das Programm weiter ausgefuehrt
         werden soll.
 
-        @param blocking Wenn False, blockiert das Programm NICHT
-        @param no_warn Keine Warnungen bei langsamen Funktionen ausgeben
+        @param blocking Wenn False, blockiert das Programm hier NICHT
         @return None
 
         """
@@ -847,7 +880,7 @@ class RevPiModIO(object):
                                 or regfunc.edge == RISING and io.value \
                                 or regfunc.edge == FALLING and not io.value:
                             if regfunc.as_thread:
-                                self._imgwriter.__eventqth.put(
+                                self._imgwriter._eventqth.put(
                                     (regfunc, io._name, io.value), False
                                 )
                             else:
@@ -858,13 +891,13 @@ class RevPiModIO(object):
         # ImgWriter mit Eventüberwachung aktivieren
         self._imgwriter._collect_events(True)
         e = None
-        runtime = -1 if no_warn else 0
+        runtime = -1 if self._debug == -1 else 0
 
         while not self._exit.is_set():
 
             # Laufzeit der Eventqueue auf 0 setzen
             if self._imgwriter._eventq.qsize() == 0:
-                runtime = -1 if no_warn else 0
+                runtime = -1 if self._debug == -1 else 0
 
             try:
                 tup_fire = self._imgwriter._eventq.get(timeout=1)
@@ -882,7 +915,7 @@ class RevPiModIO(object):
                     runtime = -1
                     warnings.warn(
                         "can not execute all event functions in one cycle - "
-                        "rise .cycletime or optimize your event functions",
+                        "optimize your event functions or rise .cycletime",
                         RuntimeWarning
                     )
             except Empty:
@@ -958,7 +991,6 @@ class RevPiModIO(object):
     def resetioerrors(self):
         """Setzt aktuellen IOError-Zaehler auf 0 zurueck."""
         self._ioerror = 0
-        self._imgwriter._ioerror = 0
 
     def setdefaultvalues(self, device=None):
         """Alle Outputbuffer werden auf die piCtory default Werte gesetzt.
@@ -1082,7 +1114,7 @@ class RevPiModIO(object):
 
         return workokay
 
-    debug = property(_get_debug)
+    debug = property(_get_debug, _set_debug)
     configrsc = property(_get_configrsc)
     cycletime = property(_get_cycletime, _set_cycletime)
     ioerrors = property(_get_ioerrors)
@@ -1110,7 +1142,7 @@ class RevPiModIOSelected(RevPiModIO):
     def __init__(
             self, deviceselection, autorefresh=False, monitoring=False,
             syncoutputs=True, procimg=None, configrsc=None,
-            simulator=False, debug=False, replace_io_file=None,
+            simulator=False, debug=True, replace_io_file=None,
             direct_output=False):
         """Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 
@@ -1142,6 +1174,7 @@ class RevPiModIOSelected(RevPiModIO):
                 )
 
         self._configure(self.get_jconfigrsc())
+        self._configure_replace_io(self._get_cpreplaceio())
 
         if len(self.device) == 0:
             if type(self) == RevPiModIODriver:
@@ -1178,7 +1211,7 @@ class RevPiModIODriver(RevPiModIOSelected):
 
     def __init__(
             self, virtdev, autorefresh=False, monitoring=False,
-            syncoutputs=True, procimg=None, configrsc=None, debug=False,
+            syncoutputs=True, procimg=None, configrsc=None, debug=True,
             replace_io_file=None, direct_output=False):
         """Instantiiert die Grundfunktionen.
 

@@ -994,18 +994,12 @@ class IntIOReplaceable(IntIO):
             - delay: Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
             - edge: Event ausfuehren bei RISING, FALLING or BOTH Wertaenderung
             - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
+            - prefire: Ausloesen mit aktuellem Wert, wenn mainloop startet
         @see <a target="_blank"
         href="https://docs.python.org/3/library/struct.html#format-characters"
         >Python3 struct</a>
 
         """
-        # Sperre prüfen
-        if self._parentdevice._modio._lck_replace_io:
-            raise RuntimeError(
-                "can not use this function while using an external "
-                "replace_io_file"
-            )
-
         # StructIO erzeugen
         io_new = StructIO(
             self,

@@ -289,8 +289,8 @@ class ProcimgWriter(Thread):
 
     """
 
-    __slots__ = "__dict_delay", "__eventth", "__eventqth", "__eventwork", \
-        "_adjwait", "_eventq", "_ioerror", "_maxioerrors", "_modio", \
+    __slots__ = "__dict_delay", "__eventth", "_eventqth", "__eventwork", \
+        "_adjwait", "_eventq", "_modio", \
         "_refresh", "_work", "daemon", "lck_refresh", "newdata"
 
     def __init__(self, parentmodio):
@@ -299,12 +299,10 @@ class ProcimgWriter(Thread):
         super().__init__()
         self.__dict_delay = {}
         self.__eventth = Thread(target=self.__exec_th)
-        self.__eventqth = queue.Queue()
+        self._eventqth = queue.Queue()
         self.__eventwork = False
         self._adjwait = 0
         self._eventq = queue.Queue()
-        self._ioerror = 0
-        self._maxioerrors = 0
         self._modio = parentmodio
         self._refresh = 0.05
         self._work = Event()
@@ -340,7 +338,7 @@ class ProcimgWriter(Thread):
                             or regfunc.edge == FALLING and not boolor:
                         if regfunc.delay == 0:
                             if regfunc.as_thread:
-                                self.__eventqth.put(
+                                self._eventqth.put(
                                     (regfunc, io_event._name, io_event.value),
                                     False
                                 )
@@ -351,19 +349,20 @@ class ProcimgWriter(Thread):
                                 )
                         else:
                             # Verzögertes Event in dict einfügen
-                            tupfire = (
-                                regfunc, io_event._name, io_event.value
+                            tup_fire = (
+                                regfunc, io_event._name, io_event.value,
+                                io_event,
                             )
                             if regfunc.overwrite \
-                                    or tupfire not in self.__dict_delay:
-                                self.__dict_delay[tupfire] = ceil(
+                                    or tup_fire not in self.__dict_delay:
+                                self.__dict_delay[tup_fire] = ceil(
                                     regfunc.delay / 1000 / self._refresh
                                 )
             else:
                 for regfunc in dev._dict_events[io_event]:
                     if regfunc.delay == 0:
                         if regfunc.as_thread:
-                            self.__eventqth.put(
+                            self._eventqth.put(
                                 (regfunc, io_event._name, io_event.value),
                                 False
                             )
@@ -374,12 +373,13 @@ class ProcimgWriter(Thread):
                             )
                     else:
                         # Verzögertes Event in dict einfügen
-                        tupfire = (
-                            regfunc, io_event._name, io_event.value
+                        tup_fire = (
+                            regfunc, io_event._name, io_event.value,
+                            io_event,
                         )
                         if regfunc.overwrite \
-                                or tupfire not in self.__dict_delay:
-                            self.__dict_delay[tupfire] = ceil(
+                                or tup_fire not in self.__dict_delay:
+                            self.__dict_delay[tup_fire] = ceil(
                                 regfunc.delay / 1000 / self._refresh
                             )
 
@@ -390,7 +390,7 @@ class ProcimgWriter(Thread):
         """Laeuft als Thread, der Events als Thread startet."""
         while self.__eventwork:
             try:
-                tup_fireth = self.__eventqth.get(timeout=1)
+                tup_fireth = self._eventqth.get(timeout=1)
                 th = EventCallback(
                     tup_fireth[0].func, tup_fireth[1], tup_fireth[2]
                 )
@@ -415,7 +415,7 @@ class ProcimgWriter(Thread):
                 self.__eventwork = value
                 if not value:
                     # Nur leeren beim deaktivieren
-                    self.__eventqth = queue.Queue()
+                    self._eventqth = queue.Queue()
                     self._eventq = queue.Queue()
                     self.__dict_delay = {}
 
@@ -427,34 +427,6 @@ class ProcimgWriter(Thread):
 
         return True
 
-    def _get_ioerrors(self):
-        """Ruft aktuelle Anzahl der Fehler ab.
-        @return Aktuelle Fehleranzahl"""
-        return self._ioerror
-
-    def _gotioerror(self, e=None):
-        """IOError Verwaltung fuer autorefresh.
-        @param e Exception to log if debug is enabled
-        """
-        self._ioerror += 1
-        if self._maxioerrors != 0 and self._ioerror >= self._maxioerrors:
-            raise RuntimeError(
-                "reach max io error count {0} on process image".format(
-                    self._maxioerrors
-                )
-            )
-        warnings.warn(
-            "count {0} io errors on process image".format(self._ioerror),
-            RuntimeWarning
-        )
-        if self._modio._debug and e is not None:
-            warnings.warn(str(e), RuntimeWarning)
-
-    def get_maxioerrors(self):
-        """Gibt die Anzahl der maximal erlaubten Fehler zurueck.
-        @return Anzahl erlaubte Fehler"""
-        return self._maxioerrors
-
     def get_refresh(self):
         """Gibt Zykluszeit zurueck.
         @return <class 'int'> Zykluszeit in Millisekunden"""
@@ -465,18 +437,19 @@ class ProcimgWriter(Thread):
         fh = self._modio._create_myfh()
         self._adjwait = self._refresh
 
+        mrk_warn = True
+
         while not self._work.is_set():
             ot = default_timer()
 
             # Lockobjekt holen und Fehler werfen, wenn nicht schnell genug
             if not self.lck_refresh.acquire(timeout=self._adjwait):
                 warnings.warn(
-                    "cycle time of {0} ms exceeded on lock".format(
-                        int(self._refresh * 1000)
-                    ),
+                    "cycle time of {0} ms exceeded during executing function"
+                    "".format(int(self._refresh * 1000)),
                     RuntimeWarning
                 )
-                # Verzögerte Events pausieren an dieser Stelle
+                # Nur durch cycleloop erreichbar - keine verzögerten Events
                 continue
 
             try:
@@ -511,11 +484,27 @@ class ProcimgWriter(Thread):
                         fh.flush()
 
             except IOError as e:
-                self._gotioerror(e)
+                self._modio._gotioerror("autorefresh", e, mrk_warn)
+                mrk_warn = self._modio._debug == -1
                 self.lck_refresh.release()
                 continue
 
             else:
+                if not mrk_warn:
+                    if self._modio._debug == 0:
+                        warnings.warn(
+                            "recover from io errors on process image",
+                            RuntimeWarning
+                        )
+                    else:
+                        warnings.warn(
+                            "recover from io errors on process image - total "
+                            "count of {0} errors now"
+                            "".format(self._modio._ioerror),
+                            RuntimeWarning
+                        )
+                mrk_warn = True
+
                 # Alle aufwecken
                 self.lck_refresh.release()
                 self.newdata.set()
@@ -525,15 +514,14 @@ class ProcimgWriter(Thread):
                 if self.__eventwork:
                     for tup_fire in tuple(self.__dict_delay.keys()):
                         if tup_fire[0].overwrite and \
-                                getattr(self._modio.io, tup_fire[1]).value != \
-                                tup_fire[2]:
+                                tup_fire[3].value != tup_fire[2]:
                             del self.__dict_delay[tup_fire]
                         else:
                             self.__dict_delay[tup_fire] -= 1
                             if self.__dict_delay[tup_fire] <= 0:
                                 # Verzögertes Event übernehmen und löschen
                                 if tup_fire[0].as_thread:
-                                    self.__eventqth.put(tup_fire, False)
+                                    self._eventqth.put(tup_fire, False)
                                 else:
                                     self._eventq.put(tup_fire, False)
                                 del self.__dict_delay[tup_fire]
@@ -546,9 +534,8 @@ class ProcimgWriter(Thread):
                 self._adjwait -= 0.001
                 if self._adjwait < 0:
                     warnings.warn(
-                        "cycle time of {0} ms exceeded".format(
-                            int(self._refresh * 1000)
-                        ),
+                        "cycle time of {0} ms exceeded several times - can not"
+                        " hold cycle time!".format(int(self._refresh * 1000)),
                         RuntimeWarning
                     )
                     self._adjwait = 0
@@ -564,17 +551,6 @@ class ProcimgWriter(Thread):
         """Beendet die automatische Prozessabbildsynchronisierung."""
         self._work.set()
 
-    def set_maxioerrors(self, value):
-        """Setzt die Anzahl der maximal erlaubten Fehler.
-        @param value Anzahl erlaubte Fehler"""
-        if type(value) == int:
-            if value >= 0:
-                self._maxioerrors = value
-            else:
-                raise ValueError("value must be 0 or a positive integer")
-        else:
-            raise TypeError("value must be <class 'int'>")
-
     def set_refresh(self, value):
         """Setzt die Zykluszeit in Millisekunden.
         @param value <class 'int'> Millisekunden"""
@@ -587,6 +563,4 @@ class ProcimgWriter(Thread):
                 "refresh time must be 5 to 2000 milliseconds"
             )
 
-    ioerrors = property(_get_ioerrors)
-    maxioerrors = property(get_maxioerrors, set_maxioerrors)
     refresh = property(get_refresh, set_refresh)
