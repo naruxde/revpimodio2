@@ -1,26 +1,27 @@
 # -*- coding: utf-8 -*-
 """RevPiModIO Hauptklasse fuer piControl0 Zugriff."""
-__author__ = "Sven Sager"
-__copyright__ = "Copyright (C) 2018 Sven Sager"
-__license__ = "LGPLv3"
-
 import warnings
 from configparser import ConfigParser
 from json import load as jload
 from multiprocessing import cpu_count
-from os import access, F_OK, R_OK
+from os import F_OK, R_OK, access
 from os import stat as osstat
 from queue import Empty
-from revpimodio2 import acheck, DeviceNotFoundError, BOTH, RISING, FALLING
-from signal import signal, SIG_DFL, SIGINT, SIGTERM
+from signal import SIGINT, SIGTERM, SIG_DFL, signal
 from stat import S_ISCHR
-from threading import Thread, Event, Lock
+from threading import Event, Lock, Thread
 from timeit import default_timer
+
+from revpimodio2 import BOTH, DeviceNotFoundError, FALLING, RISING, acheck
+
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
 
 
 class RevPiModIO(object):
-
-    """Klasse fuer die Verwaltung der piCtory Konfiguration.
+    """
+    Klasse fuer die Verwaltung der piCtory Konfiguration.
 
     Diese Klasse uebernimmt die gesamte Konfiguration aus piCtory und bilded
     die Devices und IOs ab. Sie uebernimmt die exklusive Verwaltung des
@@ -28,33 +29,32 @@ class RevPiModIO(object):
     Sollten nur einzelne Devices gesteuert werden, verwendet man
     RevPiModIOSelected() und uebergibt bei Instantiierung eine Liste mit
     Device Positionen oder Device Namen.
-
     """
 
     __slots__ = "__cleanupfunc", "_autorefresh", "_buffedwrite", \
-        "_configrsc", "_direct_output", "_exit", "_imgwriter", "_ioerror", \
-        "_length", "_looprunning", "_lst_devselect", "_lst_refresh", \
-        "_maxioerrors", "_myfh", "_myfh_lck", "_monitoring", "_procimg", \
-        "_simulator", "_syncoutputs", "_th_mainloop", "_waitexit", \
-        "core", "app", "device", "exitsignal", "io", "summary", "_debug", \
-        "_replace_io_file", "_run_on_pi"
+                "_configrsc", "_direct_output", "_exit", "_imgwriter", "_ioerror", \
+                "_length", "_looprunning", "_lst_devselect", "_lst_refresh", \
+                "_maxioerrors", "_myfh", "_myfh_lck", "_monitoring", "_procimg", \
+                "_simulator", "_syncoutputs", "_th_mainloop", "_waitexit", \
+                "core", "app", "device", "exitsignal", "io", "summary", "_debug", \
+                "_replace_io_file", "_run_on_pi"
 
     def __init__(
             self, autorefresh=False, monitoring=False, syncoutputs=True,
             procimg=None, configrsc=None, simulator=False, debug=True,
             replace_io_file=None, direct_output=False):
-        """Instantiiert die Grundfunktionen.
+        """
+        Instantiiert die Grundfunktionen.
 
-        @param autorefresh Wenn True, alle Devices zu autorefresh hinzufuegen
-        @param monitoring In- und Outputs werden gelesen, niemals geschrieben
-        @param syncoutputs Aktuell gesetzte Outputs vom Prozessabbild einlesen
-        @param procimg Abweichender Pfad zum Prozessabbild
-        @param configrsc Abweichender Pfad zur piCtory Konfigurationsdatei
-        @param simulator Laedt das Modul als Simulator und vertauscht IOs
-        @param debug Gibt alle Warnungen inkl. Zyklusprobleme aus
-        @param replace_io_file Replace IO Konfiguration aus Datei laden
-        @param direct_output Write outputs immediately to process image (slow)
-
+        :param autorefresh: Wenn True, alle Devices zu autorefresh hinzufuegen
+        :param monitoring: In- und Outputs werden gelesen, niemals geschrieben
+        :param syncoutputs: Aktuell gesetzte Outputs vom Prozessabbild einlesen
+        :param procimg: Abweichender Pfad zum Prozessabbild
+        :param configrsc: Abweichender Pfad zur piCtory Konfigurationsdatei
+        :param simulator: Laedt das Modul als Simulator und vertauscht IOs
+        :param debug: Gibt alle Warnungen inkl. Zyklusprobleme aus
+        :param replace_io_file: Replace IO Konfiguration aus Datei laden
+        :param direct_output: Write outputs immediately to process image (slow)
         """
         # Parameterprüfung
         acheck(
@@ -127,10 +127,13 @@ class RevPiModIO(object):
             if self._myfh is not None:
                 self._myfh.close()
 
-    def __evt_exit(self, signum, sigframe):
-        """Eventhandler fuer Programmende.
-        @param signum Signalnummer
-        @param sigframe Signalframe"""
+    def __evt_exit(self, signum, sigframe) -> None:
+        """
+        Eventhandler fuer Programmende.
+
+        :param signum: Signalnummer
+        :param sigframe: Signalframe
+        """
         signal(SIGINT, SIG_DFL)
         signal(SIGTERM, SIG_DFL)
         self.exit(full=True)
@@ -140,10 +143,12 @@ class RevPiModIO(object):
             if not self._monitoring:
                 self.writeprocimg()
 
-    def _configure(self, jconfigrsc):
-        """Verarbeitet die piCtory Konfigurationsdatei.
-        @param jconfigrsc: Data to build IOs as <class 'dict'> of JSON"""
+    def _configure(self, jconfigrsc: dict) -> None:
+        """
+        Verarbeitet die piCtory Konfigurationsdatei.
 
+        :param jconfigrsc: Data to build IOs as <class 'dict'> of JSON
+        """
         # Filehandler konfigurieren, wenn er noch nicht existiert
         if self._myfh is None:
             self._myfh = self._create_myfh()
@@ -283,12 +288,12 @@ class RevPiModIO(object):
             if self.core._slc_errorlimit1 is not None:
                 io = self.io[
                     self.core.offset + self.core._slc_errorlimit1.start
-                ][0]
+                    ][0]
                 io.set_value(io._defaultvalue)
             if self.core._slc_errorlimit2 is not None:
                 io = self.io[
                     self.core.offset + self.core._slc_errorlimit2.start
-                ][0]
+                    ][0]
                 io.set_value(io._defaultvalue)
 
             # RS485 errors schreiben
@@ -301,15 +306,15 @@ class RevPiModIO(object):
         # Summary Klasse instantiieren
         self.summary = summarymodule.Summary(jconfigrsc["Summary"])
 
-    def _configure_replace_io(self, creplaceio):
-        """Importiert ersetzte IOs in diese Instanz.
+    def _configure_replace_io(self, creplaceio: ConfigParser) -> None:
+        """
+        Importiert ersetzte IOs in diese Instanz.
 
         Importiert ersetzte IOs, welche vorher mit .export_replaced_ios(...)
         in eine Datei exportiert worden sind. Diese IOs werden in dieser
         Instanz wiederhergestellt.
 
-        @param ireplaceio: Data to replace ios as <class 'ConfigParser'>
-
+        :param creplaceio: Data to replace ios as <class 'ConfigParser'>
         """
         for io in creplaceio:
             if io == "DEFAULT":
@@ -371,19 +376,28 @@ class RevPiModIO(object):
                     )
 
     def _create_myfh(self):
-        """Erstellt FileObject mit Pfad zum procimg.
-        return FileObject"""
+        """
+        Erstellt FileObject mit Pfad zum procimg.
+
+        :return: FileObject
+        """
         self._buffedwrite = False
         return open(self._procimg, "r+b", 0)
 
-    def _get_configrsc(self):
-        """Getter function.
-        @return Pfad der verwendeten piCtory Konfiguration"""
+    def _get_configrsc(self) -> str:
+        """
+        Getter function.
+
+        :return: Pfad der verwendeten piCtory Konfiguration
+        """
         return self._configrsc
 
-    def _get_cpreplaceio(self):
-        """Laed die replace_io_file Konfiguration und verarbeitet sie.
-        @return <class 'ConfigParser'> der replace io daten"""
+    def _get_cpreplaceio(self) -> ConfigParser:
+        """
+        Laed die replace_io_file Konfiguration und verarbeitet sie.
+
+        :return: <class 'ConfigParser'> der replace io daten
+        """
         cp = ConfigParser()
 
         # TODO: verfeinern!
@@ -400,58 +414,85 @@ class RevPiModIO(object):
 
         return cp
 
-    def _get_cycletime(self):
-        """Gibt Aktualisierungsrate in ms der Prozessabbildsynchronisierung aus.
-        @return Millisekunden"""
+    def _get_cycletime(self) -> int:
+        """
+        Gibt Aktualisierungsrate in ms der Prozessabbildsynchronisierung aus.
+
+        :return: Millisekunden
+        """
         return self._imgwriter.refresh
 
-    def _get_debug(self):
-        """Gibt Status des Debugflags zurueck.
-        @return Status des Debugflags"""
+    def _get_debug(self) -> bool:
+        """
+        Gibt Status des Debugflags zurueck.
+
+        :return: Status des Debugflags
+        """
         return self._debug == 1
 
-    def _get_ioerrors(self):
-        """Getter function.
-        @return Aktuelle Anzahl gezaehlter Fehler"""
+    def _get_ioerrors(self) -> int:
+        """
+        Getter function.
+
+        :return: Aktuelle Anzahl gezaehlter Fehler
+        """
         return self._ioerror
 
-    def _get_length(self):
-        """Getter function.
-        @return Laenge in Bytes der Devices"""
+    def _get_length(self) -> int:
+        """
+        Getter function.
+
+        :return: Laenge in Bytes der Devices
+        """
         return self._length
 
-    def _get_maxioerrors(self):
-        """Getter function.
-        @return Anzahl erlaubte Fehler"""
+    def _get_maxioerrors(self) -> int:
+        """
+        Getter function.
+
+        :return: Anzahl erlaubte Fehler
+        """
         return self._maxioerrors
 
-    def _get_monitoring(self):
-        """Getter function.
-        @return True, wenn als Monitoring gestartet"""
+    def _get_monitoring(self) -> bool:
+        """
+        Getter function.
+
+        :return: True, wenn als Monitoring gestartet
+        """
         return self._monitoring
 
-    def _get_procimg(self):
-        """Getter function.
-        @return Pfad des verwendeten Prozessabbilds"""
+    def _get_procimg(self) -> str:
+        """
+        Getter function.
+
+        :return: Pfad des verwendeten Prozessabbilds
+        """
         return self._procimg
 
-    def _get_replace_io_file(self):
-        """Gibt Pfad zur verwendeten replace IO Datei aus.
-        @return Pfad zur replace IO Datei"""
+    def _get_replace_io_file(self) -> str:
+        """
+        Gibt Pfad zur verwendeten replace IO Datei aus.
+
+        :return: Pfad zur replace IO Datei
+        """
         return self._replace_io_file
 
-    def _get_simulator(self):
-        """Getter function.
-        @return True, wenn als Simulator gestartet"""
+    def _get_simulator(self) -> bool:
+        """
+        Getter function.
+
+        :return: True, wenn als Simulator gestartet
+        """
         return self._simulator
 
-    def _gotioerror(self, action, e=None, show_warn=True):
-        """IOError Verwaltung fuer Prozessabbildzugriff.
+    def _gotioerror(self, action: str, e=None, show_warn=True) -> None:
+        """
+        IOError Verwaltung fuer Prozessabbildzugriff.
 
-        @param action Zusatzinformationen zum loggen
-        @param e Exception to log if debug is enabled
-        @param show_warn Warnung anzeigen
-
+        :param action: Zusatzinformationen zum loggen
+        :param e: Exception to log if debug is enabled
+        :param show_warn: Warnung anzeigen
         """
         self._ioerror += 1
         if self._maxioerrors != 0 and self._ioerror >= self._maxioerrors:
@@ -475,9 +516,12 @@ class RevPiModIO(object):
                 RuntimeWarning
             )
 
-    def _set_cycletime(self, milliseconds):
-        """Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.
-        @param milliseconds <class 'int'> in Millisekunden"""
+    def _set_cycletime(self, milliseconds: int) -> None:
+        """
+        Setzt Aktualisierungsrate der Prozessabbild-Synchronisierung.
+
+        :param milliseconds: <class 'int'> in Millisekunden
+        """
         if self._looprunning:
             raise RuntimeError(
                 "can not change cycletime when cycleloop or mainloop is "
@@ -486,9 +530,12 @@ class RevPiModIO(object):
         else:
             self._imgwriter.refresh = milliseconds
 
-    def _set_debug(self, value):
-        """Setzt debugging Status um mehr Meldungen zu erhalten oder nicht.
-        @param value Wenn True, werden umfangreiche Medungen angezeigt"""
+    def _set_debug(self, value: bool) -> None:
+        """
+        Setzt debugging Status um mehr Meldungen zu erhalten oder nicht.
+
+        :param value: Wenn True, werden umfangreiche Medungen angezeigt
+        """
         if type(value) == bool:
             value = int(value)
         if not type(value) == int:
@@ -506,18 +553,24 @@ class RevPiModIO(object):
         else:
             warnings.filterwarnings("always", module="revpimodio2")
 
-    def _set_maxioerrors(self, value):
-        """Setzt Anzahl der maximal erlaubten Fehler bei Prozessabbildzugriff.
-        @param value Anzahl erlaubte Fehler"""
+    def _set_maxioerrors(self, value: int) -> None:
+        """
+        Setzt Anzahl der maximal erlaubten Fehler bei Prozessabbildzugriff.
+
+        :param value: Anzahl erlaubte Fehler
+        """
         if type(value) == int and value >= 0:
             self._maxioerrors = value
         else:
             raise ValueError("value must be 0 or a positive integer")
 
-    def _simulate_ioctl(self, request, arg=b''):
-        """Simuliert IOCTL Funktionen auf procimg Datei.
-        @param request IO Request
-        @param arg: Request argument"""
+    def _simulate_ioctl(self, request: int, arg=b'') -> None:
+        """
+        Simuliert IOCTL Funktionen auf procimg Datei.
+
+        :param request: IO Request
+        :param arg: Request argument
+        """
         if request == 19216:
             # Einzelnes Bit setzen
             byte_address = int.from_bytes(arg[:2], byteorder="little")
@@ -552,7 +605,7 @@ class RevPiModIO(object):
             for i in range(16):
                 if bool(bit_field & 1 << i):
                     io_byte = self.device[dev_position].offset \
-                        + int(self.device[dev_position]._lst_counter[i])
+                              + int(self.device[dev_position]._lst_counter[i])
                     break
 
             if io_byte == -1:
@@ -564,12 +617,12 @@ class RevPiModIO(object):
                 if self._buffedwrite:
                     self._myfh.flush()
 
-    def autorefresh_all(self):
+    def autorefresh_all(self) -> None:
         """Setzt alle Devices in autorefresh Funktion."""
         for dev in self.device:
             dev.autorefresh()
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Beendet autorefresh und alle Threads."""
         self.exit(full=True)
         self._myfh.close()
@@ -580,7 +633,8 @@ class RevPiModIO(object):
         self.summary = None
 
     def cycleloop(self, func, cycletime=50):
-        """Startet den Cycleloop.
+        """
+        Startet den Cycleloop.
 
         Der aktuelle Programmthread wird hier bis Aufruf von
         .exit() "gefangen". Er fuehrt nach jeder Aktualisierung
@@ -603,10 +657,9 @@ class RevPiModIO(object):
         50 Millisekunden, in denen das Prozessabild eingelesen, die uebergebene
         Funktion ausgefuert und das Prozessabbild geschrieben wird.
 
-        @param func Funktion, die ausgefuehrt werden soll
-        @param cycletime Zykluszeit in Millisekunden - Standardwert 50 ms
-        @return None or the return value of the cycle function
-
+        :param func: Funktion, die ausgefuehrt werden soll
+        :param cycletime: Zykluszeit in Millisekunden - Standardwert 50 ms
+        :return: None or the return value of the cycle function
         """
         # Prüfen ob ein Loop bereits läuft
         if self._looprunning:
@@ -679,8 +732,9 @@ class RevPiModIO(object):
 
         return ec
 
-    def exit(self, full=True):
-        """Beendet mainloop() und optional autorefresh.
+    def exit(self, full=True) -> None:
+        """
+        Beendet mainloop() und optional autorefresh.
 
         Wenn sich das Programm im mainloop() befindet, wird durch Aufruf
         von exit() die Kontrolle wieder an das Hauptprogramm zurueckgegeben.
@@ -689,8 +743,8 @@ class RevPiModIO(object):
         dem autorefresh. Der Thread fuer die Prozessabbildsynchronisierung
         wird dann gestoppt und das Programm kann sauber beendet werden.
 
-        @param full Entfernt auch alle Devices aus autorefresh"""
-
+        :param full: Entfernt auch alle Devices aus autorefresh
+        """
         # Benutzerevent
         self.exitsignal.set()
 
@@ -714,15 +768,17 @@ class RevPiModIO(object):
                 if not self._monitoring:
                     self.writeprocimg(dev)
 
-    def export_replaced_ios(self, filename="replace_ios.conf"):
-        """Exportiert ersetzte IOs dieser Instanz.
+    def export_replaced_ios(self, filename="replace_ios.conf") -> None:
+        """
+        Exportiert ersetzte IOs dieser Instanz.
 
         Exportiert alle ersetzten IOs, welche mit .replace_io(...) angelegt
         wurden. Die Datei kann z.B. fuer RevPiPyLoad verwndet werden um Daten
         in den neuen Formaten per MQTT zu uebertragen oder mit RevPiPyControl
         anzusehen.
 
-        @param filename Dateiname fuer Exportdatei"""
+        @param filename Dateiname fuer Exportdatei
+        """
         acheck(str, filename=filename)
 
         cp = ConfigParser()
@@ -753,9 +809,12 @@ class RevPiModIO(object):
                 "".format(filename, e)
             )
 
-    def get_jconfigrsc(self):
-        """Laedt die piCtory Konfiguration und erstellt ein <class 'dict'>.
-        @return <class 'dict'> der piCtory Konfiguration"""
+    def get_jconfigrsc(self) -> dict:
+        """
+        Laedt die piCtory Konfiguration und erstellt ein <class 'dict'>.
+
+        :return: <class 'dict'> der piCtory Konfiguration
+        """
         # piCtory Konfiguration prüfen
         if self._configrsc is not None:
             if not access(self._configrsc, F_OK | R_OK):
@@ -786,8 +845,9 @@ class RevPiModIO(object):
                 )
             return jdata
 
-    def handlesignalend(self, cleanupfunc=None):
-        """Signalhandler fuer Programmende verwalten.
+    def handlesignalend(self, cleanupfunc=None) -> None:
+        """
+        Signalhandler fuer Programmende verwalten.
 
         Wird diese Funktion aufgerufen, uebernimmt RevPiModIO die SignalHandler
         fuer SIGINT und SIGTERM. Diese werden Empfangen, wenn das
@@ -804,9 +864,7 @@ class RevPiModIO(object):
         RevPiModIO Thrads / Funktionen werden die SignalHandler wieder
         freigegeben.
 
-        @param cleanupfunc Funktion wird nach dem letzten Lesen der Inputs
-        ausgefuehrt, gefolgt vom letzten Schreiben der Outputs
-
+        :param cleanupfunc: Funktion wird nach dem Beenden ausgefuehrt
         """
         # Prüfen ob Funktion callable ist
         if not (cleanupfunc is None or callable(cleanupfunc)):
@@ -818,8 +876,9 @@ class RevPiModIO(object):
         signal(SIGINT, self.__evt_exit)
         signal(SIGTERM, self.__evt_exit)
 
-    def mainloop(self, blocking=True):
-        """Startet den Mainloop mit Eventueberwachung.
+    def mainloop(self, blocking=True) -> None:
+        """
+        Startet den Mainloop mit Eventueberwachung.
 
         Der aktuelle Programmthread wird hier bis Aufruf von
         RevPiDevicelist.exit() "gefangen" (es sei denn blocking=False). Er
@@ -833,9 +892,7 @@ class RevPiModIO(object):
         Events vom RevPi benoetigt werden, aber das Programm weiter ausgefuehrt
         werden soll.
 
-        @param blocking Wenn False, blockiert das Programm hier NICHT
-        @return None
-
+        :param blocking: Wenn False, blockiert das Programm hier NICHT
         """
         # Prüfen ob ein Loop bereits läuft
         if self._looprunning:
@@ -935,14 +992,14 @@ class RevPiModIO(object):
         if e is not None:
             raise e
 
-    def readprocimg(self, device=None):
-        """Einlesen aller Inputs aller/eines Devices vom Prozessabbild.
+    def readprocimg(self, device=None) -> bool:
+        """
+        Einlesen aller Inputs aller/eines Devices vom Prozessabbild.
 
         Devices mit aktiverem autorefresh werden ausgenommen!
 
-        @param device nur auf einzelnes Device anwenden
-        @return True, wenn Arbeiten an allen Devices erfolgreich waren
-
+        :param device: nur auf einzelnes Device anwenden
+        :return: True, wenn Arbeiten an allen Devices erfolgreich waren
         """
         if device is None:
             mylist = self.device
@@ -988,13 +1045,16 @@ class RevPiModIO(object):
 
         return True
 
-    def resetioerrors(self):
+    def resetioerrors(self) -> None:
         """Setzt aktuellen IOError-Zaehler auf 0 zurueck."""
         self._ioerror = 0
 
-    def setdefaultvalues(self, device=None):
-        """Alle Outputbuffer werden auf die piCtory default Werte gesetzt.
-        @param device nur auf einzelnes Device anwenden"""
+    def setdefaultvalues(self, device=None) -> None:
+        """
+        Alle Outputbuffer werden auf die piCtory default Werte gesetzt.
+
+        :param device: nur auf einzelnes Device anwenden
+        """
         if self._monitoring:
             raise RuntimeError(
                 "can not set default values, while system is in monitoring "
@@ -1012,14 +1072,14 @@ class RevPiModIO(object):
             for io in dev.get_outputs():
                 io.set_value(io._defaultvalue)
 
-    def syncoutputs(self, device=None):
-        """Lesen aller aktuell gesetzten Outputs im Prozessabbild.
+    def syncoutputs(self, device=None) -> bool:
+        """
+        Lesen aller aktuell gesetzten Outputs im Prozessabbild.
 
         Devices mit aktiverem autorefresh werden ausgenommen!
 
-        @param device nur auf einzelnes Device anwenden
-        @return True, wenn Arbeiten an allen Devices erfolgreich waren
-
+        :param device: nur auf einzelnes Device anwenden
+        :return: True, wenn Arbeiten an allen Devices erfolgreich waren
         """
         if device is None:
             mylist = self.device
@@ -1052,14 +1112,14 @@ class RevPiModIO(object):
 
         return True
 
-    def writeprocimg(self, device=None):
-        """Schreiben aller Outputs aller Devices ins Prozessabbild.
+    def writeprocimg(self, device=None) -> bool:
+        """
+        Schreiben aller Outputs aller Devices ins Prozessabbild.
 
         Devices mit aktiverem autorefresh werden ausgenommen!
 
-        @param device nur auf einzelnes Device anwenden
-        @return True, wenn Arbeiten an allen Devices erfolgreich waren
-
+        :param device: nur auf einzelnes Device anwenden
+        :return: True, wenn Arbeiten an allen Devices erfolgreich waren
         """
         if self._direct_output:
             return True
@@ -1127,14 +1187,13 @@ class RevPiModIO(object):
 
 
 class RevPiModIOSelected(RevPiModIO):
-
-    """Klasse fuer die Verwaltung einzelner Devices aus piCtory.
+    """
+    Klasse fuer die Verwaltung einzelner Devices aus piCtory.
 
     Diese Klasse uebernimmt nur angegebene Devices der piCtory Konfiguration
     und bilded sie inkl. IOs ab. Sie uebernimmt die exklusive Verwaltung des
     Adressbereichs im Prozessabbild an dem sich die angegebenen Devices
     befinden und stellt sicher, dass die Daten synchron sind.
-
     """
 
     __slots__ = ()
@@ -1144,15 +1203,15 @@ class RevPiModIOSelected(RevPiModIO):
             syncoutputs=True, procimg=None, configrsc=None,
             simulator=False, debug=True, replace_io_file=None,
             direct_output=False):
-        """Instantiiert nur fuer angegebene Devices die Grundfunktionen.
+        """
+        Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 
         Der Parameter deviceselection kann eine einzelne
         Device Position / einzelner Device Name sein oder eine Liste mit
         mehreren Positionen / Namen
 
-        @param deviceselection Positionsnummer oder Devicename
-        @see #RevPiModIO.__init__ RevPiModIO.__init__(...)
-
+        :param deviceselection: Positionsnummer oder Devicename
+        :ref: :func:`RevPiModIO.__init__(...)`
         """
         super().__init__(
             autorefresh, monitoring, syncoutputs, procimg, configrsc,
@@ -1197,29 +1256,29 @@ class RevPiModIOSelected(RevPiModIO):
 
 
 class RevPiModIODriver(RevPiModIOSelected):
-
-    """Klasse um eigene Treiber fuer die virtuellen Devices zu erstellen.
+    """
+    Klasse um eigene Treiber fuer die virtuellen Devices zu erstellen.
 
     Mit dieser Klasse werden nur angegebene Virtuelle Devices mit RevPiModIO
     verwaltet. Bei Instantiierung werden automatisch die Inputs und Outputs
     verdreht, um das Schreiben der Inputs zu ermoeglichen. Die Daten koennen
     dann ueber logiCAD an den Devices abgerufen werden.
-
     """
 
     __slots__ = ()
 
     def __init__(
-            self, virtdev, autorefresh=False, monitoring=False,
+            self, virtdev, autorefresh=False,
             syncoutputs=True, procimg=None, configrsc=None, debug=True,
             replace_io_file=None, direct_output=False):
-        """Instantiiert die Grundfunktionen.
+        """
+        Instantiiert die Grundfunktionen.
 
         Parameter 'monitoring' und 'simulator' stehen hier nicht zur
         Verfuegung, da diese automatisch gesetzt werden.
 
-        @param virtdev Virtuelles Device oder mehrere als <class 'list'>
-        @see #RevPiModIO.__init__ RevPiModIO.__init__(...)
+        :param virtdev: Virtuelles Device oder mehrere als <class 'list'>
+        :ref: :func:`RevPiModIO.__init__()`
 
         """
         # Parent mit monitoring=False und simulator=True laden

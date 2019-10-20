@@ -12,7 +12,7 @@ class App(object):
 
     __slots__ = "name", "version", "language", "layout", "savets"
 
-    def __init__(self, app):
+    def __init__(self, app: dict):
         """
         Instantiiert die App-Klasse.
 

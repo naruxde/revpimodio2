@@ -6,13 +6,15 @@ __license__ = "LGPLv3"
 
 
 class Summary(object):
-
     """Bildet die Summary-Sektion der config.rsc ab."""
 
     __slots__ = "inptotal", "outtotal"
 
-    def __init__(self, summary):
-        """Instantiiert die RevPiSummary-Klasse.
-        @param summary piCtory Summaryinformationen"""
+    def __init__(self, summary: dict):
+        """
+        Instantiiert die RevPiSummary-Klasse.
+
+        :param summary: piCtory Summaryinformationen
+        """
         self.inptotal = summary["inpTotal"]
         self.outtotal = summary["outTotal"]
