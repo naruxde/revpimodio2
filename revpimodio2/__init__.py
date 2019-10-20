@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Stellt alle Klassen fuer den RevolutionPi zur Verfuegung.
+"""
+Stellt alle Klassen fuer den RevolutionPi zur Verfuegung.
 
 Webpage: https://revpimodio.org/
 
@@ -10,11 +11,10 @@ gemacht. Fuer Gateways sind eigene IOs ueber mehrere Bytes konfigurierbar
 Mit den definierten Namen greift man direkt auf die gewuenschten Daten zu.
 Auf alle IOs kann der Benutzer Funktionen als Events registrieren. Diese
 fuehrt das Modul bei Datenaenderung aus.
-
 """
 __all__ = [
-    "RevPiModIO", "RevPiModIOSelected", "RevPiModIODriver",
-    "RevPiNetIO", "RevPiNetIOSelected", "RevPiNetIODriver",
+    "RevPiModIO", "RevPiModIODriver", "RevPiModIOSelected",
+    "RevPiNetIO", "RevPiNetIODriver", "RevPiNetIOSelected",
     "Cycletools",
 ]
 __author__ = "Sven Sager <akira@revpimodio.org>"
@@ -36,27 +36,25 @@ MEM = 302
 
 
 class DeviceNotFoundError(Exception):
-
     """Fehler wenn ein Device nicht gefunden wird."""
 
     pass
 
 
-def acheck(check_type, **kwargs):
-    """Check type of given arguments.
+def acheck(check_type, **kwargs) -> None:
+    """
+    Check type of given arguments.
 
     Use the argument name as keyword and the argument itself as value.
 
-    @param check_type Type to check
-    @param kwargs Arguments to check
-
+    :param check_type: Type to check
+    :param kwargs: Arguments to check
     """
     for var_name in kwargs:
         none_okay = var_name.endswith("_noneok")
 
         if not (isinstance(kwargs[var_name], check_type) or
                 none_okay and kwargs[var_name] is None):
-
             msg = "Argument '{0}' must be {1}{2}".format(
                 var_name.rstrip("_noneok"), str(check_type),
                 " or <class 'NoneType'>" if none_okay else ""
@@ -64,14 +62,14 @@ def acheck(check_type, **kwargs):
             raise TypeError(msg)
 
 
-def consttostr(value):
-    """Gibt <class 'str'> fuer Konstanten zurueck.
+def consttostr(value) -> str:
+    """
+    Gibt <class 'str'> fuer Konstanten zurueck.
 
     Diese Funktion ist erforderlich, da enum in Python 3.2 nicht existiert.
 
-    @param value Konstantenwert
-    @return <class 'str'> Name der Konstanten
-
+    :param value: Konstantenwert
+    :return: <class 'str'> Name der Konstanten
     """
     if value == 0:
         return "OFF"
@@ -97,5 +95,5 @@ def consttostr(value):
 
 # Benötigte Klassen importieren
 from .helper import Cycletools
-from .modio import RevPiModIO, RevPiModIOSelected, RevPiModIODriver
-from .netio import RevPiNetIO, RevPiNetIOSelected, RevPiNetIODriver
+from .modio import RevPiModIO, RevPiModIODriver, RevPiModIOSelected
+from .netio import RevPiNetIO, RevPiNetIODriver, RevPiNetIOSelected

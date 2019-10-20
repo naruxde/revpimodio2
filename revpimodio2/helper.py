@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """RevPiModIO Helperklassen und Tools."""
-__author__ = "Sven Sager"
-__copyright__ = "Copyright (C) 2018 Sven Sager"
-__license__ = "LGPLv3"
-
 import queue
 import warnings
 from math import ceil
 from threading import Event, Lock, Thread
 from timeit import default_timer
-from revpimodio2 import RISING, FALLING, BOTH
+
+from revpimodio2 import BOTH, FALLING, RISING
+
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2018 Sven Sager"
+__license__ = "LGPLv3"
 
 
 class EventCallback(Thread):
-
     """Thread fuer das interne Aufrufen von Event-Funktionen.
 
     Der Eventfunktion, welche dieser Thread aufruft, wird der Thread selber
@@ -34,18 +34,17 @@ class EventCallback(Thread):
     while not th.exit.is_set():
         # IO-Arbeiten
         th.exit.wait(0.5)
-
     """
 
     __slots__ = "daemon", "exit", "func", "ioname", "iovalue"
 
-    def __init__(self, func, name, value):
-        """Init EventCallback class.
+    def __init__(self, func, name: str, value):
+        """
+        Init EventCallback class.
 
-        @param func Funktion die beim Start aufgerufen werden soll
-        @param name IO-Name
-        @param value IO-Value zum Zeitpunkt des Events
-
+        :param func: Funktion die beim Start aufgerufen werden soll
+        :param name: IO-Name
+        :param value: IO-Value zum Zeitpunkt des Events
         """
         super().__init__()
         self.daemon = True
@@ -63,9 +62,9 @@ class EventCallback(Thread):
         self.exit.set()
 
 
-class Cycletools():
-
-    """Werkzeugkasten fuer Cycleloop-Funktion.
+class Cycletools:
+    """
+    Werkzeugkasten fuer Cycleloop-Funktion.
 
     Diese Klasse enthaelt Werkzeuge fuer Zyklusfunktionen, wie Taktmerker
     und Flankenmerker.
@@ -84,13 +83,12 @@ class Cycletools():
 
     Diese Merker koennen z.B. verwendet werden um, an Outputs angeschlossene,
     Lampen synchron blinken zu lassen.
-
     """
 
     __slots__ = "__cycle", "__cycletime", "__ucycle", \
-        "__dict_ton", "__dict_tof", "__dict_tp", "first", \
-        "flag1c", "flag5c", "flag10c", "flag15c", "flag20c", \
-        "flank5c", "flank10c", "flank15c", "flank20c", "var"
+                "__dict_ton", "__dict_tof", "__dict_tp", "first", \
+                "flag1c", "flag5c", "flag10c", "flag15c", "flag20c", \
+                "flank5c", "flank10c", "flank15c", "flank20c", "var"
 
     def __init__(self, cycletime):
         """Init Cycletools class."""
@@ -117,10 +115,13 @@ class Cycletools():
 
         # Benutzerdaten
         class Var:
+            """Hier remanente Variablen anfuegen."""
+
             pass
+
         self.var = Var()
 
-    def _docycle(self):
+    def _docycle(self) -> None:
         """Zyklusarbeiten."""
         # Einschaltverzoegerung
         for tof in self.__dict_tof:
@@ -174,54 +175,66 @@ class Cycletools():
             self.flag5c = not self.flag5c
             self.__cycle = 0
 
-    def get_tof(self, name):
-        """Wert der Ausschaltverzoegerung.
-        @param name Eindeutiger Name des Timers
-        @return Wert <class 'bool'> der Ausschaltverzoegerung"""
+    def get_tof(self, name: str) -> bool:
+        """
+        Wert der Ausschaltverzoegerung.
+
+        :param name: Eindeutiger Name des Timers
+        :return: Wert <class 'bool'> der Ausschaltverzoegerung
+        """
         return self.__dict_tof.get(name, 0) > 0
 
-    def get_tofc(self, name):
-        """Wert der Ausschaltverzoegerung.
-        @param name Eindeutiger Name des Timers
-        @return Wert <class 'bool'> der Ausschaltverzoegerung"""
+    def get_tofc(self, name: str) -> bool:
+        """
+        Wert der Ausschaltverzoegerung.
+
+        :param name: Eindeutiger Name des Timers
+        :return: Wert <class 'bool'> der Ausschaltverzoegerung
+        """
         return self.__dict_tof.get(name, 0) > 0
 
-    def set_tof(self, name, milliseconds):
-        """Startet bei Aufruf einen ausschaltverzoegerten Timer.
+    def set_tof(self, name: str, milliseconds: int) -> None:
+        """
+        Startet bei Aufruf einen ausschaltverzoegerten Timer.
 
-        @param name Eindeutiger Name fuer Zugriff auf Timer
-        @param milliseconds Verzoegerung in Millisekunden
-
+        :param name: Eindeutiger Name fuer Zugriff auf Timer
+        :param milliseconds: Verzoegerung in Millisekunden
         """
         self.__dict_tof[name] = ceil(milliseconds / self.__cycletime)
 
-    def set_tofc(self, name, cycles):
-        """Startet bei Aufruf einen ausschaltverzoegerten Timer.
+    def set_tofc(self, name: str, cycles: int) -> None:
+        """
+        Startet bei Aufruf einen ausschaltverzoegerten Timer.
 
-        @param name Eindeutiger Name fuer Zugriff auf Timer
-        @param cycles Zyklusanzahl, der Verzoegerung wenn nicht neu gestartet
-
+        :param name: Eindeutiger Name fuer Zugriff auf Timer
+        :param cycles: Zyklusanzahl, der Verzoegerung wenn nicht neu gestartet
         """
         self.__dict_tof[name] = cycles
 
-    def get_ton(self, name):
-        """Einschaltverzoegerung.
-        @param name Eindeutiger Name des Timers
-        @return Wert <class 'bool'> der Einschaltverzoegerung"""
+    def get_ton(self, name: str) -> bool:
+        """
+        Einschaltverzoegerung.
+
+        :param name: Eindeutiger Name des Timers
+        :return: Wert <class 'bool'> der Einschaltverzoegerung
+        """
         return self.__dict_ton.get(name, [-1])[0] == 0
 
-    def get_tonc(self, name):
-        """Einschaltverzoegerung.
-        @param name Eindeutiger Name des Timers
-        @return Wert <class 'bool'> der Einschaltverzoegerung"""
+    def get_tonc(self, name: str) -> bool:
+        """
+        Einschaltverzoegerung.
+
+        :param name: Eindeutiger Name des Timers
+        :return: Wert <class 'bool'> der Einschaltverzoegerung
+        """
         return self.__dict_ton.get(name, [-1])[0] == 0
 
-    def set_ton(self, name, milliseconds):
-        """Startet einen einschaltverzoegerten Timer.
+    def set_ton(self, name: str, milliseconds: int) -> None:
+        """
+        Startet einen einschaltverzoegerten Timer.
 
-        @param name Eindeutiger Name fuer Zugriff auf Timer
-        @param milliseconds Millisekunden, der Verzoegerung wenn neu gestartet
-
+        :param name: Eindeutiger Name fuer Zugriff auf Timer
+        :param milliseconds: Millisekunden, der Verzoegerung wenn neu gestartet
         """
         if self.__dict_ton.get(name, [-1])[0] == -1:
             self.__dict_ton[name] = \
@@ -229,36 +242,42 @@ class Cycletools():
         else:
             self.__dict_ton[name][1] = True
 
-    def set_tonc(self, name, cycles):
-        """Startet einen einschaltverzoegerten Timer.
+    def set_tonc(self, name: str, cycles: int) -> None:
+        """
+        Startet einen einschaltverzoegerten Timer.
 
-        @param name Eindeutiger Name fuer Zugriff auf Timer
-        @param cycles Zyklusanzahl, der Verzoegerung wenn neu gestartet
-
+        :param name: Eindeutiger Name fuer Zugriff auf Timer
+        :param cycles: Zyklusanzahl, der Verzoegerung wenn neu gestartet
         """
         if self.__dict_ton.get(name, [-1])[0] == -1:
             self.__dict_ton[name] = [cycles, True]
         else:
             self.__dict_ton[name][1] = True
 
-    def get_tp(self, name):
-        """Impulstimer.
-        @param name Eindeutiger Name des Timers
-        @return Wert <class 'bool'> des Impulses"""
+    def get_tp(self, name: str) -> bool:
+        """
+        Impulstimer.
+
+        :param name: Eindeutiger Name des Timers
+        :return: Wert <class 'bool'> des Impulses
+        """
         return self.__dict_tp.get(name, [-1])[0] > 0
 
-    def get_tpc(self, name):
-        """Impulstimer.
-        @param name Eindeutiger Name des Timers
-        @return Wert <class 'bool'> des Impulses"""
+    def get_tpc(self, name: str) -> bool:
+        """
+        Impulstimer.
+
+        :param name: Eindeutiger Name des Timers
+        :return: Wert <class 'bool'> des Impulses
+        """
         return self.__dict_tp.get(name, [-1])[0] > 0
 
-    def set_tp(self, name, milliseconds):
-        """Startet einen Impuls Timer.
+    def set_tp(self, name: str, milliseconds: int) -> None:
+        """
+        Startet einen Impuls Timer.
 
-        @param name Eindeutiger Name fuer Zugriff auf Timer
-        @param milliseconds Millisekunden, die der Impuls anstehen soll
-
+        :param name: Eindeutiger Name fuer Zugriff auf Timer
+        :param milliseconds: Millisekunden, die der Impuls anstehen soll
         """
         if self.__dict_tp.get(name, [-1])[0] == -1:
             self.__dict_tp[name] = \
@@ -266,12 +285,12 @@ class Cycletools():
         else:
             self.__dict_tp[name][1] = True
 
-    def set_tpc(self, name, cycles):
-        """Startet einen Impuls Timer.
+    def set_tpc(self, name: str, cycles: int) -> None:
+        """
+        Startet einen Impuls Timer.
 
-        @param name Eindeutiger Name fuer Zugriff auf Timer
-        @param cycles Zyklusanzahl, die der Impuls anstehen soll
-
+        :param name: Eindeutiger Name fuer Zugriff auf Timer
+        :param cycles: Zyklusanzahl, die der Impuls anstehen soll
         """
         if self.__dict_tp.get(name, [-1])[0] == -1:
             self.__dict_tp[name] = [cycles, True]
@@ -280,22 +299,20 @@ class Cycletools():
 
 
 class ProcimgWriter(Thread):
-
-    """Klasse fuer Synchroniseriungs-Thread.
+    """
+    Klasse fuer Synchroniseriungs-Thread.
 
     Diese Klasse wird als Thread gestartet, wenn das Prozessabbild zyklisch
     synchronisiert werden soll. Diese Funktion wird hauptsaechlich fuer das
     Event-Handling verwendet.
-
     """
 
     __slots__ = "__dict_delay", "__eventth", "_eventqth", "__eventwork", \
-        "_adjwait", "_eventq", "_modio", \
-        "_refresh", "_work", "daemon", "lck_refresh", "newdata"
+                "_adjwait", "_eventq", "_modio", \
+                "_refresh", "_work", "daemon", "lck_refresh", "newdata"
 
     def __init__(self, parentmodio):
-        """Init ProcimgWriter class.
-        @param parentmodio Parent Object"""
+        """Init ProcimgWriter class."""
         super().__init__()
         self.__dict_delay = {}
         self.__eventth = Thread(target=self.__exec_th)
@@ -311,7 +328,7 @@ class ProcimgWriter(Thread):
         self.lck_refresh = Lock()
         self.newdata = Event()
 
-    def __check_change(self, dev):
+    def __check_change(self, dev) -> None:
         """Findet Aenderungen fuer die Eventueberwachung."""
         for io_event in dev._dict_events:
 
@@ -386,7 +403,7 @@ class ProcimgWriter(Thread):
         # Nach Verarbeitung aller IOs die Bytes kopieren (Lock ist noch drauf)
         dev._ba_datacp = dev._ba_devdata[:]
 
-    def __exec_th(self):
+    def __exec_th(self) -> None:
         """Laeuft als Thread, der Events als Thread startet."""
         while self.__eventwork:
             try:
@@ -398,10 +415,13 @@ class ProcimgWriter(Thread):
             except queue.Empty:
                 pass
 
-    def _collect_events(self, value):
-        """Aktiviert oder Deaktiviert die Eventueberwachung.
-        @param value True aktiviert / False deaktiviert
-        @return True, wenn Anforderung erfolgreich war"""
+    def _collect_events(self, value: bool) -> bool:
+        """
+        Aktiviert oder Deaktiviert die Eventueberwachung.
+
+        :param value: True aktiviert / False deaktiviert
+        :return: True, wenn Anforderung erfolgreich war
+        """
         if type(value) != bool:
             raise TypeError("value must be <class 'bool'>")
 
@@ -427,9 +447,12 @@ class ProcimgWriter(Thread):
 
         return True
 
-    def get_refresh(self):
-        """Gibt Zykluszeit zurueck.
-        @return <class 'int'> Zykluszeit in Millisekunden"""
+    def get_refresh(self) -> int:
+        """
+        Gibt Zykluszeit zurueck.
+
+        :return: <class 'int'> Zykluszeit in Millisekunden
+        """
         return int(self._refresh * 1000)
 
     def run(self):
@@ -472,7 +495,7 @@ class ProcimgWriter(Thread):
                         with dev._filelock:
                             dev._ba_devdata[dev._slc_inp] = \
                                 bytesbuff[dev._slc_inpoff]
-                            if self.__eventwork\
+                            if self.__eventwork \
                                     and len(dev._dict_events) > 0 \
                                     and dev._ba_datacp != dev._ba_devdata:
                                 self.__check_change(dev)
