@@ -175,9 +175,11 @@ class RevPiModIO(object):
                             and int(dev["position"]) in self._lst_devselect:
                         lst_found.append(dev)
 
-        # Devices aus JSON oder Filter übernehmen
-        lst_devices = jconfigrsc["Devices"] if len(self._lst_devselect) == 0 \
-            else lst_found
+            # Devices Filter übernehmen
+            lst_devices = lst_found
+        else:
+            # Devices aus JSON übernehmen
+            lst_devices = jconfigrsc["Devices"]
 
         # Device und IO Klassen anlegen
         self.device = devicemodule.DeviceList()

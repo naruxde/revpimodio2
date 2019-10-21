@@ -659,14 +659,13 @@ class Core(Base):
         led += int_led & 2
         return led
 
-    def _set_calculatedled(self, addresslist, shifted_value) -> None:
+    def _set_calculatedled(self, addresslist: list, shifted_value: int) -> None:
         """
         Berechnet und setzt neuen Bytewert fuer LED byte.
 
         :param addresslist: Liste der Vergleicher
         :param shifted_value: Bits vergleichen
         """
-        # TODO: Docstring
         # Byte als int holen
         int_led = int.from_bytes(
             self._ba_devdata[self._slc_led], byteorder="little"

@@ -542,7 +542,7 @@ class IOBase(object):
         der Fall, wird IMMER aufgerundet!
 
         :param func: Funktion die bei Aenderung aufgerufen werden soll
-        :param delay; Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
+        :param delay: Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
         :param edge: Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
         :param as_thread: Bei True, Funktion als EventCallback-Thread ausfuehren
         :param prefire: Ausloesen mit aktuellem Wert, wenn mainloop startet
@@ -752,13 +752,15 @@ class IOBase(object):
         :param okvalue: IO-Wert, bei dem das Warten sofort beendet wird
         :param timeout: Zeit in ms nach der abgebrochen wird
         :return: <class 'int'> erfolgreich Werte <= 0
-            * Erfolgreich gewartet
-                ** Wert 0: IO hat den Wert gewechselt
-                ** Wert -1: okvalue stimmte mit IO ueberein
-            * Fehlerhaft gewartet
-                ** Wert 1: exitevent wurde gesetzt
-                ** Wert 2: timeout abgelaufen
-                ** Wert 100: Devicelist.exit() wurde aufgerufen
+
+        - Erfolgreich gewartet
+            - Wert 0: IO hat den Wert gewechselt
+            - Wert -1: okvalue stimmte mit IO ueberein
+        - Fehlerhaft gewartet
+            - Wert 1: exitevent wurde gesetzt
+            - Wert 2: timeout abgelaufen
+            - Wert 100: Devicelist.exit() wurde aufgerufen
+
         """
         # Prüfen ob Device in autorefresh ist
         if not self._parentdevice._selfupdate:
@@ -849,7 +851,7 @@ class IntIO(IOBase):
     Umwandlung koennen 'Byteorder' (Default 'little') und 'signed' (Default
     False) als Parameter gesetzt werden.
 
-    :ref:`IOBase`
+    :ref: :class:`IOBase`
     """
 
     __slots__ = ()
@@ -1041,9 +1043,9 @@ class IntIOReplaceable(IntIO):
         Es darf nur ein einzelnes Formatzeichen 'frm' uebergeben werden. Daraus
         wird dann die benoetigte Laenge an Bytes berechnet und der Datentyp
         festgelegt. Moeglich sind:
-            Bits / Bytes: ?, c, s
-            Integer     : bB, hH, iI, lL, qQ
-            Float       : e, f, d
+        - Bits / Bytes: ?, c, s
+        - Integer     : bB, hH, iI, lL, qQ
+        - Float       : e, f, d
 
         Eine Ausnahme ist die Formatierung 's'. Hier koennen mehrere Bytes
         zu einem langen IO zusammengefasst werden. Die Formatierung muss
@@ -1055,17 +1057,19 @@ class IntIOReplaceable(IntIO):
 
         :param name: Name des neuen Inputs
         :param frm: struct formatierung (1 Zeichen) oder 'ANZAHLs' z.B. '8s'
-        :param kwargs: Weitere Parameter:
-            - bmk: interne Bezeichnung fuer IO
-            - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer den IO, Standardwert=little
-            - defaultvalue: Standardwert fuer IO
-            - event: Funktion fuer Eventhandling registrieren
-            - delay: Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
-            - edge: Event ausfuehren bei RISING, FALLING or BOTH Wertaenderung
-            - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
-            - prefire: Ausloesen mit aktuellem Wert, wenn mainloop startet
-        `https://docs.python.org/3/library/struct.html#format-characters`
+        :param kwargs: Weitere Parameter
+
+        - bmk: interne Bezeichnung fuer IO
+        - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
+        - byteorder: Byteorder fuer den IO, Standardwert=little
+        - defaultvalue: Standardwert fuer IO
+        - event: Funktion fuer Eventhandling registrieren
+        - delay: Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
+        - edge: Event ausfuehren bei RISING, FALLING or BOTH Wertaenderung
+        - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
+        - prefire: Ausloesen mit aktuellem Wert, wenn mainloop startet
+
+        `<https://docs.python.org/3/library/struct.html#format-characters>`_
         """
         # StructIO erzeugen
         io_new = StructIO(
@@ -1095,7 +1099,6 @@ class StructIO(IOBase):
 
     Sie stellt ueber struct die Werte in der gewuenschten Formatierung
     bereit. Der struct-Formatwert wird bei der Instantiierung festgelegt.
-    :ref:`IOBase`
     """
 
     __slots__ = "__frm", "_parentio_address", "_parentio_defaultvalue", \
