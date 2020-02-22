@@ -1040,9 +1040,6 @@ class RevPiModIO(object):
                     # Inputs vom Bus einlesen
                     dev._ba_devdata[dev._slc_inp] = bytesbuff[dev._slc_inpoff]
 
-                    # Mems vom Bus lesen
-                    dev._ba_devdata[dev._slc_mem] = bytesbuff[dev._slc_memoff]
-
                 dev._filelock.release()
 
         return True

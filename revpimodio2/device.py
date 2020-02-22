@@ -302,7 +302,15 @@ class Device(object):
         for key in sorted(dict_io, key=lambda x: int(x)):
 
             # Neuen IO anlegen
-            if bool(dict_io[key][7]) or isinstance(self, Base):
+            if iotype == MEM:
+                # Memory setting
+                io_new = MemIO(
+                    self, dict_io[key],
+                    iotype,
+                    "little",
+                    False
+                )
+            elif bool(dict_io[key][7]) or isinstance(self, Base):
                 # Bei Bitwerten oder Base IOBase verwenden
                 io_new = IOBase(
                     self, dict_io[key], iotype, "little", False
@@ -317,7 +325,7 @@ class Device(object):
                     "little",
                     False
                 )
-            elif isinstance(self, Gateway) and iotype != MEM:
+            elif isinstance(self, Gateway):
                 # Ersetzbare IOs erzeugen
                 io_new = IntIOReplaceable(
                     self, dict_io[key],
@@ -1127,5 +1135,5 @@ class Virtual(Gateway):
 
 
 # Nachträglicher Import
-from .io import IOBase, IntIO, IntIOCounter, IntIOReplaceable
+from .io import IOBase, IntIO, IntIOCounter, IntIOReplaceable, MemIO
 from revpimodio2 import INP, OUT, MEM

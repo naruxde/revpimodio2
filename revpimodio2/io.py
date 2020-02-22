@@ -1244,3 +1244,31 @@ class StructIO(IOBase):
     frm = property(_get_frm)
     signed = property(_get_signed)
     value = property(get_structvalue, set_structvalue)
+
+
+class MemIO(IOBase):
+    """
+    Erstellt einen IO für die Memory Werte in piCtory.
+
+    Dieser Typ ist nur für lesenden Zugriff vorgesehen und kann verschiedene
+    Datentypen über .value zurückgeben. Damit hat man nun auch Zugriff
+    auf Strings, welche in piCtory vergeben werden.
+    """
+
+    def get_variantvalue(self):
+        val = bytes(self._defaultvalue)
+
+        if self._bitlength == 256:
+            # STRING
+            try:
+                val = val.strip(b'\x00').decode("ASCII")
+            except Exception:
+                pass
+            return val
+
+        else:
+            # INT
+            return int.from_bytes(val, self._byteorder, signed=self._signed)
+
+    defaultvalue = property(get_variantvalue)
+    value = property(get_variantvalue)
