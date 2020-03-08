@@ -5,6 +5,7 @@ import warnings
 from configparser import ConfigParser
 from json import loads as jloads
 from re import compile
+from struct import pack, unpack
 from threading import Event, Lock, Thread
 
 from revpimodio2 import DeviceNotFoundError
@@ -27,10 +28,11 @@ _syspictoryh = b'\x01PH\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
 # ReplaceIO Konfiguration laden
 _sysreplaceio = b'\x01RP\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
 _sysreplaceioh = b'\x01RH\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
-# Übertragene Bytes schreiben
-_sysflush = b'\x01SD\x00\x00\x00\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x17'
 # Hashvalues
 HASH_FAIL = b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'
+# Header start/stop
+HEADER_START = b'\x01'
+HEADER_STOP = b'\x17'
 
 
 class AclException(Exception):
@@ -272,11 +274,11 @@ class NetFH(Thread):
                 self._slavesock.sendall(_sysdeldirty)
             else:
                 # Nur bestimmte Dirtybytes löschen
-                self._slavesock.sendall(
-                    b'\x01EY' +
-                    position.to_bytes(length=2, byteorder="little") +
-                    b'\x00\x00\xFE\x00\x00\x00\x00\x00\x00\x00\x17'
-                )
+                # b CM ii xx c0000000 b = 16
+                self._slavesock.sendall(pack(
+                    "=c2sH2xc7xc",
+                    HEADER_START, b'EY', position, b'\xfe', HEADER_STOP
+                ))
 
             check = self._slavesock.recv(1)
             if check != b'\x1e':
@@ -330,8 +332,11 @@ class NetFH(Thread):
             raise ValueError("flush of closed file")
 
         with self.__socklock:
-            self.__by_buff += _sysflush
-            self._slavesock.sendall(self.__by_buff)
+            # b CM ii ii 00000000 b = 16
+            self._slavesock.sendall(pack(
+                "=c2sHH8xc",
+                HEADER_START, b'FD', len(self.__by_buff), self.__int_buff, HEADER_STOP
+            ) + self.__by_buff)
 
             # Puffer immer leeren
             self.__int_buff = 0
@@ -405,13 +410,11 @@ class NetFH(Thread):
             raise TypeError("arg must be <class 'bytes'>")
 
         with self.__socklock:
-            self._slavesock.sendall(
-                b'\x01IC' +
-                request.to_bytes(length=4, byteorder="little") +
-                len(arg).to_bytes(length=2, byteorder="little") +
-                b'\x00\x00\x00\x00\x00\x00\x17' +
-                arg
-            )
+            # b CM xx ii iiii0000 b = 16
+            self._slavesock.sendall(pack(
+                "=c2s2xHI4xc",
+                HEADER_START, b'IC', len(arg), request, HEADER_STOP
+            ) + arg)
 
             # Rückmeldebyte auswerten
             blockok = self._slavesock.recv(1)
@@ -435,12 +438,11 @@ class NetFH(Thread):
             raise ValueError("read of closed file")
 
         with self.__socklock:
-            self._slavesock.sendall(
-                b'\x01DA' +
-                self.__position.to_bytes(length=2, byteorder="little") +
-                length.to_bytes(length=2, byteorder="little") +
-                b'\x00\x00\x00\x00\x00\x00\x00\x00\x17'
-            )
+            # b CM ii ii 00000000 b = 16
+            self._slavesock.sendall(pack(
+                "=c2sHH8xc",
+                HEADER_START, b'DA', self.__position, length, HEADER_STOP
+            ))
 
             self.__position += length
 
@@ -476,18 +478,27 @@ class NetFH(Thread):
             self._slavesock.sendall(_syspictory)
 
             self.__buff_recv.clear()
-            while not self.__sockend.is_set():
-                count = self._slavesock.recv_into(self.__buff_block, self.__buff_size)
+            recv_lenght = 4
+            while recv_lenght > 0:
+                count = self._slavesock.recv_into(
+                    self.__buff_block, recv_lenght
+                )
                 if count == 0:
-                    self.__sockerr.set()
                     raise IOError("readpictory error on network")
                 self.__buff_recv += self.__buff_block[:count]
+                recv_lenght -= count
 
-                if b'\x04' in self.__buff_recv:
-                    # Found EndOfText byte
-                    break
+            recv_lenght = unpack("=I", self.__buff_recv)[0]
+            while recv_lenght > 0:
+                count = self._slavesock.recv_into(
+                    self.__buff_block, min(recv_lenght, self.__buff_size)
+                )
+                if count == 0:
+                    raise IOError("readpictory error on network")
+                self.__buff_recv += self.__buff_block[:count]
+                recv_lenght -= count
 
-            return bytes(self.__buff_recv[:-1])
+            return bytes(self.__buff_recv[4:])
 
     def readreplaceio(self) -> bytes:
         """
@@ -507,18 +518,27 @@ class NetFH(Thread):
             self._slavesock.sendall(_sysreplaceio)
 
             self.__buff_recv.clear()
-            while not self.__sockend.is_set():
-                count = self._slavesock.recv_into(self.__buff_block, self.__buff_size)
+            recv_lenght = 4
+            while recv_lenght > 0:
+                count = self._slavesock.recv_into(
+                    self.__buff_block, recv_lenght
+                )
                 if count == 0:
-                    self.__sockerr.set()
                     raise IOError("readreplaceio error on network")
                 self.__buff_recv += self.__buff_block[:count]
+                recv_lenght -= count
 
-                if b'\x04' in self.__buff_recv:
-                    # Found EndOfText byte
-                    break
+            recv_lenght = unpack("=I", self.__buff_recv)[0]
+            while recv_lenght > 0:
+                count = self._slavesock.recv_into(
+                    self.__buff_block, min(recv_lenght, self.__buff_size)
+                )
+                if count == 0:
+                    raise IOError("readpictory error on network")
+                self.__buff_recv += self.__buff_block[:count]
+                recv_lenght -= count
 
-            return bytes(self.__buff_recv[:-1])
+            return bytes(self.__buff_recv[4:])
 
     def run(self) -> None:
         """Handler fuer Synchronisierung."""
@@ -602,13 +622,11 @@ class NetFH(Thread):
         try:
             self.__socklock.acquire()
 
-            self._slavesock.sendall(
-                b'\x01EY' +
-                position.to_bytes(length=2, byteorder="little") +
-                len(dirtybytes).to_bytes(length=2, byteorder="little") +
-                b'\x00\x00\x00\x00\x00\x00\x00\x00\x17' +
-                dirtybytes
-            )
+            # b CM ii ii 00000000 b = 16
+            self._slavesock.sendall(pack(
+                "=c2sHH8xc",
+                HEADER_START, b'EY', position, len(dirtybytes), HEADER_STOP
+            ) + dirtybytes)
 
             check = self._slavesock.recv(1)
             if check != b'\x1e':
@@ -645,11 +663,11 @@ class NetFH(Thread):
         try:
             self.__socklock.acquire()
 
-            self._slavesock.sendall(
-                b'\x01CF' +
-                value.to_bytes(length=2, byteorder="little") +
-                b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
-            )
+            # b CM ii xx 00000000 b = 16
+            self._slavesock.sendall(pack(
+                "=c2sH10xc",
+                HEADER_START, b'CF', value, HEADER_STOP
+            ))
             check = self._slavesock.recv(1)
             if check != b'\x1e':
                 raise IOError("set timeout error on network")
@@ -689,10 +707,8 @@ class NetFH(Thread):
             self.__int_buff += 1
 
             # Datenblöcke mit Group Seperator in Puffer ablegen
-            self.__by_buff += b'\x01SD' + \
-                              self.__position.to_bytes(length=2, byteorder="little") + \
+            self.__by_buff += self.__position.to_bytes(length=2, byteorder="little") + \
                               len(bytebuff).to_bytes(length=2, byteorder="little") + \
-                              b'\x1d\x00\x00\x00\x00\x00\x00\x00\x17' + \
                               bytebuff
 
         # TODO: Bufferlänge und dann flushen?
