@@ -258,6 +258,9 @@ class NetFH(Thread):
         """
         Entfernt die konfigurierten Dirtybytes vom RevPi Slave.
 
+        Diese Funktion wirft keine Exception bei einem uebertragungsfehler,
+        veranlasst aber eine Neuverbindung.
+
         :param position: Startposition der Dirtybytes
         """
         if self.__config_changed:
@@ -335,7 +338,7 @@ class NetFH(Thread):
             # b CM ii ii 00000000 b = 16
             self._slavesock.sendall(pack(
                 "=c2sHH8xc",
-                HEADER_START, b'FD', len(self.__by_buff), self.__int_buff, HEADER_STOP
+                HEADER_START, b'FD', self.__int_buff, len(self.__by_buff), HEADER_STOP
             ) + self.__by_buff)
 
             # Puffer immer leeren
@@ -484,17 +487,17 @@ class NetFH(Thread):
                     self.__buff_block, recv_lenght
                 )
                 if count == 0:
-                    raise IOError("readpictory error on network")
+                    raise IOError("readpictory length error on network")
                 self.__buff_recv += self.__buff_block[:count]
                 recv_lenght -= count
 
-            recv_lenght = unpack("=I", self.__buff_recv)[0]
+            recv_lenght, = unpack("=I", self.__buff_recv)
             while recv_lenght > 0:
                 count = self._slavesock.recv_into(
                     self.__buff_block, min(recv_lenght, self.__buff_size)
                 )
                 if count == 0:
-                    raise IOError("readpictory error on network")
+                    raise IOError("readpictory file error on network")
                 self.__buff_recv += self.__buff_block[:count]
                 recv_lenght -= count
 
@@ -524,17 +527,17 @@ class NetFH(Thread):
                     self.__buff_block, recv_lenght
                 )
                 if count == 0:
-                    raise IOError("readreplaceio error on network")
+                    raise IOError("readreplaceio length error on network")
                 self.__buff_recv += self.__buff_block[:count]
                 recv_lenght -= count
 
-            recv_lenght = unpack("=I", self.__buff_recv)[0]
+            recv_lenght, = unpack("=I", self.__buff_recv)
             while recv_lenght > 0:
                 count = self._slavesock.recv_into(
                     self.__buff_block, min(recv_lenght, self.__buff_size)
                 )
                 if count == 0:
-                    raise IOError("readpictory error on network")
+                    raise IOError("readreplaceio file error on network")
                 self.__buff_recv += self.__buff_block[:count]
                 recv_lenght -= count
 
@@ -609,6 +612,9 @@ class NetFH(Thread):
     def set_dirtybytes(self, position: int, dirtybytes: bytes) -> None:
         """
         Konfiguriert Dirtybytes fuer Prozessabbild bei Verbindungsfehler.
+
+        Diese Funktion wirft keine Exception bei einem uebertragungsfehler,
+        veranlasst aber eine Neuverbindung.
 
         :param position: Startposition zum Schreiben
         :param dirtybytes: <class 'bytes'> die geschrieben werden sollen
