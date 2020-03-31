@@ -336,15 +336,11 @@ class ProcimgWriter(Thread):
                     dev._ba_devdata[io_event._slc_address]:
                 continue
 
-            if io_event._bitaddress >= 0:
-                boolcp = bool(int.from_bytes(
-                    dev._ba_datacp[io_event._slc_address],
-                    byteorder=io_event._byteorder
-                ) & 1 << io_event._bitaddress)
-                boolor = bool(int.from_bytes(
-                    dev._ba_devdata[io_event._slc_address],
-                    byteorder=io_event._byteorder
-                ) & 1 << io_event._bitaddress)
+            if io_event._bitshift:
+                boolcp = dev._ba_datacp[io_event._slc_address.start] \
+                         & io_event._bitshift
+                boolor = dev._ba_devdata[io_event._slc_address.start] \
+                         & io_event._bitshift
 
                 if boolor == boolcp:
                     continue

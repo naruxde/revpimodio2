@@ -64,13 +64,15 @@ class IOList(object):
         io_del.unreg_event()
 
         # IO aus Byteliste und Attributen entfernen
-        if io_del._bitaddress < 0:
-            self.__dict_iobyte[io_del.address].remove(io_del)
-        else:
+        if io_del._bitshift:
             self.__dict_iobyte[io_del.address][io_del._bitaddress] = None
+
+            # Do not use any() because we want to know None, not 0
             if self.__dict_iobyte[io_del.address] == \
                     [None, None, None, None, None, None, None, None]:
                 self.__dict_iobyte[io_del.address] = []
+        else:
+            self.__dict_iobyte[io_del.address].remove(io_del)
 
         object.__delattr__(self, key)
         io_del._parentdevice._update_my_io_list()
@@ -157,12 +159,12 @@ class IOList(object):
         :param io: Neuer IO der eingefuegt werden soll
         """
         # Scanbereich festlegen
-        if io._bitaddress < 0:
-            scan_start = io.address
-            scan_stop = scan_start + (1 if io._length == 0 else io._length)
-        else:
+        if io._bitshift:
             scan_start = io._parentio_address
             scan_stop = scan_start + io._parentio_length
+        else:
+            scan_start = io.address
+            scan_stop = scan_start + (1 if io._length == 0 else io._length)
 
         # Defaultvalue über mehrere Bytes sammeln
         calc_defaultvalue = b''
@@ -172,8 +174,8 @@ class IOList(object):
 
                 if type(oldio) == StructIO:
                     # Hier gibt es schon einen neuen IO
-                    if oldio._bitaddress >= 0:
-                        if io._bitaddress == oldio._bitaddress:
+                    if oldio._bitshift:
+                        if io._bitshift == oldio._bitshift:
                             raise MemoryError(
                                 "bit {0} already assigned to '{1}'".format(
                                     io._bitaddress, oldio._name
@@ -188,7 +190,7 @@ class IOList(object):
                         )
                 elif oldio is not None:
                     # IOs im Speicherbereich des neuen IO merken
-                    if io._bitaddress >= 0:
+                    if io._bitshift:
                         # ios für ref bei bitaddress speichern
                         self.__dict_iorefname[oldio._name] = DeadIO(oldio)
                     else:
@@ -205,12 +207,14 @@ class IOList(object):
 
         if io._defaultvalue is None:
             # Nur bei StructIO und keiner gegebenen defaultvalue übernehmen
-            if io._bitaddress < 0:
-                io._defaultvalue = calc_defaultvalue
+            if io._bitshift:
+                io._defaultvalue = bool(
+                    io._parentio_defaultvalue[
+                        io._parentio_address - io.address
+                    ] & io._bitshift
+                )
             else:
-                io._defaultvalue = bool(io._parentio_defaultvalue[
-                                            io._parentio_address - io.address
-                                            ] & (1 << io._bitaddress))
+                io._defaultvalue = calc_defaultvalue
 
     def _private_register_new_io_object(self, new_io) -> None:
         """
@@ -221,9 +225,8 @@ class IOList(object):
         if isinstance(new_io, IOBase):
             if hasattr(self, new_io._name):
                 raise AttributeError(
-                    "attribute {0} already exists - can not set io".format(
-                        new_io._name
-                    )
+                    "attribute {0} already exists - can not set io"
+                    "".format(new_io._name)
                 )
 
             if type(new_io) is StructIO:
@@ -232,15 +235,14 @@ class IOList(object):
             object.__setattr__(self, new_io._name, new_io)
 
             # Bytedict für Adresszugriff anpassen
-            if new_io._bitaddress < 0:
-                self.__dict_iobyte[new_io.address].append(new_io)
-            else:
+            if new_io._bitshift:
                 if len(self.__dict_iobyte[new_io.address]) != 8:
                     # "schnell" 8 Einträge erstellen da es BIT IOs sind
-                    self.__dict_iobyte[new_io.address] += [
-                        None, None, None, None, None, None, None, None
-                    ]
+                    self.__dict_iobyte[new_io.address] += \
+                        [None, None, None, None, None, None, None, None]
                 self.__dict_iobyte[new_io.address][new_io._bitaddress] = new_io
+            else:
+                self.__dict_iobyte[new_io.address].append(new_io)
 
             if type(new_io) is StructIO:
                 new_io._parentdevice._update_my_io_list()
@@ -286,8 +288,8 @@ class IOBase(object):
     auch als <class 'int'> verwendet werden koennen.
     """
 
-    __slots__ = "__bit_ioctl_off", "__bit_ioctl_on", \
-                "_bitaddress", "_bitlength", "_byteorder", "_defaultvalue", \
+    __slots__ = "__bit_ioctl_off", "__bit_ioctl_on", "_bitaddress", \
+                "_bitshift", "_bitlength", "_byteorder", "_defaultvalue", \
                 "_iotype", "_length", "_name", "_parentdevice", \
                 "_signed", "_slc_address", "bmk", "export"
 
@@ -308,6 +310,7 @@ class IOBase(object):
 
         # Bitadressen auf Bytes aufbrechen und umrechnen
         self._bitaddress = -1 if valuelist[7] == "" else int(valuelist[7]) % 8
+        self._bitshift = None if self._bitaddress == -1 else 1 << self._bitaddress
 
         # Längenberechnung
         self._bitlength = int(valuelist[2])
@@ -323,7 +326,28 @@ class IOBase(object):
         self.export = bool(valuelist[4])
 
         int_startaddress = int(valuelist[3])
-        if self._bitaddress == -1:
+        if self._bitshift:
+            # Höhere Bits als 7 auf nächste Bytes umbrechen
+            int_startaddress += int(int(valuelist[7]) / 8)
+            self._slc_address = slice(
+                int_startaddress, int_startaddress + 1
+            )
+
+            # Defaultvalue ermitteln, sonst False
+            if valuelist[1] is None and type(self) == StructIO:
+                self._defaultvalue = None
+            else:
+                try:
+                    self._defaultvalue = bool(int(valuelist[1]))
+                except Exception:
+                    self._defaultvalue = False
+
+            # Ioctl für Bitsetzung setzen
+            self.__bit_ioctl_off = struct.pack(
+                "<HB", self._get_address(), self._bitaddress
+            )
+            self.__bit_ioctl_on = self.__bit_ioctl_off + b'\x01'
+        else:
             self._slc_address = slice(
                 int_startaddress, int_startaddress + self._length
             )
@@ -359,43 +383,19 @@ class IOBase(object):
                     except Exception:
                         pass
 
-        else:
-            # Höhere Bits als 7 auf nächste Bytes umbrechen
-            int_startaddress += int(int(valuelist[7]) / 8)
-            self._slc_address = slice(
-                int_startaddress, int_startaddress + 1
-            )
-
-            # Defaultvalue ermitteln, sonst False
-            if valuelist[1] is None and type(self) == StructIO:
-                self._defaultvalue = None
-            else:
-                try:
-                    self._defaultvalue = bool(int(valuelist[1]))
-                except Exception:
-                    self._defaultvalue = False
-
-            # Ioctl für Bitsetzung setzen
-            self.__bit_ioctl_off = \
-                self._get_address().to_bytes(2, "little") \
-                + self._bitaddress.to_bytes(1, "little")
-            self.__bit_ioctl_on = self.__bit_ioctl_off + b'\x01'
-
     def __bool__(self):
         """
         <class 'bool'>-Wert der Klasse.
 
         :return: <class 'bool'> Nur False wenn False oder 0 sonst True
         """
-        if self._bitaddress >= 0:
-            int_byte = int.from_bytes(
-                self._parentdevice._ba_devdata[self._slc_address],
-                byteorder=self._byteorder
+        if self._bitshift:
+            return bool(
+                self._parentdevice._ba_devdata[self._slc_address.start]
+                & self._bitshift
             )
-            return bool(int_byte & 1 << self._bitaddress)
         else:
-            return self._parentdevice._ba_devdata[self._slc_address] != \
-                   bytearray(self._length)
+            return any(self._parentdevice._ba_devdata[self._slc_address])
 
     def __len__(self):
         """
@@ -433,7 +433,7 @@ class IOBase(object):
             raise ValueError(
                 "'delay' must be <class 'int'> and greater or equal 0"
             )
-        if edge != BOTH and self._bitaddress < 0:
+        if edge != BOTH and not self._bitshift:
             raise ValueError(
                 "parameter 'edge' can be used with bit io objects only"
             )
@@ -454,12 +454,7 @@ class IOBase(object):
                     continue
 
                 if edge == BOTH or regfunc.edge == BOTH:
-                    if self._bitaddress < 0:
-                        raise RuntimeError(
-                            "io '{0}' with function '{1}' already in list."
-                            "".format(self._name, func)
-                        )
-                    else:
+                    if self._bitshift:
                         raise RuntimeError(
                             "io '{0}' with function '{1}' already in list "
                             "with edge '{2}' - edge '{3}' not allowed anymore"
@@ -468,6 +463,12 @@ class IOBase(object):
                                 consttostr(regfunc.edge), consttostr(edge)
                             )
                         )
+                    else:
+                        raise RuntimeError(
+                            "io '{0}' with function '{1}' already in list."
+                            "".format(self._name, func)
+                        )
+
                 elif regfunc.edge == edge:
                     raise RuntimeError(
                         "io '{0}' with function '{1}' for given edge '{2}' "
@@ -520,12 +521,11 @@ class IOBase(object):
 
         :return: IO-Wert als <class 'bytes'> oder <class 'bool'>
         """
-        if self._bitaddress >= 0:
-            int_byte = int.from_bytes(
-                self._parentdevice._ba_devdata[self._slc_address],
-                byteorder=self._byteorder
+        if self._bitshift:
+            return bool(
+                self._parentdevice._ba_devdata[self._slc_address.start]
+                & self._bitshift
             )
-            return bool(int_byte & 1 << self._bitaddress)
         else:
             return bytes(self._parentdevice._ba_devdata[self._slc_address])
 
@@ -591,7 +591,7 @@ class IOBase(object):
                 "can not write to memory '{0}'".format(self._name)
             )
 
-        if self._bitaddress >= 0:
+        if self._bitshift:
             # Versuchen egal welchen Typ in Bool zu konvertieren
             value = bool(value)
 
@@ -643,24 +643,19 @@ class IOBase(object):
                 # Für Bitoperationen sperren
                 self._parentdevice._filelock.acquire()
 
-                # ganzes Byte laden
-                byte_buff = self._parentdevice._ba_devdata[self._slc_address]
-
-                # Bytes in integer umwandeln
-                int_len = len(byte_buff)
-                int_byte = int.from_bytes(byte_buff, byteorder=self._byteorder)
-                int_bit = 1 << self._bitaddress
+                # Hier gibt es immer nur ein byte, als int holen
+                int_byte = self._parentdevice._ba_devdata[self._slc_address.start]
 
                 # Aktuellen Wert vergleichen und ggf. setzen
-                if not bool(int_byte & int_bit) == value:
+                if not bool(int_byte & self._bitshift) == value:
                     if value:
-                        int_byte += int_bit
+                        int_byte += self._bitshift
                     else:
-                        int_byte -= int_bit
+                        int_byte -= self._bitshift
 
                     # Zurückschreiben wenn verändert
-                    self._parentdevice._ba_devdata[self._slc_address] = \
-                        int_byte.to_bytes(int_len, byteorder=self._byteorder)
+                    self._parentdevice._ba_devdata[self._slc_address.start] = \
+                        int_byte
 
                 self._parentdevice._filelock.release()
 
@@ -783,7 +778,7 @@ class IOBase(object):
             raise ValueError(
                 "parameter 'timeout' must be <class 'int'> and greater than 0"
             )
-        if edge != BOTH and self._bitaddress < 0:
+        if edge != BOTH and not self._bitshift:
             raise ValueError(
                 "parameter 'edge' can be used with bit Inputs only"
             )
@@ -1213,7 +1208,7 @@ class StructIO(IOBase):
 
         :return: Defaultvalue vom Typ der struct-Formatierung
         """
-        if self._bitaddress >= 0:
+        if self._bitshift:
             return self._defaultvalue
         else:
             return struct.unpack(self.__frm, self._defaultvalue)[0]
@@ -1224,7 +1219,7 @@ class StructIO(IOBase):
 
         :return: Wert vom Typ der struct-Formatierung
         """
-        if self._bitaddress >= 0:
+        if self._bitshift:
             return self.get_value()
         else:
             return struct.unpack(self.__frm, self.get_value())[0]
@@ -1235,7 +1230,7 @@ class StructIO(IOBase):
 
         :param value: Wert vom Typ der struct-Formatierung
         """
-        if self._bitaddress >= 0:
+        if self._bitshift:
             self.set_value(value)
         else:
             self.set_value(struct.pack(self.__frm, value))

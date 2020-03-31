@@ -793,7 +793,7 @@ class RevPiModIO(object):
                 cp[io.name]["frm"] = io.frm
 
                 # Optional values
-                if io._bitaddress >= 0:
+                if io._bitshift:
                     cp[io.name]["bit"] = str(io._bitaddress)
                 if io._byteorder != "little":
                     cp[io.name]["byteorder"] = io._byteorder
