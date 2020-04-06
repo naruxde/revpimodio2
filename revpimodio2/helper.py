@@ -86,7 +86,7 @@ class Cycletools:
     """
 
     __slots__ = "__cycle", "__cycletime", "__ucycle", \
-                "__dict_ton", "__dict_tof", "__dict_tp", "first", \
+                "__dict_ton", "__dict_tof", "__dict_tp", "first", "last", \
                 "flag1c", "flag5c", "flag10c", "flag15c", "flag20c", \
                 "flank5c", "flank10c", "flank15c", "flank20c", "var"
 
@@ -106,6 +106,7 @@ class Cycletools:
         self.flag10c = False
         self.flag15c = False
         self.flag20c = False
+        self.last = False
 
         # Flankenmerker
         self.flank5c = True

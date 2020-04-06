@@ -23,15 +23,15 @@ class RevPiModIO(object):
     """
     Klasse fuer die Verwaltung der piCtory Konfiguration.
 
-    Diese Klasse uebernimmt die gesamte Konfiguration aus piCtory und bilded
-    die Devices und IOs ab. Sie uebernimmt die exklusive Verwaltung des
+    Diese Klasse uebernimmt die gesamte Konfiguration aus piCtory und
+    laedt die Devices und IOs. Sie uebernimmt die exklusive Verwaltung des
     Prozessabbilds und stellt sicher, dass die Daten synchron sind.
     Sollten nur einzelne Devices gesteuert werden, verwendet man
     RevPiModIOSelected() und uebergibt bei Instantiierung eine Liste mit
     Device Positionen oder Device Namen.
     """
 
-    __slots__ = "__cleanupfunc", "_autorefresh", "_buffedwrite", \
+    __slots__ = "__cleanupfunc", "_autorefresh", "_buffedwrite", "_exit_level", \
                 "_configrsc", "_direct_output", "_exit", "_imgwriter", "_ioerror", \
                 "_length", "_looprunning", "_lst_devselect", "_lst_refresh", \
                 "_maxioerrors", "_myfh", "_myfh_lck", "_monitoring", "_procimg", \
@@ -82,6 +82,7 @@ class RevPiModIO(object):
         self._buffedwrite = False
         self._debug = 1
         self._exit = Event()
+        self._exit_level = 0
         self._imgwriter = None
         self._ioerror = 0
         self._length = 0
@@ -142,6 +143,32 @@ class RevPiModIO(object):
             self.__cleanupfunc()
             if not self._monitoring:
                 self.writeprocimg()
+
+    def __exit_jobs(self):
+        """Shutdown sub systems."""
+        if self._exit_level & 1:
+            # Nach Ausführung kann System weiter verwendet werden
+            self._exit_level ^= 1
+
+            # ProcimgWriter beenden und darauf warten
+            if self._imgwriter is not None and self._imgwriter.is_alive():
+                self._imgwriter.stop()
+                self._imgwriter.join(2.5)
+
+            # Alle Devices aus Autorefresh entfernen
+            while len(self._lst_refresh) > 0:
+                dev = self._lst_refresh.pop()
+                dev._selfupdate = False
+                if not self._monitoring:
+                    self.writeprocimg(dev)
+
+        if self._exit_level & 2:
+            self._myfh.close()
+            self.app = None
+            self.core = None
+            self.device = None
+            self.io = None
+            self.summary = None
 
     def _configure(self, jconfigrsc: dict) -> None:
         """
@@ -626,13 +653,8 @@ class RevPiModIO(object):
 
     def cleanup(self) -> None:
         """Beendet autorefresh und alle Threads."""
+        self._exit_level |= 2
         self.exit(full=True)
-        self._myfh.close()
-        self.app = None
-        self.core = None
-        self.device = None
-        self.io = None
-        self.summary = None
 
     def cycleloop(self, func, cycletime=50):
         """
@@ -697,16 +719,20 @@ class RevPiModIO(object):
         self._exit.clear()
         self._looprunning = True
         cycleinfo = helpermodule.Cycletools(self._imgwriter.refresh)
+        e = None
         ec = None
         try:
-            while ec is None and not self._exit.is_set():
+            while ec is None and not cycleinfo.last:
                 # Auf neue Daten warten und nur ausführen wenn set()
                 if not self._imgwriter.newdata.wait(2.5):
-                    if not self._exit.is_set() \
-                            and not self._imgwriter.is_alive():
+                    if not self._imgwriter.is_alive():
                         self.exit(full=False)
-                        self._looprunning = False
-                        raise RuntimeError("autorefresh thread not running")
+                        e = RuntimeError("autorefresh thread not running")
+                        break
+
+                    # Abfragen um loop bei exit zu verlassen
+                    cycleinfo.last = self._exit.is_set()
+
                     continue
                 self._imgwriter.newdata.clear()
 
@@ -714,23 +740,30 @@ class RevPiModIO(object):
                 self._imgwriter.lck_refresh.acquire()
 
                 # Funktion aufrufen und auswerten
+                cycleinfo.last = self._exit.is_set()
                 ec = func(cycleinfo)
                 cycleinfo._docycle()
 
                 # autorefresh freigeben
                 self._imgwriter.lck_refresh.release()
-        except Exception as e:
+        except Exception as ex:
             if self._imgwriter.lck_refresh.locked():
                 self._imgwriter.lck_refresh.release()
             self.exit(full=False)
+            e = ex
+        finally:
+            # Cycleloop beenden
             self._looprunning = False
-            raise e
-
-        # Cycleloop beenden
-        self._looprunning = False
 
         # Alte autorefresh Zeit setzen
         self._imgwriter.refresh = old_cycletime
+
+        # Exitstrategie ausführen
+        self.__exit_jobs()
+
+        # Auf Fehler prüfen die im loop geworfen wurden
+        if e is not None:
+            raise e
 
         return ec
 
@@ -747,6 +780,11 @@ class RevPiModIO(object):
 
         :param full: Entfernt auch alle Devices aus autorefresh
         """
+        self._exit_level |= 1 if full else 0
+
+        # Echten Loopwert vor Events speichern
+        full = full and not self._looprunning
+
         # Benutzerevent
         self.exitsignal.set()
 
@@ -754,21 +792,7 @@ class RevPiModIO(object):
         self._waitexit.set()
 
         if full:
-            # ProcimgWriter beenden und darauf warten
-            if self._imgwriter is not None and self._imgwriter.is_alive():
-                self._imgwriter.stop()
-                self._imgwriter.join(self._imgwriter._refresh)
-
-            # Mainloop beenden und darauf 1 Sekunde warten
-            if self._th_mainloop is not None and self._th_mainloop.is_alive():
-                self._th_mainloop.join(1)
-
-            # Alle Devices aus Autorefresh entfernen
-            while len(self._lst_refresh) > 0:
-                dev = self._lst_refresh.pop()
-                dev._selfupdate = False
-                if not self._monitoring:
-                    self.writeprocimg(dev)
+            self.__exit_jobs()
 
     def export_replaced_ios(self, filename="replace_ios.conf") -> None:
         """
@@ -990,7 +1014,10 @@ class RevPiModIO(object):
         self._looprunning = False
         self._th_mainloop = None
 
-        # Fehler prüfen
+        # Exitstrategie ausführen
+        self.__exit_jobs()
+
+        # Auf Fehler prüfen die im loop geworfen wurden
         if e is not None:
             raise e
 
@@ -1190,7 +1217,7 @@ class RevPiModIOSelected(RevPiModIO):
     Klasse fuer die Verwaltung einzelner Devices aus piCtory.
 
     Diese Klasse uebernimmt nur angegebene Devices der piCtory Konfiguration
-    und bilded sie inkl. IOs ab. Sie uebernimmt die exklusive Verwaltung des
+    und laedt sie inkl. IOs. Sie uebernimmt die exklusive Verwaltung des
     Adressbereichs im Prozessabbild an dem sich die angegebenen Devices
     befinden und stellt sicher, dass die Daten synchron sind.
     """
