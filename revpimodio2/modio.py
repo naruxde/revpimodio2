@@ -137,12 +137,8 @@ class RevPiModIO(object):
         """
         signal(SIGINT, SIG_DFL)
         signal(SIGTERM, SIG_DFL)
+        self._exit_level |= 4
         self.exit(full=True)
-        if self.__cleanupfunc is not None:
-            self.readprocimg()
-            self.__cleanupfunc()
-            if not self._monitoring:
-                self.writeprocimg()
 
     def __exit_jobs(self):
         """Shutdown sub systems."""
@@ -161,6 +157,14 @@ class RevPiModIO(object):
                 dev._selfupdate = False
                 if not self._monitoring:
                     self.writeprocimg(dev)
+
+        # Execute clean up function
+        if self._exit_level & 4 and self.__cleanupfunc is not None:
+            self._exit_level ^= 4
+            self.readprocimg()
+            self.__cleanupfunc()
+            if not self._monitoring:
+                self.writeprocimg()
 
         if self._exit_level & 2:
             self._myfh.close()
@@ -725,15 +729,12 @@ class RevPiModIO(object):
             while ec is None and not cycleinfo.last:
                 # Auf neue Daten warten und nur ausführen wenn set()
                 if not self._imgwriter.newdata.wait(2.5):
-                    if not self._imgwriter.is_alive():
-                        self.exit(full=False)
+                    self.exit(full=False)
+                    if self._imgwriter.is_alive():
+                        e = RuntimeError("no new io data in cycle loop")
+                    else:
                         e = RuntimeError("autorefresh thread not running")
-                        break
-
-                    # Abfragen um loop bei exit zu verlassen
-                    cycleinfo.last = self._exit.is_set()
-
-                    continue
+                    break
                 self._imgwriter.newdata.clear()
 
                 # Vor Aufruf der Funktion autorefresh sperren
@@ -790,6 +791,10 @@ class RevPiModIO(object):
 
         self._exit.set()
         self._waitexit.set()
+
+        # Auf beenden von mainloop thread warten
+        if self._th_mainloop is not None and self._th_mainloop.is_alive():
+            self._th_mainloop.join(2.5)
 
         if full:
             self.__exit_jobs()
@@ -1003,23 +1008,25 @@ class RevPiModIO(object):
                     )
             except Empty:
                 if not self._exit.is_set() and not self._imgwriter.is_alive():
-                    self.exit(full=False)
                     e = RuntimeError("autorefresh thread not running")
+                    break
             except Exception as ex:
-                self.exit(full=False)
                 e = ex
+                break
 
         # Mainloop verlassen
         self._imgwriter._collect_events(False)
         self._looprunning = False
         self._th_mainloop = None
 
-        # Exitstrategie ausführen
-        self.__exit_jobs()
-
         # Auf Fehler prüfen die im loop geworfen wurden
         if e is not None:
+            self.exit(full=False)
+            self.__exit_jobs()
             raise e
+
+        # Exitstrategie ausführen
+        self.__exit_jobs()
 
     def readprocimg(self, device=None) -> bool:
         """
