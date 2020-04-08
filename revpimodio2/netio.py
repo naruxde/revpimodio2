@@ -745,7 +745,7 @@ class RevPiNetIO(_RevPiModIO):
     def __init__(
             self, address, autorefresh=False, monitoring=False,
             syncoutputs=True, simulator=False, debug=True,
-            replace_io_file=None, direct_output=False):
+            replace_io_file=None, shared_procimg=False, direct_output=False):
         """
         Instantiiert die Grundfunktionen.
 
@@ -756,7 +756,8 @@ class RevPiNetIO(_RevPiModIO):
         :param simulator: Laedt das Modul als Simulator und vertauscht IOs
         :param debug: Gibt bei allen Fehlern komplette Meldungen aus
         :param replace_io_file: Replace IO Konfiguration aus Datei laden
-        :param direct_output: Write outputs immediately to process image (slow)
+        :param shared_procimg: Share process image with other processes (insecure for automation, little slower)
+        :param direct_output: Deprecated, use shared_procimg
         """
         check_ip = compile(
             r"^(?P<ipn>(25[0-5]|(2[0-4]|[01]?\d|)\d))(\.(?P=ipn)){3}$"
@@ -806,6 +807,7 @@ class RevPiNetIO(_RevPiModIO):
             simulator=simulator,
             debug=debug,
             replace_io_file=replace_io_file,
+            shared_procimg=shared_procimg,
             direct_output=direct_output,
         )
 
@@ -990,7 +992,7 @@ class RevPiNetIOSelected(RevPiNetIO):
     def __init__(
             self, address, deviceselection, autorefresh=False,
             monitoring=False, syncoutputs=True, simulator=False, debug=True,
-            replace_io_file=None, direct_output=False):
+            replace_io_file=None, shared_procimg=False, direct_output=False):
         """
         Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 
@@ -1004,7 +1006,7 @@ class RevPiNetIOSelected(RevPiNetIO):
         """
         super().__init__(
             address, autorefresh, monitoring, syncoutputs, simulator, debug,
-            replace_io_file, direct_output
+            replace_io_file, shared_procimg, direct_output
         )
 
         # Device liste erstellen
@@ -1059,7 +1061,7 @@ class RevPiNetIODriver(RevPiNetIOSelected):
     def __init__(
             self, address, virtdev, autorefresh=False,
             syncoutputs=True, debug=True, replace_io_file=None,
-            direct_output=False):
+            shared_procimg=False, direct_output=False):
         """
         Instantiiert die Grundfunktionen.
 
@@ -1073,5 +1075,5 @@ class RevPiNetIODriver(RevPiNetIOSelected):
         # Parent mit monitoring=False und simulator=True laden
         super().__init__(
             address, virtdev, autorefresh, False, syncoutputs, True, debug,
-            replace_io_file, direct_output
+            replace_io_file, shared_procimg, direct_output
         )

@@ -42,7 +42,7 @@ class RevPiModIO(object):
     def __init__(
             self, autorefresh=False, monitoring=False, syncoutputs=True,
             procimg=None, configrsc=None, simulator=False, debug=True,
-            replace_io_file=None, direct_output=False):
+            replace_io_file=None, shared_procimg=False, direct_output=False):
         """
         Instantiiert die Grundfunktionen.
 
@@ -54,22 +54,29 @@ class RevPiModIO(object):
         :param simulator: Laedt das Modul als Simulator und vertauscht IOs
         :param debug: Gibt alle Warnungen inkl. Zyklusprobleme aus
         :param replace_io_file: Replace IO Konfiguration aus Datei laden
-        :param direct_output: Write outputs immediately to process image (slow)
+        :param shared_procimg: Share process image with other processes (insecure for automation, little slower)
+        :param direct_output: Deprecated, use shared_procimg
         """
         # Parameterprüfung
         acheck(
             bool, autorefresh=autorefresh, monitoring=monitoring,
             syncoutputs=syncoutputs, simulator=simulator, debug=debug,
-            direct_output=direct_output
+            shared_procimg=shared_procimg, direct_output=direct_output
         )
         acheck(
             str, procimg_noneok=procimg, configrsc_noneok=configrsc,
             replace_io_file_noneok=replace_io_file
         )
 
+        # todo: Remove in next release
+        if direct_output:
+            warnings.warn(DeprecationWarning(
+                "direct_output is deprecated - use shared_procimg instead!"
+            ))
+
         self._autorefresh = autorefresh
         self._configrsc = configrsc
-        self._direct_output = direct_output
+        self._direct_output = shared_procimg or direct_output
         self._monitoring = monitoring
         self._procimg = "/dev/piControl0" if procimg is None else procimg
         self._simulator = simulator
@@ -1235,7 +1242,7 @@ class RevPiModIOSelected(RevPiModIO):
             self, deviceselection, autorefresh=False, monitoring=False,
             syncoutputs=True, procimg=None, configrsc=None,
             simulator=False, debug=True, replace_io_file=None,
-            direct_output=False):
+            shared_procimg=False, direct_output=False):
         """
         Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 
@@ -1248,7 +1255,7 @@ class RevPiModIOSelected(RevPiModIO):
         """
         super().__init__(
             autorefresh, monitoring, syncoutputs, procimg, configrsc,
-            simulator, debug, replace_io_file, direct_output
+            simulator, debug, replace_io_file, shared_procimg, direct_output
         )
 
         # Device liste erstellen
@@ -1303,7 +1310,7 @@ class RevPiModIODriver(RevPiModIOSelected):
     def __init__(
             self, virtdev, autorefresh=False,
             syncoutputs=True, procimg=None, configrsc=None, debug=True,
-            replace_io_file=None, direct_output=False):
+            replace_io_file=None, shared_procimg=False, direct_output=False):
         """
         Instantiiert die Grundfunktionen.
 
@@ -1317,7 +1324,7 @@ class RevPiModIODriver(RevPiModIOSelected):
         # Parent mit monitoring=False und simulator=True laden
         super().__init__(
             virtdev, autorefresh, False, syncoutputs, procimg, configrsc,
-            True, debug, replace_io_file, direct_output
+            True, debug, replace_io_file, shared_procimg, direct_output
         )
 
 
