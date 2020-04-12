@@ -68,7 +68,7 @@ class RevPiModIO(object):
             replace_io_file_noneok=replace_io_file
         )
 
-        # todo: Remove in next release
+        # TODO: Remove in next release
         if direct_output:
             warnings.warn(DeprecationWarning(
                 "direct_output is deprecated - use shared_procimg instead!"
@@ -434,13 +434,11 @@ class RevPiModIO(object):
 
     def _get_cpreplaceio(self) -> ConfigParser:
         """
-        Laed die replace_io_file Konfiguration und verarbeitet sie.
+        Laedt die replace_io_file Konfiguration und verarbeitet sie.
 
         :return: <class 'ConfigParser'> der replace io daten
         """
         cp = ConfigParser()
-
-        # TODO: verfeinern!
 
         if self._replace_io_file:
             try:

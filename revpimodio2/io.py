@@ -942,7 +942,7 @@ class IntIO(IOBase):
 class IntIOCounter(IntIO):
     """Erweitert die IntIO-Klasse um die .reset() Funktion fuer Counter."""
 
-    __slots__ = ("__ioctl_arg", )
+    __slots__ = ("__ioctl_arg",)
 
     def __init__(
             self, counter_id,
