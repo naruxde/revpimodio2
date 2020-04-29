@@ -647,12 +647,8 @@ class Core(Base):
 
         :return: 0=aus, 1=gruen, 2=rot
         """
-        int_led = int.from_bytes(
-            self._ba_devdata[self._slc_led], byteorder="little"
-        )
-        led = int_led & 1
-        led += int_led & 2
-        return led
+        # 0b00000011 = 3
+        return self._ba_devdata[self._slc_led.start] & 3
 
     def _get_leda2(self) -> int:
         """
@@ -660,37 +656,8 @@ class Core(Base):
 
         :return: 0=aus, 1=gruen, 2=rot
         """
-        int_led = int.from_bytes(
-            self._ba_devdata[self._slc_led], byteorder="little"
-        ) >> 2
-        led = int_led & 1
-        led += int_led & 2
-        return led
-
-    def _set_calculatedled(self, addresslist: list, shifted_value: int) -> None:
-        """
-        Berechnet und setzt neuen Bytewert fuer LED byte.
-
-        :param addresslist: Liste der Vergleicher
-        :param shifted_value: Bits vergleichen
-        """
-        # Byte als int holen
-        int_led = int.from_bytes(
-            self._ba_devdata[self._slc_led], byteorder="little"
-        )
-
-        for int_bit in addresslist:
-            value = bool(shifted_value & int_bit)
-            if bool(int_led & int_bit) != value:
-                # Berechnen, wenn verändert
-                if value:
-                    int_led += int_bit
-                else:
-                    int_led -= int_bit
-
-        # Zurückschreiben wenn verändert
-        self._ba_devdata[self._slc_led] = \
-            int_led.to_bytes(length=1, byteorder="little")
+        # 0b00001100 = 12
+        return (self._ba_devdata[self._slc_led.start] & 12) >> 2
 
     def _set_leda1(self, value: int) -> None:
         """
@@ -699,7 +666,13 @@ class Core(Base):
         :param value: 0=aus, 1=gruen, 2=rot
         """
         if 0 <= value <= 3:
-            self._set_calculatedled([1, 2], value)
+            proc_value = self._ba_devdata[self._slc_led.start]
+            proc_value_calc = proc_value & 3
+            if proc_value_calc == value:
+                return
+            # Set new value
+            self._ba_devdata[self._slc_led.start] = \
+                proc_value - proc_value_calc + value
         else:
             raise ValueError("led status must be between 0 and 3")
 
@@ -710,7 +683,14 @@ class Core(Base):
         :param value: 0=aus, 1=gruen, 2=rot
         """
         if 0 <= value <= 3:
-            self._set_calculatedled([4, 8], value << 2)
+            value <<= 2
+            proc_value = self._ba_devdata[self._slc_led.start]
+            proc_value_calc = proc_value & 12
+            if proc_value_calc == value:
+                return
+            # Set new value
+            self._ba_devdata[self._slc_led.start] = \
+                proc_value - proc_value_calc + value
         else:
             raise ValueError("led status must be between 0 and 3")
 
@@ -960,12 +940,8 @@ class Connect(Core):
 
         :return: 0=aus, 1=gruen, 2=rot
         """
-        int_led = int.from_bytes(
-            self._ba_devdata[self._slc_led], byteorder="little"
-        ) >> 4
-        led = int_led & 1
-        led += int_led & 2
-        return led
+        # 0b00110000 = 48
+        return (self._ba_devdata[self._slc_led.start] & 48) >> 4
 
     def _get_wdtoggle(self) -> bool:
         """
@@ -982,7 +958,14 @@ class Connect(Core):
         :param: value 0=aus, 1=gruen, 2=rot
         """
         if 0 <= value <= 3:
-            self._set_calculatedled([16, 32], value << 4)
+            value <<= 4
+            proc_value = self._ba_devdata[self._slc_led.start]
+            proc_value_calc = proc_value & 48
+            if proc_value_calc == value:
+                return
+            # Set new value
+            self._ba_devdata[self._slc_led.start] = \
+                proc_value - proc_value_calc + value
         else:
             raise ValueError("led status must be between 0 and 3")
 
@@ -1021,6 +1004,145 @@ class Connect(Core):
 
     A3 = property(_get_leda3, _set_leda3)
     wdautotoggle = property(_get_wdtoggle, _set_wdtoggle)
+
+
+class Compact(Base):
+    """
+    Klasse fuer den RevPi Connect.
+
+    Stellt Funktionen fuer die LEDs zur Verfuegung. Auf IOs wird ueber das .io
+    Objekt zugegriffen.
+    """
+
+    __slots__ = "_slc_temperature", "_slc_frequency", "_slc_led", \
+                "a1green", "a1red", "a2green", "a2red"
+
+    def __setattr__(self, key, value):
+        """Verhindert Ueberschreibung der LEDs."""
+        if hasattr(self, key) and key in (
+                "a1green", "a1red", "a2green", "a2red"):
+            raise AttributeError(
+                "direct assignment is not supported - use .value Attribute"
+            )
+        else:
+            object.__setattr__(self, key, value)
+
+    def _devconfigure(self) -> None:
+        """Core-Klasse vorbereiten."""
+
+        # Statische IO Verknüpfungen des Compacts
+        self._slc_led = slice(23, 24)
+        self._slc_temperature = slice(0, 1)
+        self._slc_frequency = slice(1, 2)
+
+        # Exportflags prüfen (Byte oder Bit)
+        lst_led = self._modio.io[self._slc_devoff][self._slc_led.start]
+        if len(lst_led) == 8:
+            exp_a1green = lst_led[0].export
+            exp_a1red = lst_led[1].export
+            exp_a2green = lst_led[2].export
+            exp_a2red = lst_led[3].export
+        else:
+            exp_a1green = lst_led[0].export
+            exp_a1red = exp_a1green
+            exp_a2green = exp_a1green
+            exp_a2red = exp_a1green
+
+        # Echte IOs erzeugen
+        self.a1green = IOBase(self, [
+            "core.a1green", 0, 1, self._slc_led.start,
+            exp_a1green, None, "LED_A1_GREEN", "0"
+        ], OUT, "little", False)
+        self.a1red = IOBase(self, [
+            "core.a1red", 0, 1, self._slc_led.start,
+            exp_a1red, None, "LED_A1_RED", "1"
+        ], OUT, "little", False)
+        self.a2green = IOBase(self, [
+            "core.a2green", 0, 1, self._slc_led.start,
+            exp_a2green, None, "LED_A2_GREEN", "2"
+        ], OUT, "little", False)
+        self.a2red = IOBase(self, [
+            "core.a2red", 0, 1, self._slc_led.start,
+            exp_a2red, None, "LED_A2_RED", "3"
+        ], OUT, "little", False)
+
+    def _get_leda1(self) -> int:
+        """
+        Gibt den Zustand der LED A1 vom Compact zurueck.
+
+        :return: 0=aus, 1=gruen, 2=rot
+        """
+        # 0b00000011 = 3
+        return self._ba_devdata[self._slc_led.start] & 3
+
+    def _get_leda2(self) -> int:
+        """
+        Gibt den Zustand der LED A2 vom Compact zurueck.
+
+        :return: 0=aus, 1=gruen, 2=rot
+        """
+        # 0b00001100 = 12
+        return (self._ba_devdata[self._slc_led.start] & 12) >> 2
+
+    def _set_leda1(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A1 vom Compact.
+
+        :param value: 0=aus, 1=gruen, 2=rot
+        """
+        if 0 <= value <= 3:
+            proc_value = self._ba_devdata[self._slc_led.start]
+            proc_value_calc = proc_value & 3
+            if proc_value_calc == value:
+                return
+            # Set new value
+            self._ba_devdata[self._slc_led.start] = \
+                proc_value - proc_value_calc + value
+        else:
+            raise ValueError("led status must be between 0 and 3")
+
+    def _set_leda2(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A2 vom Compact.
+
+        :param value: 0=aus, 1=gruen, 2=rot
+        """
+        if 0 <= value <= 3:
+            value <<= 2
+            proc_value = self._ba_devdata[self._slc_led.start]
+            proc_value_calc = proc_value & 12
+            if proc_value_calc == value:
+                return
+            # Set new value
+            self._ba_devdata[self._slc_led.start] = \
+                proc_value - proc_value_calc + value
+        else:
+            raise ValueError("led status must be between 0 and 3")
+
+    A1 = property(_get_leda1, _set_leda1)
+    A2 = property(_get_leda2, _set_leda2)
+
+    @property
+    def temperature(self) -> int:
+        """
+        Gibt CPU-Temperatur zurueck.
+
+        :return: CPU-Temperatur in Celsius (-273 wenn nich verfuegbar)
+        """
+        return -273 if self._slc_temperature is None else int.from_bytes(
+            self._ba_devdata[self._slc_temperature], byteorder="little"
+        )
+
+    @property
+    def frequency(self) -> int:
+        """
+        Gibt CPU Taktfrequenz zurueck.
+
+        :return: CPU Taktfrequenz in MHz (-1 wenn nicht verfuegbar)
+        """
+        return -1 if self._slc_frequency is None else int.from_bytes(
+            self._ba_devdata[self._slc_frequency], byteorder="little"
+        ) * 10
 
 
 class DioModule(Device):

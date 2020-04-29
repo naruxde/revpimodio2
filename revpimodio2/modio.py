@@ -248,6 +248,12 @@ class RevPiModIO(object):
                         self, device, simulator=self._simulator
                     )
                     self.core = dev_new
+                elif pt == 104:
+                    # RevPi Compact
+                    dev_new = devicemodule.Compact(
+                        self, device, simulator=self._simulator
+                    )
+                    self.core = dev_new
                 else:
                     # Base immer als Fallback verwenden
                     dev_new = devicemodule.Base(
@@ -324,7 +330,8 @@ class RevPiModIO(object):
             self.syncoutputs()
 
         # Für RS485 errors am core defaults laden sollte procimg NULL sein
-        if not (self.core is None or self._monitoring or self._simulator):
+        if isinstance(self.core, devicemodule.Core) and \
+                not (self._monitoring or self._simulator):
             if self.core._slc_errorlimit1 is not None:
                 io = self.io[
                     self.core.offset + self.core._slc_errorlimit1.start

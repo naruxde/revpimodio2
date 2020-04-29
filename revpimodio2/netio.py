@@ -714,8 +714,8 @@ class NetFH(Thread):
 
             # Datenblöcke mit Group Seperator in Puffer ablegen
             self.__by_buff += self.__position.to_bytes(length=2, byteorder="little") + \
-                              len(bytebuff).to_bytes(length=2, byteorder="little") + \
-                              bytebuff
+                len(bytebuff).to_bytes(length=2, byteorder="little") + \
+                bytebuff
 
         # TODO: Bufferlänge und dann flushen?
 

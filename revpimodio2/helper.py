@@ -339,9 +339,9 @@ class ProcimgWriter(Thread):
 
             if io_event._bitshift:
                 boolcp = dev._ba_datacp[io_event._slc_address.start] \
-                         & io_event._bitshift
+                    & io_event._bitshift
                 boolor = dev._ba_devdata[io_event._slc_address.start] \
-                         & io_event._bitshift
+                    & io_event._bitshift
 
                 if boolor == boolcp:
                     continue
