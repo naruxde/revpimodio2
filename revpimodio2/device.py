@@ -310,8 +310,8 @@ class Device(object):
                     "little",
                     False
                 )
-            elif bool(dict_io[key][7]) or isinstance(self, Base):
-                # Bei Bitwerten oder Base IOBase verwenden
+            elif bool(dict_io[key][7]):
+                # Bei Bitwerten IOBase verwenden
                 io_new = IOBase(
                     self, dict_io[key], iotype, "little", False
                 )
