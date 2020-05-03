@@ -734,9 +734,9 @@ class RevPiModIO(object):
         # Cycleloop starten
         self._exit.clear()
         self._looprunning = True
-        cycleinfo = helpermodule.Cycletools(self._imgwriter.refresh)
-        e = None
-        ec = None
+        cycleinfo = helpermodule.Cycletools(self._imgwriter.refresh, self)
+        e = None  # Exception
+        ec = None  # Return value of cycle_function
         try:
             while ec is None and not cycleinfo.last:
                 # Auf neue Daten warten und nur ausführen wenn set()
@@ -752,8 +752,11 @@ class RevPiModIO(object):
                 # Vor Aufruf der Funktion autorefresh sperren
                 self._imgwriter.lck_refresh.acquire()
 
-                # Funktion aufrufen und auswerten
+                # Vorbereitung für cycleinfo
+                cycleinfo._start_timer = default_timer()
                 cycleinfo.last = self._exit.is_set()
+
+                # Funktion aufrufen und auswerten
                 ec = func(cycleinfo)
                 cycleinfo._docycle()
 

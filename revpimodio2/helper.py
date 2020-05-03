@@ -85,12 +85,12 @@ class Cycletools:
     Lampen synchron blinken zu lassen.
     """
 
-    __slots__ = "__cycle", "__cycletime", "__ucycle", \
-                "__dict_ton", "__dict_tof", "__dict_tp", "first", "last", \
-                "flag1c", "flag5c", "flag10c", "flag15c", "flag20c", \
-                "flank5c", "flank10c", "flank15c", "flank20c", "var"
+    __slots__ = "__cycle", "__cycletime", "__ucycle", "__dict_ton", \
+                "__dict_tof", "__dict_tp", "_start_timer", "core", "first", \
+                "io", "last", "flag1c", "flag5c", "flag10c", "flag15c", \
+                "flag20c", "flank5c", "flank10c", "flank15c", "flank20c", "var"
 
-    def __init__(self, cycletime):
+    def __init__(self, cycletime, revpi_object):
         """Init Cycletools class."""
         self.__cycle = 0
         self.__cycletime = cycletime
@@ -98,6 +98,11 @@ class Cycletools:
         self.__dict_ton = {}
         self.__dict_tof = {}
         self.__dict_tp = {}
+        self._start_timer = 0.0
+
+        # Access to core and io
+        self.core = revpi_object.core
+        self.io = revpi_object.io
 
         # Taktmerker
         self.first = True
@@ -298,6 +303,17 @@ class Cycletools:
         else:
             self.__dict_tp[name][1] = True
 
+    @property
+    def runtime(self) -> float:
+        """
+        Runtime im milliseconds of cycle function till now.
+
+        This property will return the actual runtime of the function. So on the
+        beginning of your function it will be about 0 and will rise during
+        the runtime to the max in the last line of your function.
+        """
+        return (default_timer() - self._start_timer) * 1000
+
 
 class ProcimgWriter(Thread):
     """
@@ -458,9 +474,10 @@ class ProcimgWriter(Thread):
         self._adjwait = self._refresh
 
         mrk_warn = True
+        mrk_dt = default_timer()
 
         while not self._work.is_set():
-            ot = default_timer()
+            ot = mrk_dt
 
             # Lockobjekt holen und Fehler werfen, wenn nicht schnell genug
             if not self.lck_refresh.acquire(timeout=self._adjwait):
@@ -550,7 +567,8 @@ class ProcimgWriter(Thread):
                 self._work.wait(self._adjwait)
 
             # Wartezeit anpassen um echte self._refresh zu erreichen
-            if default_timer() - ot >= self._refresh:
+            mrk_dt = default_timer()
+            if mrk_dt - ot >= self._refresh:
                 self._adjwait -= 0.001
                 if self._adjwait < 0:
                     warnings.warn(

@@ -542,12 +542,13 @@ class Core(Base):
 
     __slots__ = "_slc_cycle", "_slc_errorcnt", "_slc_statusbyte", \
                 "_slc_temperature", "_slc_errorlimit1", "_slc_errorlimit2", \
-                "_slc_frequency", "_slc_led", "a1green", "a1red", "a2green", "a2red"
+                "_slc_frequency", "_slc_led", "a1green", "a1red", \
+                "a2green", "a2red", "wd"
 
     def __setattr__(self, key, value):
         """Verhindert Ueberschreibung der LEDs."""
         if hasattr(self, key) and key in (
-                "a1green", "a1red", "a2green", "a2red"):
+                "a1green", "a1red", "a2green", "a2red", "wd"):
             raise AttributeError(
                 "direct assignment is not supported - use .value Attribute"
             )
@@ -614,6 +615,12 @@ class Core(Base):
         self.a2red = IOBase(self, [
             "core.a2red", 0, 1, self._slc_led.start,
             exp_a2red, None, "LED_A2_RED", "3"
+        ], OUT, "little", False)
+
+        # Watchdog einrichten (Core=soft / Connect=soft/hard)
+        self.wd = IOBase(self, [
+            "core.wd", 0, 1, self._slc_led.start,
+            False, None, "WatchDog", "7"
         ], OUT, "little", False)
 
     def __errorlimit(self, slc_io: slice, errorlimit: int) -> None:
@@ -693,6 +700,10 @@ class Core(Base):
                 proc_value - proc_value_calc + value
         else:
             raise ValueError("led status must be between 0 and 3")
+
+    def wd_toggle(self):
+        """Toggle watchdog bit to prevent a timeout."""
+        self.wd.value = not self.wd.value
 
     A1 = property(_get_leda1, _set_leda1)
     A2 = property(_get_leda2, _set_leda2)
@@ -865,19 +876,17 @@ class Connect(Core):
     Stellt Funktionen fuer die LEDs, Watchdog und den Status zur Verfuegung.
     """
 
-    __slots__ = "__evt_wdtoggle", "__th_wdtoggle", "a3green", "a3red", "wd", \
+    __slots__ = "__evt_wdtoggle", "__th_wdtoggle", "a3green", "a3red", \
                 "x2in", "x2out"
 
     def __setattr__(self, key, value):
-        """Verhindert Ueberschreibung der LEDs."""
+        """Verhindert Ueberschreibung der speziellen IOs."""
         if hasattr(self, key) and key in (
-                "a1green", "a1red", "a2green", "a2red", "a3green", "a3red",
-                "wd", "x2in", "x2out"):
+                "a3green", "a3red", "x2in", "x2out"):
             raise AttributeError(
                 "direct assignment is not supported - use .value Attribute"
             )
-        else:
-            object.__setattr__(self, key, value)
+        super(Connect, self).__setattr__(key, value)
 
     def __wdtoggle(self) -> None:
         """WD Ausgang alle 10 Sekunden automatisch toggeln."""
@@ -921,10 +930,6 @@ class Connect(Core):
         ], OUT, "little", False)
 
         # IO Objekte für WD und X2 in/out erzeugen
-        self.wd = IOBase(self, [
-            "core.wd", 0, 1, self._slc_led.start,
-            exp_wd, None, "Connect_WatchDog", "7"
-        ], OUT, "little", False)
         self.x2in = IOBase(self, [
             "core.x2in", 0, 1, self._slc_statusbyte.start,
             exp_x2in, None, "Connect_X2_IN", "6"
@@ -1015,7 +1020,7 @@ class Compact(Base):
     """
 
     __slots__ = "_slc_temperature", "_slc_frequency", "_slc_led", \
-                "a1green", "a1red", "a2green", "a2red"
+                "a1green", "a1red", "a2green", "a2red", "wd"
 
     def __setattr__(self, key, value):
         """Verhindert Ueberschreibung der LEDs."""
@@ -1064,6 +1069,12 @@ class Compact(Base):
         self.a2red = IOBase(self, [
             "core.a2red", 0, 1, self._slc_led.start,
             exp_a2red, None, "LED_A2_RED", "3"
+        ], OUT, "little", False)
+
+        # Software watchdog einrichten
+        self.wd = IOBase(self, [
+            "core.wd", 0, 1, self._slc_led.start,
+            False, None, "WatchDog", "7"
         ], OUT, "little", False)
 
     def _get_leda1(self) -> int:
@@ -1118,6 +1129,10 @@ class Compact(Base):
                 proc_value - proc_value_calc + value
         else:
             raise ValueError("led status must be between 0 and 3")
+
+    def wd_toggle(self):
+        """Toggle watchdog bit to prevent a timeout."""
+        self.wd.value = not self.wd.value
 
     A1 = property(_get_leda1, _set_leda1)
     A2 = property(_get_leda2, _set_leda2)

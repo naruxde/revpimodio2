@@ -1253,10 +1253,10 @@ class MemIO(IOBase):
     def get_variantvalue(self):
         val = bytes(self._defaultvalue)
 
-        if self._bitlength == 256:
+        if self._bitlength > 64:
             # STRING
             try:
-                val = val.strip(b'\x00').decode("ASCII")
+                val = val.strip(b'\x00').decode()
             except Exception:
                 pass
             return val
