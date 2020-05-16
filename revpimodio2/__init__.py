@@ -13,7 +13,7 @@ Auf alle IOs kann der Benutzer Funktionen als Events registrieren. Diese
 fuehrt das Modul bei Datenaenderung aus.
 """
 __all__ = [
-    "RevPiModIO", "RevPiModIODriver", "RevPiModIOSelected",
+    "RevPiModIO", "RevPiModIODriver", "RevPiModIOSelected", "run_plc",
     "RevPiNetIO", "RevPiNetIODriver", "RevPiNetIOSelected",
     "Cycletools", "EventCallback"
 ]
@@ -21,7 +21,7 @@ __author__ = "Sven Sager <akira@revpimodio.org>"
 __copyright__ = "Copyright (C) 2018 Sven Sager"
 __license__ = "LGPLv3"
 __name__ = "revpimodio2"
-__version__ = "2.4.5c"
+__version__ = "2.5.0"
 
 # Global package values
 OFF = 0
@@ -95,5 +95,5 @@ def consttostr(value) -> str:
 
 # Benötigte Klassen importieren
 from .helper import Cycletools, EventCallback
-from .modio import RevPiModIO, RevPiModIODriver, RevPiModIOSelected
+from .modio import RevPiModIO, RevPiModIODriver, RevPiModIOSelected, run_plc
 from .netio import RevPiNetIO, RevPiNetIODriver, RevPiNetIOSelected

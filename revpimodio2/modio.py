@@ -1336,6 +1336,29 @@ class RevPiModIODriver(RevPiModIOSelected):
         )
 
 
+def run_plc(func, cycletime=50, replace_io_file=None):
+    """
+    Run Revoluton Pi as real plc with cycle loop and exclusive IO access.
+
+    This function is just a shortcut to run the module in cycle loop mode and
+    handle the program exit signal. You will access the .io, .core, .device
+    via the cycletools in your cycle function.
+
+    Shortcut vor this source code:
+        rpi = RevPiModIO(autorefresh=True, replace_io_file=replace_io_file)
+        rpi.handlesignalend()
+        return rpi.cycleloop(func, cycletime)
+
+    :param func: Function to run every set milliseconds
+    :param cycletime: Cycle time in milliseconds
+    :param replace_io_file: Load replace IO configuration from file
+    :return: None or the return value of the cycle function
+    """
+    rpi = RevPiModIO(autorefresh=True, replace_io_file=replace_io_file)
+    rpi.handlesignalend()
+    return rpi.cycleloop(func, cycletime)
+
+
 # Nachträglicher Import
 from . import app as appmodule
 from . import device as devicemodule

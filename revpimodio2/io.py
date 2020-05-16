@@ -4,7 +4,7 @@ import struct
 from re import match as rematch
 from threading import Event
 
-from revpimodio2 import BOTH, FALLING, INP, MEM, RISING, consttostr
+from revpimodio2 import BOTH, FALLING, INP, MEM, OUT, RISING, consttostr
 
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2018 Sven Sager"
@@ -291,7 +291,7 @@ class IOBase(object):
     __slots__ = "__bit_ioctl_off", "__bit_ioctl_on", "_bitaddress", \
                 "_bitshift", "_bitlength", "_byteorder", "_defaultvalue", \
                 "_iotype", "_length", "_name", "_parentdevice", \
-                "_signed", "_slc_address", "bmk", "export"
+                "_read_only_io", "_signed", "_slc_address", "bmk", "export"
 
     def __init__(self, parentdevice, valuelist: list, iotype: int, byteorder: str, signed: bool):
         """
@@ -318,6 +318,7 @@ class IOBase(object):
 
         self.__bit_ioctl_off = None
         self.__bit_ioctl_on = None
+        self._read_only_io = iotype != OUT
         self._byteorder = byteorder
         self._iotype = iotype
         self._name = valuelist[0]
@@ -576,19 +577,23 @@ class IOBase(object):
 
         :param value: IO-Wert als <class bytes'> oder <class 'bool'>
         """
-        if self._iotype == INP:
-            if self._parentdevice._modio._simulator:
+        if self._read_only_io:
+            if self._iotype == INP:
+                if self._parentdevice._modio._simulator:
+                    raise RuntimeError(
+                        "can not write to output '{0}' in simulator mode"
+                        "".format(self._name)
+                    )
+                else:
+                    raise RuntimeError(
+                        "can not write to input '{0}'".format(self._name)
+                    )
+            elif self._iotype == MEM:
                 raise RuntimeError(
-                    "can not write to output '{0}' in simulator mode"
-                    "".format(self._name)
+                    "can not write to memory '{0}'".format(self._name)
                 )
-            else:
-                raise RuntimeError(
-                    "can not write to input '{0}'".format(self._name)
-                )
-        if self._iotype == MEM:
             raise RuntimeError(
-                "can not write to memory '{0}'".format(self._name)
+                "the io object '{0}' is read only".format(self._name)
             )
 
         if self._bitshift:

@@ -1254,7 +1254,7 @@ class Virtual(Gateway):
         for io in self.get_inputs():
             self._ba_devdata[io._slc_address] = io._defaultvalue
 
-        # Outputs auf Bus schreiben
+        # Inputs auf Bus schreiben
         self._modio._myfh_lck.acquire()
         try:
             self._modio._myfh.seek(self._slc_inpoff.start)

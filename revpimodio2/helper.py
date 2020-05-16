@@ -86,9 +86,10 @@ class Cycletools:
     """
 
     __slots__ = "__cycle", "__cycletime", "__ucycle", "__dict_ton", \
-                "__dict_tof", "__dict_tp", "_start_timer", "core", "first", \
-                "io", "last", "flag1c", "flag5c", "flag10c", "flag15c", \
-                "flag20c", "flank5c", "flank10c", "flank15c", "flank20c", "var"
+                "__dict_tof", "__dict_tp", "_start_timer", "core", "device", \
+                "first", "io", "last", "var", \
+                "flag1c", "flag5c", "flag10c", "flag15c", "flag20c", \
+                "flank5c", "flank10c", "flank15c", "flank20c"
 
     def __init__(self, cycletime, revpi_object):
         """Init Cycletools class."""
@@ -102,6 +103,7 @@ class Cycletools:
 
         # Access to core and io
         self.core = revpi_object.core
+        self.device = revpi_object.device
         self.io = revpi_object.io
 
         # Taktmerker
@@ -476,6 +478,7 @@ class ProcimgWriter(Thread):
         mrk_warn = True
         mrk_dt = default_timer()
 
+        bytesbuff = bytearray(self._modio._length)
         while not self._work.is_set():
             ot = mrk_dt
 
@@ -491,7 +494,7 @@ class ProcimgWriter(Thread):
 
             try:
                 fh.seek(0)
-                bytesbuff = bytearray(fh.read(self._modio._length))
+                fh.readinto(bytesbuff)
 
                 if self._modio._monitoring or self._modio._direct_output:
                     # Inputs und Outputs in Puffer
