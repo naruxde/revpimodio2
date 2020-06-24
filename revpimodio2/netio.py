@@ -463,6 +463,42 @@ class NetFH(Thread):
 
         return bytes(self.__buff_recv)
 
+    def readinto(self, buffer: bytearray) -> int:
+        """
+        Read data from network into a buffer.
+
+        :param buffer: Use Buffer to write bytes into
+        :return: Amount of read bytes
+        """
+        if self.__config_changed:
+            raise ConfigChanged("configuration on revolution pi was changed")
+        if self.__sockend.is_set():
+            raise ValueError("read of closed file")
+
+        length = len(buffer)
+        with self.__socklock:
+            # b CM ii ii 00000000 b = 16
+            self._slavesock.sendall(pack(
+                "=c2sHH8xc",
+                HEADER_START, b'DA', self.__position, length, HEADER_STOP
+            ))
+
+            self.__position += length
+
+            buffer.clear()
+            while length > 0:
+                count = self._slavesock.recv_into(
+                    self.__buff_block,
+                    min(length, self.__buff_size),
+                )
+                if count == 0:
+                    self.__sockerr.set()
+                    raise IOError("read error on network")
+                buffer += self.__buff_block[:count]
+                length -= count
+
+        return len(buffer)
+
     def readpictory(self) -> bytes:
         """
         Ruft die piCtory Konfiguration ab.

@@ -21,7 +21,7 @@ __author__ = "Sven Sager <akira@revpimodio.org>"
 __copyright__ = "Copyright (C) 2018 Sven Sager"
 __license__ = "LGPLv3"
 __name__ = "revpimodio2"
-__version__ = "2.5.0"
+__version__ = "2.5.1"
 
 # Global package values
 OFF = 0
