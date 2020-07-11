@@ -398,6 +398,19 @@ class IOBase(object):
         else:
             return any(self._parentdevice._ba_devdata[self._slc_address])
 
+    def __call__(self, value=None):
+        if value is None:
+            # Inline get_value()
+            if self._bitshift:
+                return bool(
+                    self._parentdevice._ba_devdata[self._slc_address.start]
+                    & self._bitshift
+                )
+            else:
+                return bytes(self._parentdevice._ba_devdata[self._slc_address])
+        else:
+            self.set_value(value)
+
     def __len__(self):
         """
         Gibt die Bytelaenge des IO zurueck.
@@ -868,6 +881,28 @@ class IntIO(IOBase):
             signed=self._signed
         )
 
+    def __call__(self, value=None):
+        if value is None:
+            # Inline get_intvalue()
+            return int.from_bytes(
+                self._parentdevice._ba_devdata[self._slc_address],
+                byteorder=self._byteorder,
+                signed=self._signed
+            )
+        else:
+            # Inline from set_intvalue()
+            if type(value) == int:
+                self.set_value(value.to_bytes(
+                    self._length,
+                    byteorder=self._byteorder,
+                    signed=self._signed
+                ))
+            else:
+                raise TypeError(
+                    "'{0}' need a <class 'int'> value, but {1} was given"
+                    "".format(self._name, type(value))
+                )
+
     def _get_signed(self) -> bool:
         """
         Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.
@@ -1190,6 +1225,20 @@ class StructIO(IOBase):
             raise BufferError(
                 "registered value does not fit process image scope"
             )
+
+    def __call__(self, value=None):
+        if value is None:
+            # Inline get_structdefaultvalue()
+            if self._bitshift:
+                return self.get_value()
+            else:
+                return struct.unpack(self.__frm, self.get_value())[0]
+        else:
+            # Inline set_structvalue()
+            if self._bitshift:
+                self.set_value(value)
+            else:
+                self.set_value(struct.pack(self.__frm, value))
 
     def _get_frm(self) -> str:
         """
