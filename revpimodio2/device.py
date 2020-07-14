@@ -298,7 +298,7 @@ class Device(object):
         if len(dict_io) <= 0:
             return slice(0, 0)
 
-        int_min, int_max = 4096, 0
+        int_min, int_max = PROCESS_IMAGE_SIZE, 0
         for key in sorted(dict_io, key=lambda x: int(x)):
 
             # Neuen IO anlegen
@@ -1273,4 +1273,4 @@ class Virtual(Gateway):
 
 # Nachträglicher Import
 from .io import IOBase, IntIO, IntIOCounter, IntIOReplaceable, MemIO
-from revpimodio2 import INP, OUT, MEM
+from revpimodio2 import INP, OUT, MEM, PROCESS_IMAGE_SIZE

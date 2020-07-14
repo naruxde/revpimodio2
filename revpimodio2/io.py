@@ -4,7 +4,8 @@ import struct
 from re import match as rematch
 from threading import Event
 
-from revpimodio2 import BOTH, FALLING, INP, MEM, OUT, RISING, consttostr
+from revpimodio2 import BOTH, FALLING, INP, MEM, OUT, RISING, consttostr, \
+    PROCESS_IMAGE_SIZE
 
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2018 Sven Sager"
@@ -37,7 +38,7 @@ class IOList(object):
 
     def __init__(self):
         """Init IOList class."""
-        self.__dict_iobyte = {k: [] for k in range(4096)}
+        self.__dict_iobyte = {k: [] for k in range(PROCESS_IMAGE_SIZE)}
         self.__dict_iorefname = {}
 
     def __contains__(self, key):

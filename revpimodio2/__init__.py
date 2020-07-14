@@ -33,6 +33,7 @@ BOTH = 33
 INP = 300
 OUT = 301
 MEM = 302
+PROCESS_IMAGE_SIZE = 4096
 
 
 class DeviceNotFoundError(Exception):
