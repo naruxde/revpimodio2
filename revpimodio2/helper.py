@@ -7,6 +7,7 @@ from threading import Event, Lock, Thread
 from timeit import default_timer
 
 from revpimodio2 import BOTH, FALLING, RISING
+from revpimodio2.io import IOBase
 
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2018 Sven Sager"
@@ -86,7 +87,8 @@ class Cycletools:
     """
 
     __slots__ = "__cycle", "__cycletime", "__ucycle", "__dict_ton", \
-                "__dict_tof", "__dict_tp", "_start_timer", "core", "device", \
+                "__dict_tof", "__dict_tp", "__dict_change", \
+                "_start_timer", "core", "device", \
                 "first", "io", "last", "var", \
                 "flag1c", "flag5c", "flag10c", "flag15c", "flag20c", \
                 "flank5c", "flank10c", "flank15c", "flank20c"
@@ -96,6 +98,7 @@ class Cycletools:
         self.__cycle = 0
         self.__cycletime = cycletime
         self.__ucycle = 0
+        self.__dict_change = {}
         self.__dict_ton = {}
         self.__dict_tof = {}
         self.__dict_tp = {}
@@ -182,6 +185,39 @@ class Cycletools:
             self.flank5c = True
             self.flag5c = not self.flag5c
             self.__cycle = 0
+
+        # Process changed values
+        for io in self.__dict_change:
+            self.__dict_change[io] = io.get_value()
+
+    def changed(self, io: IOBase, edge=BOTH):
+        """
+        Check change of IO value from last to this cycle.
+
+        It will always be False on the first use of this function with an
+        IO object.
+
+        :param io: IO to check for changes to last cycle
+        :return: True, if IO value changed
+        """
+        if io in self.__dict_change:
+            if edge == BOTH:
+                return self.__dict_change[io] != io.get_value()
+            else:
+                value = io.get_value()
+                return self.__dict_change[io] != value and (
+                    value and edge == RISING or
+                    not value and edge == FALLING
+                )
+        else:
+            if not isinstance(io, IOBase):
+                raise TypeError("parameter 'io' must be an io object")
+            if not (edge == BOTH or type(io.value) == bool):
+                raise ValueError(
+                    "parameter 'edge' can be used with bit io objects only"
+                )
+            self.__dict_change[io] = None
+            return False
 
     def get_tof(self, name: str) -> bool:
         """
