@@ -21,6 +21,38 @@ class AIO10:
     OUT_RANGE_0_20MA    = 10    # 0 - 20mA
     OUT_RANGE_0_24MA    = 11    # 0 - 24mA
 
+    # Slew rate deceleration
+    OUT_SLEW_OFF        = 0
+    OUT_SLEW_ON         = 1
+
+    # Slew rate step size
+    OUT_SLEW_STEP_SIZE_1LSB     = 0
+    OUT_SLEW_STEP_SIZE_2LSB     = 1
+    OUT_SLEW_STEP_SIZE_4LSB     = 2
+    OUT_SLEW_STEP_SIZE_8LSB     = 3
+    OUT_SLEW_STEP_SIZE_16LSB    = 4
+    OUT_SLEW_STEP_SIZE_32LSB    = 5
+    OUT_SLEW_STEP_SIZE_64LSB    = 6
+    OUT_SLEW_STEP_SIZE_128LSB   = 7
+
+    # Clock rate of slew rate deceleration in kHz
+    OUT_SLEW_CLOCK_258_KZH  = 0
+    OUT_SLEW_CLOCK_200_KZH  = 1
+    OUT_SLEW_CLOCK_154_KZH  = 2
+    OUT_SLEW_CLOCK_131_KZH  = 3
+    OUT_SLEW_CLOCK_116_KZH  = 4
+    OUT_SLEW_CLOCK_70_KZH   = 5
+    OUT_SLEW_CLOCK_38_KZH   = 6
+    OUT_SLEW_CLOCK_26_KZH   = 7
+    OUT_SLEW_CLOCK_20_KZH   = 8
+    OUT_SLEW_CLOCK_16_KZH   = 9
+    OUT_SLEW_CLOCK_10_KZH   = 10
+    OUT_SLEW_CLOCK_8P3_KZH  = 11
+    OUT_SLEW_CLOCK_6P9_KZH  = 12
+    OUT_SLEW_CLOCK_5P5_KZH  = 13
+    OUT_SLEW_CLOCK_4P2_KZH  = 14
+    OUT_SLEW_CLOCK_3P3_KZH  = 15
+
     IN_RANGE_N10V_10V   = 1     # -10 - 10V
     IN_RANGE_0_10V      = 2     # 0 - 10V
     IN_RANGE_0_5V       = 3     # 0 - 5V
@@ -29,6 +61,22 @@ class AIO10:
     IN_RANGE_0_24MA     = 6     # 0 - 24mA
     IN_RANGE_4_20MA     = 7     # 4 - 20mA
     IN_RANGE_N25_25MA   = 8     # -25 - 25mA
+
+    ADC_DATARATE_5HZ    = 0     # 5 Hz
+    ADC_DATARATE_10HZ   = 1     # 10 Hz
+    ADC_DATARATE_20HZ   = 2     # 20 Hz
+    ADC_DATARATE_40HZ   = 3     # 40 Hz
+    ADC_DATARATE_80HZ   = 4     # 80 Hz
+    ADC_DATARATE_160HZ  = 5     # 160 Hz
+    ADC_DATARATE_320HZ  = 6     # 320 Hz
+    ADC_DATARATE_640HZ  = 7     # 640 Hz
+
+    RTD_TYPE_PT100      = 0     # PT100
+    RTD_TYPE_PT1000     = 1     # PT1000
+
+    RTD_2_WIRE          = 2     # 2-wire
+    RTD_3_WIRE          = 0     # 3-wire
+    RTD_4_WIRE          = 1     # 4-wire
 
 
 class DIO10:
