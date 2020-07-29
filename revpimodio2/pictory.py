@@ -6,6 +6,17 @@ __copyright__ = "Copyright (C) 2018 Sven Sager"
 __license__ = "LGPLv3"
 
 
+# RAP files are located under "/var/www/pictory/resources/data/rap/".
+# Checked *.rap files already check and do not define any alias :
+# - RevPiCore_20160818_1_0.rap
+# - RevPiCore_20170210_1_1.rap
+# - RevPiCore_20170404_1_2.rap
+# - RevPiConCan_20180425_1_0.rap
+# - RevPiGateCANopen_20161102_1_0.rap
+
+
+# Can be used for :
+# RevPi AIO 1.0 (RevPiAIO_20170301_1_0.rap)
 class AIO10:
 
     OUT_RANGE_OFF       = 0     # Off
@@ -79,6 +90,10 @@ class AIO10:
     RTD_4_WIRE          = 1     # 4-wire
 
 
+# Can be used for :
+# RevPi DIO 1.0 (RevPiDIO_20160818_1_0.rap)
+# RevPi DI 1.0  (RevPiDI_20160818_1_0.rap)
+# RevPi DO 1.0  (RevPiDO_20160818_1_0.rap)
 class DIO10:
 
     IN_MODE_DIRECT          = 0 # Direct
@@ -86,7 +101,20 @@ class DIO10:
     IN_MODE_COUNT_FALLING   = 2 # Counter, falling edge
     IN_MODE_ENCODER         = 3 # Encoder
 
-    IN_DEBOUNCE_OFF         = 0 # Off
-    IN_DEBOUNCE_25US        = 1 # 25us
-    IN_DEBOUNCE_750US       = 2 # 750us
-    IN_DEBOUNCE_3MS         = 3 # 3ms
+    IN_DEBOUNCE_OFF     = 0 # Off
+    IN_DEBOUNCE_25US    = 1 # 25us
+    IN_DEBOUNCE_750US   = 2 # 750us
+    IN_DEBOUNCE_3MS     = 3 # 3ms
+
+    OUT_PWM_FREQ_40HZ   = 1     # 40Hz 1%
+    OUT_PWM_FREQ_80HZ   = 2     # 80Hz 2%
+    OUT_PWM_FREQ_160HZ  = 4     # 160Hz 4%
+    OUT_PWM_FREQ_200HZ  = 5     # 200Hz 5%
+    OUT_PWM_FREQ_400HZ  = 10    # 400Hz 10%
+
+
+# Aliases because *.rap files for
+# DI & DO define both input and output.
+DI10 = DIO10
+DO10 = DIO10
+
