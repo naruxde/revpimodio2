@@ -17,7 +17,7 @@ __license__ = "LGPLv3"
 
 # Can be used for :
 # RevPi AIO 1.0 (RevPiAIO_20170301_1_0.rap)
-class AIO10:
+class AIO:
 
     OUT_RANGE_OFF       = 0     # Off
     OUT_RANGE_0_5V      = 1     # 0 - 5V
@@ -91,10 +91,8 @@ class AIO10:
 
 
 # Can be used for :
-# RevPi DIO 1.0 (RevPiDIO_20160818_1_0.rap)
 # RevPi DI 1.0  (RevPiDI_20160818_1_0.rap)
-# RevPi DO 1.0  (RevPiDO_20160818_1_0.rap)
-class DIO10:
+class DI:
 
     IN_MODE_DIRECT          = 0 # Direct
     IN_MODE_COUNT_RISING    = 1 # Counter, rising edge
@@ -106,6 +104,11 @@ class DIO10:
     IN_DEBOUNCE_750US   = 2 # 750us
     IN_DEBOUNCE_3MS     = 3 # 3ms
 
+
+# Can be used for :
+# RevPi DO 1.0  (RevPiDO_20160818_1_0.rap)
+class DO:
+
     OUT_PWM_FREQ_40HZ   = 1     # 40Hz 1%
     OUT_PWM_FREQ_80HZ   = 2     # 80Hz 2%
     OUT_PWM_FREQ_160HZ  = 4     # 160Hz 4%
@@ -113,8 +116,7 @@ class DIO10:
     OUT_PWM_FREQ_400HZ  = 10    # 400Hz 10%
 
 
-# Aliases because *.rap files for
-# DI & DO define both input and output.
-DI10 = DIO10
-DO10 = DIO10
-
+# Can be used for :
+# RevPi DIO 1.0 (RevPiDIO_20160818_1_0.rap)
+class DIO(DI, DO):
+    pass
