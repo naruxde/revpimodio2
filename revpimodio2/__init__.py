@@ -15,7 +15,8 @@ fuehrt das Modul bei Datenaenderung aus.
 __all__ = [
     "RevPiModIO", "RevPiModIODriver", "RevPiModIOSelected", "run_plc",
     "RevPiNetIO", "RevPiNetIODriver", "RevPiNetIOSelected",
-    "Cycletools", "EventCallback"
+    "Cycletools", "EventCallback",
+    "AIO", "DI", "DO", "DIO",
 ]
 __author__ = "Sven Sager <akira@revpimodio.org>"
 __copyright__ = "Copyright (C) 2018 Sven Sager"
@@ -95,6 +96,7 @@ def consttostr(value) -> str:
 
 
 # Benötigte Klassen importieren
+from .pictory import AIO, DI, DO, DIO
 from .helper import Cycletools, EventCallback
 from .modio import RevPiModIO, RevPiModIODriver, RevPiModIOSelected, run_plc
 from .netio import RevPiNetIO, RevPiNetIODriver, RevPiNetIOSelected
