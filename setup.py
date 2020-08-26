@@ -17,7 +17,7 @@ setup(
 
     license="LGPLv3",
     name="revpimodio2",
-    version="2.5.1",
+    version="2.5.1b",
 
     packages=["revpimodio2"],
     python_requires="~=3.2",

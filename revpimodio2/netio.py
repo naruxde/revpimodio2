@@ -492,6 +492,8 @@ class NetFH(Thread):
                     min(length, self.__buff_size),
                 )
                 if count == 0:
+                    # Add missing bytes with zero to restore original size
+                    buffer += bytearray(length)
                     self.__sockerr.set()
                     raise IOError("read error on network")
                 buffer += self.__buff_block[:count]
