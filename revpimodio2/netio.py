@@ -336,14 +336,18 @@ class NetFH(Thread):
 
         with self.__socklock:
             # b CM ii ii 00000000 b = 16
-            self._slavesock.sendall(pack(
-                "=c2sHH8xc",
-                HEADER_START, b'FD', self.__int_buff, len(self.__by_buff), HEADER_STOP
-            ) + self.__by_buff)
-
-            # Puffer immer leeren
-            self.__int_buff = 0
-            self.__by_buff.clear()
+            try:
+                self._slavesock.sendall(pack(
+                    "=c2sHH8xc",
+                    HEADER_START, b'FD', self.__int_buff, len(self.__by_buff), HEADER_STOP
+                ) + self.__by_buff)
+            except Exception:
+                self.__flusherr = True
+                raise
+            finally:
+                # Puffer immer leeren
+                self.__int_buff = 0
+                self.__by_buff.clear()
 
             # Rückmeldebyte auswerten
             blockok = self._slavesock.recv(1)
