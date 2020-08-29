@@ -487,21 +487,21 @@ class NetFH(Thread):
                 HEADER_START, b'DA', self.__position, length, HEADER_STOP
             ))
 
-            self.__position += length
-
-            buffer.clear()
+            net_buffer = b''
             while length > 0:
                 count = self._slavesock.recv_into(
                     self.__buff_block,
                     min(length, self.__buff_size),
                 )
                 if count == 0:
-                    # Add missing bytes with zero to restore original size
-                    buffer += bytearray(length)
                     self.__sockerr.set()
                     raise IOError("read error on network")
-                buffer += self.__buff_block[:count]
+                net_buffer += self.__buff_block[:count]
                 length -= count
+
+            # We received the correct amount of bytes here
+            self.__position += length
+            buffer[:] = net_buffer
 
         return len(buffer)
 
