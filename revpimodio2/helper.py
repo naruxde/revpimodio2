@@ -10,7 +10,7 @@ from revpimodio2 import BOTH, FALLING, RISING
 from revpimodio2.io import IOBase
 
 __author__ = "Sven Sager"
-__copyright__ = "Copyright (C) 2018 Sven Sager"
+__copyright__ = "Copyright (C) 2020 Sven Sager"
 __license__ = "LGPLv3"
 
 

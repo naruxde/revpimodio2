@@ -19,10 +19,10 @@ __all__ = [
     "AIO", "DI", "DO", "DIO",
 ]
 __author__ = "Sven Sager <akira@revpimodio.org>"
-__copyright__ = "Copyright (C) 2018 Sven Sager"
+__copyright__ = "Copyright (C) 2020 Sven Sager"
 __license__ = "LGPLv3"
 __name__ = "revpimodio2"
-__version__ = "2.5.1"
+__version__ = "2.5.2"
 
 # Global package values
 OFF = 0

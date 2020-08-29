@@ -13,7 +13,7 @@ from .device import Device
 from .modio import RevPiModIO as _RevPiModIO
 
 __author__ = "Sven Sager"
-__copyright__ = "Copyright (C) 2018 Sven Sager"
+__copyright__ = "Copyright (C) 2020 Sven Sager"
 __license__ = "LGPLv3"
 
 # Synchronisierungsbefehl

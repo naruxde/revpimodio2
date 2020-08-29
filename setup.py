@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Setupscript fuer python3-revpimodio."""
 __author__ = "Sven Sager"
-__copyright__ = "Copyright (C) 2018 Sven Sager"
+__copyright__ = "Copyright (C) 2020 Sven Sager"
 __license__ = "LGPLv3"
 
 from distutils.core import setup
@@ -17,7 +17,7 @@ setup(
 
     license="LGPLv3",
     name="revpimodio2",
-    version="2.5.1b",
+    version="2.5.2",
 
     packages=["revpimodio2"],
     python_requires="~=3.2",

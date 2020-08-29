@@ -8,7 +8,7 @@ from revpimodio2 import BOTH, FALLING, INP, MEM, OUT, RISING, consttostr, \
     PROCESS_IMAGE_SIZE
 
 __author__ = "Sven Sager"
-__copyright__ = "Copyright (C) 2018 Sven Sager"
+__copyright__ = "Copyright (C) 2020 Sven Sager"
 __license__ = "LGPLv3"
 
 try:
