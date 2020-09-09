@@ -741,12 +741,18 @@ class RevPiModIO(object):
             while ec is None and not cycleinfo.last:
                 # Auf neue Daten warten und nur ausführen wenn set()
                 if not self._imgwriter.newdata.wait(2.5):
-                    self.exit(full=False)
-                    if self._imgwriter.is_alive():
-                        e = RuntimeError("no new io data in cycle loop")
-                    else:
+                    if not self._imgwriter.is_alive():
+                        self.exit(full=False)
                         e = RuntimeError("autorefresh thread not running")
-                    break
+                        break
+
+                    # Just warn, user has to use maxioerrors to kill program
+                    warnings.warn(RuntimeWarning(
+                        "no new io data in cycle loop for 2500 milliseconds"
+                    ))
+                    cycleinfo.last = self._exit.is_set()
+                    continue
+
                 self._imgwriter.newdata.clear()
 
                 # Vor Aufruf der Funktion autorefresh sperren
@@ -1336,7 +1342,9 @@ class RevPiModIODriver(RevPiModIOSelected):
         )
 
 
-def run_plc(func, cycletime=50, replace_io_file=None):
+def run_plc(
+        func, cycletime=50, replace_io_file=None, debug=True,
+        procimg=None, configrsc=None):
     """
     Run Revoluton Pi as real plc with cycle loop and exclusive IO access.
 
@@ -1344,17 +1352,27 @@ def run_plc(func, cycletime=50, replace_io_file=None):
     handle the program exit signal. You will access the .io, .core, .device
     via the cycletools in your cycle function.
 
-    Shortcut vor this source code:
-        rpi = RevPiModIO(autorefresh=True, replace_io_file=replace_io_file)
+    Shortcut for this source code:
+        rpi = RevPiModIO(autorefresh=True, replace_io_file=..., debug=...)
         rpi.handlesignalend()
         return rpi.cycleloop(func, cycletime)
 
     :param func: Function to run every set milliseconds
     :param cycletime: Cycle time in milliseconds
     :param replace_io_file: Load replace IO configuration from file
+    :param debug: Print all warnings and detailed error messages
+    :param procimg: Use different process image
+    :param configrsc: Use different piCtory configuration
+
     :return: None or the return value of the cycle function
     """
-    rpi = RevPiModIO(autorefresh=True, replace_io_file=replace_io_file)
+    rpi = RevPiModIO(
+        autorefresh=True,
+        replace_io_file=replace_io_file,
+        debug=debug,
+        procimg=procimg,
+        configrsc=configrsc,
+    )
     rpi.handlesignalend()
     return rpi.cycleloop(func, cycletime)
 
