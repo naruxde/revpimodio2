@@ -630,6 +630,7 @@ class IOBase(object):
                             )
                         except Exception as e:
                             self._parentdevice._modio._gotioerror("ioset", e)
+                            return
 
                 elif hasattr(self._parentdevice._modio._myfh, "ioctl"):
                     # IOCTL über Netzwerk
@@ -643,6 +644,7 @@ class IOBase(object):
                         except Exception as e:
                             self._parentdevice._modio._gotioerror(
                                 "net_ioset", e)
+                            return
 
                 else:
                     # IOCTL in Datei simulieren
@@ -655,28 +657,26 @@ class IOBase(object):
                         )
                     except Exception as e:
                         self._parentdevice._modio._gotioerror("file_ioset", e)
+                        return
 
-            else:
-                # Gepuffertes Schreiben der Outputs
+            # Für Bitoperationen sperren
+            self._parentdevice._filelock.acquire()
 
-                # Für Bitoperationen sperren
-                self._parentdevice._filelock.acquire()
+            # Hier gibt es immer nur ein byte, als int holen
+            int_byte = self._parentdevice._ba_devdata[self._slc_address.start]
 
-                # Hier gibt es immer nur ein byte, als int holen
-                int_byte = self._parentdevice._ba_devdata[self._slc_address.start]
+            # Aktuellen Wert vergleichen und ggf. setzen
+            if not bool(int_byte & self._bitshift) == value:
+                if value:
+                    int_byte += self._bitshift
+                else:
+                    int_byte -= self._bitshift
 
-                # Aktuellen Wert vergleichen und ggf. setzen
-                if not bool(int_byte & self._bitshift) == value:
-                    if value:
-                        int_byte += self._bitshift
-                    else:
-                        int_byte -= self._bitshift
+                # Zurückschreiben wenn verändert
+                self._parentdevice._ba_devdata[self._slc_address.start] = \
+                    int_byte
 
-                    # Zurückschreiben wenn verändert
-                    self._parentdevice._ba_devdata[self._slc_address.start] = \
-                        int_byte
-
-                self._parentdevice._filelock.release()
+            self._parentdevice._filelock.release()
 
         else:
             if type(value) != bytes:
@@ -705,8 +705,9 @@ class IOBase(object):
                             self._parentdevice._modio._myfh.flush()
                     except IOError as e:
                         self._parentdevice._modio._gotioerror("ioset", e)
-            else:
-                self._parentdevice._ba_devdata[self._slc_address] = value
+                        return
+
+            self._parentdevice._ba_devdata[self._slc_address] = value
 
     def unreg_event(self, func=None, edge=None) -> None:
         """
