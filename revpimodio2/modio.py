@@ -254,6 +254,12 @@ class RevPiModIO(object):
                         self, device, simulator=self._simulator
                     )
                     self.core = dev_new
+                elif pt == 135:
+                    # RevPi Flat
+                    dev_new = devicemodule.Flat(
+                        self, device, simulator=self._simulator
+                    )
+                    self.core = dev_new
                 else:
                     # Base immer als Fallback verwenden
                     dev_new = devicemodule.Base(

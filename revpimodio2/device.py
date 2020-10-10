@@ -593,11 +593,13 @@ class Core(Base):
             exp_a1red = lst_led[1].export
             exp_a2green = lst_led[2].export
             exp_a2red = lst_led[3].export
+            # exp_wd = lst_led[7].export
         else:
             exp_a1green = lst_led[0].export
             exp_a1red = exp_a1green
             exp_a2green = exp_a1green
             exp_a2red = exp_a1green
+            # exp_wd = exp_a1green
 
         # Echte IOs erzeugen
         self.a1green = IOBase(self, [
@@ -907,12 +909,10 @@ class Connect(Core):
             exp_a3green = lst_led[4].export
             exp_a3red = lst_led[5].export
             exp_x2out = lst_led[6].export
-            exp_wd = lst_led[7].export
         else:
             exp_a3green = lst_led[0].export
             exp_a3red = exp_a3green
             exp_x2out = exp_a3green
-            exp_wd = exp_a3green
         lst_status = lst_myios[self._slc_statusbyte.start]
         if len(lst_status) == 8:
             exp_x2in = lst_status[6].export
@@ -1013,7 +1013,7 @@ class Connect(Core):
 
 class Compact(Base):
     """
-    Klasse fuer den RevPi Connect.
+    Klasse fuer den RevPi Compact.
 
     Stellt Funktionen fuer die LEDs zur Verfuegung. Auf IOs wird ueber das .io
     Objekt zugegriffen.
@@ -1025,7 +1025,7 @@ class Compact(Base):
     def __setattr__(self, key, value):
         """Verhindert Ueberschreibung der LEDs."""
         if hasattr(self, key) and key in (
-                "a1green", "a1red", "a2green", "a2red"):
+                "a1green", "a1red", "a2green", "a2red", "wd"):
             raise AttributeError(
                 "direct assignment is not supported - use .value Attribute"
             )
@@ -1136,6 +1136,276 @@ class Compact(Base):
 
     A1 = property(_get_leda1, _set_leda1)
     A2 = property(_get_leda2, _set_leda2)
+
+    @property
+    def temperature(self) -> int:
+        """
+        Gibt CPU-Temperatur zurueck.
+
+        :return: CPU-Temperatur in Celsius (-273 wenn nich verfuegbar)
+        """
+        return -273 if self._slc_temperature is None else int.from_bytes(
+            self._ba_devdata[self._slc_temperature], byteorder="little"
+        )
+
+    @property
+    def frequency(self) -> int:
+        """
+        Gibt CPU Taktfrequenz zurueck.
+
+        :return: CPU Taktfrequenz in MHz (-1 wenn nicht verfuegbar)
+        """
+        return -1 if self._slc_frequency is None else int.from_bytes(
+            self._ba_devdata[self._slc_frequency], byteorder="little"
+        ) * 10
+
+
+class Flat(Base):
+    """
+    Klasse fuer den RevPi Flat.
+
+    Stellt Funktionen fuer die LEDs zur Verfuegung. Auf IOs wird ueber das .io
+    Objekt zugegriffen.
+    """
+
+    __slots__ = "_slc_temperature", "_slc_frequency", "_slc_led", \
+                "a1green", "a1red", "a2green", "a2red", \
+                "a3green", "a3red", "a4green", "a4red", \
+                "a5green", "a5red", "wd"
+
+    def __setattr__(self, key, value):
+        """Verhindert Ueberschreibung der LEDs."""
+        if hasattr(self, key) and key in (
+                "a1green", "a1red", "a2green", "a2red",
+                "a3green", "a3red", "a4green", "a4red",
+                "a5green", "a5red", "wd"):
+            raise AttributeError(
+                "direct assignment is not supported - use .value Attribute"
+            )
+        else:
+            object.__setattr__(self, key, value)
+
+    def _devconfigure(self) -> None:
+        """Core-Klasse vorbereiten."""
+
+        # Statische IO Verknüpfungen des Compacts
+        self._slc_led = slice(6, 8)
+        self._slc_temperature = slice(4, 5)
+        self._slc_frequency = slice(5, 6)
+
+        # Exportflags prüfen (Byte oder Bit)
+        lst_led = self._modio.io[self._slc_devoff][self._slc_led.start]
+        if len(lst_led) == 8:
+            exp_a1green = lst_led[0].export
+            exp_a1red = lst_led[1].export
+            exp_a2green = lst_led[2].export
+            exp_a2red = lst_led[3].export
+            exp_a3green = lst_led[4].export
+            exp_a3red = lst_led[5].export
+            exp_a4green = lst_led[6].export
+            exp_a4red = lst_led[7].export
+
+            # Next byte
+            lst_led = self._modio.io[self._slc_devoff][self._slc_led.start + 1]
+            exp_a5green = lst_led[0].export
+            exp_a5red = lst_led[1].export
+        else:
+            exp_a1green = lst_led[0].export
+            exp_a1red = exp_a1green
+            exp_a2green = exp_a1green
+            exp_a2red = exp_a1green
+            exp_a3green = exp_a1green
+            exp_a3red = exp_a1green
+            exp_a4green = exp_a1green
+            exp_a4red = exp_a1green
+            exp_a5green = exp_a1green
+            exp_a5red = exp_a1green
+
+        # Echte IOs erzeugen
+        self.a1green = IOBase(self, [
+            "core.a1green", 0, 1, self._slc_led.start,
+            exp_a1green, None, "LED_A1_GREEN", "0"
+        ], OUT, "little", False)
+        self.a1red = IOBase(self, [
+            "core.a1red", 0, 1, self._slc_led.start,
+            exp_a1red, None, "LED_A1_RED", "1"
+        ], OUT, "little", False)
+        self.a2green = IOBase(self, [
+            "core.a2green", 0, 1, self._slc_led.start,
+            exp_a2green, None, "LED_A2_GREEN", "2"
+        ], OUT, "little", False)
+        self.a2red = IOBase(self, [
+            "core.a2red", 0, 1, self._slc_led.start,
+            exp_a2red, None, "LED_A2_RED", "3"
+        ], OUT, "little", False)
+        self.a3green = IOBase(self, [
+            "core.a3green", 0, 1, self._slc_led.start,
+            exp_a3green, None, "LED_A3_GREEN", "4"
+        ], OUT, "little", False)
+        self.a3red = IOBase(self, [
+            "core.a3red", 0, 1, self._slc_led.start,
+            exp_a3red, None, "LED_A3_RED", "5"
+        ], OUT, "little", False)
+        self.a4green = IOBase(self, [
+            "core.a4green", 0, 1, self._slc_led.start,
+            exp_a4green, None, "LED_A4_GREEN", "6"
+        ], OUT, "little", False)
+        self.a4red = IOBase(self, [
+            "core.a4red", 0, 1, self._slc_led.start,
+            exp_a4red, None, "LED_A4_RED", "7"
+        ], OUT, "little", False)
+        self.a5green = IOBase(self, [
+            "core.a5green", 0, 1, self._slc_led.start,
+            exp_a5green, None, "LED_A5_GREEN", "8"
+        ], OUT, "little", False)
+        self.a5red = IOBase(self, [
+            "core.a5red", 0, 1, self._slc_led.start,
+            exp_a5red, None, "LED_A5_RED", "9"
+        ], OUT, "little", False)
+
+        # Software watchdog einrichten
+        self.wd = IOBase(self, [
+            "core.wd", 0, 1, self._slc_led.start,
+            False, None, "WatchDog", "15"
+        ], OUT, "little", False)
+
+    def _get_leda1(self) -> int:
+        """
+        Get value of LED A1 from RevPi Flat device.
+
+        :return: 0=off, 1=green, 2=red
+        """
+        return self._ba_devdata[self._slc_led.start] & 0b11
+
+    def _get_leda2(self) -> int:
+        """
+        Get value of LED A2 from RevPi Flat device.
+
+        :return: 0=off, 1=green, 2=red
+        """
+        return (self._ba_devdata[self._slc_led.start] & 0b1100) >> 2
+
+    def _get_leda3(self) -> int:
+        """
+        Get value of LED A3 from RevPi Flat device.
+
+        :return: 0=off, 1=green, 2=red
+        """
+        return (self._ba_devdata[self._slc_led.start] & 0b110000) >> 4
+
+    def _get_leda4(self) -> int:
+        """
+        Get value of LED A4 from RevPi Flat device.
+
+        :return: 0=off, 1=green, 2=red
+        """
+        return (self._ba_devdata[self._slc_led.start] & 0b11000000) >> 6
+
+    def _get_leda5(self) -> int:
+        """
+        Get value of LED A5 from RevPi Flat device.
+
+        :return: 0=off, 1=green, 2=red
+        """
+        return self._ba_devdata[self._slc_led.start + 1] & 0b11
+
+    def _set_leda1(self, value: int) -> None:
+        """
+        Set LED A1 on RevPi Flat device.
+
+        :param value: 0=off, 1=green, 2=red
+        """
+        if 0 <= value <= 3:
+            proc_value = self._ba_devdata[self._slc_led.start]
+            proc_value_calc = proc_value & 0b11
+            if proc_value_calc == value:
+                return
+            # Set new value
+            self._ba_devdata[self._slc_led.start] = \
+                proc_value - proc_value_calc + value
+        else:
+            raise ValueError("led status must be between 0 and 3")
+
+    def _set_leda2(self, value: int) -> None:
+        """
+        Set LED A2 on RevPi Flat device.
+
+        :param value: 0=off, 1=green, 2=red
+        """
+        if 0 <= value <= 3:
+            value <<= 2
+            proc_value = self._ba_devdata[self._slc_led.start]
+            proc_value_calc = proc_value & 0b1100
+            if proc_value_calc == value:
+                return
+            # Set new value
+            self._ba_devdata[self._slc_led.start] = \
+                proc_value - proc_value_calc + value
+        else:
+            raise ValueError("led status must be between 0 and 3")
+
+    def _set_leda3(self, value: int) -> None:
+        """
+        Set LED A3 on RevPi Flat device.
+
+        :param value: 0=off, 1=green, 2=red
+        """
+        if 0 <= value <= 3:
+            value <<= 4
+            proc_value = self._ba_devdata[self._slc_led.start]
+            proc_value_calc = proc_value & 0b110000
+            if proc_value_calc == value:
+                return
+            # Set new value
+            self._ba_devdata[self._slc_led.start] = \
+                proc_value - proc_value_calc + value
+        else:
+            raise ValueError("led status must be between 0 and 3")
+
+    def _set_leda4(self, value: int) -> None:
+        """
+        Set LED A4 on RevPi Flat device.
+
+        :param value: 0=off, 1=green, 2=red
+        """
+        if 0 <= value <= 3:
+            value <<= 6
+            proc_value = self._ba_devdata[self._slc_led.start]
+            proc_value_calc = proc_value & 0b11000000
+            if proc_value_calc == value:
+                return
+            # Set new value
+            self._ba_devdata[self._slc_led.start] = \
+                proc_value - proc_value_calc + value
+        else:
+            raise ValueError("led status must be between 0 and 3")
+
+    def _set_leda5(self, value: int) -> None:
+        """
+        Set LED A5 on RevPi Flat device.
+
+        :param value: 0=off, 1=green, 2=red
+        """
+        if 0 <= value <= 3:
+            proc_value = self._ba_devdata[self._slc_led.start + 1]
+            proc_value_calc = proc_value & 0b11
+            if proc_value_calc == value:
+                return
+            # Set new value
+            self._ba_devdata[self._slc_led.start + 1] = \
+                proc_value - proc_value_calc + value
+        else:
+            raise ValueError("led status must be between 0 and 3")
+
+    def wd_toggle(self):
+        """Toggle watchdog bit to prevent a timeout."""
+        self.wd.value = not self.wd.value
+
+    A1 = property(_get_leda1, _set_leda1)
+    A2 = property(_get_leda2, _set_leda2)
+    A3 = property(_get_leda3, _set_leda3)
+    A4 = property(_get_leda4, _set_leda4)
+    A5 = property(_get_leda5, _set_leda5)
 
     @property
     def temperature(self) -> int:
