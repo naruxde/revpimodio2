@@ -675,13 +675,8 @@ class Core(Base):
         :param value: 0=aus, 1=gruen, 2=rot
         """
         if 0 <= value <= 3:
-            proc_value = self._ba_devdata[self._slc_led.start]
-            proc_value_calc = proc_value & 3
-            if proc_value_calc == value:
-                return
-            # Set new value
-            self._ba_devdata[self._slc_led.start] = \
-                proc_value - proc_value_calc + value
+            self.a1green(bool(value & 1))
+            self.a1red(bool(value & 2))
         else:
             raise ValueError("led status must be between 0 and 3")
 
@@ -692,14 +687,8 @@ class Core(Base):
         :param value: 0=aus, 1=gruen, 2=rot
         """
         if 0 <= value <= 3:
-            value <<= 2
-            proc_value = self._ba_devdata[self._slc_led.start]
-            proc_value_calc = proc_value & 12
-            if proc_value_calc == value:
-                return
-            # Set new value
-            self._ba_devdata[self._slc_led.start] = \
-                proc_value - proc_value_calc + value
+            self.a2green(bool(value & 1))
+            self.a2red(bool(value & 2))
         else:
             raise ValueError("led status must be between 0 and 3")
 
@@ -963,14 +952,8 @@ class Connect(Core):
         :param: value 0=aus, 1=gruen, 2=rot
         """
         if 0 <= value <= 3:
-            value <<= 4
-            proc_value = self._ba_devdata[self._slc_led.start]
-            proc_value_calc = proc_value & 48
-            if proc_value_calc == value:
-                return
-            # Set new value
-            self._ba_devdata[self._slc_led.start] = \
-                proc_value - proc_value_calc + value
+            self.a3green(bool(value & 1))
+            self.a3red(bool(value & 2))
         else:
             raise ValueError("led status must be between 0 and 3")
 
@@ -1102,13 +1085,8 @@ class Compact(Base):
         :param value: 0=aus, 1=gruen, 2=rot
         """
         if 0 <= value <= 3:
-            proc_value = self._ba_devdata[self._slc_led.start]
-            proc_value_calc = proc_value & 3
-            if proc_value_calc == value:
-                return
-            # Set new value
-            self._ba_devdata[self._slc_led.start] = \
-                proc_value - proc_value_calc + value
+            self.a1green(bool(value & 1))
+            self.a1red(bool(value & 2))
         else:
             raise ValueError("led status must be between 0 and 3")
 
@@ -1119,14 +1097,8 @@ class Compact(Base):
         :param value: 0=aus, 1=gruen, 2=rot
         """
         if 0 <= value <= 3:
-            value <<= 2
-            proc_value = self._ba_devdata[self._slc_led.start]
-            proc_value_calc = proc_value & 12
-            if proc_value_calc == value:
-                return
-            # Set new value
-            self._ba_devdata[self._slc_led.start] = \
-                proc_value - proc_value_calc + value
+            self.a2green(bool(value & 1))
+            self.a2red(bool(value & 2))
         else:
             raise ValueError("led status must be between 0 and 3")
 
@@ -1263,6 +1235,8 @@ class Flat(Base):
             exp_a5red, None, "LED_A5_RED", "9"
         ], OUT, "little", False)
 
+        # todo: Add internal switch and relay, like Connect
+
         # Software watchdog einrichten
         self.wd = IOBase(self, [
             "core.wd", 0, 1, self._slc_led.start,
@@ -1316,13 +1290,8 @@ class Flat(Base):
         :param value: 0=off, 1=green, 2=red
         """
         if 0 <= value <= 3:
-            proc_value = self._ba_devdata[self._slc_led.start]
-            proc_value_calc = proc_value & 0b11
-            if proc_value_calc == value:
-                return
-            # Set new value
-            self._ba_devdata[self._slc_led.start] = \
-                proc_value - proc_value_calc + value
+            self.a1green(bool(value & 1))
+            self.a1red(bool(value & 2))
         else:
             raise ValueError("led status must be between 0 and 3")
 
@@ -1333,14 +1302,8 @@ class Flat(Base):
         :param value: 0=off, 1=green, 2=red
         """
         if 0 <= value <= 3:
-            value <<= 2
-            proc_value = self._ba_devdata[self._slc_led.start]
-            proc_value_calc = proc_value & 0b1100
-            if proc_value_calc == value:
-                return
-            # Set new value
-            self._ba_devdata[self._slc_led.start] = \
-                proc_value - proc_value_calc + value
+            self.a2green(bool(value & 1))
+            self.a2red(bool(value & 2))
         else:
             raise ValueError("led status must be between 0 and 3")
 
@@ -1351,14 +1314,8 @@ class Flat(Base):
         :param value: 0=off, 1=green, 2=red
         """
         if 0 <= value <= 3:
-            value <<= 4
-            proc_value = self._ba_devdata[self._slc_led.start]
-            proc_value_calc = proc_value & 0b110000
-            if proc_value_calc == value:
-                return
-            # Set new value
-            self._ba_devdata[self._slc_led.start] = \
-                proc_value - proc_value_calc + value
+            self.a3green(bool(value & 1))
+            self.a3red(bool(value & 2))
         else:
             raise ValueError("led status must be between 0 and 3")
 
@@ -1369,14 +1326,8 @@ class Flat(Base):
         :param value: 0=off, 1=green, 2=red
         """
         if 0 <= value <= 3:
-            value <<= 6
-            proc_value = self._ba_devdata[self._slc_led.start]
-            proc_value_calc = proc_value & 0b11000000
-            if proc_value_calc == value:
-                return
-            # Set new value
-            self._ba_devdata[self._slc_led.start] = \
-                proc_value - proc_value_calc + value
+            self.a4green(bool(value & 1))
+            self.a4red(bool(value & 2))
         else:
             raise ValueError("led status must be between 0 and 3")
 
@@ -1387,13 +1338,8 @@ class Flat(Base):
         :param value: 0=off, 1=green, 2=red
         """
         if 0 <= value <= 3:
-            proc_value = self._ba_devdata[self._slc_led.start + 1]
-            proc_value_calc = proc_value & 0b11
-            if proc_value_calc == value:
-                return
-            # Set new value
-            self._ba_devdata[self._slc_led.start + 1] = \
-                proc_value - proc_value_calc + value
+            self.a5green(bool(value & 1))
+            self.a5red(bool(value & 2))
         else:
             raise ValueError("led status must be between 0 and 3")
 
