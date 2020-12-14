@@ -4,6 +4,7 @@ import queue
 import warnings
 from math import ceil
 from threading import Event, Lock, Thread
+from time import sleep
 from timeit import default_timer
 
 from revpimodio2 import BOTH, FALLING, RISING
@@ -602,8 +603,8 @@ class ProcimgWriter(Thread):
                                     self._eventq.put(tup_fire, False)
                                 del self.__dict_delay[tup_fire]
 
-                # Refresh abwarten
-                self._work.wait(self._adjwait)
+                # Sleep and not .wait (.wait uses system clock)
+                sleep(self._adjwait)
 
             # Wartezeit anpassen um echte self._refresh zu erreichen
             mrk_dt = default_timer()

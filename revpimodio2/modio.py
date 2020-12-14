@@ -678,7 +678,7 @@ class RevPiModIO(object):
         self._exit_level |= 2
         self.exit(full=True)
 
-    def cycleloop(self, func, cycletime=50):
+    def cycleloop(self, func, cycletime=50, blocking=True):
         """
         Startet den Cycleloop.
 
@@ -705,6 +705,7 @@ class RevPiModIO(object):
 
         :param func: Funktion, die ausgefuehrt werden soll
         :param cycletime: Zykluszeit in Millisekunden - Standardwert 50 ms
+        :param blocking: Wenn False, blockiert das Programm hier NICHT
         :return: None or the return value of the cycle function
         """
         # Prüfen ob ein Loop bereits läuft
@@ -725,6 +726,16 @@ class RevPiModIO(object):
             raise RuntimeError(
                 "registered function '{0}' ist not callable".format(func)
             )
+
+        # Thread erstellen, wenn nicht blockieren soll
+        if not blocking:
+            self._th_mainloop = Thread(
+                target=self.cycleloop,
+                args=(func,),
+                kwargs={"cycletime": cycletime, "blocking": True}
+            )
+            self._th_mainloop.start()
+            return
 
         # Zykluszeit übernehmen
         old_cycletime = self._imgwriter.refresh
@@ -777,11 +788,13 @@ class RevPiModIO(object):
         except Exception as ex:
             if self._imgwriter.lck_refresh.locked():
                 self._imgwriter.lck_refresh.release()
-            self.exit(full=False)
+            if self._th_mainloop is None:
+                self.exit(full=False)
             e = ex
         finally:
             # Cycleloop beenden
             self._looprunning = False
+            self._th_mainloop = None
 
         # Alte autorefresh Zeit setzen
         self._imgwriter.refresh = old_cycletime
