@@ -125,10 +125,11 @@ class Device(object):
     """
 
     __slots__ = "__my_io_list", "_ba_devdata", "_ba_datacp", \
-                "_dict_events", "_filelock", "_length", "_modio", "_name", "_offset", \
-                "_position", "_producttype", "_selfupdate", "_slc_devoff", \
-                "_slc_inp", "_slc_inpoff", "_slc_mem", "_slc_memoff", \
-                "_slc_out", "_slc_outoff", "bmk", "catalognr", "comment", "extend", \
+                "_dict_events", "_filelock", "_length", "_modio", "_name", \
+                "_offset", "_position", "_producttype", "_selfupdate", \
+                "_slc_devoff", "_slc_inp", "_slc_inpoff", "_slc_mem", \
+                "_slc_memoff", "_slc_out", "_slc_outoff", "_shared_procimg", \
+                "bmk", "catalognr", "comment", "extend", \
                 "guid", "id", "inpvariant", "outvariant", "type"
 
     def __init__(self, parentmodio, dict_device, simulator=False):
@@ -146,6 +147,7 @@ class Device(object):
         self._length = 0
         self.__my_io_list = []
         self._selfupdate = False
+        self._shared_procimg = parentmodio._shared_procimg
 
         # Wertzuweisung aus dict_device
         self._name = dict_device.get("name")
@@ -499,6 +501,17 @@ class Device(object):
         :ref: :func:`revpimodio2.modio.RevPiModIO.setdefaultvalues()`
         """
         self._modio.setdefaultvalues(self)
+
+    def shared_procimg(self, activate: bool) -> None:
+        """
+        Activate sharing of process image just for this device.
+
+        WARNING: All outputs will set immediately in process image on value
+        change. That is also inside the cycle loop!
+
+        :param activate: Set True to activate process image sharing
+        """
+        self._shared_procimg = True if activate else False
 
     def syncoutputs(self) -> bool:
         """

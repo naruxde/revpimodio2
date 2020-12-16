@@ -32,7 +32,7 @@ class RevPiModIO(object):
     """
 
     __slots__ = "__cleanupfunc", "_autorefresh", "_buffedwrite", "_exit_level", \
-                "_configrsc", "_direct_output", "_exit", "_imgwriter", "_ioerror", \
+                "_configrsc", "_shared_procimg", "_exit", "_imgwriter", "_ioerror", \
                 "_length", "_looprunning", "_lst_devselect", "_lst_refresh", \
                 "_maxioerrors", "_myfh", "_myfh_lck", "_monitoring", "_procimg", \
                 "_simulator", "_syncoutputs", "_th_mainloop", "_waitexit", \
@@ -76,10 +76,10 @@ class RevPiModIO(object):
 
         self._autorefresh = autorefresh
         self._configrsc = configrsc
-        self._direct_output = shared_procimg or direct_output
         self._monitoring = monitoring
         self._procimg = "/dev/piControl0" if procimg is None else procimg
         self._simulator = simulator
+        self._shared_procimg = shared_procimg or direct_output
         self._syncoutputs = syncoutputs
 
         # TODO: bei simulator und procimg prüfen ob datei existiert / anlegen?
@@ -1036,6 +1036,7 @@ class RevPiModIO(object):
 
                 # Direct callen da Prüfung in io.IOBase.reg_event ist
                 tup_fire[0].func(tup_fire[1], tup_fire[2])
+                self._imgwriter._eventq.task_done()
 
                 # Laufzeitprüfung
                 if runtime != -1 and \
@@ -1107,7 +1108,7 @@ class RevPiModIO(object):
                 # FileHandler sperren
                 dev._filelock.acquire()
 
-                if self._monitoring or self._direct_output:
+                if self._monitoring or dev._shared_procimg:
                     # Alles vom Bus einlesen
                     dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
                 else:
@@ -1194,9 +1195,6 @@ class RevPiModIO(object):
         :param device: nur auf einzelnes Device anwenden
         :return: True, wenn Arbeiten an allen Devices erfolgreich waren
         """
-        if self._direct_output:
-            return True
-
         if self._monitoring:
             raise RuntimeError(
                 "can not write process image, while system is in monitoring "
@@ -1219,7 +1217,9 @@ class RevPiModIO(object):
         global_ex = None
         workokay = True
         for dev in mylist:
-            if not dev._selfupdate:
+            if dev._shared_procimg:
+                continue
+            elif not dev._selfupdate:
                 dev._filelock.acquire()
 
                 # Outpus auf Bus schreiben

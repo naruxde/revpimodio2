@@ -337,6 +337,9 @@ class NetFH(Thread):
         if self.__sockend.is_set():
             raise ValueError("flush of closed file")
 
+        if self.__int_buff == 0:
+            return
+
         try:
             # b CM ii ii 00000000 b = 16
             buff = self._direct_sr(pack(
@@ -659,7 +662,7 @@ class NetFH(Thread):
         with self.__socklock:
             self.__int_buff += 1
 
-            # Datenblöcke mit Group Seperator in Puffer ablegen
+            # Datenblock mit Position und Länge in Puffer ablegen
             self.__by_buff += self.__position.to_bytes(length=2, byteorder="little") + \
                 len(bytebuff).to_bytes(length=2, byteorder="little") + \
                 bytebuff
@@ -707,7 +710,7 @@ class RevPiNetIO(_RevPiModIO):
         :param direct_output: Deprecated, use shared_procimg
         """
         check_ip = compile(
-            r"^(?P<ipn>(25[0-5]|(2[0-4]|[01]?\d|)\d))(\.(?P=ipn)){3}$"
+            r"^(25[0-5]|(2[0-4]|[01]?\d|)\d)(\.(25[0-5]|(2[0-4]|[01]?\d|)\d)){3}$"
         )
 
         # Adresse verarbeiten

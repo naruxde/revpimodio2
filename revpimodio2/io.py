@@ -614,7 +614,7 @@ class IOBase(object):
             # Versuchen egal welchen Typ in Bool zu konvertieren
             value = bool(value)
 
-            if self._parentdevice._modio._direct_output:
+            if self._parentdevice._shared_procimg:
                 # Direktes Schreiben der Outputs
 
                 if self._parentdevice._modio._run_on_pi:
@@ -694,7 +694,7 @@ class IOBase(object):
                     )
                 )
 
-            if self._parentdevice._modio._direct_output:
+            if self._parentdevice._shared_procimg:
                 with self._parentdevice._modio._myfh_lck:
                     try:
                         self._parentdevice._modio._myfh.seek(
