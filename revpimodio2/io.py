@@ -1197,7 +1197,7 @@ class StructIO(IOBase):
                 kwargs.get("defaultvalue", None),
                 bitlength,
                 parentio._slc_address.start,
-                False,
+                kwargs.get('export', parentio.export),
                 str(parentio._slc_address.start).rjust(4, "0"),
                 kwargs.get("bmk", ""),
                 bitaddress
