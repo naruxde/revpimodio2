@@ -291,8 +291,8 @@ class IOBase(object):
 
     __slots__ = "__bit_ioctl_off", "__bit_ioctl_on", "_bitaddress", \
                 "_bitshift", "_bitlength", "_byteorder", "_defaultvalue", \
-                "_iotype", "_length", "_name", "_parentdevice", \
-                "_read_only_io", "_signed", "_slc_address", "bmk", "export"
+                "_export", "_iotype", "_length", "_name", "_parentdevice", \
+                "_read_only_io", "_signed", "_slc_address", "bmk"
 
     def __init__(self, parentdevice, valuelist: list, iotype: int, byteorder: str, signed: bool):
         """
@@ -325,7 +325,7 @@ class IOBase(object):
         self._name = valuelist[0]
         self._signed = signed
         self.bmk = valuelist[6]
-        self.export = bool(valuelist[4])
+        self._export = int(valuelist[4]) & 1
 
         int_startaddress = int(valuelist[3])
         if self._bitshift:
@@ -514,6 +514,10 @@ class IOBase(object):
         """
         return self._byteorder
 
+    def _get_export(self) -> bool:
+        """Return value of export flag."""
+        return bool(self._export & 1)
+
     def _get_iotype(self) -> int:
         """
         Gibt io type zurueck.
@@ -521,6 +525,12 @@ class IOBase(object):
         :return: <class 'int'> io type
         """
         return self._iotype
+
+    def _set_export(self, value: bool) -> None:
+        """Set value of export flag and remember this change for export."""
+        if type(value) != bool:
+            raise ValueError("Value must be <class 'bool'>")
+        self._export = 2 + int(value)
 
     def get_defaultvalue(self):
         """
@@ -850,6 +860,7 @@ class IOBase(object):
     address = property(_get_address)
     byteorder = property(_get_byteorder)
     defaultvalue = property(get_defaultvalue)
+    export = property(_get_export, _set_export)
     length = property(__len__)
     name = property(__str__)
     type = property(_get_iotype)
@@ -1197,7 +1208,7 @@ class StructIO(IOBase):
                 kwargs.get("defaultvalue", None),
                 bitlength,
                 parentio._slc_address.start,
-                kwargs.get('export', parentio.export),
+                False,
                 str(parentio._slc_address.start).rjust(4, "0"),
                 kwargs.get("bmk", ""),
                 bitaddress
@@ -1217,6 +1228,13 @@ class StructIO(IOBase):
             frm == frm.lower()
         )
         self.__frm = bofrm + frm
+        if "export" in kwargs:
+            # Use export property to remember given value for export
+            self.export = kwargs["export"]
+        else:
+            # User could change parent IO settings before replace to force
+            # export, so use parent settings for the new IO
+            self._export = parentio._export
 
         # Platz für neuen IO prüfen
         if not (self._slc_address.start >=

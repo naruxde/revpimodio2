@@ -855,8 +855,8 @@ class RevPiModIO(object):
                     cp[io.name]["defaultvalue"] = str(io.defaultvalue)
                 if io.bmk != "":
                     cp[io.name]["bmk"] = io.bmk
-                if io.export is not None:
-                    cp[io.name]["export"] = io.export
+                if io._export & 2:
+                    cp[io.name]["export"] = str(io._export & 1)
 
         try:
             with open(filename, "w") as fh:
