@@ -15,9 +15,8 @@ __license__ = "LGPLv3"
 # - RevPiGateCANopen_20161102_1_0.rap
 
 
-# Can be used for :
-# RevPi AIO 1.0 (RevPiAIO_20170301_1_0.rap)
 class AIO:
+    """Memory value mappings for RevPi AIO 1.0 (RevPiAIO_20170301_1_0.rap)."""
     OUT_RANGE_OFF = 0  # Off
     OUT_RANGE_0_5V = 1  # 0 - 5V
     OUT_RANGE_0_10V = 2  # 0 - 10V
@@ -89,9 +88,8 @@ class AIO:
     RTD_4_WIRE = 1  # 4-wire
 
 
-# Can be used for :
-# RevPi DI 1.0  (RevPiDI_20160818_1_0.rap)
 class DI:
+    """Memory value mappings for RevPi DI 1.0  (RevPiDI_20160818_1_0.rap)."""
     IN_MODE_DIRECT = 0  # Direct
     IN_MODE_COUNT_RISING = 1  # Counter, rising edge
     IN_MODE_COUNT_FALLING = 2  # Counter, falling edge
@@ -103,9 +101,8 @@ class DI:
     IN_DEBOUNCE_3MS = 3  # 3ms
 
 
-# Can be used for :
-# RevPi DO 1.0  (RevPiDO_20160818_1_0.rap)
 class DO:
+    """Memory value mappings for RevPi DO 1.0  (RevPiDO_20160818_1_0.rap)."""
     OUT_PWM_FREQ_40HZ = 1  # 40Hz 1%
     OUT_PWM_FREQ_80HZ = 2  # 80Hz 2%
     OUT_PWM_FREQ_160HZ = 4  # 160Hz 4%
@@ -113,7 +110,19 @@ class DO:
     OUT_PWM_FREQ_400HZ = 10  # 400Hz 10%
 
 
-# Can be used for :
-# RevPi DIO 1.0 (RevPiDIO_20160818_1_0.rap)
 class DIO(DI, DO):
+    """Memory value mappings for RevPi DIO 1.0 (RevPiDIO_20160818_1_0.rap)."""
     pass
+
+
+class COMPACT:
+    """Memory value mappings for RevPi Compact 1.0 (RevPiCompact_20171023_1_0.rap)."""
+    DIN_DEBOUNCE_OFF = 0  # Off
+    DIN_DEBOUNCE_25US = 1  # 25us
+    DIN_DEBOUNCE_750US = 2  # 750us
+    DIN_DEBOUNCE_3MS = 3  # 3ms
+
+    AIN_MODE_OFF = 0  # Off
+    AIN_MODE_0_10V = 1  # 0 - 10V
+    AIN_MODE_PT100 = 3  # PT100
+    AIN_MODE_PT1000 = 7  # PT1000

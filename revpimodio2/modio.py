@@ -32,7 +32,7 @@ class RevPiModIO(object):
     """
 
     __slots__ = "__cleanupfunc", "_autorefresh", "_buffedwrite", "_exit_level", \
-                "_configrsc", "_direct_output", "_exit", "_imgwriter", "_ioerror", \
+                "_configrsc", "_shared_procimg", "_exit", "_imgwriter", "_ioerror", \
                 "_length", "_looprunning", "_lst_devselect", "_lst_refresh", \
                 "_maxioerrors", "_myfh", "_myfh_lck", "_monitoring", "_procimg", \
                 "_simulator", "_syncoutputs", "_th_mainloop", "_waitexit", \
@@ -76,10 +76,10 @@ class RevPiModIO(object):
 
         self._autorefresh = autorefresh
         self._configrsc = configrsc
-        self._direct_output = shared_procimg or direct_output
         self._monitoring = monitoring
         self._procimg = "/dev/piControl0" if procimg is None else procimg
         self._simulator = simulator
+        self._shared_procimg = shared_procimg or direct_output
         self._syncoutputs = syncoutputs
 
         # TODO: bei simulator und procimg prüfen ob datei existiert / anlegen?
@@ -251,6 +251,12 @@ class RevPiModIO(object):
                 elif pt == 104:
                     # RevPi Compact
                     dev_new = devicemodule.Compact(
+                        self, device, simulator=self._simulator
+                    )
+                    self.core = dev_new
+                elif pt == 135:
+                    # RevPi Flat
+                    dev_new = devicemodule.Flat(
                         self, device, simulator=self._simulator
                     )
                     self.core = dev_new
@@ -682,7 +688,7 @@ class RevPiModIO(object):
         self._exit_level |= 2
         self.exit(full=True)
 
-    def cycleloop(self, func, cycletime=50):
+    def cycleloop(self, func, cycletime=50, blocking=True):
         """
         Startet den Cycleloop.
 
@@ -709,6 +715,7 @@ class RevPiModIO(object):
 
         :param func: Funktion, die ausgefuehrt werden soll
         :param cycletime: Zykluszeit in Millisekunden - Standardwert 50 ms
+        :param blocking: Wenn False, blockiert das Programm hier NICHT
         :return: None or the return value of the cycle function
         """
         # Prüfen ob ein Loop bereits läuft
@@ -729,6 +736,16 @@ class RevPiModIO(object):
             raise RuntimeError(
                 "registered function '{0}' ist not callable".format(func)
             )
+
+        # Thread erstellen, wenn nicht blockieren soll
+        if not blocking:
+            self._th_mainloop = Thread(
+                target=self.cycleloop,
+                args=(func,),
+                kwargs={"cycletime": cycletime, "blocking": True}
+            )
+            self._th_mainloop.start()
+            return
 
         # Zykluszeit übernehmen
         old_cycletime = self._imgwriter.refresh
@@ -751,12 +768,18 @@ class RevPiModIO(object):
             while ec is None and not cycleinfo.last:
                 # Auf neue Daten warten und nur ausführen wenn set()
                 if not self._imgwriter.newdata.wait(2.5):
-                    self.exit(full=False)
-                    if self._imgwriter.is_alive():
-                        e = RuntimeError("no new io data in cycle loop")
-                    else:
+                    if not self._imgwriter.is_alive():
+                        self.exit(full=False)
                         e = RuntimeError("autorefresh thread not running")
-                    break
+                        break
+
+                    # Just warn, user has to use maxioerrors to kill program
+                    warnings.warn(RuntimeWarning(
+                        "no new io data in cycle loop for 2500 milliseconds"
+                    ))
+                    cycleinfo.last = self._exit.is_set()
+                    continue
+
                 self._imgwriter.newdata.clear()
 
                 # Vor Aufruf der Funktion autorefresh sperren
@@ -775,11 +798,13 @@ class RevPiModIO(object):
         except Exception as ex:
             if self._imgwriter.lck_refresh.locked():
                 self._imgwriter.lck_refresh.release()
-            self.exit(full=False)
+            if self._th_mainloop is None:
+                self.exit(full=False)
             e = ex
         finally:
             # Cycleloop beenden
             self._looprunning = False
+            self._th_mainloop = None
 
         # Alte autorefresh Zeit setzen
         self._imgwriter.refresh = old_cycletime
@@ -1023,6 +1048,7 @@ class RevPiModIO(object):
 
                 # Direct callen da Prüfung in io.IOBase.reg_event ist
                 tup_fire[0].func(tup_fire[1], tup_fire[2])
+                self._imgwriter._eventq.task_done()
 
                 # Laufzeitprüfung
                 if runtime != -1 and \
@@ -1094,7 +1120,7 @@ class RevPiModIO(object):
                 # FileHandler sperren
                 dev._filelock.acquire()
 
-                if self._monitoring or self._direct_output:
+                if self._monitoring or dev._shared_procimg:
                     # Alles vom Bus einlesen
                     dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
                 else:
@@ -1181,9 +1207,6 @@ class RevPiModIO(object):
         :param device: nur auf einzelnes Device anwenden
         :return: True, wenn Arbeiten an allen Devices erfolgreich waren
         """
-        if self._direct_output:
-            return True
-
         if self._monitoring:
             raise RuntimeError(
                 "can not write process image, while system is in monitoring "
@@ -1206,7 +1229,9 @@ class RevPiModIO(object):
         global_ex = None
         workokay = True
         for dev in mylist:
-            if not dev._selfupdate:
+            if dev._shared_procimg:
+                continue
+            elif not dev._selfupdate:
                 dev._filelock.acquire()
 
                 # Outpus auf Bus schreiben
@@ -1348,7 +1373,9 @@ class RevPiModIODriver(RevPiModIOSelected):
         )
 
 
-def run_plc(func, cycletime=50, replace_io_file=None):
+def run_plc(
+        func, cycletime=50, replace_io_file=None, debug=True,
+        procimg=None, configrsc=None):
     """
     Run Revoluton Pi as real plc with cycle loop and exclusive IO access.
 
@@ -1356,17 +1383,27 @@ def run_plc(func, cycletime=50, replace_io_file=None):
     handle the program exit signal. You will access the .io, .core, .device
     via the cycletools in your cycle function.
 
-    Shortcut vor this source code:
-        rpi = RevPiModIO(autorefresh=True, replace_io_file=replace_io_file)
+    Shortcut for this source code:
+        rpi = RevPiModIO(autorefresh=True, replace_io_file=..., debug=...)
         rpi.handlesignalend()
         return rpi.cycleloop(func, cycletime)
 
     :param func: Function to run every set milliseconds
     :param cycletime: Cycle time in milliseconds
     :param replace_io_file: Load replace IO configuration from file
+    :param debug: Print all warnings and detailed error messages
+    :param procimg: Use different process image
+    :param configrsc: Use different piCtory configuration
+
     :return: None or the return value of the cycle function
     """
-    rpi = RevPiModIO(autorefresh=True, replace_io_file=replace_io_file)
+    rpi = RevPiModIO(
+        autorefresh=True,
+        replace_io_file=replace_io_file,
+        debug=debug,
+        procimg=procimg,
+        configrsc=configrsc,
+    )
     rpi.handlesignalend()
     return rpi.cycleloop(func, cycletime)
 

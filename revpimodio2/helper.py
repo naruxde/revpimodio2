@@ -4,6 +4,7 @@ import queue
 import warnings
 from math import ceil
 from threading import Event, Lock, Thread
+from time import sleep
 from timeit import default_timer
 
 from revpimodio2 import BOTH, FALLING, RISING
@@ -463,6 +464,7 @@ class ProcimgWriter(Thread):
                     tup_fireth[0].func, tup_fireth[1], tup_fireth[2]
                 )
                 th.start()
+                self._eventqth.task_done()
             except queue.Empty:
                 pass
 
@@ -532,20 +534,18 @@ class ProcimgWriter(Thread):
                 fh.seek(0)
                 fh.readinto(bytesbuff)
 
-                if self._modio._monitoring or self._modio._direct_output:
-                    # Inputs und Outputs in Puffer
-                    for dev in self._modio._lst_refresh:
-                        with dev._filelock:
+                for dev in self._modio._lst_refresh:
+                    with dev._filelock:
+                        if self._modio._monitoring or dev._shared_procimg:
+                            # Inputs und Outputs in Puffer
                             dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
                             if self.__eventwork \
                                     and len(dev._dict_events) > 0 \
                                     and dev._ba_datacp != dev._ba_devdata:
                                 self.__check_change(dev)
 
-                else:
-                    # Inputs in Puffer, Outputs in Prozessabbild
-                    for dev in self._modio._lst_refresh:
-                        with dev._filelock:
+                        else:
+                            # Inputs in Puffer, Outputs in Prozessabbild
                             dev._ba_devdata[dev._slc_inp] = \
                                 bytesbuff[dev._slc_inpoff]
                             if self.__eventwork \
@@ -556,8 +556,8 @@ class ProcimgWriter(Thread):
                             fh.seek(dev._slc_outoff.start)
                             fh.write(dev._ba_devdata[dev._slc_out])
 
-                    if self._modio._buffedwrite:
-                        fh.flush()
+                if self._modio._buffedwrite:
+                    fh.flush()
 
             except IOError as e:
                 self._modio._gotioerror("autorefresh", e, mrk_warn)
@@ -602,8 +602,8 @@ class ProcimgWriter(Thread):
                                     self._eventq.put(tup_fire, False)
                                 del self.__dict_delay[tup_fire]
 
-                # Refresh abwarten
-                self._work.wait(self._adjwait)
+                # Sleep and not .wait (.wait uses system clock)
+                sleep(self._adjwait)
 
             # Wartezeit anpassen um echte self._refresh zu erreichen
             mrk_dt = default_timer()
