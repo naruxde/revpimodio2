@@ -388,6 +388,16 @@ class RevPiModIO(object):
                         "".format(io, creplaceio[io]["bit"])
                     )
 
+            if "export" in creplaceio[io]:
+                try:
+                    dict_replace["export"] = creplaceio[io].getboolean("export")
+                except Exception:
+                    raise ValueError(
+                        "replace_io_file: could not convert '{0}' "
+                        "export '{1}' to bool"
+                        "".format(io, creplaceio[io]["export"])
+                    )
+
             # Convert defaultvalue from config file
             if "defaultvalue" in creplaceio[io]:
                 if dict_replace["frm"] == "?":
@@ -845,6 +855,8 @@ class RevPiModIO(object):
                     cp[io.name]["defaultvalue"] = str(io.defaultvalue)
                 if io.bmk != "":
                     cp[io.name]["bmk"] = io.bmk
+                if io._export & 2:
+                    cp[io.name]["export"] = str(io._export & 1)
 
         try:
             with open(filename, "w") as fh:
