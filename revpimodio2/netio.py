@@ -743,7 +743,7 @@ class RevPiNetIO(_RevPiModIO):
                 self._address = (ipv4, self._address[1])
             except Exception:
                 raise ValueError(
-                    "ip '{0}' is no valid IPv4 address"
+                    "can not resolve ip address for hostname '{0}'"
                     "".format(self._address[0])
                 )
 
