@@ -1227,13 +1227,21 @@ class RevPiModIO(object):
             mylist = [dev]
 
         global_ex = None
-        workokay = True
         for dev in mylist:
-            if dev._shared_procimg:
+            if dev._selfupdate:
+                # Do not update this device
                 continue
-            elif not dev._selfupdate:
-                dev._filelock.acquire()
 
+            dev._filelock.acquire()
+
+            if dev._shared_procimg:
+                for io in dev._shared_write:
+                    if not io._write_to_procimg():
+                        global_ex = IOError(
+                            "error on shared procimg while write"
+                        )
+                dev._shared_write.clear()
+            else:
                 # Outpus auf Bus schreiben
                 self._myfh_lck.acquire()
                 try:
@@ -1241,23 +1249,22 @@ class RevPiModIO(object):
                     self._myfh.write(dev._ba_devdata[dev._slc_out])
                 except IOError as e:
                     global_ex = e
-                    workokay = False
                 finally:
                     self._myfh_lck.release()
 
-                dev._filelock.release()
+            dev._filelock.release()
 
         if self._buffedwrite:
             try:
                 self._myfh.flush()
             except IOError as e:
                 global_ex = e
-                workokay = False
 
-        if not workokay:
+        if global_ex:
             self._gotioerror("writeprocimg", global_ex)
+            return False
 
-        return workokay
+        return True
 
     debug = property(_get_debug, _set_debug)
     configrsc = property(_get_configrsc)

@@ -532,6 +532,80 @@ class IOBase(object):
             raise ValueError("Value must be <class 'bool'>")
         self._export = 2 + int(value)
 
+    def _write_to_procimg(self) -> bool:
+        """
+        Write value of io directly to the process image.
+
+        :return: True after successful write operation
+        """
+        if not self._parentdevice._shared_procimg:
+            raise RuntimeError("device is not marked for shared_procimg")
+
+        # note: Will not be removed from _shared_write on direct call
+
+        if self._bitshift:
+            # Write single bit to process image
+            value = \
+                self._parentdevice._ba_devdata[self._slc_address.start] & \
+                self._bitshift
+            if self._parentdevice._modio._run_on_pi:
+                # IOCTL auf dem RevPi
+                with self._parentdevice._modio._myfh_lck:
+                    try:
+                        # Set value durchführen (Funktion K+16)
+                        ioctl(
+                            self._parentdevice._modio._myfh,
+                            19216,
+                            self.__bit_ioctl_on if value
+                            else self.__bit_ioctl_off
+                        )
+                    except Exception as e:
+                        self._parentdevice._modio._gotioerror("ioset", e)
+                        return False
+
+            elif hasattr(self._parentdevice._modio._myfh, "ioctl"):
+                # IOCTL über Netzwerk
+                with self._parentdevice._modio._myfh_lck:
+                    try:
+                        self._parentdevice._modio._myfh.ioctl(
+                            19216,
+                            self.__bit_ioctl_on if value
+                            else self.__bit_ioctl_off
+                        )
+                    except Exception as e:
+                        self._parentdevice._modio._gotioerror(
+                            "net_ioset", e)
+                        return False
+
+            else:
+                # IOCTL in Datei simulieren
+                try:
+                    # Set value durchführen (Funktion K+16)
+                    self._parentdevice._modio._simulate_ioctl(
+                        19216,
+                        self.__bit_ioctl_on if value
+                        else self.__bit_ioctl_off
+                    )
+                except Exception as e:
+                    self._parentdevice._modio._gotioerror("file_ioset", e)
+                    return False
+
+        else:
+            value = bytes(self._parentdevice._ba_devdata[self._slc_address])
+            with self._parentdevice._modio._myfh_lck:
+                try:
+                    self._parentdevice._modio._myfh.seek(
+                        self._get_address()
+                    )
+                    self._parentdevice._modio._myfh.write(value)
+                    if self._parentdevice._modio._buffedwrite:
+                        self._parentdevice._modio._myfh.flush()
+                except IOError as e:
+                    self._parentdevice._modio._gotioerror("ioset", e)
+                    return False
+
+        return True
+
     def get_defaultvalue(self):
         """
         Gibt die Defaultvalue von piCtory zurueck.
@@ -624,53 +698,13 @@ class IOBase(object):
             # Versuchen egal welchen Typ in Bool zu konvertieren
             value = bool(value)
 
-            if self._parentdevice._shared_procimg:
-                # Direktes Schreiben der Outputs
-
-                if self._parentdevice._modio._run_on_pi:
-                    # IOCTL auf dem RevPi
-                    with self._parentdevice._modio._myfh_lck:
-                        try:
-                            # Set value durchführen (Funktion K+16)
-                            ioctl(
-                                self._parentdevice._modio._myfh,
-                                19216,
-                                self.__bit_ioctl_on if value
-                                else self.__bit_ioctl_off
-                            )
-                        except Exception as e:
-                            self._parentdevice._modio._gotioerror("ioset", e)
-                            return
-
-                elif hasattr(self._parentdevice._modio._myfh, "ioctl"):
-                    # IOCTL über Netzwerk
-                    with self._parentdevice._modio._myfh_lck:
-                        try:
-                            self._parentdevice._modio._myfh.ioctl(
-                                19216,
-                                self.__bit_ioctl_on if value
-                                else self.__bit_ioctl_off
-                            )
-                        except Exception as e:
-                            self._parentdevice._modio._gotioerror(
-                                "net_ioset", e)
-                            return
-
-                else:
-                    # IOCTL in Datei simulieren
-                    try:
-                        # Set value durchführen (Funktion K+16)
-                        self._parentdevice._modio._simulate_ioctl(
-                            19216,
-                            self.__bit_ioctl_on if value
-                            else self.__bit_ioctl_off
-                        )
-                    except Exception as e:
-                        self._parentdevice._modio._gotioerror("file_ioset", e)
-                        return
-
             # Für Bitoperationen sperren
             self._parentdevice._filelock.acquire()
+
+            if self._parentdevice._shared_procimg \
+                    and self not in self._parentdevice._shared_write:
+                # Mark this IO for write operations
+                self._parentdevice._shared_write.append(self)
 
             # Hier gibt es immer nur ein byte, als int holen
             int_byte = self._parentdevice._ba_devdata[self._slc_address.start]
@@ -704,18 +738,11 @@ class IOBase(object):
                     )
                 )
 
-            if self._parentdevice._shared_procimg:
-                with self._parentdevice._modio._myfh_lck:
-                    try:
-                        self._parentdevice._modio._myfh.seek(
-                            self._get_address()
-                        )
-                        self._parentdevice._modio._myfh.write(value)
-                        if self._parentdevice._modio._buffedwrite:
-                            self._parentdevice._modio._myfh.flush()
-                    except IOError as e:
-                        self._parentdevice._modio._gotioerror("ioset", e)
-                        return
+            if self._parentdevice._shared_procimg \
+                    and self not in self._parentdevice._shared_write:
+                with self._parentdevice._filelock:
+                    # Mark this IO as changed
+                    self._parentdevice._shared_write.append(self)
 
             self._parentdevice._ba_devdata[self._slc_address] = value
 

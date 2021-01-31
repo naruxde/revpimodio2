@@ -536,7 +536,20 @@ class ProcimgWriter(Thread):
 
                 for dev in self._modio._lst_refresh:
                     with dev._filelock:
-                        if self._modio._monitoring or dev._shared_procimg:
+                        if self._modio._monitoring:
+                            # Inputs und Outputs in Puffer
+                            dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
+                            if self.__eventwork \
+                                    and len(dev._dict_events) > 0 \
+                                    and dev._ba_datacp != dev._ba_devdata:
+                                self.__check_change(dev)
+
+                        elif dev._shared_procimg:
+                            for io in dev._shared_write:
+                                if not io._write_to_procimg():
+                                    raise IOError("error on _write_to_procimg")
+                            dev._shared_write.clear()
+
                             # Inputs und Outputs in Puffer
                             dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
                             if self.__eventwork \

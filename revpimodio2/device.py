@@ -129,6 +129,7 @@ class Device(object):
                 "_offset", "_position", "_producttype", "_selfupdate", \
                 "_slc_devoff", "_slc_inp", "_slc_inpoff", "_slc_mem", \
                 "_slc_memoff", "_slc_out", "_slc_outoff", "_shared_procimg", \
+                "_shared_write", \
                 "bmk", "catalognr", "comment", "extend", \
                 "guid", "id", "inpvariant", "outvariant", "type"
 
@@ -148,6 +149,7 @@ class Device(object):
         self.__my_io_list = []
         self._selfupdate = False
         self._shared_procimg = parentmodio._shared_procimg
+        self._shared_write = []
 
         # Wertzuweisung aus dict_device
         self._name = dict_device.get("name")
@@ -511,6 +513,8 @@ class Device(object):
 
         :param activate: Set True to activate process image sharing
         """
+        with self._filelock:
+            self._shared_write.clear()
         self._shared_procimg = True if activate else False
 
     def syncoutputs(self) -> bool:
