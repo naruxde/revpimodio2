@@ -126,3 +126,9 @@ class COMPACT:
     AIN_MODE_0_10V = 1  # 0 - 10V
     AIN_MODE_PT100 = 3  # PT100
     AIN_MODE_PT1000 = 7  # PT1000
+
+
+class FLAT:
+    """Memory value mappings for RevPi Flat 1.0 (RevPiFlat_20200921_1_0.rap)."""
+    IN_RANGE_0_10V = 0
+    IN_RANGE_4_20MA = 1

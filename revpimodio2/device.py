@@ -1158,16 +1158,17 @@ class Flat(Base):
     """
 
     __slots__ = "_slc_temperature", "_slc_frequency", "_slc_led", \
+                "_slc_switch", "_slc_dout", \
                 "a1green", "a1red", "a2green", "a2red", \
                 "a3green", "a3red", "a4green", "a4red", \
-                "a5green", "a5red", "wd"
+                "a5green", "a5red", "relais", "switch", "wd"
 
     def __setattr__(self, key, value):
         """Verhindert Ueberschreibung der LEDs."""
         if hasattr(self, key) and key in (
                 "a1green", "a1red", "a2green", "a2red",
                 "a3green", "a3red", "a4green", "a4red",
-                "a5green", "a5red", "wd"):
+                "a5green", "a5red", "relais", "switch", "wd"):
             raise AttributeError(
                 "direct assignment is not supported - use .value Attribute"
             )
@@ -1178,9 +1179,11 @@ class Flat(Base):
         """Core-Klasse vorbereiten."""
 
         # Statische IO Verknüpfungen des Compacts
-        self._slc_led = slice(6, 8)
+        self._slc_led = slice(7, 9)
         self._slc_temperature = slice(4, 5)
         self._slc_frequency = slice(5, 6)
+        self._slc_switch = slice(6, 7)
+        self._slc_dout = slice(11, 12)
 
         # Exportflags prüfen (Byte oder Bit)
         lst_led = self._modio.io[self._slc_devoff][self._slc_led.start]
@@ -1252,7 +1255,21 @@ class Flat(Base):
             exp_a5red, None, "LED_A5_RED", "9"
         ], OUT, "little", False)
 
-        # todo: Add internal switch and relay, like Connect
+        # Real IO for switch
+        lst_io = self._modio.io[self._slc_devoff][self._slc_switch.start]
+        exp_io = lst_io[0].export
+        self.switch = IOBase(self, [
+            "flat.switch", 0, 1, self._slc_switch.start,
+            exp_io, None, "Flat_Switch", "0"
+        ], INP, "little", False)
+
+        # Real IO for relais
+        lst_io = self._modio.io[self._slc_devoff][self._slc_dout.start]
+        exp_io = lst_io[0].export
+        self.relais = IOBase(self, [
+            "flat.relais", 0, 1, self._slc_dout.start,
+            exp_io, None, "Flat_Relais", "0"
+        ], OUT, "little", False)
 
         # Software watchdog einrichten
         self.wd = IOBase(self, [
