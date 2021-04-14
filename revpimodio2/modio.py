@@ -305,7 +305,7 @@ class RevPiModIO(object):
                 if self._length < dev_new._offset:
                     self._length = dev_new._offset
 
-                self._length += dev_new._length
+                self._length += dev_new.length
 
                 # Auf doppelte Namen prüfen, da piCtory dies zulässt
                 if hasattr(self.device, dev_new._name):
