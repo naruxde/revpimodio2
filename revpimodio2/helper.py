@@ -199,6 +199,7 @@ class Cycletools:
         IO object.
 
         :param io: IO to check for changes to last cycle
+        :param edge: Check for rising or falling on bit io objects
         :return: True, if IO value changed
         """
         if io in self.__dict_change:
