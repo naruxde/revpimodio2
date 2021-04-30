@@ -96,7 +96,7 @@ def consttostr(value) -> str:
 
 
 # Benötigte Klassen importieren
-from .pictory import AIO, COMPACT, DI, DO, DIO, FLAT
+from .pictory import ProductType, AIO, COMPACT, DI, DO, DIO, FLAT
 from .helper import Cycletools, EventCallback
 from .modio import RevPiModIO, RevPiModIODriver, RevPiModIOSelected, run_plc
 from .netio import RevPiNetIO, RevPiNetIODriver, RevPiNetIOSelected
