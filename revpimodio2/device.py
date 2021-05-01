@@ -8,6 +8,8 @@ __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2020 Sven Sager"
 __license__ = "LGPLv3"
 
+from .pictory import ProductType
+
 
 class DeviceList(object):
     """Basisklasse fuer direkten Zugriff auf Device Objekte."""
@@ -340,7 +342,7 @@ class Device(object):
                     iotype,
                     "little",
                     # Bei AIO (103) signed auf True setzen
-                    self._producttype == 103
+                    self._producttype == ProductType.AIO
                 )
 
             # IO registrieren

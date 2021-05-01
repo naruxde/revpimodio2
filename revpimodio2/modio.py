@@ -18,6 +18,8 @@ __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2020 Sven Sager"
 __license__ = "LGPLv3"
 
+from .pictory import ProductType
+
 
 class RevPiModIO(object):
     """
@@ -236,25 +238,25 @@ class RevPiModIO(object):
             if device["type"] == "BASE":
                 # Basedevices
                 pt = int(device["productType"])
-                if pt == 95:
+                if pt == ProductType.REVPI_CORE:
                     # RevPi Core
                     dev_new = devicemodule.Core(
                         self, device, simulator=self._simulator
                     )
                     self.core = dev_new
-                elif pt == 105:
+                elif pt == ProductType.REVPI_CONNECT:
                     # RevPi Connect
                     dev_new = devicemodule.Connect(
                         self, device, simulator=self._simulator
                     )
                     self.core = dev_new
-                elif pt == 104:
+                elif pt == ProductType.REVPI_COMPACT:
                     # RevPi Compact
                     dev_new = devicemodule.Compact(
                         self, device, simulator=self._simulator
                     )
                     self.core = dev_new
-                elif pt == 135:
+                elif pt == ProductType.REVPI_FLAT:
                     # RevPi Flat
                     dev_new = devicemodule.Flat(
                         self, device, simulator=self._simulator
@@ -268,7 +270,7 @@ class RevPiModIO(object):
             elif device["type"] == "LEFT_RIGHT":
                 # IOs
                 pt = int(device["productType"])
-                if pt == 96 or pt == 97 or pt == 98:
+                if pt == ProductType.DIO or pt == ProductType.DI or pt == ProductType.DO:
                     # DIO / DI / DO
                     dev_new = devicemodule.DioModule(
                         self, device, simulator=self._simulator
