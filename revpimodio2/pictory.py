@@ -146,6 +146,24 @@ class DIO(DI, DO):
     pass
 
 
+class MIO:
+    """Memory value mappings for RevPi MIO 1.0 (RevPiMIO_20200901_1_0.rap)."""
+    ENCODER_MODE_DISABLED = 0
+    ENCODER_MODE_ENABLED = 1
+
+    IO_MODE_DIGITAL_IN = 0
+    IO_MODE_PULSE_IN = 1
+    IO_MODE_PWM_IN = 2
+    IO_MODE_DIGITAL_OUT = 3
+    IO_MODE_PULSE_OUT = 4
+    IO_MODE_PWM_OUT = 5
+
+    AI_MODE_ANALOG_INPUT = 0
+    AI_MODE_LOGIC_LEVEL_INPUT = 1
+    AO_MODE_ANALOG_OUTPUT = 0
+    AO_MODE_LOGIC_LEVEL_OUTPUT = 1
+
+
 class COMPACT:
     """Memory value mappings for RevPi Compact 1.0 (RevPiCompact_20171023_1_0.rap)."""
     DIN_DEBOUNCE_OFF = 0  # Off
