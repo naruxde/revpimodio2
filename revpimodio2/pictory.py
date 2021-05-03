@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Pictory aliases for IO values."""
-
 __author__ = "Théo Rozier"
 __copyright__ = "Copyright (C) 2020 Sven Sager"
 __license__ = "LGPLv3"
@@ -44,6 +43,15 @@ class ProductType:
     REVPI_COMPACT = 104
     REVPI_CONNECT = 105
     REVPI_FLAT = 135
+
+
+class DeviceType:
+    """Module key "type" in piCtory file."""
+    BASE = "BASE"  # Core devices
+    EDGE = "EDGE"  # Gateways
+    LEFT_RIGHT = "LEFT_RIGHT"  # IOs
+    RIGHT = "RIGHT"  # Connect device
+    VIRTUAL = "VIRTUAL"  # All virtual devices
 
 
 class AIO:
