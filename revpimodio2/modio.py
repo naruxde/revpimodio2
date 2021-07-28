@@ -227,7 +227,7 @@ class RevPiModIO(object):
 
         # Devices initialisieren
         err_names = []
-        for device in sorted(lst_devices, key=lambda x: x["position"]):
+        for device in sorted(lst_devices, key=lambda x: x["offset"]):
 
             # VDev alter piCtory Versionen auf Kunbus-Standard ändern
             if device["position"] == "adap.":

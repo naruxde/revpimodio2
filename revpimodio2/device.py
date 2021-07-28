@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """Modul fuer die Verwaltung der Devices."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2021 Sven Sager"
+__license__ = "LGPLv3"
+
+import warnings
 from threading import Event, Lock, Thread
 
 from .helper import ProcimgWriter
-
-__author__ = "Sven Sager"
-__copyright__ = "Copyright (C) 2020 Sven Sager"
-__license__ = "LGPLv3"
-
 from .pictory import ProductType
 
 
@@ -160,6 +160,14 @@ class Device(object):
         self._position = int(dict_device.get("position"))
         self._producttype = int(dict_device.get("productType"))
 
+        # Offset-Check for broken piCtory configuration
+        if self._offset != parentmodio.length:
+            warnings.warn(
+                "Device offset ERROR in piCtory configuration! Offset of '{0}' "
+                "must be {1} but is {2} - Overlapping devices overwrite the "
+                "same memory, which has unpredictable effects!!!"
+                "".format(self._name, parentmodio.length, self._offset)
+            )
         # IOM-Objekte erstellen und Adressen in SLCs speichern
         if simulator:
             self._slc_inp = self._buildio(
@@ -345,8 +353,15 @@ class Device(object):
                     self._producttype == ProductType.AIO
                 )
 
-            # IO registrieren
-            self._modio.io._private_register_new_io_object(io_new)
+            if io_new.address < self._modio.length:
+                warnings.warn(
+                    "IO {0} is not in the device offset and will be ignored"
+                    "".format(io_new.name),
+                    Warning
+                )
+            else:
+                # IO registrieren
+                self._modio.io._private_register_new_io_object(io_new)
 
             # Kleinste und größte Speicheradresse ermitteln
             if io_new._slc_address.start < int_min:
