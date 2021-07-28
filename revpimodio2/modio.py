@@ -418,6 +418,19 @@ class RevPiModIO(object):
                             "defaultvalue '{1}' to boolean"
                             "".format(io, creplaceio[io]["defaultvalue"])
                         )
+                elif dict_replace["frm"].find("s") != 0:
+                    buff = bytearray()
+                    try:
+                        dv_array = creplaceio[io].get("defaultvalue").split(" ")
+                        for byte_int in dv_array:
+                            buff.append(int(byte_int))
+                        dict_replace["defaultvalue"] = bytes(buff)
+                    except Exception as e:
+                        raise ValueError(
+                            "replace_io_file: could not convert '{0}' "
+                            "defaultvalue to bytes | {1}"
+                            "".format(io, e)
+                        )
                 else:
                     try:
                         dict_replace["defaultvalue"] = \
@@ -878,7 +891,12 @@ class RevPiModIO(object):
                     cp[io.name]["bit"] = str(io._bitaddress)
                 if io._byteorder != "little":
                     cp[io.name]["byteorder"] = io._byteorder
-                if io.defaultvalue != 0:
+                if type(io.defaultvalue) is bytes:
+                    if any(io.defaultvalue):
+                        # Convert each byte to an integer
+                        cp[io.name]["defaultvalue"] = \
+                            " ".join(map(str, io.defaultvalue))
+                elif io.defaultvalue != 0:
                     cp[io.name]["defaultvalue"] = str(io.defaultvalue)
                 if io.bmk != "":
                     cp[io.name]["bmk"] = io.bmk
