@@ -968,7 +968,7 @@ class RevPiNetIOSelected(RevPiNetIO):
 
         for vdev in self._lst_devselect:
             if type(vdev) != int and type(vdev) != str:
-                raise TypeError(
+                raise ValueError(
                     "need device position as <class 'int'> or device name as "
                     "<class 'str'>"
                 )

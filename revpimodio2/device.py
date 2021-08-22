@@ -161,12 +161,13 @@ class Device(object):
         self._producttype = int(dict_device.get("productType"))
 
         # Offset-Check for broken piCtory configuration
-        if self._offset != parentmodio.length:
+        if self._offset < parentmodio.length:
             warnings.warn(
                 "Device offset ERROR in piCtory configuration! Offset of '{0}' "
                 "must be {1} but is {2} - Overlapping devices overwrite the "
                 "same memory, which has unpredictable effects!!!"
-                "".format(self._name, parentmodio.length, self._offset)
+                "".format(self._name, parentmodio.length, self._offset),
+                Warning
             )
         # IOM-Objekte erstellen und Adressen in SLCs speichern
         if simulator:
