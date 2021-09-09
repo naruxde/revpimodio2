@@ -418,7 +418,7 @@ class RevPiModIO(object):
                             "defaultvalue '{1}' to boolean"
                             "".format(io, creplaceio[io]["defaultvalue"])
                         )
-                elif dict_replace["frm"].find("s") != 0:
+                elif dict_replace["frm"].find("s") >= 0:
                     buff = bytearray()
                     try:
                         dv_array = creplaceio[io].get("defaultvalue").split(" ")
