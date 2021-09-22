@@ -36,6 +36,7 @@ class RevPiModIO(object):
     __slots__ = "__cleanupfunc", "_autorefresh", "_buffedwrite", "_exit_level", \
                 "_configrsc", "_shared_procimg", "_exit", "_imgwriter", "_ioerror", \
                 "_length", "_looprunning", "_lst_devselect", "_lst_refresh", \
+                "_lst_shared", \
                 "_maxioerrors", "_myfh", "_myfh_lck", "_monitoring", "_procimg", \
                 "_simulator", "_syncoutputs", "_th_mainloop", "_waitexit", \
                 "core", "app", "device", "exitsignal", "io", "summary", "_debug", \
@@ -98,6 +99,7 @@ class RevPiModIO(object):
         self._looprunning = False
         self._lst_devselect = []
         self._lst_refresh = []
+        self._lst_shared = []
         self._maxioerrors = 0
         self._myfh = None
         self._myfh_lck = Lock()

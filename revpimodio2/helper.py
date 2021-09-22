@@ -532,32 +532,25 @@ class ProcimgWriter(Thread):
                 continue
 
             try:
+                for dev in self._modio._lst_shared:
+                    # Set shared outputs before reading process image
+                    for io in dev._shared_write:
+                        if not io._write_to_procimg():
+                            raise IOError("error on _write_to_procimg")
+                    dev._shared_write.clear()
+
                 fh.seek(0)
                 fh.readinto(bytesbuff)
 
                 for dev in self._modio._lst_refresh:
                     with dev._filelock:
-                        if self._modio._monitoring:
+                        if self._modio._monitoring or dev._shared_procimg:
                             # Inputs und Outputs in Puffer
                             dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
                             if self.__eventwork \
                                     and len(dev._dict_events) > 0 \
                                     and dev._ba_datacp != dev._ba_devdata:
                                 self.__check_change(dev)
-
-                        elif dev._shared_procimg:
-                            for io in dev._shared_write:
-                                if not io._write_to_procimg():
-                                    raise IOError("error on _write_to_procimg")
-                            dev._shared_write.clear()
-
-                            # Inputs und Outputs in Puffer
-                            dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
-                            if self.__eventwork \
-                                    and len(dev._dict_events) > 0 \
-                                    and dev._ba_datacp != dev._ba_devdata:
-                                self.__check_change(dev)
-
                         else:
                             # Inputs in Puffer, Outputs in Prozessabbild
                             dev._ba_devdata[dev._slc_inp] = \

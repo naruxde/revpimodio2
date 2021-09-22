@@ -151,8 +151,9 @@ class Device(object):
         self._filelock = Lock()
         self.__my_io_list = []
         self._selfupdate = False
-        self._shared_procimg = parentmodio._shared_procimg
+        self._shared_procimg = False
         self._shared_write = []
+        self.shared_procimg(parentmodio._shared_procimg)  # Set with register
 
         # Wertzuweisung aus dict_device
         self._name = dict_device.get("name")
@@ -522,14 +523,15 @@ class Device(object):
         """
         Activate sharing of process image just for this device.
 
-        WARNING: All outputs will set immediately in process image on value
-        change. That is also inside the cycle loop!
-
         :param activate: Set True to activate process image sharing
         """
         with self._filelock:
             self._shared_write.clear()
         self._shared_procimg = True if activate else False
+        if self._shared_procimg and self not in self._modio._lst_shared:
+            self._modio._lst_shared.append(self)
+        elif not self._shared_procimg and self in self._modio._lst_shared:
+            self._modio._lst_shared.remove(self)
 
     def syncoutputs(self) -> bool:
         """
