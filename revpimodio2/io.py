@@ -176,7 +176,7 @@ class IOList(object):
                 if type(oldio) == StructIO:
                     # Hier gibt es schon einen neuen IO
                     if oldio._bitshift:
-                        if io._bitshift == oldio._bitshift:
+                        if io._bitshift == oldio._bitshift and io._slc_address == oldio._slc_address:
                             raise MemoryError(
                                 "bit {0} already assigned to '{1}'".format(
                                     io._bitaddress, oldio._name
