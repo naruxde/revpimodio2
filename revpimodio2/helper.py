@@ -365,7 +365,7 @@ class ProcimgWriter(Thread):
     """
 
     __slots__ = "__dict_delay", "__eventth", "_eventqth", "__eventwork", \
-                "_adjwait", "_eventq", "_modio", \
+                "_eventq", "_modio", \
                 "_refresh", "_work", "daemon", "lck_refresh", "newdata"
 
     def __init__(self, parentmodio):
@@ -375,7 +375,6 @@ class ProcimgWriter(Thread):
         self.__eventth = Thread(target=self.__exec_th)
         self._eventqth = queue.Queue()
         self.__eventwork = False
-        self._adjwait = 0
         self._eventq = queue.Queue()
         self._modio = parentmodio
         self._refresh = 0.05
@@ -512,17 +511,18 @@ class ProcimgWriter(Thread):
     def run(self):
         """Startet die automatische Prozessabbildsynchronisierung."""
         fh = self._modio._create_myfh()
-        self._adjwait = self._refresh
 
         mrk_warn = True
-        mrk_dt = default_timer()
-
         bytesbuff = bytearray(self._modio._length)
+
+        # First sync of cycle time to start the main loop and match exact time
+        sleep(self._refresh - (default_timer() % self._refresh))
+
         while not self._work.is_set():
-            ot = mrk_dt
+            ot = default_timer()
 
             # Lockobjekt holen und Fehler werfen, wenn nicht schnell genug
-            if not self.lck_refresh.acquire(timeout=self._adjwait):
+            if not self.lck_refresh.acquire(timeout=self._refresh):
                 warnings.warn(
                     "cycle time of {0} ms exceeded during executing function"
                     "".format(int(self._refresh * 1000)),
@@ -609,22 +609,15 @@ class ProcimgWriter(Thread):
                                     self._eventq.put(tup_fire, False)
                                 del self.__dict_delay[tup_fire]
 
-                # Sleep and not .wait (.wait uses system clock)
-                sleep(self._adjwait)
-
-            # Wartezeit anpassen um echte self._refresh zu erreichen
-            mrk_dt = default_timer()
-            if mrk_dt - ot >= self._refresh:
-                self._adjwait -= 0.001
-                if self._adjwait < 0:
-                    warnings.warn(
-                        "cycle time of {0} ms exceeded several times - can not"
-                        " hold cycle time!".format(int(self._refresh * 1000)),
-                        RuntimeWarning
-                    )
-                    self._adjwait = 0
+            if default_timer() - ot > self._refresh:
+                warnings.warn(
+                    "cycle time of {0} ms exceeded - can not hold cycle time!"
+                    "".format(int(self._refresh * 1000)),
+                    RuntimeWarning
+                )
             else:
-                self._adjwait += 0.001
+                # Sleep and not .wait (.wait uses system clock)
+                sleep(self._refresh - (default_timer() % self._refresh))
 
         # Alle am Ende erneut aufwecken
         self._collect_events(False)
@@ -639,9 +632,7 @@ class ProcimgWriter(Thread):
         """Setzt die Zykluszeit in Millisekunden.
         @param value <class 'int'> Millisekunden"""
         if type(value) == int and 5 <= value <= 2000:
-            waitdiff = self._refresh - self._adjwait
             self._refresh = value / 1000
-            self._adjwait = 0 if waitdiff < 0 else self._refresh - waitdiff
         else:
             raise ValueError(
                 "refresh time must be 5 to 2000 milliseconds"
