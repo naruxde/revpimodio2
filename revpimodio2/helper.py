@@ -512,6 +512,7 @@ class ProcimgWriter(Thread):
         """Startet die automatische Prozessabbildsynchronisierung."""
         fh = self._modio._create_myfh()
 
+        mrk_delay = self._refresh
         mrk_warn = True
         bytesbuff = bytearray(self._modio._length)
 
@@ -521,13 +522,14 @@ class ProcimgWriter(Thread):
         while not self._work.is_set():
             ot = default_timer()
 
-            # Lockobjekt holen und Fehler werfen, wenn nicht schnell genug
-            if not self.lck_refresh.acquire(timeout=self._refresh):
+            # At this point, we slept and have the rest of delay from last cycle
+            if not self.lck_refresh.acquire(timeout=mrk_delay):
                 warnings.warn(
-                    "cycle time of {0} ms exceeded during executing function"
+                    "cycle time of {0} ms exceeded in your cycle function"
                     "".format(int(self._refresh * 1000)),
                     RuntimeWarning
                 )
+                mrk_delay = self._refresh
                 # Nur durch cycleloop erreichbar - keine verzögerten Events
                 continue
 
@@ -609,15 +611,18 @@ class ProcimgWriter(Thread):
                                     self._eventq.put(tup_fire, False)
                                 del self.__dict_delay[tup_fire]
 
+            mrk_delay = default_timer() % self._refresh
+            # Second default_timer call include calculation time from above
             if default_timer() - ot > self._refresh:
                 warnings.warn(
                     "cycle time of {0} ms exceeded - can not hold cycle time!"
                     "".format(int(self._refresh * 1000)),
                     RuntimeWarning
                 )
+                mrk_delay = 0.0
             else:
                 # Sleep and not .wait (.wait uses system clock)
-                sleep(self._refresh - (default_timer() % self._refresh))
+                sleep(self._refresh - mrk_delay)
 
         # Alle am Ende erneut aufwecken
         self._collect_events(False)
