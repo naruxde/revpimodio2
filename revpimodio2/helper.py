@@ -516,9 +516,6 @@ class ProcimgWriter(Thread):
         mrk_warn = True
         bytesbuff = bytearray(self._modio._length)
 
-        # First sync of cycle time to start the main loop and match exact time
-        sleep(self._refresh - (default_timer() % self._refresh))
-
         while not self._work.is_set():
             ot = default_timer()
 

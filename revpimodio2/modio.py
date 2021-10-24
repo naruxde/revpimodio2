@@ -767,10 +767,10 @@ class RevPiModIO(object):
         # Zykluszeit übernehmen
         old_cycletime = self._imgwriter.refresh
         if not cycletime == self._imgwriter.refresh:
+            # Set new cycle time and wait one imgwriter cycle to sync fist cycle
             self._imgwriter.refresh = cycletime
-
-            # Zeitänderung in _imgwriter neuladen
             self._imgwriter.newdata.clear()
+            self._imgwriter.newdata.wait(self._imgwriter._refresh)
 
         # Benutzerevent
         self.exitsignal.clear()
@@ -781,6 +781,7 @@ class RevPiModIO(object):
         cycleinfo = helpermodule.Cycletools(self._imgwriter.refresh, self)
         e = None  # Exception
         ec = None  # Return value of cycle_function
+        self._imgwriter.newdata.clear()
         try:
             while ec is None and not cycleinfo.last:
                 # Auf neue Daten warten und nur ausführen wenn set()
