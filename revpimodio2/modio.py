@@ -130,7 +130,6 @@ class RevPiModIO(object):
         # Nur Konfigurieren, wenn nicht vererbt
         if type(self) == RevPiModIO:
             self._configure(self.get_jconfigrsc())
-            self._configure_replace_io(self._get_cpreplaceio())
 
     def __del__(self):
         """Zerstoert alle Klassen um aufzuraeumen."""
@@ -355,6 +354,9 @@ class RevPiModIO(object):
 
             # RS485 errors schreiben
             self.writeprocimg(self.core)
+
+        # Set replace IO before autostart to prevent cycle time exhausting
+        self._configure_replace_io(self._get_cpreplaceio())
 
         # Optional ins autorefresh aufnehmen
         if self._autorefresh:
@@ -1348,7 +1350,6 @@ class RevPiModIOSelected(RevPiModIO):
                 )
 
         self._configure(self.get_jconfigrsc())
-        self._configure_replace_io(self._get_cpreplaceio())
 
         if len(self.device) == 0:
             if type(self) == RevPiModIODriver:

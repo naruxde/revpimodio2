@@ -767,7 +767,6 @@ class RevPiNetIO(_RevPiModIO):
         # Nur Konfigurieren, wenn nicht vererbt
         if type(self) == RevPiNetIO:
             self._configure(self.get_jconfigrsc())
-            self._configure_replace_io(self._get_cpreplaceio())
 
     def _create_myfh(self):
         """
@@ -974,7 +973,6 @@ class RevPiNetIOSelected(RevPiNetIO):
                 )
 
         self._configure(self.get_jconfigrsc())
-        self._configure_replace_io(self._get_cpreplaceio())
 
         if len(self.device) == 0:
             if type(self) == RevPiNetIODriver:
