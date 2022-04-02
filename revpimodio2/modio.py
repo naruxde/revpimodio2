@@ -305,25 +305,25 @@ class RevPiModIO(object):
 
             if dev_new is not None:
                 # Offset prüfen, muss mit Länge übereinstimmen
-                if self._length < dev_new._offset:
-                    self._length = dev_new._offset
+                if self._length < dev_new.offset:
+                    self._length = dev_new.offset
 
                 self._length += dev_new.length
 
                 # Auf doppelte Namen prüfen, da piCtory dies zulässt
-                if hasattr(self.device, dev_new._name):
-                    err_names.append(dev_new._name)
+                if hasattr(self.device, dev_new.name):
+                    err_names.append((dev_new.name, dev_new.position))
 
                 # DeviceList für direkten Zugriff aufbauen
-                setattr(self.device, dev_new._name, dev_new)
+                setattr(self.device, dev_new.name, dev_new)
 
         # Namenszugriff zerstören, wenn doppelte Namen vorhanden sind
-        for errdev in err_names:
+        for errdev in err_names:  # type: tuple
             self.device.__delattr__(errdev, False)
             warnings.warn(
-                "equal device name in pictory configuration. can not "
-                "build device to access by name. you can access all devices "
-                "by position number .device[nn] only!",
+                "equal device name '{0}' in pictory configuration. you can "
+                "access this device by position number .device[{1}] only!"
+                "".format(*errdev),
                 Warning
             )
 
