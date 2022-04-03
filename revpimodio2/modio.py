@@ -227,7 +227,7 @@ class RevPiModIO(object):
         self.io = IOList()
 
         # Devices initialisieren
-        err_names = []
+        err_names_check = {}
         for device in sorted(lst_devices, key=lambda x: x["offset"]):
 
             # VDev alter piCtory Versionen auf Kunbus-Standard ändern
@@ -310,20 +310,23 @@ class RevPiModIO(object):
 
                 self._length += dev_new.length
 
-                # Auf doppelte Namen prüfen, da piCtory dies zulässt
-                if hasattr(self.device, dev_new.name):
-                    err_names.append((dev_new.name, dev_new.position))
+                # Build dict with device name and positions and check later
+                if dev_new.name not in err_names_check:
+                    err_names_check[dev_new.name] = []
+                err_names_check[dev_new.name].append(str(dev_new.position))
 
                 # DeviceList für direkten Zugriff aufbauen
                 setattr(self.device, dev_new.name, dev_new)
 
-        # Namenszugriff zerstören, wenn doppelte Namen vorhanden sind
-        for errdev in err_names:  # type: tuple
-            self.device.__delattr__(errdev, False)
+        # Check equal device names and destroy name attribute of device class
+        for check_dev in err_names_check:
+            if len(err_names_check[check_dev]) == 1:
+                continue
+            self.device.__delattr__(check_dev, False)
             warnings.warn(
                 "equal device name '{0}' in pictory configuration. you can "
-                "access this device by position number .device[{1}] only!"
-                "".format(*errdev),
+                "access this devices by position number .device[{1}] only!"
+                "".format(check_dev, "|".join(err_names_check[check_dev])),
                 Warning
             )
 
