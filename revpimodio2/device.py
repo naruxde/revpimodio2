@@ -626,13 +626,11 @@ class Core(Base):
             exp_a1red = lst_led[1].export
             exp_a2green = lst_led[2].export
             exp_a2red = lst_led[3].export
-            # exp_wd = lst_led[7].export
         else:
             exp_a1green = lst_led[0].export
             exp_a1red = exp_a1green
             exp_a2green = exp_a1green
             exp_a2red = exp_a1green
-            # exp_wd = exp_a1green
 
         # Echte IOs erzeugen
         self.a1green = IOBase(self, [
@@ -931,10 +929,12 @@ class Connect(Core):
             exp_a3green = lst_led[4].export
             exp_a3red = lst_led[5].export
             exp_x2out = lst_led[6].export
+            exp_wd = lst_led[7].export
         else:
             exp_a3green = lst_led[0].export
             exp_a3red = exp_a3green
             exp_x2out = exp_a3green
+            exp_wd = exp_a3green
         lst_status = lst_myios[self._slc_statusbyte.start]
         if len(lst_status) == 8:
             exp_x2in = lst_status[6].export
@@ -960,6 +960,9 @@ class Connect(Core):
             "core.x2out", 0, 1, self._slc_led.start,
             exp_x2out, None, "Connect_X2_OUT", "6"
         ], OUT, "little", False)
+
+        # Export hardware watchdog to use it with other systems
+        self.wd._export = int(exp_wd)  # Do this without mrk for export!
 
     def _get_leda3(self) -> int:
         """
