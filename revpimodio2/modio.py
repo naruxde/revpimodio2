@@ -403,6 +403,9 @@ class RevPiModIO(object):
                         "".format(io, creplaceio[io]["bit"])
                     )
 
+            if "wordorder" in creplaceio[io]:
+                dict_replace["wordorder"] = creplaceio[io]["wordorder"]
+
             if "export" in creplaceio[io]:
                 try:
                     dict_replace["export"] = creplaceio[io].getboolean("export")
@@ -877,7 +880,7 @@ class RevPiModIO(object):
         Exportiert ersetzte IOs dieser Instanz.
 
         Exportiert alle ersetzten IOs, welche mit .replace_io(...) angelegt
-        wurden. Die Datei kann z.B. fuer RevPiPyLoad verwndet werden um Daten
+        wurden. Die Datei kann z.B. fuer RevPiPyLoad verwendet werden um Daten
         in den neuen Formaten per MQTT zu uebertragen oder mit RevPiPyControl
         anzusehen.
 
@@ -899,6 +902,8 @@ class RevPiModIO(object):
                     cp[io.name]["bit"] = str(io._bitaddress)
                 if io._byteorder != "little":
                     cp[io.name]["byteorder"] = io._byteorder
+                if io._wordorder:
+                    cp[io.name]["wordorder"] = io._wordorder
                 if type(io.defaultvalue) is bytes:
                     if any(io.defaultvalue):
                         # Convert each byte to an integer
