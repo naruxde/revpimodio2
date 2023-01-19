@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 """RevPiModIO Hauptklasse fuer Netzwerkzugriff."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2023 Sven Sager"
+__license__ = "LGPLv3"
+
 import socket
 import warnings
 from configparser import ConfigParser
@@ -8,13 +12,9 @@ from re import compile
 from struct import pack, unpack
 from threading import Event, Lock, Thread
 
-from revpimodio2 import DeviceNotFoundError
 from .device import Device
+from .errors import DeviceNotFoundError
 from .modio import RevPiModIO as _RevPiModIO
-
-__author__ = "Sven Sager"
-__copyright__ = "Copyright (C) 2020 Sven Sager"
-__license__ = "LGPLv3"
 
 # Synchronisierungsbefehl
 _syssync = b'\x01\x06\x16\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
@@ -57,11 +57,11 @@ class NetFH(Thread):
     """
 
     __slots__ = "__buff_size", "__buff_block", "__buff_recv", \
-                "__by_buff", "__check_replace_ios", "__config_changed", \
-                "__int_buff", "__dictdirty", "__flusherr", "__replace_ios_h", \
-                "__pictory_h", "__position", "__sockerr", "__sockend", \
-                "__socklock", "__timeout", "__waitsync", "_address", \
-                "_slavesock", "daemon"
+        "__by_buff", "__check_replace_ios", "__config_changed", \
+        "__int_buff", "__dictdirty", "__flusherr", "__replace_ios_h", \
+        "__pictory_h", "__position", "__sockerr", "__sockend", \
+        "__socklock", "__timeout", "__waitsync", "_address", \
+        "_slavesock", "daemon"
 
     def __init__(self, address: tuple, check_replace_ios: bool, timeout=500):
         """
@@ -344,7 +344,9 @@ class NetFH(Thread):
             # b CM ii ii 00000000 b = 16
             buff = self._direct_sr(pack(
                 "=c2sHH8xc",
-                HEADER_START, b'FD', self.__int_buff, len(self.__by_buff), HEADER_STOP
+                HEADER_START,
+                b'FD', self.__int_buff, len(self.__by_buff),
+                HEADER_STOP
             ) + self.__by_buff, 1)
         except Exception:
             raise
@@ -663,9 +665,10 @@ class NetFH(Thread):
             self.__int_buff += 1
 
             # Datenblock mit Position und Länge in Puffer ablegen
-            self.__by_buff += self.__position.to_bytes(length=2, byteorder="little") + \
-                len(bytebuff).to_bytes(length=2, byteorder="little") + \
-                bytebuff
+            self.__by_buff += \
+                self.__position.to_bytes(length=2, byteorder="little") \
+                + len(bytebuff).to_bytes(length=2, byteorder="little") \
+                + bytebuff
 
         # TODO: Bufferlänge und dann flushen?
 
@@ -760,6 +763,7 @@ class RevPiNetIO(_RevPiModIO):
             shared_procimg=shared_procimg,
             direct_output=direct_output,
         )
+        self._set_device_based_cycle_time = False
 
         # Netzwerkfilehandler anlegen
         self._myfh = self._create_myfh()

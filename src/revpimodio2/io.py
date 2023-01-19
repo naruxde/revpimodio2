@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """RevPiModIO Modul fuer die Verwaltung der IOs."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2023 Sven Sager"
+__license__ = "LGPLv3"
+
 import struct
 from re import match as rematch
 from threading import Event
 
-from revpimodio2 import BOTH, FALLING, INP, MEM, OUT, RISING, consttostr, \
-    PROCESS_IMAGE_SIZE
-
-__author__ = "Sven Sager"
-__copyright__ = "Copyright (C) 2020 Sven Sager"
-__license__ = "LGPLv3"
+from ._internal import consttostr, RISING, FALLING, BOTH, INP, OUT, \
+    MEM, PROCESS_IMAGE_SIZE
 
 try:
     # Funktioniert nur auf Unix
@@ -209,10 +209,9 @@ class IOList(object):
         if io._defaultvalue is None:
             # Nur bei StructIO und keiner gegebenen defaultvalue übernehmen
             if io._bitshift:
+                io_byte_address = io._parentio_address - io.address
                 io._defaultvalue = bool(
-                    io._parentio_defaultvalue[
-                        io._parentio_address - io.address
-                    ] & io._bitshift
+                    io._parentio_defaultvalue[io_byte_address] & io._bitshift
                 )
             else:
                 io._defaultvalue = calc_defaultvalue
@@ -290,11 +289,12 @@ class IOBase(object):
     """
 
     __slots__ = "__bit_ioctl_off", "__bit_ioctl_on", "_bitaddress", \
-                "_bitshift", "_bitlength", "_byteorder", "_defaultvalue", \
-                "_export", "_iotype", "_length", "_name", "_parentdevice", \
-                "_read_only_io", "_signed", "_slc_address", "bmk"
+        "_bitshift", "_bitlength", "_byteorder", "_defaultvalue", \
+        "_export", "_iotype", "_length", "_name", "_parentdevice", \
+        "_read_only_io", "_signed", "_slc_address", "bmk"
 
-    def __init__(self, parentdevice, valuelist: list, iotype: int, byteorder: str, signed: bool):
+    def __init__(self, parentdevice, valuelist: list, iotype: int,
+                 byteorder: str, signed: bool):
         """
         Instantiierung der IOBase-Klasse.
 
@@ -428,7 +428,8 @@ class IOBase(object):
         """
         return self._name
 
-    def __reg_xevent(self, func, delay: int, edge: int, as_thread: bool, overwrite: bool, prefire: bool) -> None:
+    def __reg_xevent(self, func, delay: int, edge: int, as_thread: bool,
+                     overwrite: bool, prefire: bool) -> None:
         """
         Verwaltet reg_event und reg_timerevent.
 
@@ -1043,8 +1044,9 @@ class IntIOCounter(IntIO):
         # Deviceposition + leer + Counter_ID
         # ID-Bits: 7|6|5|4|3|2|1|0|15|14|13|12|11|10|9|8
         self.__ioctl_arg = \
-            parentdevice._position.to_bytes(1, "little") + b'\x00' + \
-            (1 << counter_id).to_bytes(2, "little")
+            parentdevice._position.to_bytes(1, "little") \
+            + b'\x00' \
+            + (1 << counter_id).to_bytes(2, "little")
 
         """
         IOCTL fuellt dieses struct, welches durch padding im Speicher nach
@@ -1180,7 +1182,7 @@ class StructIO(IOBase):
     """
 
     __slots__ = "__frm", "_parentio_address", "_parentio_defaultvalue", \
-                "_parentio_length", "_parentio_name", "_wordorder"
+        "_parentio_length", "_parentio_name", "_wordorder"
 
     def __init__(self, parentio, name: str, frm: str, **kwargs):
         """

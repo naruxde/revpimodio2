@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Bildet die App Sektion von piCtory ab."""
-from time import strptime
-
 __author__ = "Sven Sager"
-__copyright__ = "Copyright (C) 2020 Sven Sager"
+__copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv3"
+
+from time import strptime
 
 
 class App(object):

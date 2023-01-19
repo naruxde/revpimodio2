@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 """Modul fuer die Verwaltung der Devices."""
 __author__ = "Sven Sager"
-__copyright__ = "Copyright (C) 2021 Sven Sager"
+__copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv3"
 
 import warnings
 from threading import Event, Lock, Thread
 
+from ._internal import INP, OUT, MEM, PROCESS_IMAGE_SIZE
 from .helper import ProcimgWriter
+from .io import IOBase, IntIO, IntIOCounter, IntIOReplaceable, MemIO
 from .pictory import ProductType
 
 
@@ -127,13 +129,13 @@ class Device(object):
     """
 
     __slots__ = "__my_io_list", "_ba_devdata", "_ba_datacp", \
-                "_dict_events", "_filelock", "_modio", "_name", \
-                "_offset", "_position", "_producttype", "_selfupdate", \
-                "_slc_devoff", "_slc_inp", "_slc_inpoff", "_slc_mem", \
-                "_slc_memoff", "_slc_out", "_slc_outoff", "_shared_procimg", \
-                "_shared_write", \
-                "bmk", "catalognr", "comment", "extend", \
-                "guid", "id", "inpvariant", "outvariant", "type"
+        "_dict_events", "_filelock", "_modio", "_name", \
+        "_offset", "_position", "_producttype", "_selfupdate", \
+        "_slc_devoff", "_slc_inp", "_slc_inpoff", "_slc_mem", \
+        "_slc_memoff", "_slc_out", "_slc_outoff", "_shared_procimg", \
+        "_shared_write", \
+        "bmk", "catalognr", "comment", "extend", \
+        "guid", "id", "inpvariant", "outvariant", "type"
 
     def __init__(self, parentmodio, dict_device, simulator=False):
         """
@@ -244,7 +246,7 @@ class Device(object):
             return False
         else:
             return key in self._modio.io \
-                   and getattr(self._modio.io, key)._parentdevice == self
+                and getattr(self._modio.io, key)._parentdevice == self
 
     def __getitem__(self, key):
         """
@@ -574,9 +576,9 @@ class Core(Base):
     """
 
     __slots__ = "_slc_cycle", "_slc_errorcnt", "_slc_statusbyte", \
-                "_slc_temperature", "_slc_errorlimit1", "_slc_errorlimit2", \
-                "_slc_frequency", "_slc_led", "a1green", "a1red", \
-                "a2green", "a2red", "wd"
+        "_slc_temperature", "_slc_errorlimit1", "_slc_errorlimit2", \
+        "_slc_frequency", "_slc_led", "a1green", "a1red", \
+        "a2green", "a2red", "wd"
 
     def __setattr__(self, key, value):
         """Verhindert Ueberschreibung der LEDs."""
@@ -899,7 +901,7 @@ class Connect(Core):
     """
 
     __slots__ = "__evt_wdtoggle", "__th_wdtoggle", "a3green", "a3red", \
-                "x2in", "x2out"
+        "x2in", "x2out"
 
     def __setattr__(self, key, value):
         """Verhindert Ueberschreibung der speziellen IOs."""
@@ -1039,7 +1041,7 @@ class Compact(Base):
     """
 
     __slots__ = "_slc_temperature", "_slc_frequency", "_slc_led", \
-                "a1green", "a1red", "a2green", "a2red", "wd"
+        "a1green", "a1red", "a2green", "a2red", "wd"
 
     def __setattr__(self, key, value):
         """Verhindert Ueberschreibung der LEDs."""
@@ -1177,10 +1179,10 @@ class Flat(Base):
     """
 
     __slots__ = "_slc_temperature", "_slc_frequency", "_slc_led", \
-                "_slc_switch", "_slc_dout", \
-                "a1green", "a1red", "a2green", "a2red", \
-                "a3green", "a3red", "a4green", "a4red", \
-                "a5green", "a5red", "relais", "switch", "wd"
+        "_slc_switch", "_slc_dout", \
+        "a1green", "a1red", "a2green", "a2red", \
+        "a3green", "a3red", "a4green", "a4red", \
+        "a5green", "a5red", "relais", "switch", "wd"
 
     def __setattr__(self, key, value):
         """Verhindert Ueberschreibung der LEDs."""
@@ -1538,8 +1540,3 @@ class Virtual(Gateway):
 
         self._filelock.release()
         return workokay
-
-
-# Nachträglicher Import
-from .io import IOBase, IntIO, IntIOCounter, IntIOReplaceable, MemIO
-from revpimodio2 import INP, OUT, MEM, PROCESS_IMAGE_SIZE

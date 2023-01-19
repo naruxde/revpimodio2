@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 """RevPiModIO Hauptklasse fuer piControl0 Zugriff."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2023 Sven Sager"
+__license__ = "LGPLv3"
+
 import warnings
 from configparser import ConfigParser
 from json import load as jload
@@ -12,12 +16,14 @@ from stat import S_ISCHR
 from threading import Event, Lock, Thread
 from timeit import default_timer
 
-from revpimodio2 import BOTH, DeviceNotFoundError, FALLING, RISING, acheck
-
-__author__ = "Sven Sager"
-__copyright__ = "Copyright (C) 2020 Sven Sager"
-__license__ = "LGPLv3"
-
+from . import app as appmodule
+from . import device as devicemodule
+from . import helper as helpermodule
+from . import summary as summarymodule
+from ._internal import acheck, RISING, FALLING, BOTH
+from .errors import DeviceNotFoundError
+from .io import IOList
+from .io import StructIO
 from .pictory import ProductType
 
 
@@ -33,14 +39,16 @@ class RevPiModIO(object):
     Device Positionen oder Device Namen.
     """
 
-    __slots__ = "__cleanupfunc", "_autorefresh", "_buffedwrite", "_exit_level", \
-                "_configrsc", "_shared_procimg", "_exit", "_imgwriter", "_ioerror", \
-                "_length", "_looprunning", "_lst_devselect", "_lst_refresh", \
-                "_lst_shared", \
-                "_maxioerrors", "_myfh", "_myfh_lck", "_monitoring", "_procimg", \
-                "_simulator", "_syncoutputs", "_th_mainloop", "_waitexit", \
-                "core", "app", "device", "exitsignal", "io", "summary", "_debug", \
-                "_replace_io_file", "_run_on_pi"
+    __slots__ = "__cleanupfunc", \
+        "_autorefresh", "_buffedwrite", "_configrsc", "_debug", \
+        "_exit", "_exit_level", "_imgwriter", "_ioerror", \
+        "_length", "_looprunning", "_lst_devselect", "_lst_refresh", \
+        "_lst_shared", \
+        "_maxioerrors", "_monitoring", "_myfh", "_myfh_lck", \
+        "_procimg", "_replace_io_file", "_run_on_pi", \
+        "_set_device_based_cycle_time", "_simulator", "_shared_procimg", \
+        "_syncoutputs", "_th_mainloop", "_waitexit", \
+        "app", "core", "device", "exitsignal", "io", "summary"
 
     def __init__(
             self, autorefresh=False, monitoring=False, syncoutputs=True,
@@ -81,6 +89,7 @@ class RevPiModIO(object):
         self._configrsc = configrsc
         self._monitoring = monitoring
         self._procimg = "/dev/piControl0" if procimg is None else procimg
+        self._set_device_based_cycle_time = True
         self._simulator = simulator
         self._shared_procimg = shared_procimg or direct_output
         self._syncoutputs = syncoutputs
@@ -333,8 +342,8 @@ class RevPiModIO(object):
         # ImgWriter erstellen
         self._imgwriter = helpermodule.ProcimgWriter(self)
 
-        # Refreshzeit CM1 25 Hz / CM3 50 Hz
-        if not isinstance(self, RevPiNetIO):
+        if self._set_device_based_cycle_time:
+            # Refreshzeit CM1 25 Hz / CM3 50 Hz
             self._imgwriter.refresh = 20 if cpu_count() > 1 else 40
 
         # Aktuellen Outputstatus von procimg einlesen
@@ -1446,13 +1455,4 @@ def run_plc(
     rpi.handlesignalend()
     return rpi.cycleloop(func, cycletime)
 
-
-# Nachträglicher Import
-from . import app as appmodule
-from . import device as devicemodule
-from . import helper as helpermodule
-from . import summary as summarymodule
-from .io import IOList
-from .io import StructIO
-
-from .netio import RevPiNetIODriver, RevPiNetIO
+from .netio import RevPiNetIODriver

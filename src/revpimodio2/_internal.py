@@ -1,28 +1,8 @@
 # -*- coding: utf-8 -*-
-"""
-Stellt alle Klassen fuer den RevolutionPi zur Verfuegung.
-
-Webpage: https://revpimodio.org/
-
-Stellt Klassen fuer die einfache Verwendung des Revolution Pis der
-Kunbus GmbH (https://revolution.kunbus.de/) zur Verfuegung. Alle I/Os werden
-aus der piCtory Konfiguration eingelesen und mit deren Namen direkt zugreifbar
-gemacht. Fuer Gateways sind eigene IOs ueber mehrere Bytes konfigurierbar
-Mit den definierten Namen greift man direkt auf die gewuenschten Daten zu.
-Auf alle IOs kann der Benutzer Funktionen als Events registrieren. Diese
-fuehrt das Modul bei Datenaenderung aus.
-"""
-__all__ = [
-    "RevPiModIO", "RevPiModIODriver", "RevPiModIOSelected", "run_plc",
-    "RevPiNetIO", "RevPiNetIODriver", "RevPiNetIOSelected",
-    "Cycletools", "EventCallback",
-    "ProductType", "AIO", "COMPACT", "DI", "DO", "DIO", "FLAT", "MIO",
-]
-__author__ = "Sven Sager <akira@revpimodio.org>"
-__copyright__ = "Copyright (C) 2020 Sven Sager"
-__license__ = "LGPLv3"
-__name__ = "revpimodio2"
-__version__ = "2.6.0rc1"
+"""Internal functions and values for this package."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2023 Sven Sager"
+__license__ = "GPLv3"
 
 # Global package values
 OFF = 0
@@ -35,12 +15,6 @@ INP = 300
 OUT = 301
 MEM = 302
 PROCESS_IMAGE_SIZE = 4096
-
-
-class DeviceNotFoundError(Exception):
-    """Fehler wenn ein Device nicht gefunden wird."""
-
-    pass
 
 
 def acheck(check_type, **kwargs) -> None:
@@ -93,10 +67,3 @@ def consttostr(value) -> str:
         return "MEM"
     else:
         return ""
-
-
-# Benötigte Klassen importieren
-from .pictory import ProductType, AIO, COMPACT, DI, DO, DIO, FLAT, MIO
-from .helper import Cycletools, EventCallback
-from .modio import RevPiModIO, RevPiModIODriver, RevPiModIOSelected, run_plc
-from .netio import RevPiNetIO, RevPiNetIODriver, RevPiNetIOSelected

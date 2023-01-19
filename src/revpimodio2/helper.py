@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 """RevPiModIO Helperklassen und Tools."""
+__author__ = "Sven Sager"
+__copyright__ = "Copyright (C) 2023 Sven Sager"
+__license__ = "LGPLv3"
+
 import queue
 import warnings
 from math import ceil
@@ -7,12 +11,8 @@ from threading import Event, Lock, Thread
 from time import sleep
 from timeit import default_timer
 
-from revpimodio2 import BOTH, FALLING, RISING
-from revpimodio2.io import IOBase
-
-__author__ = "Sven Sager"
-__copyright__ = "Copyright (C) 2020 Sven Sager"
-__license__ = "LGPLv3"
+from ._internal import RISING, FALLING, BOTH
+from .io import IOBase
 
 
 class EventCallback(Thread):
@@ -88,11 +88,11 @@ class Cycletools:
     """
 
     __slots__ = "__cycle", "__cycletime", "__ucycle", "__dict_ton", \
-                "__dict_tof", "__dict_tp", "__dict_change", \
-                "_start_timer", "core", "device", \
-                "first", "io", "last", "var", \
-                "flag1c", "flag5c", "flag10c", "flag15c", "flag20c", \
-                "flank5c", "flank10c", "flank15c", "flank20c"
+        "__dict_tof", "__dict_tp", "__dict_change", \
+        "_start_timer", "core", "device", \
+        "first", "io", "last", "var", \
+        "flag1c", "flag5c", "flag10c", "flag15c", "flag20c", \
+        "flank5c", "flank10c", "flank15c", "flank20c"
 
     def __init__(self, cycletime, revpi_object):
         """Init Cycletools class."""
@@ -208,8 +208,8 @@ class Cycletools:
             else:
                 value = io.get_value()
                 return self.__dict_change[io] != value and (
-                    value and edge == RISING or
-                    not value and edge == FALLING
+                        value and edge == RISING or
+                        not value and edge == FALLING
                 )
         else:
             if not isinstance(io, IOBase):
@@ -365,8 +365,8 @@ class ProcimgWriter(Thread):
     """
 
     __slots__ = "__dict_delay", "__eventth", "_eventqth", "__eventwork", \
-                "_eventq", "_modio", \
-                "_refresh", "_work", "daemon", "lck_refresh", "newdata"
+        "_eventq", "_modio", \
+        "_refresh", "_work", "daemon", "lck_refresh", "newdata"
 
     def __init__(self, parentmodio):
         """Init ProcimgWriter class."""
@@ -394,9 +394,9 @@ class ProcimgWriter(Thread):
 
             if io_event._bitshift:
                 boolcp = dev._ba_datacp[io_event._slc_address.start] \
-                    & io_event._bitshift
+                         & io_event._bitshift
                 boolor = dev._ba_devdata[io_event._slc_address.start] \
-                    & io_event._bitshift
+                         & io_event._bitshift
 
                 if boolor == boolcp:
                     continue
