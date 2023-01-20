@@ -1,5 +1,6 @@
-recursive-include src/revpimodio *.py
 include LICENSE.txt
+include Makefile
 include MANIFEST.in
 include README.md
+include requirements.txt
 include setup.py

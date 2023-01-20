@@ -710,11 +710,13 @@ class RevPiNetIO(_RevPiModIO):
         :param simulator: Laedt das Modul als Simulator und vertauscht IOs
         :param debug: Gibt bei allen Fehlern komplette Meldungen aus
         :param replace_io_file: Replace IO Konfiguration aus Datei laden
-        :param shared_procimg: Share process image with other processes (insecure for automation, little slower)
+        :param shared_procimg: Share process image with other processes, this
+                               could be insecure for automation
         :param direct_output: Deprecated, use shared_procimg
         """
         check_ip = compile(
-            r"^(25[0-5]|(2[0-4]|[01]?\d|)\d)(\.(25[0-5]|(2[0-4]|[01]?\d|)\d)){3}$"
+            r"^(25[0-5]|(2[0-4]|[01]?\d|)\d)"
+            r"(\.(25[0-5]|(2[0-4]|[01]?\d|)\d)){3}$"
         )
 
         # Adresse verarbeiten
@@ -1054,9 +1056,6 @@ def run_net_plc(
     :param cycletime: Cycle time in milliseconds
     :param replace_io_file: Load replace IO configuration from file
     :param debug: Print all warnings and detailed error messages
-    :param procimg: Use different process image
-    :param configrsc: Use different piCtory configuration
-
     :return: None or the return value of the cycle function
     """
     rpi = RevPiNetIO(

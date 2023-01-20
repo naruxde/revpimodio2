@@ -114,5 +114,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-/test/
 /make.conf
+/test_local/

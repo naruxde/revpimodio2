@@ -69,7 +69,8 @@ class RevPiModIO(object):
         :param simulator: Laedt das Modul als Simulator und vertauscht IOs
         :param debug: Gibt alle Warnungen inkl. Zyklusprobleme aus
         :param replace_io_file: Replace IO Konfiguration aus Datei laden
-        :param shared_procimg: Share process image with other processes (insecure for automation, little slower)
+        :param shared_procimg: Share process image with other processes, this
+                               could be insecure for automation
         :param direct_output: Deprecated, use shared_procimg
         """
         # Parameterprüfung
@@ -290,7 +291,9 @@ class RevPiModIO(object):
             elif device["type"] == DeviceType.LEFT_RIGHT:
                 # IOs
                 pt = int(device["productType"])
-                if pt == ProductType.DIO or pt == ProductType.DI or pt == ProductType.DO:
+                if pt == ProductType.DIO \
+                        or pt == ProductType.DI \
+                        or pt == ProductType.DO:
                     # DIO / DI / DO
                     dev_new = devicemodule.DioModule(
                         self, device, simulator=self._simulator
@@ -1454,7 +1457,6 @@ def run_plc(
     :param debug: Print all warnings and detailed error messages
     :param procimg: Use different process image
     :param configrsc: Use different piCtory configuration
-
     :return: None or the return value of the cycle function
     """
     rpi = RevPiModIO(

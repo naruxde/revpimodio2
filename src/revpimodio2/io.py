@@ -176,7 +176,8 @@ class IOList(object):
                 if type(oldio) == StructIO:
                     # Hier gibt es schon einen neuen IO
                     if oldio._bitshift:
-                        if io._bitshift == oldio._bitshift and io._slc_address == oldio._slc_address:
+                        if io._bitshift == oldio._bitshift \
+                                and io._slc_address == oldio._slc_address:
                             raise MemoryError(
                                 "bit {0} already assigned to '{1}'".format(
                                     io._bitaddress, oldio._name
@@ -311,7 +312,8 @@ class IOBase(object):
 
         # Bitadressen auf Bytes aufbrechen und umrechnen
         self._bitaddress = -1 if valuelist[7] == "" else int(valuelist[7]) % 8
-        self._bitshift = None if self._bitaddress == -1 else 1 << self._bitaddress
+        self._bitshift = None if self._bitaddress == -1 \
+            else 1 << self._bitaddress
 
         # Längenberechnung
         self._bitlength = int(valuelist[2])
