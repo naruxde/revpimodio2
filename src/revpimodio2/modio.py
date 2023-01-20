@@ -5,6 +5,7 @@ __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv3"
 
 import warnings
+from collections import namedtuple
 from configparser import ConfigParser
 from json import load as jload
 from multiprocessing import cpu_count
@@ -24,7 +25,10 @@ from ._internal import acheck, RISING, FALLING, BOTH
 from .errors import DeviceNotFoundError
 from .io import IOList
 from .io import StructIO
-from .pictory import ProductType
+from .pictory import DeviceType, ProductType
+
+DevSelect = namedtuple("DevSelect", ["type", "key", "values"])
+"""Leave type, key empty for auto search name and position depending on type in values."""
 
 
 class RevPiModIO(object):
@@ -40,7 +44,7 @@ class RevPiModIO(object):
     """
 
     __slots__ = "__cleanupfunc", \
-        "_autorefresh", "_buffedwrite", "_configrsc", "_debug", \
+        "_autorefresh", "_buffedwrite", "_configrsc", "_debug", "_devselect", \
         "_exit", "_exit_level", "_imgwriter", "_ioerror", \
         "_length", "_looprunning", "_lst_devselect", "_lst_refresh", \
         "_lst_shared", \
@@ -100,13 +104,13 @@ class RevPiModIO(object):
         self.__cleanupfunc = None
         self._buffedwrite = False
         self._debug = 1
+        self._devselect = DevSelect("", "", ())
         self._exit = Event()
         self._exit_level = 0
         self._imgwriter = None
         self._ioerror = 0
         self._length = 0
         self._looprunning = False
-        self._lst_devselect = []
         self._lst_refresh = []
         self._lst_shared = []
         self._maxioerrors = 0
@@ -206,27 +210,24 @@ class RevPiModIO(object):
         # App Klasse instantiieren
         self.app = appmodule.App(jconfigrsc["App"])
 
-        # Devicefilter anwenden
-        if len(self._lst_devselect) > 0:
-            lst_found = []
-
-            if type(self) == RevPiModIODriver \
-                    or type(self) == RevPiNetIODriver:
-                _searchtype = "VIRTUAL"
-            else:
-                _searchtype = None
-
-            # Angegebene Devices suchen
+        # Apply device filter
+        if self._devselect.values:
+            lst_devices = []
             for dev in jconfigrsc["Devices"]:
-                if _searchtype is None or dev["type"] == _searchtype:
-                    if dev["name"] in self._lst_devselect:
-                        lst_found.append(dev)
-                    elif dev["position"].isdigit() \
-                            and int(dev["position"]) in self._lst_devselect:
-                        lst_found.append(dev)
+                if self._devselect.type and self._devselect.type != dev["type"]:
+                    continue
+                if self._devselect.key:
+                    if str(dev[self._devselect.key]) not in self._devselect.values:
+                        # The list is always filled with <class 'str'>
+                        continue
+                else:
+                    # Auto search depending of value item type
+                    if dev["name"] not in self._devselect.values \
+                            and not (dev["position"].isdigit()
+                            and int(dev["position"]) in self._devselect.values):
+                        continue
 
-            # Devices Filter übernehmen
-            lst_devices = lst_found
+                lst_devices.append(dev)
         else:
             # Devices aus JSON übernehmen
             lst_devices = jconfigrsc["Devices"]
@@ -245,7 +246,7 @@ class RevPiModIO(object):
                 while device["position"] in self.device:
                     device["position"] += 1
 
-            if device["type"] == "BASE":
+            if device["type"] == DeviceType.BASE:
                 # Basedevices
                 pt = int(device["productType"])
                 if pt == ProductType.REVPI_CORE:
@@ -277,7 +278,7 @@ class RevPiModIO(object):
                     dev_new = devicemodule.Base(
                         self, device, simulator=self._simulator
                     )
-            elif device["type"] == "LEFT_RIGHT":
+            elif device["type"] == DeviceType.LEFT_RIGHT:
                 # IOs
                 pt = int(device["productType"])
                 if pt == ProductType.DIO or pt == ProductType.DI or pt == ProductType.DO:
@@ -290,17 +291,17 @@ class RevPiModIO(object):
                     dev_new = devicemodule.Device(
                         self, device, simulator=self._simulator
                     )
-            elif device["type"] == "VIRTUAL":
+            elif device["type"] == DeviceType.VIRTUAL:
                 # Virtuals
                 dev_new = devicemodule.Virtual(
                     self, device, simulator=self._simulator
                 )
-            elif device["type"] == "EDGE":
+            elif device["type"] == DeviceType.EDGE:
                 # Gateways
                 dev_new = devicemodule.Gateway(
                     self, device, simulator=self._simulator
                 )
-            elif device["type"] == "RIGHT":
+            elif device["type"] == DeviceType.RIGHT:
                 # Connectdevice
                 dev_new = None
             else:
@@ -466,7 +467,7 @@ class RevPiModIO(object):
                 self.io[parentio].replace_io(name=io, **dict_replace)
             except Exception as e:
                 # NOTE: Bei Selected/Driver kann nicht geprüft werden
-                if len(self._lst_devselect) == 0:
+                if len(self._devselect.values) == 0:
                     raise RuntimeError(
                         "replace_io_file: can not replace '{0}' with '{1}' "
                         "| RevPiModIO message: {2}".format(parentio, io, e)
@@ -1352,19 +1353,27 @@ class RevPiModIOSelected(RevPiModIO):
             simulator, debug, replace_io_file, shared_procimg, direct_output
         )
 
-        # Device liste erstellen
-        if type(deviceselection) == list:
-            for dev in deviceselection:
-                self._lst_devselect.append(dev)
-        else:
-            self._lst_devselect.append(deviceselection)
+        if type(deviceselection) is not DevSelect:
+            # Convert to tuple
+            if type(deviceselection) in (int, str):
+                deviceselection = (deviceselection,)
 
-        for vdev in self._lst_devselect:
-            if type(vdev) != int and type(vdev) != str:
-                raise ValueError(
-                    "need device position as <class 'int'> or device name as "
-                    "<class 'str'>"
-                )
+            # Check supported types
+            for dev in deviceselection:
+                if type(dev) not in (int, str):
+                    raise ValueError(
+                        "need device position as <class 'int'> or "
+                        "device name as <class 'str'>"
+                    )
+
+            # Automatic search for name and position depends on type int / str
+            self._devselect = DevSelect(
+                "VIRTUAL" if type(self) is RevPiModIODriver else "", "",
+                tuple(deviceselection),
+            )
+
+        else:
+            self._devselect = deviceselection
 
         self._configure(self.get_jconfigrsc())
 
@@ -1377,7 +1386,8 @@ class RevPiModIOSelected(RevPiModIO):
                 raise DeviceNotFoundError(
                     "could not find any given devices in config"
                 )
-        elif len(self.device) != len(self._lst_devselect):
+        elif not self._devselect.key \
+                and len(self.device) != len(self._devselect.values):
             if type(self) == RevPiModIODriver:
                 raise DeviceNotFoundError(
                     "could not find all given VIRTUAL devices in config"
@@ -1454,5 +1464,3 @@ def run_plc(
     )
     rpi.handlesignalend()
     return rpi.cycleloop(func, cycletime)
-
-from .netio import RevPiNetIODriver

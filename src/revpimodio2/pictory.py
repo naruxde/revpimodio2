@@ -45,6 +45,15 @@ class ProductType:
     REVPI_FLAT = 135
 
 
+class DeviceType:
+    """Module key "type" in piCtory file."""
+    BASE = "BASE"  # Core devices
+    EDGE = "EDGE"  # Gateways
+    LEFT_RIGHT = "LEFT_RIGHT"  # IOs
+    RIGHT = "RIGHT"  # Connect device
+    VIRTUAL = "VIRTUAL"  # All virtual devices
+
+
 class AIO:
     """Memory value mappings for RevPi AIO 1.0 (RevPiAIO_20170301_1_0.rap)."""
     OUT_RANGE_OFF = 0  # Off

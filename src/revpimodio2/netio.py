@@ -14,8 +14,7 @@ from threading import Event, Lock, Thread
 
 from .device import Device
 from .errors import DeviceNotFoundError
-from .modio import RevPiModIO as _RevPiModIO
-
+from .modio import DevSelect, RevPiModIO as _RevPiModIO
 # Synchronisierungsbefehl
 _syssync = b'\x01\x06\x16\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
 # Disconnectbefehl
@@ -962,19 +961,27 @@ class RevPiNetIOSelected(RevPiNetIO):
             replace_io_file, shared_procimg, direct_output
         )
 
-        # Device liste erstellen
-        if type(deviceselection) == list:
-            for dev in deviceselection:
-                self._lst_devselect.append(dev)
-        else:
-            self._lst_devselect.append(deviceselection)
+        if type(deviceselection) is not DevSelect:
+            # Convert to tuple
+            if type(deviceselection) in (int, str):
+                deviceselection = (deviceselection,)
 
-        for vdev in self._lst_devselect:
-            if type(vdev) != int and type(vdev) != str:
-                raise ValueError(
-                    "need device position as <class 'int'> or device name as "
-                    "<class 'str'>"
-                )
+            # Check supported types
+            for dev in deviceselection:
+                if type(dev) not in (int, str):
+                    raise ValueError(
+                        "need device position as <class 'int'> or "
+                        "device name as <class 'str'>"
+                    )
+
+            # Automatic search for name and position depends on type int / str
+            self._devselect = DevSelect(
+                "VIRTUAL" if type(self) is RevPiNetIODriver else "", "",
+                tuple(deviceselection),
+            )
+
+        else:
+            self._devselect = deviceselection
 
         self._configure(self.get_jconfigrsc())
 
@@ -987,7 +994,8 @@ class RevPiNetIOSelected(RevPiNetIO):
                 raise DeviceNotFoundError(
                     "could not find any given devices in config"
                 )
-        elif len(self.device) != len(self._lst_devselect):
+        elif not self._devselect.key \
+                and len(self.device) != len(self._devselect.values):
             if type(self) == RevPiNetIODriver:
                 raise DeviceNotFoundError(
                     "could not find all given VIRTUAL devices in config"
