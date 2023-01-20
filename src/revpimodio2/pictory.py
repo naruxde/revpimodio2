@@ -47,6 +47,7 @@ class ProductType:
 
 class DeviceType:
     """Module key "type" in piCtory file."""
+    IGNORED = ""
     BASE = "BASE"  # Core devices
     EDGE = "EDGE"  # Gateways
     LEFT_RIGHT = "LEFT_RIGHT"  # IOs

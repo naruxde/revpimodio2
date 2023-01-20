@@ -15,6 +15,8 @@ from threading import Event, Lock, Thread
 from .device import Device
 from .errors import DeviceNotFoundError
 from .modio import DevSelect, RevPiModIO as _RevPiModIO
+from .pictory import DeviceType
+
 # Synchronisierungsbefehl
 _syssync = b'\x01\x06\x16\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
 # Disconnectbefehl
@@ -934,7 +936,7 @@ class RevPiNetIOSelected(RevPiNetIO):
     Klasse fuer die Verwaltung einzelner Devices aus piCtory.
 
     Diese Klasse uebernimmt nur angegebene Devices der piCtory Konfiguration
-    und bilded sie inkl. IOs ab. Sie uebernimmt die exklusive Verwaltung des
+    und bildet sie inkl. IOs ab. Sie uebernimmt die exklusive Verwaltung des
     Adressbereichs im Prozessabbild an dem sich die angegebenen Devices
     befinden und stellt sicher, dass die Daten synchron sind.
     """
@@ -963,22 +965,11 @@ class RevPiNetIOSelected(RevPiNetIO):
 
         if type(deviceselection) is not DevSelect:
             # Convert to tuple
-            if type(deviceselection) in (int, str):
+            if type(deviceselection) not in (list, tuple):
                 deviceselection = (deviceselection,)
 
-            # Check supported types
-            for dev in deviceselection:
-                if type(dev) not in (int, str):
-                    raise ValueError(
-                        "need device position as <class 'int'> or "
-                        "device name as <class 'str'>"
-                    )
-
             # Automatic search for name and position depends on type int / str
-            self._devselect = DevSelect(
-                "VIRTUAL" if type(self) is RevPiNetIODriver else "", "",
-                tuple(deviceselection),
-            )
+            self._devselect = DevSelect(DeviceType.IGNORED, "", deviceselection)
 
         else:
             self._devselect = deviceselection
@@ -986,23 +977,25 @@ class RevPiNetIOSelected(RevPiNetIO):
         self._configure(self.get_jconfigrsc())
 
         if len(self.device) == 0:
-            if type(self) == RevPiNetIODriver:
+            if self._devselect.type:
                 raise DeviceNotFoundError(
-                    "could not find any given VIRTUAL devices in config"
+                    "could not find ANY given {0} devices in config"
+                    "".format(self._devselect.type)
                 )
             else:
                 raise DeviceNotFoundError(
-                    "could not find any given devices in config"
+                    "could not find ANY given devices in config"
                 )
-        elif not self._devselect.key \
+        elif not self._devselect.other_device_key \
                 and len(self.device) != len(self._devselect.values):
-            if type(self) == RevPiNetIODriver:
+            if self._devselect.type:
                 raise DeviceNotFoundError(
-                    "could not find all given VIRTUAL devices in config"
+                    "could not find ALL given {0} devices in config"
+                    "".format(self._devselect.type)
                 )
             else:
                 raise DeviceNotFoundError(
-                    "could not find all given devices in config"
+                    "could not find ALL given devices in config"
                 )
 
 
@@ -1033,7 +1026,44 @@ class RevPiNetIODriver(RevPiNetIOSelected):
         :ref: :func:`RevPiModIO.__init__()`
         """
         # Parent mit monitoring=False und simulator=True laden
+        if type(virtdev) not in (list, tuple):
+            virtdev = (virtdev,)
+        dev_select = DevSelect(DeviceType.VIRTUAL, "", virtdev)
         super().__init__(
-            address, virtdev, autorefresh, False, syncoutputs, True, debug,
+            address, dev_select, autorefresh, False, syncoutputs, True, debug,
             replace_io_file, shared_procimg, direct_output
         )
+
+
+def run_net_plc(
+        address, func, cycletime=50, replace_io_file=None, debug=True):
+    """
+    Run Revoluton Pi as real plc with cycle loop and exclusive IO access.
+
+    This function is just a shortcut to run the module in cycle loop mode and
+    handle the program exit signal. You will access the .io, .core, .device
+    via the cycletools in your cycle function.
+
+    Shortcut for this source code:
+        rpi = RevPiModIO(autorefresh=True, replace_io_file=..., debug=...)
+        rpi.handlesignalend()
+        return rpi.cycleloop(func, cycletime)
+
+    :param address: IP-Adresse <class 'str'> / (IP, Port) <class 'tuple'>
+    :param func: Function to run every set milliseconds
+    :param cycletime: Cycle time in milliseconds
+    :param replace_io_file: Load replace IO configuration from file
+    :param debug: Print all warnings and detailed error messages
+    :param procimg: Use different process image
+    :param configrsc: Use different piCtory configuration
+
+    :return: None or the return value of the cycle function
+    """
+    rpi = RevPiNetIO(
+        address=address,
+        autorefresh=True,
+        replace_io_file=replace_io_file,
+        debug=debug,
+    )
+    rpi.handlesignalend()
+    return rpi.cycleloop(func, cycletime)

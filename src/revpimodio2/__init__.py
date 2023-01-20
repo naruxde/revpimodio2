@@ -15,7 +15,7 @@ fuehrt das Modul bei Datenaenderung aus.
 __all__ = [
     "IOEvent",
     "RevPiModIO", "RevPiModIODriver", "RevPiModIOSelected", "run_plc",
-    "RevPiNetIO", "RevPiNetIODriver", "RevPiNetIOSelected",
+    "RevPiNetIO", "RevPiNetIODriver", "RevPiNetIOSelected", "run_net_plc",
     "Cycletools", "EventCallback",
     "ProductType", "AIO", "COMPACT", "DI", "DO", "DIO", "FLAT", "MIO",
 ]
@@ -29,5 +29,5 @@ from ._internal import *
 from .helper import Cycletools, EventCallback
 from .io import IOEvent
 from .modio import RevPiModIO, RevPiModIODriver, RevPiModIOSelected, run_plc
-from .netio import RevPiNetIO, RevPiNetIODriver, RevPiNetIOSelected
+from .netio import RevPiNetIO, RevPiNetIODriver, RevPiNetIOSelected, run_net_plc
 from .pictory import ProductType, AIO, COMPACT, DI, DO, DIO, FLAT, MIO

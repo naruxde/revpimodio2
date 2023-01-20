@@ -27,7 +27,7 @@ from .io import IOList
 from .io import StructIO
 from .pictory import DeviceType, ProductType
 
-DevSelect = namedtuple("DevSelect", ["type", "key", "values"])
+DevSelect = namedtuple("DevSelect", ["type", "other_device_key", "values"])
 """Leave type, key empty for auto search name and position depending on type in values."""
 
 
@@ -104,7 +104,7 @@ class RevPiModIO(object):
         self.__cleanupfunc = None
         self._buffedwrite = False
         self._debug = 1
-        self._devselect = DevSelect("", "", ())
+        self._devselect = DevSelect(DeviceType.IGNORED, "", ())
         self._exit = Event()
         self._exit_level = 0
         self._imgwriter = None
@@ -212,19 +212,28 @@ class RevPiModIO(object):
 
         # Apply device filter
         if self._devselect.values:
+
+            # Check for supported types in values
+            for dev in self._devselect.values:
+                if type(dev) not in (int, str):
+                    raise ValueError(
+                        "need device position as <class 'int'> or "
+                        "device name as <class 'str'>"
+                    )
+
             lst_devices = []
             for dev in jconfigrsc["Devices"]:
                 if self._devselect.type and self._devselect.type != dev["type"]:
                     continue
-                if self._devselect.key:
-                    if str(dev[self._devselect.key]) not in self._devselect.values:
+                if self._devselect.other_device_key:
+                    key_value = str(dev[self._devselect.other_device_key])
+                    if key_value not in self._devselect.values:
                         # The list is always filled with <class 'str'>
                         continue
                 else:
                     # Auto search depending of value item type
-                    if dev["name"] not in self._devselect.values \
-                            and not (dev["position"].isdigit()
-                            and int(dev["position"]) in self._devselect.values):
+                    if not (dev["name"] in self._devselect.values
+                            or int(dev["position"]) in self._devselect.values):
                         continue
 
                 lst_devices.append(dev)
@@ -1326,7 +1335,7 @@ class RevPiModIOSelected(RevPiModIO):
     Klasse fuer die Verwaltung einzelner Devices aus piCtory.
 
     Diese Klasse uebernimmt nur angegebene Devices der piCtory Konfiguration
-    und laedt sie inkl. IOs. Sie uebernimmt die exklusive Verwaltung des
+    und bildet sie inkl. IOs ab. Sie uebernimmt die exklusive Verwaltung des
     Adressbereichs im Prozessabbild an dem sich die angegebenen Devices
     befinden und stellt sicher, dass die Daten synchron sind.
     """
@@ -1355,22 +1364,11 @@ class RevPiModIOSelected(RevPiModIO):
 
         if type(deviceselection) is not DevSelect:
             # Convert to tuple
-            if type(deviceselection) in (int, str):
+            if type(deviceselection) not in (list, tuple):
                 deviceselection = (deviceselection,)
 
-            # Check supported types
-            for dev in deviceselection:
-                if type(dev) not in (int, str):
-                    raise ValueError(
-                        "need device position as <class 'int'> or "
-                        "device name as <class 'str'>"
-                    )
-
             # Automatic search for name and position depends on type int / str
-            self._devselect = DevSelect(
-                "VIRTUAL" if type(self) is RevPiModIODriver else "", "",
-                tuple(deviceselection),
-            )
+            self._devselect = DevSelect(DeviceType.IGNORED, "", deviceselection)
 
         else:
             self._devselect = deviceselection
@@ -1378,23 +1376,25 @@ class RevPiModIOSelected(RevPiModIO):
         self._configure(self.get_jconfigrsc())
 
         if len(self.device) == 0:
-            if type(self) == RevPiModIODriver:
+            if self._devselect.type:
                 raise DeviceNotFoundError(
-                    "could not find any given VIRTUAL devices in config"
+                    "could not find ANY given {0} devices in config"
+                    "".format(self._devselect.type)
                 )
             else:
                 raise DeviceNotFoundError(
-                    "could not find any given devices in config"
+                    "could not find ANY given devices in config"
                 )
-        elif not self._devselect.key \
+        elif not self._devselect.other_device_key \
                 and len(self.device) != len(self._devselect.values):
-            if type(self) == RevPiModIODriver:
+            if self._devselect.type:
                 raise DeviceNotFoundError(
-                    "could not find all given VIRTUAL devices in config"
+                    "could not find ALL given {0} devices in config"
+                    "".format(self._devselect.type)
                 )
             else:
                 raise DeviceNotFoundError(
-                    "could not find all given devices in config"
+                    "could not find ALL given devices in config"
                 )
 
 
@@ -1422,11 +1422,13 @@ class RevPiModIODriver(RevPiModIOSelected):
 
         :param virtdev: Virtuelles Device oder mehrere als <class 'list'>
         :ref: :func:`RevPiModIO.__init__()`
-
         """
         # Parent mit monitoring=False und simulator=True laden
+        if type(virtdev) not in (list, tuple):
+            virtdev = (virtdev,)
+        dev_select = DevSelect(DeviceType.VIRTUAL, "", virtdev)
         super().__init__(
-            virtdev, autorefresh, False, syncoutputs, procimg, configrsc,
+            dev_select, autorefresh, False, syncoutputs, procimg, configrsc,
             True, debug, replace_io_file, shared_procimg, direct_output
         )
 
