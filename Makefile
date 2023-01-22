@@ -28,7 +28,7 @@ build:
 	$(PYTHON) -m setup sdist
 	$(PYTHON) -m setup bdist_wheel
 
-install:
+install: build
 	$(PYTHON) -m pip install dist/$(PACKAGE)-*.whl
 
 .PHONY: build install

@@ -5,7 +5,7 @@ Stellt alle Klassen fuer den RevolutionPi zur Verfuegung.
 Webpage: https://revpimodio.org/
 
 Stellt Klassen fuer die einfache Verwendung des Revolution Pis der
-Kunbus GmbH (https://revolution.kunbus.de/) zur Verfuegung. Alle I/Os werden
+KUNBUS GmbH (https://revolution.kunbus.de/) zur Verfuegung. Alle I/Os werden
 aus der piCtory Konfiguration eingelesen und mit deren Namen direkt zugreifbar
 gemacht. Fuer Gateways sind eigene IOs ueber mehrere Bytes konfigurierbar
 Mit den definierten Namen greift man direkt auf die gewuenschten Daten zu.
@@ -22,8 +22,8 @@ __all__ = [
 __author__ = "Sven Sager <akira@revpimodio.org>"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv3"
-__name__ = "revpimodio2"
-__version__ = "2.6.0rc2"
+__package__ = "revpimodio2"
+__version__ = "2.6.0rc3"
 
 from ._internal import *
 from .helper import Cycletools, EventCallback

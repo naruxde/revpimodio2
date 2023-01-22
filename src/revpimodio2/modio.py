@@ -250,7 +250,7 @@ class RevPiModIO(object):
         err_names_check = {}
         for device in sorted(lst_devices, key=lambda x: x["offset"]):
 
-            # VDev alter piCtory Versionen auf Kunbus-Standard ändern
+            # VDev alter piCtory Versionen auf KUNBUS-Standard ändern
             if device["position"] == "adap.":
                 device["position"] = 64
                 while device["position"] in self.device:
