@@ -92,4 +92,4 @@ functions of the module give the developer many tools along the way.
 
 More examples: (https://revpimodio.org/en/blogs/examples/)
 
-Provided under the [LGPLv3](LICENSE.txt) license
+Provided under the [LGPLv2](LICENSE.txt) license

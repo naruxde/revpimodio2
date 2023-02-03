@@ -2,7 +2,7 @@
 """Pictory aliases for IO values."""
 __author__ = "Théo Rozier"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
-__license__ = "LGPLv3"
+__license__ = "LGPLv2"
 
 
 # RAP files are located under "/var/www/pictory/resources/data/rap/".

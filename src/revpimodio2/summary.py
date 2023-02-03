@@ -2,10 +2,10 @@
 """Bildet die Summary-Sektion von piCtory ab."""
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
-__license__ = "LGPLv3"
+__license__ = "LGPLv2"
 
 
-class Summary(object):
+class Summary:
     """Bildet die Summary-Sektion der config.rsc ab."""
 
     __slots__ = "inptotal", "outtotal"
@@ -16,5 +16,5 @@ class Summary(object):
 
         :param summary: piCtory Summaryinformationen
         """
-        self.inptotal = summary["inpTotal"]
-        self.outtotal = summary["outTotal"]
+        self.inptotal = summary.get("inpTotal", -1)
+        self.outtotal = summary.get("outTotal", -1)

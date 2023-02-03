@@ -2,7 +2,7 @@
 """Internal functions and values for this package."""
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
-__license__ = "GPLv3"
+__license__ = "LGPLv2"
 
 # Global package values
 OFF = 0

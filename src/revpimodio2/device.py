@@ -2,7 +2,7 @@
 """Modul fuer die Verwaltung der Devices."""
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
-__license__ = "LGPLv3"
+__license__ = "LGPLv2"
 
 import warnings
 from threading import Event, Lock, Thread

@@ -2,7 +2,7 @@
 """RevPiModIO Hauptklasse fuer piControl0 Zugriff."""
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
-__license__ = "LGPLv3"
+__license__ = "LGPLv2"
 
 import warnings
 from collections import namedtuple

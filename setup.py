@@ -3,7 +3,7 @@
 """Setup-script for revpimodio2."""
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
-__license__ = "LGPLv3"
+__license__ = "LGPLv2"
 
 from setuptools import setup, find_namespace_packages
 
@@ -13,7 +13,7 @@ with open("README.md") as fh:
 
 setup(
     name="revpimodio2",
-    version="2.6.0rc3",
+    version="2.6.0rc4",
 
     packages=find_namespace_packages("src"),
     package_dir={'': 'src'},
@@ -26,7 +26,7 @@ setup(
     platforms=["all"],
 
     url="https://revpimodio.org/",
-    license="LGPLv3",
+    license="LGPLv2",
     author="Sven Sager",
     author_email="akira@narux.de",
     maintainer="Sven Sager",
@@ -40,7 +40,7 @@ setup(
         "Environment :: Console",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: "
-        "GNU Lesser General Public License v3 (LGPLv3)",
+        "GNU Lesser General Public License v2 (LGPLv2)",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX",
