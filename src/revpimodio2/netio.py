@@ -62,7 +62,7 @@ class NetFH(Thread):
         "__int_buff", "__dictdirty", "__flusherr", "__replace_ios_h", \
         "__pictory_h", "__position", "__sockerr", "__sockend", \
         "__socklock", "__timeout", "__waitsync", "_address", \
-        "_slavesock", "daemon"
+        "_serversock", "daemon"
 
     def __init__(self, address: tuple, check_replace_ios: bool, timeout=500):
         """
@@ -91,7 +91,7 @@ class NetFH(Thread):
         self.__timeout = None
         self.__waitsync = None
         self._address = address
-        self._slavesock = None  # type: socket.socket
+        self._serversock = None  # type: socket.socket
 
         # Parameterprüfung
         if not isinstance(address, tuple):
@@ -105,8 +105,8 @@ class NetFH(Thread):
         self.__set_systimeout(timeout)
         self._connect()
 
-        if self._slavesock is None:
-            raise FileNotFoundError("can not connect to revpi slave")
+        if self._serversock is None:
+            raise FileNotFoundError("can not connect to revpi server")
 
         # NetFH konfigurieren
         self.__position = 0
@@ -129,10 +129,10 @@ class NetFH(Thread):
             # Alles beenden, wenn nicht erlaubt
             self.__sockend.set()
             self.__sockerr.set()
-            self._slavesock.close()
+            self._serversock.close()
             raise AclException(
                 "write access to the process image is not permitted - use "
-                "monitoring=True or check aclplcslave.conf on RevPi and "
+                "monitoring=True or check aclplcserver.conf on RevPi and "
                 "reload revpipyload!"
             )
 
@@ -146,8 +146,8 @@ class NetFH(Thread):
             self.__timeout = value / 1000
 
             # Timeouts in Socket setzen
-            if self._slavesock is not None:
-                self._slavesock.settimeout(self.__timeout)
+            if self._serversock is not None:
+                self._serversock.settimeout(self.__timeout)
 
             # 45 Prozent vom Timeout für Synctimer verwenden
             self.__waitsync = self.__timeout / 100 * 45
@@ -156,7 +156,7 @@ class NetFH(Thread):
             raise ValueError("value must between 10 and 60000 milliseconds")
 
     def _connect(self) -> None:
-        """Stellt die Verbindung zu einem RevPiSlave her."""
+        """Stellt die Verbindung zu einem RevPiPlcServer her."""
         # Neuen Socket aufbauen
         so = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -205,10 +205,10 @@ class NetFH(Thread):
         else:
             # Alten Socket trennen
             with self.__socklock:
-                if self._slavesock is not None:
-                    self._slavesock.close()
+                if self._serversock is not None:
+                    self._serversock.close()
 
-                self._slavesock = so
+                self._serversock = so
                 self.__sockerr.clear()
 
             # Timeout setzen
@@ -241,7 +241,7 @@ class NetFH(Thread):
             send_len = len(send_bytes)
             while counter < send_len:
                 # Send loop to trigger timeout of socket on each send
-                sent = self._slavesock.send(send_bytes[counter:])
+                sent = self._serversock.send(send_bytes[counter:])
                 if sent == 0:
                     self.__sockerr.set()
                     raise IOError("lost network connection while send")
@@ -249,7 +249,7 @@ class NetFH(Thread):
 
             self.__buff_recv.clear()
             while recv_len > 0:
-                count = self._slavesock.recv_into(
+                count = self._serversock.recv_into(
                     self.__buff_block, min(recv_len, self.__buff_size)
                 )
                 if count == 0:
@@ -270,7 +270,7 @@ class NetFH(Thread):
 
     def clear_dirtybytes(self, position=None) -> None:
         """
-        Entfernt die konfigurierten Dirtybytes vom RevPi Slave.
+        Entfernt die konfigurierten Dirtybytes vom RevPi Server.
 
         Diese Funktion wirft keine Exception bei einem uebertragungsfehler,
         veranlasst aber eine Neuverbindung.
@@ -319,17 +319,17 @@ class NetFH(Thread):
         self.__sockerr.set()
 
         # Vom Socket sauber trennen
-        if self._slavesock is not None:
+        if self._serversock is not None:
             try:
                 self.__socklock.acquire()
-                self._slavesock.sendall(_sysexit)
-                self._slavesock.shutdown(socket.SHUT_WR)
+                self._serversock.sendall(_sysexit)
+                self._serversock.shutdown(socket.SHUT_WR)
             except Exception:
                 pass
             finally:
                 self.__socklock.release()
 
-            self._slavesock.close()
+            self._serversock.close()
 
     def flush(self) -> None:
         """Schreibpuffer senden."""
@@ -538,12 +538,12 @@ class NetFH(Thread):
             # Kein Fehler aufgetreten, sync durchführen wenn socket frei
             if self.__socklock.acquire(blocking=False):
                 try:
-                    self._slavesock.sendall(_syssync)
+                    self._serversock.sendall(_syssync)
 
                     self.__buff_recv.clear()
                     recv_lenght = 2
                     while recv_lenght > 0:
-                        count = self._slavesock.recv_into(
+                        count = self._serversock.recv_into(
                             self.__buff_block, recv_lenght
                         )
                         if count == 0:
@@ -857,7 +857,7 @@ class RevPiNetIO(_RevPiModIO):
 
     def net_cleardefaultvalues(self, device=None) -> None:
         """
-        Loescht Defaultwerte vom PLC Slave.
+        Loescht Defaultwerte vom PLC Server.
 
         :param device: nur auf einzelnes Device anwenden, sonst auf Alle
         """
@@ -879,7 +879,7 @@ class RevPiNetIO(_RevPiModIO):
 
     def net_setdefaultvalues(self, device=None) -> None:
         """
-        Konfiguriert den PLC Slave mit den piCtory Defaultwerten.
+        Konfiguriert den PLC Server mit den piCtory Defaultwerten.
 
         Diese Werte werden auf dem RevPi gesetzt, wenn die Verbindung
         unerwartet (Netzwerkfehler) unterbrochen wird.
@@ -924,7 +924,7 @@ class RevPiNetIO(_RevPiModIO):
                     dirtybytes += \
                         int_byte.to_bytes(length=1, byteorder="little")
 
-            # Dirtybytes an PLC Slave senden
+            # Dirtybytes an PLC Server senden
             self._myfh.set_dirtybytes(
                 dev._offset + dev._slc_out.start, dirtybytes
             )
