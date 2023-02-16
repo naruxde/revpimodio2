@@ -7,19 +7,21 @@ __license__ = "LGPLv2"
 
 from setuptools import setup, find_namespace_packages
 
+from src.revpimodio2.__about__ import __version__
+
 with open("README.md") as fh:
     # Load long description from readme file
     long_description = fh.read()
 
 setup(
     name="revpimodio2",
-    version="2.6.0rc4",
+    version=__version__,
 
     packages=find_namespace_packages("src"),
     package_dir={'': 'src'},
     include_package_data=True,
 
-    python_requires="~=3.2",
+    python_requires=">= 3.2",
     install_requires=[],
     entry_points={},
 
