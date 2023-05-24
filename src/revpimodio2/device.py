@@ -1049,6 +1049,287 @@ class Connect(Core):
     wdautotoggle = property(_get_wdtoggle, _set_wdtoggle)
 
 
+class Connect4(ModularBase):
+    """Klasse fuer den RevPi Connect 4.
+
+    Stellt Funktionen fuer die LEDs und den Status zur Verfuegung.
+    """
+
+    __slots__ = (
+        "_slc_output",
+        "a1red", "a1green", "a1blue",
+        "a2red", "a2green", "a2blue",
+        "a3red", "a3green", "a3blue",
+        "a4red", "a4green", "a4blue",
+        "a5red", "a5green", "a5blue",
+        "x2in", "x2out"
+    )
+
+    def __setattr__(self, key, value):
+        """Verhindert Ueberschreibung der speziellen IOs."""
+        if hasattr(self, key) and key in (
+                "a1red", "a1green", "a1blue",
+                "a2red", "a2green", "a2blue",
+                "a3red", "a3green", "a3blue",
+                "a4red", "a4green", "a4blue",
+                "a5red", "a5green", "a5blue",
+                "x2in", "x2out"):
+            raise AttributeError(
+                "direct assignment is not supported - use .value Attribute"
+            )
+        super(Connect4, self).__setattr__(key, value)
+
+    def _devconfigure(self) -> None:
+        """Connect4-Klasse vorbereiten."""
+        super()._devconfigure()
+
+        self._slc_cycle = slice(1, 2)
+        self._slc_errorcnt = slice(2, 4)
+        self._slc_temperature = slice(4, 5)
+        self._slc_frequency = slice(5, 6)
+        self._slc_output = slice(6, 7)
+        self._slc_errorlimit1 = slice(7, 9)
+        self._slc_errorlimit2 = slice(9, 11)
+        self._slc_led = slice(11, 13)
+
+        # Exportflags prüfen (Byte oder Bit)
+        lst_myios = self._modio.io[self._slc_devoff]
+        lst_led = lst_myios[self._slc_led.start]
+        lst_output = lst_myios[self._slc_output.start]
+
+        if len(lst_led) == 16:
+            exp_a1red = lst_led[0].export
+            exp_a1green = lst_led[1].export
+            exp_a1blue = lst_led[2].export
+            exp_a2red = lst_led[3].export
+            exp_a2green = lst_led[4].export
+            exp_a2blue = lst_led[5].export
+            exp_a3red = lst_led[6].export
+            exp_a3green = lst_led[7].export
+            exp_a3blue = lst_led[8].export
+            exp_a4red = lst_led[9].export
+            exp_a4green = lst_led[10].export
+            exp_a4blue = lst_led[11].export
+            exp_a5red = lst_led[12].export
+            exp_a5green = lst_led[13].export
+            exp_a5blue = lst_led[14].export
+        else:
+            exp_a1red = lst_led[0].export
+            exp_a1green = exp_a1red
+            exp_a1blue = exp_a1red
+            exp_a2red = exp_a1red
+            exp_a2green = exp_a1red
+            exp_a2blue = exp_a1red
+            exp_a3red = exp_a1red
+            exp_a3green = exp_a1red
+            exp_a3blue = exp_a1red
+            exp_a4red = exp_a1red
+            exp_a4green = exp_a1red
+            exp_a4blue = exp_a1red
+            exp_a5red = exp_a1red
+            exp_a5green = exp_a1red
+            exp_a5blue = exp_a1red
+
+        if len(lst_output) == 8:
+            # prepared for future extension with wdtoggle
+            exp_x2out = lst_output[0].export
+        else:
+            exp_x2out = lst_output[0].export
+
+        lst_status = lst_myios[self._slc_statusbyte.start]
+        if len(lst_status) == 8:
+            exp_x2in = lst_status[6].export
+        else:
+            exp_x2in = lst_status[0].export
+
+        # Echte IOs erzeugen
+        self.a1red = IOBase(self, [
+            "core.a1red", 0, 1, self._slc_led.start,
+            exp_a1red, None, "LED_A1_RED", "0"
+        ], OUT, "little", False)
+        self.a1green = IOBase(self, [
+            "core.a1green", 0, 1, self._slc_led.start,
+            exp_a1green, None, "LED_A1_GREEN", "1"
+        ], OUT, "little", False)
+        self.a1blue = IOBase(self, [
+            "core.a1blue", 0, 1, self._slc_led.start,
+            exp_a1blue, None, "LED_A1_BLUE", "2"
+        ], OUT, "little", False)
+
+        self.a2red = IOBase(self, [
+            "core.a2red", 0, 1, self._slc_led.start,
+            exp_a2red, None, "LED_A2_RED", "3"
+        ], OUT, "little", False)
+        self.a2green = IOBase(self, [
+            "core.a2green", 0, 1, self._slc_led.start,
+            exp_a2green, None, "LED_A2_GREEN", "4"
+        ], OUT, "little", False)
+        self.a2blue = IOBase(self, [
+            "core.a2blue", 0, 1, self._slc_led.start,
+            exp_a2blue, None, "LED_A2_BLUE", "5"
+        ], OUT, "little", False)
+
+        self.a3red = IOBase(self, [
+            "core.a3red", 0, 1, self._slc_led.start,
+            exp_a3red, None, "LED_A3_RED", "6"
+        ], OUT, "little", False)
+        self.a3green = IOBase(self, [
+            "core.a3green", 0, 1, self._slc_led.start,
+            exp_a3green, None, "LED_A3_GREEN", "7"
+        ], OUT, "little", False)
+        self.a3blue = IOBase(self, [
+            "core.a3blue", 0, 1, self._slc_led.start,
+            exp_a3blue, None, "LED_A3_BLUE", "8"
+        ], OUT, "little", False)
+
+        self.a4red = IOBase(self, [
+            "core.a4red", 0, 1, self._slc_led.start,
+            exp_a4red, None, "LED_A4_RED", "9"
+        ], OUT, "little", False)
+        self.a4green = IOBase(self, [
+            "core.a4green", 0, 1, self._slc_led.start,
+            exp_a4green, None, "LED_A4_GREEN", "10"
+        ], OUT, "little", False)
+        self.a4blue = IOBase(self, [
+            "core.a4blue", 0, 1, self._slc_led.start,
+            exp_a4blue, None, "LED_A4_BLUE", "11"
+        ], OUT, "little", False)
+
+        self.a5red = IOBase(self, [
+            "core.a5red", 0, 1, self._slc_led.start,
+            exp_a5red, None, "LED_A5_RED", "12"
+        ], OUT, "little", False)
+        self.a5green = IOBase(self, [
+            "core.a5green", 0, 1, self._slc_led.start,
+            exp_a5green, None, "LED_A5_GREEN", "13"
+        ], OUT, "little", False)
+        self.a5blue = IOBase(self, [
+            "core.a5blue", 0, 1, self._slc_led.start,
+            exp_a5blue, None, "LED_A5_BLUE", "14"
+        ], OUT, "little", False)
+
+        # IO Objekte für WD und X2 in/out erzeugen
+        self.x2in = IOBase(self, [
+            "core.x2in", 0, 1, self._slc_statusbyte.start,
+            exp_x2in, None, "Connect_X2_IN", "6"
+        ], INP, "little", False)
+        self.x2out = IOBase(self, [
+            "core.x2out", 0, 1, self._slc_led.start,
+            exp_x2out, None, "Connect_X2_OUT", "6"
+        ], OUT, "little", False)
+
+    def _get_leda1(self) -> int:
+        """
+        Gibt den Zustand der LED A1 vom Connect zurueck.
+
+        :return: 0=aus, 1=rot, 2=gruen, 4=blau
+        """
+        return self._ba_devdata[self._slc_led.start] & 0b0000000000000111
+
+    def _get_leda2(self) -> int:
+        """
+        Gibt den Zustand der LED A2 vom Core zurueck.
+
+        :return: 0=aus, 1=rot, 2=gruen, 4=blau
+        """
+        return self._ba_devdata[self._slc_led.start] & 0b0000000000111000
+
+    def _get_leda3(self) -> int:
+        """
+        Gibt den Zustand der LED A3 vom Core zurueck.
+
+        :return: 0=aus, 1=rot, 2=gruen, 4=blau
+        """
+        return self._ba_devdata[self._slc_led.start] & 0b0000000111000000
+
+    def _get_leda4(self) -> int:
+        """
+        Gibt den Zustand der LED A4 vom Core zurueck.
+
+        :return: 0=aus, 1=rot, 2=gruen, 4=blau
+        """
+        return self._ba_devdata[self._slc_led.start] & 0b0000111000000000
+
+    def _get_leda5(self) -> int:
+        """
+        Gibt den Zustand der LED A5 vom Core zurueck.
+
+        :return: 0=aus, 1=rot, 2=gruen, 4=blau
+        """
+        return self._ba_devdata[self._slc_led.start] & 0b0111000000000000
+
+    def _set_leda1(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A1 vom Connect.
+
+        :param: value 0=aus, 1=rot, 2=gruen, 4=blue
+        """
+        if 0 <= value <= 7:
+            self.a1green(bool(value & 1))
+            self.a1red(bool(value & 2))
+            self.a1blue(bool(value & 4))
+        else:
+            raise ValueError("led status must be between 0 and 7")
+
+    def _set_leda2(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A2 vom Connect.
+
+        :param: value 0=aus, 1=rot, 2=gruen, 4=blue
+        """
+        if 0 <= value <= 7:
+            self.a2green(bool(value & 1))
+            self.a2red(bool(value & 2))
+            self.a2blue(bool(value & 4))
+        else:
+            raise ValueError("led status must be between 0 and 7")
+
+    def _set_leda3(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A3 vom Connect.
+
+        :param: value 0=aus, 1=rot, 2=gruen, 4=blue
+        """
+        if 0 <= value <= 7:
+            self.a3green(bool(value & 1))
+            self.a3red(bool(value & 2))
+            self.a3blue(bool(value & 4))
+        else:
+            raise ValueError("led status must be between 0 and 7")
+
+    def _set_leda4(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A4 vom Connect.
+
+        :param: value 0=aus, 1=rot, 2=gruen, 4=blue
+        """
+        if 0 <= value <= 7:
+            self.a4green(bool(value & 1))
+            self.a4red(bool(value & 2))
+            self.a4blue(bool(value & 4))
+        else:
+            raise ValueError("led status must be between 0 and 7")
+
+    def _set_leda5(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A5 vom Connect.
+
+        :param: value 0=aus, 1=rot, 2=gruen, 4=blue
+        """
+        if 0 <= value <= 7:
+            self.a5green(bool(value & 1))
+            self.a5red(bool(value & 2))
+            self.a5blue(bool(value & 4))
+        else:
+            raise ValueError("led status must be between 0 and 7")
+
+    A1 = property(_get_leda1, _set_leda1)
+    A2 = property(_get_leda2, _set_leda2)
+    A3 = property(_get_leda3, _set_leda3)
+    A4 = property(_get_leda4, _set_leda4)
+    A5 = property(_get_leda5, _set_leda5)
+
+
 class Compact(Base):
     """
     Klasse fuer den RevPi Compact.

@@ -271,6 +271,12 @@ class RevPiModIO(object):
                         self, device, simulator=self._simulator
                     )
                     self.core = dev_new
+                elif pt == ProductType.REVPI_CONNECT_4:
+                    # RevPi Connect 4
+                    dev_new = devicemodule.Connect4(
+                        self, device, simulator=self._simulator
+                    )
+                    self.core = dev_new
                 elif pt == ProductType.REVPI_COMPACT:
                     # RevPi Compact
                     dev_new = devicemodule.Compact(

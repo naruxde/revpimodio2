@@ -43,6 +43,7 @@ class ProductType:
     REVPI_COMPACT = 104
     REVPI_CONNECT = 105
     REVPI_FLAT = 135
+    REVPI_CONNECT_4 = 136
 
 
 class DeviceType:
