@@ -1008,7 +1008,7 @@ class Connect(Core):
                  .writeprocimg() aufgerufen werden, um den Wert in das
                  Prozessabbild zu schreiben!!!
 
-        :param value: True zum aktivieren, Fals zum beenden
+        :param value: True zum aktivieren, False zum beenden
         """
         if self._modio._monitoring:
             raise RuntimeError(
