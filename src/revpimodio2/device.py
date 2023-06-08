@@ -568,27 +568,41 @@ class Base(Device):
     pass
 
 
-class Core(Base):
-    """
-    Klasse fuer den RevPi Core.
+class GatewayMixin:
 
-    Stellt Funktionen fuer die LEDs und den Status zur Verfuegung.
+    @property
+    def leftgate(self) -> bool:
+        """
+        Statusbit links vom RevPi ist ein piGate Modul angeschlossen.
+
+        :return: True, wenn piGate links existiert
+        """
+        return bool(int.from_bytes(
+            self._ba_devdata[self._slc_statusbyte], byteorder="little"
+        ) & 16)
+
+    @property
+    def rightgate(self) -> bool:
+        """
+        Statusbit rechts vom RevPi ist ein piGate Modul angeschlossen.
+
+        :return: True, wenn piGate rechts existiert
+        """
+        return bool(int.from_bytes(
+            self._ba_devdata[self._slc_statusbyte], byteorder="little"
+        ) & 32)
+
+
+class ModularBase(Base):
+    """
+    Klasse fuer alle modularen Base-Devices wie Core / Connect usw..
+
+    Stellt Funktionen fuer den Status zur Verfuegung.
     """
 
     __slots__ = "_slc_cycle", "_slc_errorcnt", "_slc_statusbyte", \
         "_slc_temperature", "_slc_errorlimit1", "_slc_errorlimit2", \
-        "_slc_frequency", "_slc_led", "a1green", "a1red", \
-        "a2green", "a2red", "wd"
-
-    def __setattr__(self, key, value):
-        """Verhindert Ueberschreibung der LEDs."""
-        if hasattr(self, key) and key in (
-                "a1green", "a1red", "a2green", "a2red", "wd"):
-            raise AttributeError(
-                "direct assignment is not supported - use .value Attribute"
-            )
-        else:
-            object.__setattr__(self, key, value)
+        "_slc_frequency", "_slc_led"
 
     def _devconfigure(self) -> None:
         """Core-Klasse vorbereiten."""
@@ -621,43 +635,6 @@ class Core(Base):
             self._slc_errorlimit1 = slice(7, 9)
             self._slc_errorlimit2 = slice(9, 11)
 
-        # Exportflags prüfen (Byte oder Bit)
-        lst_led = self._modio.io[self._slc_devoff][self._slc_led.start]
-        if len(lst_led) == 8:
-            exp_a1green = lst_led[0].export
-            exp_a1red = lst_led[1].export
-            exp_a2green = lst_led[2].export
-            exp_a2red = lst_led[3].export
-        else:
-            exp_a1green = lst_led[0].export
-            exp_a1red = exp_a1green
-            exp_a2green = exp_a1green
-            exp_a2red = exp_a1green
-
-        # Echte IOs erzeugen
-        self.a1green = IOBase(self, [
-            "core.a1green", 0, 1, self._slc_led.start,
-            exp_a1green, None, "LED_A1_GREEN", "0"
-        ], OUT, "little", False)
-        self.a1red = IOBase(self, [
-            "core.a1red", 0, 1, self._slc_led.start,
-            exp_a1red, None, "LED_A1_RED", "1"
-        ], OUT, "little", False)
-        self.a2green = IOBase(self, [
-            "core.a2green", 0, 1, self._slc_led.start,
-            exp_a2green, None, "LED_A2_GREEN", "2"
-        ], OUT, "little", False)
-        self.a2red = IOBase(self, [
-            "core.a2red", 0, 1, self._slc_led.start,
-            exp_a2red, None, "LED_A2_RED", "3"
-        ], OUT, "little", False)
-
-        # Watchdog einrichten (Core=soft / Connect=soft/hard)
-        self.wd = IOBase(self, [
-            "core.wd", 0, 1, self._slc_led.start,
-            False, None, "WatchDog", "7"
-        ], OUT, "little", False)
-
     def __errorlimit(self, slc_io: slice, errorlimit: int) -> None:
         """
         Verwaltet das Schreiben der ErrorLimits.
@@ -682,56 +659,6 @@ class Core(Base):
         return int.from_bytes(
             self._ba_devdata[self._slc_statusbyte], byteorder="little"
         )
-
-    def _get_leda1(self) -> int:
-        """
-        Gibt den Zustand der LED A1 vom Core zurueck.
-
-        :return: 0=aus, 1=gruen, 2=rot
-        """
-        # 0b00000011 = 3
-        return self._ba_devdata[self._slc_led.start] & 3
-
-    def _get_leda2(self) -> int:
-        """
-        Gibt den Zustand der LED A2 vom Core zurueck.
-
-        :return: 0=aus, 1=gruen, 2=rot
-        """
-        # 0b00001100 = 12
-        return (self._ba_devdata[self._slc_led.start] & 12) >> 2
-
-    def _set_leda1(self, value: int) -> None:
-        """
-        Setzt den Zustand der LED A1 vom Core.
-
-        :param value: 0=aus, 1=gruen, 2=rot
-        """
-        if 0 <= value <= 3:
-            self.a1green(bool(value & 1))
-            self.a1red(bool(value & 2))
-        else:
-            raise ValueError("led status must be between 0 and 3")
-
-    def _set_leda2(self, value: int) -> None:
-        """
-        Setzt den Zustand der LED A2 vom Core.
-
-        :param value: 0=aus, 1=gruen, 2=rot
-        """
-        if 0 <= value <= 3:
-            self.a2green(bool(value & 1))
-            self.a2red(bool(value & 2))
-        else:
-            raise ValueError("led status must be between 0 and 3")
-
-    def wd_toggle(self):
-        """Toggle watchdog bit to prevent a timeout."""
-        self.wd.value = not self.wd.value
-
-    A1 = property(_get_leda1, _set_leda1)
-    A2 = property(_get_leda2, _set_leda2)
-    status = property(_get_status)
 
     @property
     def picontrolrunning(self) -> bool:
@@ -776,28 +703,6 @@ class Core(Base):
         return bool(int.from_bytes(
             self._ba_devdata[self._slc_statusbyte], byteorder="little"
         ) & 8)
-
-    @property
-    def leftgate(self) -> bool:
-        """
-        Statusbit links vom RevPi ist ein piGate Modul angeschlossen.
-
-        :return: True, wenn piGate links existiert
-        """
-        return bool(int.from_bytes(
-            self._ba_devdata[self._slc_statusbyte], byteorder="little"
-        ) & 16)
-
-    @property
-    def rightgate(self) -> bool:
-        """
-        Statusbit rechts vom RevPi ist ein piGate Modul angeschlossen.
-
-        :return: True, wenn piGate rechts existiert
-        """
-        return bool(int.from_bytes(
-            self._ba_devdata[self._slc_statusbyte], byteorder="little"
-        ) & 32)
 
     @property
     def iocycle(self) -> int:
@@ -892,6 +797,118 @@ class Core(Base):
             )
         else:
             self.__errorlimit(self._slc_errorlimit2, value)
+
+    status = property(_get_status)
+
+
+class Core(ModularBase, GatewayMixin):
+    """
+    Klasse fuer den RevPi Core.
+
+    Stellt Funktionen fuer die LEDs und den Status zur Verfuegung.
+    """
+
+    __slots__ = "a1green", "a1red", "a2green", "a2red", "wd"
+
+    def __setattr__(self, key, value):
+        """Verhindert Ueberschreibung der LEDs."""
+        if hasattr(self, key) and key in (
+                "a1green", "a1red", "a2green", "a2red", "wd"):
+            raise AttributeError(
+                "direct assignment is not supported - use .value Attribute"
+            )
+        else:
+            object.__setattr__(self, key, value)
+
+    def _devconfigure(self) -> None:
+        """Core-Klasse vorbereiten."""
+        super()._devconfigure()
+
+        # Exportflags prüfen (Byte oder Bit)
+        lst_led = self._modio.io[self._slc_devoff][self._slc_led.start]
+        if len(lst_led) == 8:
+            exp_a1green = lst_led[0].export
+            exp_a1red = lst_led[1].export
+            exp_a2green = lst_led[2].export
+            exp_a2red = lst_led[3].export
+        else:
+            exp_a1green = lst_led[0].export
+            exp_a1red = exp_a1green
+            exp_a2green = exp_a1green
+            exp_a2red = exp_a1green
+
+        # Echte IOs erzeugen
+        self.a1green = IOBase(self, [
+            "core.a1green", 0, 1, self._slc_led.start,
+            exp_a1green, None, "LED_A1_GREEN", "0"
+        ], OUT, "little", False)
+        self.a1red = IOBase(self, [
+            "core.a1red", 0, 1, self._slc_led.start,
+            exp_a1red, None, "LED_A1_RED", "1"
+        ], OUT, "little", False)
+        self.a2green = IOBase(self, [
+            "core.a2green", 0, 1, self._slc_led.start,
+            exp_a2green, None, "LED_A2_GREEN", "2"
+        ], OUT, "little", False)
+        self.a2red = IOBase(self, [
+            "core.a2red", 0, 1, self._slc_led.start,
+            exp_a2red, None, "LED_A2_RED", "3"
+        ], OUT, "little", False)
+
+        # Watchdog einrichten (Core=soft / Connect=soft/hard)
+        self.wd = IOBase(self, [
+            "core.wd", 0, 1, self._slc_led.start,
+            False, None, "WatchDog", "7"
+        ], OUT, "little", False)
+
+    def _get_leda1(self) -> int:
+        """
+        Gibt den Zustand der LED A1 vom Core zurueck.
+
+        :return: 0=aus, 1=gruen, 2=rot
+        """
+        # 0b00000011 = 3
+        return self._ba_devdata[self._slc_led.start] & 3
+
+    def _get_leda2(self) -> int:
+        """
+        Gibt den Zustand der LED A2 vom Core zurueck.
+
+        :return: 0=aus, 1=gruen, 2=rot
+        """
+        # 0b00001100 = 12
+        return (self._ba_devdata[self._slc_led.start] & 12) >> 2
+
+    def _set_leda1(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A1 vom Core.
+
+        :param value: 0=aus, 1=gruen, 2=rot
+        """
+        if 0 <= value <= 3:
+            self.a1green(bool(value & 1))
+            self.a1red(bool(value & 2))
+        else:
+            raise ValueError("led status must be between 0 and 3")
+
+    def _set_leda2(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A2 vom Core.
+
+        :param value: 0=aus, 1=gruen, 2=rot
+        """
+        if 0 <= value <= 3:
+            self.a2green(bool(value & 1))
+            self.a2red(bool(value & 2))
+        else:
+            raise ValueError("led status must be between 0 and 3")
+
+    def wd_toggle(self):
+        """Toggle watchdog bit to prevent a timeout."""
+        self.wd.value = not self.wd.value
+
+    A1 = property(_get_leda1, _set_leda1)
+    A2 = property(_get_leda2, _set_leda2)
 
 
 class Connect(Core):
