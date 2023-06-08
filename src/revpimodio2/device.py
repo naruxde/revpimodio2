@@ -604,37 +604,6 @@ class ModularBase(Base):
         "_slc_temperature", "_slc_errorlimit1", "_slc_errorlimit2", \
         "_slc_frequency", "_slc_led"
 
-    def _devconfigure(self) -> None:
-        """Core-Klasse vorbereiten."""
-
-        # Statische IO Verknüpfungen je nach Core-Variante
-        # 2 Byte = Core1.0
-        self._slc_statusbyte = slice(0, 1)
-        self._slc_led = slice(1, 2)
-
-        self._slc_cycle = None
-        self._slc_temperature = None
-        self._slc_frequency = None
-        self._slc_errorcnt = None
-        self._slc_errorlimit1 = None
-        self._slc_errorlimit2 = None
-        if self.length == 9:
-            #  9 Byte = Core1.1
-            self._slc_cycle = slice(1, 2)
-            self._slc_errorcnt = slice(2, 4)
-            self._slc_led = slice(4, 5)
-            self._slc_errorlimit1 = slice(5, 7)
-            self._slc_errorlimit2 = slice(7, 9)
-        elif self.length == 11:
-            # 11 Byte = Core1.2 / Connect
-            self._slc_cycle = slice(1, 2)
-            self._slc_errorcnt = slice(2, 4)
-            self._slc_temperature = slice(4, 5)
-            self._slc_frequency = slice(5, 6)
-            self._slc_led = slice(6, 7)
-            self._slc_errorlimit1 = slice(7, 9)
-            self._slc_errorlimit2 = slice(9, 11)
-
     def __errorlimit(self, slc_io: slice, errorlimit: int) -> None:
         """
         Verwaltet das Schreiben der ErrorLimits.
@@ -823,6 +792,34 @@ class Core(ModularBase, GatewayMixin):
     def _devconfigure(self) -> None:
         """Core-Klasse vorbereiten."""
         super()._devconfigure()
+
+        # Statische IO Verknüpfungen je nach Core-Variante
+        # 2 Byte = Core1.0
+        self._slc_statusbyte = slice(0, 1)
+        self._slc_led = slice(1, 2)
+
+        self._slc_cycle = None
+        self._slc_temperature = None
+        self._slc_frequency = None
+        self._slc_errorcnt = None
+        self._slc_errorlimit1 = None
+        self._slc_errorlimit2 = None
+        if self.length == 9:
+            #  9 Byte = Core1.1
+            self._slc_cycle = slice(1, 2)
+            self._slc_errorcnt = slice(2, 4)
+            self._slc_led = slice(4, 5)
+            self._slc_errorlimit1 = slice(5, 7)
+            self._slc_errorlimit2 = slice(7, 9)
+        elif self.length == 11:
+            # 11 Byte = Core1.2 / Connect
+            self._slc_cycle = slice(1, 2)
+            self._slc_errorcnt = slice(2, 4)
+            self._slc_temperature = slice(4, 5)
+            self._slc_frequency = slice(5, 6)
+            self._slc_led = slice(6, 7)
+            self._slc_errorlimit1 = slice(7, 9)
+            self._slc_errorlimit2 = slice(9, 11)
 
         # Exportflags prüfen (Byte oder Bit)
         lst_led = self._modio.io[self._slc_devoff][self._slc_led.start]
@@ -1353,6 +1350,7 @@ class Compact(Base):
 
     def _devconfigure(self) -> None:
         """Core-Klasse vorbereiten."""
+        super()._devconfigure()
 
         # Statische IO Verknüpfungen des Compacts
         self._slc_led = slice(23, 24)
@@ -1496,6 +1494,7 @@ class Flat(Base):
 
     def _devconfigure(self) -> None:
         """Core-Klasse vorbereiten."""
+        super()._devconfigure()
 
         # Statische IO Verknüpfungen des Compacts
         self._slc_led = slice(7, 9)
