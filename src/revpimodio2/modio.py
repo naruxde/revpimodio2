@@ -5,7 +5,6 @@ __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"
 
 import warnings
-from collections import namedtuple
 from configparser import ConfigParser
 from json import load as jload
 from multiprocessing import cpu_count
@@ -27,8 +26,31 @@ from .io import IOList
 from .io import StructIO
 from .pictory import DeviceType, ProductType
 
-DevSelect = namedtuple("DevSelect", ["type", "other_device_key", "values"])
-"""Leave type, key empty for auto search name and position depending on type in values."""
+
+class DevSelect:
+    __slots__ = "type", "other_device_key", "values"
+
+    def __init__(
+            self,
+            device_type=DeviceType.IGNORED,
+            search_key: str = None,
+            search_values=(),
+    ):
+        """
+        Create a customized search filter for RevPiModIOSelected search.
+
+        If you leave search_key set to None or empty string, the default, the
+        given search_values will automatically select the search_key. This
+        depends on the data type in the tuple. A string value searches for
+        device name, an integer value searches for device position.
+
+        :param device_type: Set a filter for just this device types
+        :param search_key: Set a property of device to search values or auto
+        :param search_values: Search for this values
+        """
+        self.type = device_type
+        self.other_device_key = search_key or ""
+        self.values = search_values
 
 
 class RevPiModIO(object):
@@ -105,7 +127,7 @@ class RevPiModIO(object):
         self.__cleanupfunc = None
         self._buffedwrite = False
         self._debug = 1
-        self._devselect = DevSelect(DeviceType.IGNORED, "", ())
+        self._devselect = DevSelect()
         self._exit = Event()
         self._exit_level = 0
         self._imgwriter = None
