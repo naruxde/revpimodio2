@@ -9,7 +9,7 @@ PACKAGE = revpimodio2
 SYSTEM_PYTHON  = /usr/bin/python3
 PYTHON         = $(or $(wildcard venv/bin/python), $(SYSTEM_PYTHON))
 
-all: build
+all: build docs
 
 .PHONY: all
 
@@ -31,11 +31,14 @@ build:
 install: build
 	$(PYTHON) -m pip install dist/$(PACKAGE)-*.whl
 
-.PHONY: build install
+docs:
+	$(PYTHON) -m sphinx.cmd.build -b html docs docs/_build/html
+
+.PHONY: build docs install
 
 ## Clean
 clean:
-	rm -rf build dist src/*.egg-info *.spec
+	rm -rf build docs/_build dist src/*.egg-info *.spec
 
 clean-all: clean
 	rm -R venv
