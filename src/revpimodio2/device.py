@@ -5,6 +5,7 @@ __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"
 
 import warnings
+from struct import unpack
 from threading import Event, Lock, Thread
 
 from ._internal import INP, OUT, MEM, PROCESS_IMAGE_SIZE
@@ -1080,6 +1081,7 @@ class Connect4(ModularBase):
         """Connect4-Klasse vorbereiten."""
         super()._devconfigure()
 
+        self._slc_statusbyte = slice(0, 1)
         self._slc_cycle = slice(1, 2)
         self._slc_errorcnt = slice(2, 4)
         self._slc_temperature = slice(4, 5)
@@ -1221,7 +1223,7 @@ class Connect4(ModularBase):
 
         :return: 0=aus, 1=rot, 2=gruen, 4=blau
         """
-        return self._ba_devdata[self._slc_led.start] & 0b0000000000000111
+        return self._ba_devdata[self._slc_led.start] & 0b00000111
 
     def _get_leda2(self) -> int:
         """
@@ -1229,7 +1231,7 @@ class Connect4(ModularBase):
 
         :return: 0=aus, 1=rot, 2=gruen, 4=blau
         """
-        return self._ba_devdata[self._slc_led.start] & 0b0000000000111000
+        return (self._ba_devdata[self._slc_led.start] & 0b00111000) >> 3
 
     def _get_leda3(self) -> int:
         """
@@ -1237,7 +1239,8 @@ class Connect4(ModularBase):
 
         :return: 0=aus, 1=rot, 2=gruen, 4=blau
         """
-        return self._ba_devdata[self._slc_led.start] & 0b0000000111000000
+        word_led = self._ba_devdata[self._slc_led]
+        return (unpack("<H", word_led)[0] & 0b0000000111000000) >> 6
 
     def _get_leda4(self) -> int:
         """
@@ -1245,7 +1248,7 @@ class Connect4(ModularBase):
 
         :return: 0=aus, 1=rot, 2=gruen, 4=blau
         """
-        return self._ba_devdata[self._slc_led.start] & 0b0000111000000000
+        return (self._ba_devdata[self._slc_led.start + 1] & 0b00001110) >> 1
 
     def _get_leda5(self) -> int:
         """
@@ -1253,7 +1256,7 @@ class Connect4(ModularBase):
 
         :return: 0=aus, 1=rot, 2=gruen, 4=blau
         """
-        return self._ba_devdata[self._slc_led.start] & 0b0111000000000000
+        return (self._ba_devdata[self._slc_led.start + 1] & 0b01110000) >> 4
 
     def _set_leda1(self, value: int) -> None:
         """
@@ -1262,8 +1265,8 @@ class Connect4(ModularBase):
         :param: value 0=aus, 1=rot, 2=gruen, 4=blue
         """
         if 0 <= value <= 7:
-            self.a1green(bool(value & 1))
-            self.a1red(bool(value & 2))
+            self.a1red(bool(value & 1))
+            self.a1green(bool(value & 2))
             self.a1blue(bool(value & 4))
         else:
             raise ValueError("led status must be between 0 and 7")
@@ -1275,8 +1278,8 @@ class Connect4(ModularBase):
         :param: value 0=aus, 1=rot, 2=gruen, 4=blue
         """
         if 0 <= value <= 7:
-            self.a2green(bool(value & 1))
-            self.a2red(bool(value & 2))
+            self.a2red(bool(value & 1))
+            self.a2green(bool(value & 2))
             self.a2blue(bool(value & 4))
         else:
             raise ValueError("led status must be between 0 and 7")
@@ -1288,8 +1291,8 @@ class Connect4(ModularBase):
         :param: value 0=aus, 1=rot, 2=gruen, 4=blue
         """
         if 0 <= value <= 7:
-            self.a3green(bool(value & 1))
-            self.a3red(bool(value & 2))
+            self.a3red(bool(value & 1))
+            self.a3green(bool(value & 2))
             self.a3blue(bool(value & 4))
         else:
             raise ValueError("led status must be between 0 and 7")
@@ -1301,8 +1304,8 @@ class Connect4(ModularBase):
         :param: value 0=aus, 1=rot, 2=gruen, 4=blue
         """
         if 0 <= value <= 7:
-            self.a4green(bool(value & 1))
-            self.a4red(bool(value & 2))
+            self.a4red(bool(value & 1))
+            self.a4green(bool(value & 2))
             self.a4blue(bool(value & 4))
         else:
             raise ValueError("led status must be between 0 and 7")
@@ -1314,8 +1317,8 @@ class Connect4(ModularBase):
         :param: value 0=aus, 1=rot, 2=gruen, 4=blue
         """
         if 0 <= value <= 7:
-            self.a5green(bool(value & 1))
-            self.a5red(bool(value & 2))
+            self.a5red(bool(value & 1))
+            self.a5green(bool(value & 2))
             self.a5blue(bool(value & 4))
         else:
             raise ValueError("led status must be between 0 and 7")
