@@ -706,10 +706,9 @@ class IOBase(object):
             # Für Bitoperationen sperren
             self._parentdevice._filelock.acquire()
 
-            if self._parentdevice._shared_procimg \
-                    and self not in self._parentdevice._shared_write:
+            if self._parentdevice._shared_procimg:
                 # Mark this IO for write operations
-                self._parentdevice._shared_write.append(self)
+                self._parentdevice._shared_write.add(self)
 
             # Hier gibt es immer nur ein byte, als int holen
             int_byte = self._parentdevice._ba_devdata[self._slc_address.start]
@@ -743,11 +742,10 @@ class IOBase(object):
                     )
                 )
 
-            if self._parentdevice._shared_procimg \
-                    and self not in self._parentdevice._shared_write:
+            if self._parentdevice._shared_procimg:
                 with self._parentdevice._filelock:
                     # Mark this IO as changed
-                    self._parentdevice._shared_write.append(self)
+                    self._parentdevice._shared_write.add(self)
 
             self._parentdevice._ba_devdata[self._slc_address] = value
 

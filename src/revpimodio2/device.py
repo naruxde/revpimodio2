@@ -155,7 +155,7 @@ class Device(object):
         self.__my_io_list = []
         self._selfupdate = False
         self._shared_procimg = False
-        self._shared_write = []
+        self._shared_write = set()
         self.shared_procimg(parentmodio._shared_procimg)  # Set with register
 
         # Wertzuweisung aus dict_device
