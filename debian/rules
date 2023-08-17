@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+
+export PYBUILD_NAME=revpimodio2
+
+%:
+	dh $@ --with python3,sphinxdoc --buildsystem=pybuild
+
+override_dh_auto_build:
+	dh_auto_build
+	PYTHONPATH=. python3 -m sphinx -b html -d docs/_build/.doctrees -N docs docs/_build/html
+
+override_dh_clean:
+	rm -rf docs/_build
+	dh_clean

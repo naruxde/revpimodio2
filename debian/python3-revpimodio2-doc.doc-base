@@ -1,0 +1,8 @@
+Document: python3-revpimodio2-doc
+Title: RevPiModIO Documentation
+Author: Sven Sager <akira@narux.de>
+Section: Programming/Python
+
+Format: HTML
+Index: /usr/share/doc/python3-revpimodio2/html/index.html
+Files: /usr/share/doc/python3-revpimodio2/html/*.html
