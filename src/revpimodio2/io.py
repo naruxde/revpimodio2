@@ -594,6 +594,7 @@ class IOBase(object):
                     return False
 
         else:
+            # Write one or more bytes to process image
             value = bytes(self._parentdevice._ba_devdata[self._slc_address])
             with self._parentdevice._modio._myfh_lck:
                 try:
