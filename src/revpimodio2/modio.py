@@ -69,7 +69,6 @@ class RevPiModIO(object):
         "_autorefresh", "_buffedwrite", "_configrsc", "_debug", "_devselect", \
         "_exit", "_exit_level", "_imgwriter", "_ioerror", \
         "_length", "_looprunning", "_lst_devselect", "_lst_refresh", \
-        "_lst_shared", \
         "_maxioerrors", "_monitoring", "_myfh", "_myfh_lck", \
         "_procimg", "_replace_io_file", "_run_on_pi", \
         "_set_device_based_cycle_time", "_simulator", "_shared_procimg", \
@@ -135,7 +134,6 @@ class RevPiModIO(object):
         self._length = 0
         self._looprunning = False
         self._lst_refresh = []
-        self._lst_shared = []
         self._maxioerrors = 0
         self._myfh = None
         self._myfh_lck = Lock()

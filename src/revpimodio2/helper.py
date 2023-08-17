@@ -531,7 +531,9 @@ class ProcimgWriter(Thread):
                 continue
 
             try:
-                for dev in self._modio._lst_shared:
+                for dev in self._modio._lst_refresh:
+                    if not dev._shared_procimg:
+                        continue
                     # Set shared outputs before reading process image
                     for io in dev._shared_write:
                         if not io._write_to_procimg():
