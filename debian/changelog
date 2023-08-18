@@ -1,0 +1,372 @@
+revpimodio2 (2.6.0-1) stable; urgency=medium
+
+  [ Sven Sager ]
+  * new project started
+  * reg_inp reg_out in IOList Klasse verschoben
+  * Erste Debug-Version
+  * Bugfix in io Module
+  * Starke Leistungsverbesserung bei device.get_*s() auto_refresh in
+    autorefresh überall umbenannt ioerror Zähler auch in RevPiModIO
+    eingebaut _adjwait wird bei Umstellung gleich mit DIFF gesetzt _
+    ba_devdata wird nach IOs vollständig erstellt StructIO Instantiierung
+    vereinfacht / byteorder, signed automatisch
+  * setup.py für Package angepasst get_inps _outs _mems umbenannt in
+    get_inputs _outputs _memmories IOType von __init__ auf io.Type geändert
+    IOBase.type eingefügt
+  * Fehlerabfang bei procimg verbessert Device.autoupdate entfernt (nie
+    verwendet) RevPiModIO.ioerrors liefert Anzahl von _imgwriter, wenn Loop
+    aktiv ist RevPiModIO.*procimg force Parameter entfernt, da autoupdate
+    weg ist RevPiModIO.writeinputdefaults auf device.Virtual verschoben
+    Docstrings angepasst alle Slices von Device und IOBase privatisiert _
+    DeviceList.__delattr__ eingefügt Bugfix: Byteorder wurde bei StructIO
+    nicht übernommen Diverse Verbesserungen an DeviceList und IOList class
+    DeadIO eingefügt
+  * IOList.__setitem__ aus Leistungsgründen entfernt - .value ist schneller
+    IOBase.__bytes__ Entfernt, da sinnlos - .get_value() liefert Bytes
+    Core._get_leda2 angepasst - weniger ifs
+  * cleanup
+  * Etikett 2.0.0 zum Änderungssatz 38b3a1252331 hinzugefügt
+  * Encodingzeile an PEP angepasst (muss in Zeile 0 - 1 sein) Von RevPiModIO
+    kwagrs entfernt und feste keyword vergeben Bei Änderung der Byteorder
+    wird defaultvalue angepasst da aus piCtory little Beim Core nur die
+    RS485 Fehlerwerte übernehmen defaultvalue wird mit Formatierung
+    ausgegeben .isnumeric gegen isdigit getauscht docstrings
+  * replace_io kann Bits >7 bei längeren Datentypen festlegen
+    Klassenattribute für Device angelegt Intern nur auf interne _Variablen
+    zugreifen StructIO berechnet _defaultvalue aus gelöschten IOs
+  * delay Parameter für reg_event eingebaut reg_event schneller und Prüfung
+    auf doppelte Events verbessert cycletime kann nicht mehr verändert
+    werden, wenn ein Loop läuft io.IntIO.get_int und .set_int in
+    get_intvalue und set_intvalue geändert docstring
+  * Etikett 2.0.1 zum Änderungssatz ef712bae2753 hinzugefügt
+  * handlesignalend() prüfte immer auf cleanupfunc, auch wenn None cycleloop
+    cycletime=None gesetzt - bei Nichtangabe wurde immer 50 gesetzt
+    io.reg_timerevent() hinzugefügt docstring
+  * Etikett 2.0.2 zum Änderungssatz a52158b41285 hinzugefügt
+  * Fehler bei Devicesuche über Namen oder Position in setdefaultvalues,
+    syncoutputs, writeprocimg cycletools: ton, tof, tp auch ohne c nutzbar
+    mit Angabe in Millisekunden
+  * Version hochgezogen
+  * Etikett 2.0.3 zum Änderungssatz 40b068ca1df2 hinzugefügt
+  * FileHandler nicht bei __init__ Anlegen um Vererbung zu ermöglichen ._
+    configure bekommt JSON als Parameter übergeben RS485 Fehler nicht im
+    Simulatormodus schreiben
+  * Modul netio eingefügt
+  * Import der __init__ vereinfacht (Nur die RevPi Klassen importieren)
+  * Etikett 2.1.0 zum Änderungssatz aaae8badbf95 hinzugefügt
+  * typo core.temperatur in core.temperature umbenannt
+  * Etikett 2.0.4 zum Änderungssatz 313d792dc991 hinzugefügt
+  * RevPiNetIO nur ._configure wenn nicht vererbt Bugfix: prüfen auf self._
+    myfh is not None statt hasattr Socket in .close() beenden - nicht am
+    Ende von .run() da als daemon=True
+  * Bugfix: prüfen auf self._myfh is not None statt hasattr
+  * Etikett 2.0.5 zum Änderungssatz 1f6c388e709d hinzugefügt
+  * Etikett 2.1.1 zum Änderungssatz 99ca7df2da0e hinzugefügt
+  * pip anpassungen
+  * NetFH.close() mehrfach aufrufbar ohne Fehler Socket schließen, wenn
+    Fehler bei Verbindung
+  * Etikett 2.1.1b2 zum Änderungssatz 2d683ac34c1a hinzugefügt
+  * VirtualDevices in alter piCtory "adap." mit 64 beginnen (Kunbus
+    Standard) Konstanten um INP, OUT, MEM erweitert und io.Type gelöscht
+    Änderung der Klassen auf neue Konstanten device.__getioiter angelegt für
+    Rückgabe der IOs ohne None bei BIT-Bytes device.__getioiter in
+    Rückgabefunktionen eingebaut io.DeadIO mit _parentdevice = None
+    erweitert io.IOBase.__bool__ gibt nun False bei leeren Bytes aus
+    io.StructIO.frm gibt nun nur einzelnen Zeichen aus (Byteorder über
+    .byteorder)
+  * cycleloop säubert das _exit-Event .wait Parameterprüfung eingebaut
+    Fehler im Devicehandling bei doppelten Namen behoben
+  * Etikett 2.0.6 zum Änderungssatz be1cb33cb307 hinzugefügt
+  * RevPiNetIO.net_cleardefaultvalues() funktionierte nicht mit Server
+    Bugfix: Bei Instantiierungsfehler traten weitere Fehler auf
+  * Fehlerverwaltung bei cycleloop und mainloop Device.__contains__ Rückgabe
+    bei ersetzen IOs nun False RevPiModIO.__del__ löst klarere Fehler bei
+    falscher Instantiierung aus
+  * Etikett 2.0.7 zum Änderungssatz 3ae247283e75 hinzugefügt
+  * netio.disconnect() eingefügt (gleich mit modio.cleanup()) Prüfung des
+    Parameters address in RevPiNetIO()
+  * Eventüberwachung über Queues realisiert
+  * Fehlerabfang und Leistung in ProcimgWriter.run() verbessert
+  * Eigene EventQueue für Threads, um diese direkt zu starten
+  * IOEvent-Klasse eingebaut - Ersetzt tuple() reg_event, reg_timerevent
+    über zentrale Funktion verwaltet
+  * EventThread vor Mehrfachstarten geschützt
+  * __exec_th als daemon starten Devices zum autorefresh hinzufügen
+    abgesichert mit Lock
+  * setup.py angepasst für Upload
+  * Etikett 2.1.2 zum Änderungssatz e797a0b44e23 hinzugefügt
+  * Saubere Fehlermeldung, wenn piCtory Datei nicht lesbar (leer) ist
+    docstrings
+  * StuctIO kann nun COUNTs Bytes zu einem IO zusammenfassen Fehlermeldungen
+    in NetFH mit warnings realisiert
+  * Etikett 2.1.3 zum Änderungssatz 0864ee445b48 hinzugefügt
+  * Zeitübergabe cycleloop() wurde nicht sofort übernommen
+  * Etikett 2.1.4 zum Änderungssatz 5310c7b68cec hinzugefügt
+  * _defaultvalue kann String aufnehmen muss aber über _defaultvalue erfragt
+    werden _defaultvalue kann niemals None sein, außer bei StructIO zur
+    Berechnung Fehlerabfang komischer piCtory JSON Datei für _
+    defaultvalue ('null' statt null)
+  * Etikett 2.1.5 zum Änderungssatz 5afbc2b0cf8f hinzugefügt
+  * Reihenfolge des Iterators der Devices ist nun nach Position im
+    Prozessabbild sortiert und nicht nach Position - Entspricht piCtory
+  * Etikett 2.1.6 zum Änderungssatz 717b1c9de1a1 hinzugefügt
+  * Erste Anpassungen für RevPiConnect
+  * Timeouthandling für NetFH verbessert 70 prozent für Sync-Timer
+    IP-Adresse prüfen und ggf. auflösen
+  * Verbesserung in LED_BYTE-Berechnung Byteorder für Core-Funktionen fest
+    auf "little" gesetzt Connect-Klasse von Core abgeleitet A3 zur Connect
+    Klasse hinzugefügt
+  * IO Zuordnung in Core-Klasse jetzt IOBase Objekt kein Index mehr Watchdog
+    und X2 in/out werden als IOBase Objekte über core angeboten
+  * Berechnung von Bit-IOs über mehr als 2 Bytes angepasst wd und x2out
+    Ansteuerung verbessert Connect Funkscheiben werden als Devices ignoriert
+    Alle Cores werden bei syncoutputs nicht mehr mit \x00 vorbelegt
+    issubclass gegen isinstance getauscht .exitsignal-Event für den Benutzer
+    hinzugefügt Bei Core-Klasse a*green / a*red als echte IOs hinzugefügt
+  * watchdogtrigger in Connect-Klasse integriert (Wechselt alle 10 Sekunden)
+    Adressen der core/connect IOs verbessert
+  * Etikett 2.2.0 zum Änderungssatz ab291911cddc hinzugefügt
+  * triggerwatchdog darf nicht in monitoring oder simulator mode verwendet
+    werden
+  * Etikett 2.2.1 zum Änderungssatz 7cb81c09347a hinzugefügt
+  * Connect-Attribut watchdogtrigger in wdautotoggle umbenannt Bei
+    handlesignalend wird im monitoring Modus nicht mehr geschrieben
+  * Etikett 2.2.2 zum Änderungssatz 3348b69ce4da hinzugefügt
+  * Code style
+  * __slots__ für alle möglichen Klassen implementiert
+  * _dict_events ist nun Threadsicher Bei Fehler in ProcimgWriter System
+    sauber verlassen
+  * Kleinste refresh-Zeit auf 5 ms gesetzt Zykluszeit vom .cycleloop wird
+    bei Aufruf auf 50 ms gesetzt Standardrefreshzeit wird nach CPU-Anzahl
+    bestimmt Laufzeitüberwachung für Eventsystem eingebaut IOBase.export
+    gibt Wert von 'Export' in piCtory zurück Device.get_* Parameter 'export'
+    Filtert auf piCtory 'Export' Wert
+  * IP Adresse aus Hostnamen ermitteln .gethostbyname NetFH Schreibpuffer
+    wird bei flush immer geleert, auch bei Fehlern __flusherr wird nach
+    Fehler bei _connect auf False gesetzt Start des Sync nun sofort mit Sync
+    und dann Wait Bei ACL Fehlern Exception auslösen Synctimer wird auf 45%
+    des Timeouts angepasst (Senden nur bei Leerlauf) __set_systimout setzt
+    auch für bestehenden Socket das Timeout
+  * Etikett 2.2.3 zum Änderungssatz 004f802ab5b9 hinzugefügt
+  * Export Wert von RevPiLED an a*color / wd / x2* weitergeben IO Namen des
+    Cores mit "core." als Präfix versehen für Eventüberwachung
+  * Etikett 2.2.4 zum Änderungssatz 35b18b1423b9 hinzugefügt
+  * Bei Cores werden Adressen von IOs statisch festgelegt unabhängig von
+    IO-Anzahl Unterstützung mehrere IO Arten der Cores Fehler bei Exportflag
+    von Connect xin beseitigt
+  * Etikett 2.2.5 zum Änderungssatz a19c245f9a15 hinzugefügt
+  * Speicherzeit der piCtory Datei wird in Klasse App verarbeitet raise
+    IndexError bei __getitem__
+  * Neue Base Klasse eingefügt von der Core / Connect erben Sollten neue
+    Base-Devices von Kunbus hinzugefügt werden, wird Base verwendet
+    IntIOReplaceable Klasse erstellt für IOs von Gateways und virtuellen
+    Devices Leere IntIOCounter Klasse für Counter IOs hinzugefügt
+  * IntIOCounter Klasse erweitert mit ioctl Aufruf Devices erzeugen
+    IntIOCounter-Objekt, wenn Counteradresse gefunden wird DioModule Klasse
+    wird für DIO / DI / DO verwendet und ermöglicht Counterreset
+  * .core wird nur gesetzt, wenn gültiges Basedevice erkannt wurde Globalen
+    FileHandler durch Lock gesichert IOCTL über das Netzwerk umgesetzt
+  * Etikett 2.3.0 zum Änderungssatz 486b6c6e6c09 hinzugefügt
+  * Errortypen angepasst NetFh.__init__ Parameterprüfung geändert NetFh._
+    direct_send implementiert
+  * Parameter no_warn in .mainloop eingebaut
+  * Etikett 2.3.1 zum Änderungssatz ce2fce1e77d5 hinzugefügt
+  * added LICENSE.txt and README.md
+  * Bessere Werte bei _gotioerror Debugflag um exakte Fehlermeldungen zu
+    bekommen
+  * .replace_io mit regex für parameter frm versehen - Danke an Nicolai
+    Buchwitz! .reset Funktion warf Fehler bei Counter IOs 8-16
+  * Parameterprüfung für Instantiierung eingeführt Debug-Parameter für alle
+    Vererbungen übernommen
+  * Etikett 2.3.2 zum Änderungssatz 789ef5f59b37 hinzugefügt
+  * StructIO für export erweitert Export und Importfunktionen für ersetzte
+    IOs hinzugefügt
+  * Import und Export der Dateien verbessert
+  * Parameter replace_io_file hinzugefügt für IO replacement Wenn
+    replace_io_file verwendet wird, ist .replace_io gesperrt Verarbeitung
+    der Datei direkt beim Instanziieren
+  * Etikett 2.3.3 zum Änderungssatz 2c1959348dd5 hinzugefügt
+  * replace_io_file nimmt nun Wert :network: und läd Konfiguration über
+    RevPiPyLoad ._configure_replace_io ist eigenständige Funktion ._
+    get_cpreplaceio für Überschreibungen bei Vererbung hinzugefügt
+  * direct_output zu RevPiModIO hinzugefügt Outputs werden direkt in
+    Processimage geschrieben Der Puffer wird nur durch gängige Techniken
+    aktualisiert TODO: Umsetzung für procimg=file fehlt
+  * direct_output in RevPiNetIO übernommen Eindeutige erkennung des
+    procimg (file or character) Simulationsfunktionen für IOCTL gegen
+    einfache Datei bei procimg Parameter IOCTLs werden nun einfacher
+    verarbeitet / umgelenkt
+  * Selected / Driver gegen nun einen DeviceNotFoundError aus, wenn nicht
+    vorhanden debug und replace_io_file über Namen abrufbar
+  * Indexzugriff auf IOs eines Devices
+  * Bei .reg_event Parameter prefire eingefügt um Event bei Eintritt in
+    mainloop mit aktuellem Wert auszulösen. Im Helper werden Event-Queues
+    nur beim deaktiveren geleert
+  * Fork develop
+  * docstring prefire kann bei replace_io direkt mit übergeben werden
+  * Replace_IO file hatte bei export falschen namen für bit
+  * Zusammenfassung aller Entwicklungen erledigt Versionsnummer geändert
+    typos gefixt
+  * Etikett 2.4.0 zum Änderungssatz ad553068ac56 hinzugefügt
+  * Reconnect sicherer gestaltet Abfrage von .reconnecting eingebaut
+    Dirtybytes und Timeout lösen keine Exception mehr aus sondern einen
+    Reconnect
+  * Lock des replace_io bei Verwendung von replace_io_file entfernt
+  * export_replaced_ios mit Dateinamen als default versehen (PyLoad name)
+    Merge-Fehler beseitigt
+  * Für Export default-Werte festgelegt, die nicht exportiert werden müssen
+    Fehlerbehebung bei Import-Fehlermeldungen
+  * NetFH braucht min. RevPiPyLoad 0.8.0 da hashwerte übertragen werden
+    NetFH wirft ConfigChanged bei geänderten piCtory oder replace_ios
+    Dateien
+  * Disconnect bei veränderter replace_ios Datei nur, wenn diese angefordert
+    wrude
+  * Bugfix: prefire mit as_thread hatte Fehler bei Übergabe in Queue
+    Netzwerkklassen zeigen über .config_changed an, dass Neuinstanzierung
+    nötig ist _connect von NetFH löst ConfigChanged-Exception aus
+  * Wenn RevPiPyLoad falsche replace_ios Datei hat, wird Fehler geworfen
+    IO-Prüfung bei replace wird nicht für Selected/Driver durchgeführt
+  * piCtory Datei fehlerhaft bei HASH_FAIL
+  * Etikett 2.4.1 zum Änderungssatz e48bb0a57dbc hinzugefügt
+  * Warnmeldungen überarbeitet Warnungen erscheinen nur ein Mal, wenn
+    debug=False ist Filter für Warnungen werden nur für RevPiModIO verändert
+  * Fehler bei NetIO im Hash load beseitigt Core IOs geben keine Fehler
+    mehr, wenn ein delay event draufgelegt wird Core IOs können nicht mehr
+    überschrieben werden, wenn .value vergessen wrid
+  * Doppelte Fehlerzählung bei imgwriter und modio in modio zusammengeführt
+  * Ausgabe der Warnungen optimiert no_warn parameter aus mainloop
+    entfernt (jetzt über debug einstellbar) Kein Warnungsspam mehr - debug
+    ist True als Vorbelegung
+  * Debug Parameter nimmt Werte -1, 0, 1 an. Bei debug=-1 werden keinerlei
+    Warnungen angezeigt Bei debug=0 werden alle Warnungen nur ein einziges
+    Mal angezeigt bei debug=1 werden alle Warnungen immer angezeigt
+  * Nach reconnect sofort syssync ermöglichen
+  * Versionsnummer angepasst
+  * Etikett 2.4.2 zum Änderungssatz 15efb52b23cf hinzugefügt
+
+  [ Sven Sager ]
+  * Added Cycletools to __init__ and Switched VCS and IDE
+  * Docstrings optimieren 1
+  * Docstrings optimieren 2 - Code-Cleanup
+  * Umzüge abgeschlossen Docstrings - Code-Cleanup
+  * Value of memory setting in .value property
+
+  [ Sven Sager ]
+  * Implement bytebuffer and length check to NetIO
+  * Use struct module to pack net commands, send files with length
+  * Protocol change on flush()
+  * Remove bit shifting on each get bit value and event loop
+  * Add .last cycle flag to Cycletools, better sync of loops on program end.
+  * Moved call of cleanupfunc to exit jobs, wait mainloop end on thread (
+    blocking=False).
+  * DeprecationWarning when using direct_output - replaced by shared_procimg
+  * Cleanup and new version number
+  * Add support for RevPi Compact, better calculation of A1, A2, A3 on core
+    object
+  * Return all IOs of base devices in the .io object as int() not bytes()
+    when using .value
+  * Watchdog for all RevPis, cycletools with .core/.io/.runtime, bugfix on
+    MemIO for str()
+  * Added .device to Cycletools, added revpimodio2.run_plc shortcut to run
+    cycleloop
+  * Bug fix for NetIO with autorefresh=True
+  * IOs are callable to get or set values.
+  * Add library const PROCESS_IMAGE_SIZE should it change some day in
+    future.
+  * Add .changed(io, edge) -> bool function to CycleTools.
+
+  [ Théo Rozier ]
+  * Added a "pictory" module to register all aliases used by Pictory (#8)
+
+  [ Sven Sager ]
+  * Create FUNDING.yml
+  * Include classes from pictory module to package __init__.py.
+  * Bugfix: Wrong buffer size after network error
+  * Bugfix: writeprocimg did not flush buffer on network error
+  * Next release
+  * Restore fix c20caaa5d54ada965c464d24b6a2f95f3756e412
+  * Next release
+  * Redesign netio.py to prevent errors and provide clean source code
+  * Add piCtory value mappings for RevPi Compact memories in pictory.py.
+  * Cycleloop does not raise Exception, run_plc accept debug flag.
+  * Set values in process image AND buffer with shared_procimg=True
+  * Add support for RevPi Flat
+  * Bugfix: Set A1 - A5 LED did not work with shared_procimg=True
+  * Add blocking parameter to .cycleloop
+  * Parameter shared_procimg can be set per device
+
+  [ Nicolai Buchwitz ]
+  * feature: make export flag configurable for StructIO
+
+  [ Sven Sager ]
+  * Only write export flag to replace_io_file, if the value was set during
+    runtime
+  * Next release
+  * Corrected misleading message
+  * Sync write of outputs with autorefresh/cycle or .writeprocimg, if
+    shared_procimg=True
+  * Next release
+  * Flat: Switch and Relais as real io of core class, added MEMs to
+    pictory.py
+  * Bugfix: Calculate correct lengths despite IO gaps in incorrect piCtory
+    file
+  * Next release
+
+  [ Nicolai Buchwitz ]
+  * introduce ProductType enum and use it
+
+  [ Sven Sager ]
+  * Added MIO memory value mappings
+  * Internal change RevPi*IOSelected search method
+  * The replace_io file can handle default values of type byte (frm="*s")
+    now.
+  * Check device offsets in piCtory file and ignore IOs with wrong offsets
+  * Bugfix for offset check in piCtory file
+  * Bugfix on handle default values of type byte (frm="*s") in export_file
+  * Bugfix with shared process image in cycle loop
+  * Next release
+
+  [ Nicolai Buchwitz ]
+  * fix: scope bit address with slc_address
+
+  [ Sven Sager ]
+  * Make the cycle more precise
+  * Warn the user faster, if the cycle time is exhausted
+  * Add `prefire` to reg_timerevent function
+  * Sync the first cycle with imgwriter after calling `.cycleloop`
+  * Next release
+  * Configure replaced ios from file before starting autorefresh
+  * Improve troubleshooting details on equal device names in piCtory.
+  * Add position numbers in warning text of all devices with equal name in
+    piCtory
+  * Next release
+  * Read export flag from piCtory for watchdog output
+  * replace_io accepts keyword wordorder
+  * Reorder package to src-layout.
+  * Improved device search function and create run_net_plc shortcut
+  * Code and project cleanup
+  * Update documentation
+  * Change license from LGPLv3 to LGPLv2 after approval of all contributors
+  * Replaces Master-Slave with Client-Server
+  * Add __about__.py to handle version number of project in one place
+
+  [ Nicolai Buchwitz ]
+  * docs(Connect): Fix typo in wgtoggle docstring
+
+  [ Sven Sager ]
+  * fix: Add modular design for RevPiStatus byte
+
+  [ Nicolai Buchwitz ]
+  * feat: Add support for RevPi Connect 4
+
+  [ Sven Sager ]
+  * chore: RC version 2.6.0rc6
+  * fix: Adjustment of the inheritance of devconfigure
+  * fix: Changed DevSelect from namedtuple to a class
+  * build: Add sphinx to build documentation
+  * ide: Add code inspection values to project
+  * fix: Colors of LEDs are now controlled correctly
+  * chore: Release 2.6.0
+  * packaging(deb): Start packaging branch
+
+ -- Sven Sager <akira@narux.de>  Fri, 18 Aug 2023 07:49:57 +0200
