@@ -617,7 +617,7 @@ class ProcimgWriter(Thread):
             # Second default_timer call include calculation time from above
             if default_timer() - ot > self._refresh:
                 warnings.warn(
-                    "cycle time of {0} ms exceeded - can not hold cycle time!"
+                    "io refresh time of {0} ms exceeded!"
                     "".format(int(self._refresh * 1000)),
                     RuntimeWarning
                 )
