@@ -155,8 +155,7 @@ class Device(object):
         self.__my_io_list = []
         self._selfupdate = False
         self._shared_procimg = False
-        self._shared_write = []
-        self.shared_procimg(parentmodio._shared_procimg)  # Set with register
+        self._shared_write = set()
 
         # Wertzuweisung aus dict_device
         self._name = dict_device.get("name")
@@ -531,10 +530,6 @@ class Device(object):
         with self._filelock:
             self._shared_write.clear()
         self._shared_procimg = True if activate else False
-        if self._shared_procimg and self not in self._modio._lst_shared:
-            self._modio._lst_shared.append(self)
-        elif not self._shared_procimg and self in self._modio._lst_shared:
-            self._modio._lst_shared.remove(self)
 
     def syncoutputs(self) -> bool:
         """

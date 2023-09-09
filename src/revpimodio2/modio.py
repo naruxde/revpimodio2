@@ -69,10 +69,9 @@ class RevPiModIO(object):
         "_autorefresh", "_buffedwrite", "_configrsc", "_debug", "_devselect", \
         "_exit", "_exit_level", "_imgwriter", "_ioerror", \
         "_length", "_looprunning", "_lst_devselect", "_lst_refresh", \
-        "_lst_shared", \
         "_maxioerrors", "_monitoring", "_myfh", "_myfh_lck", \
         "_procimg", "_replace_io_file", "_run_on_pi", \
-        "_set_device_based_cycle_time", "_simulator", "_shared_procimg", \
+        "_set_device_based_cycle_time", "_simulator", "_init_shared_procimg", \
         "_syncoutputs", "_th_mainloop", "_waitexit", \
         "app", "core", "device", "exitsignal", "io", "summary"
 
@@ -118,7 +117,7 @@ class RevPiModIO(object):
         self._procimg = "/dev/piControl0" if procimg is None else procimg
         self._set_device_based_cycle_time = True
         self._simulator = simulator
-        self._shared_procimg = shared_procimg or direct_output
+        self._init_shared_procimg = shared_procimg or direct_output
         self._syncoutputs = syncoutputs
 
         # TODO: bei simulator und procimg prüfen ob datei existiert / anlegen?
@@ -135,7 +134,6 @@ class RevPiModIO(object):
         self._length = 0
         self._looprunning = False
         self._lst_refresh = []
-        self._lst_shared = []
         self._maxioerrors = 0
         self._myfh = None
         self._myfh_lck = Lock()
@@ -364,6 +362,9 @@ class RevPiModIO(object):
                 if dev_new.name not in err_names_check:
                     err_names_check[dev_new.name] = []
                 err_names_check[dev_new.name].append(str(dev_new.position))
+
+                # Set shared_procimg mode, if requested on instantiation
+                dev_new.shared_procimg(self._init_shared_procimg)
 
                 # DeviceList für direkten Zugriff aufbauen
                 setattr(self.device, dev_new.name, dev_new)

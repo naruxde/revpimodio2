@@ -531,18 +531,23 @@ class ProcimgWriter(Thread):
                 continue
 
             try:
-                for dev in self._modio._lst_shared:
-                    # Set shared outputs before reading process image
-                    for io in dev._shared_write:
-                        if not io._write_to_procimg():
-                            raise IOError("error on _write_to_procimg")
-                    dev._shared_write.clear()
-
                 fh.seek(0)
                 fh.readinto(bytesbuff)
 
                 for dev in self._modio._lst_refresh:
                     with dev._filelock:
+                        if dev._shared_procimg:
+                            # Set modified outputs one by one
+                            for io in dev._shared_write:
+                                if not io._write_to_procimg():
+                                    raise IOError("error on _write_to_procimg")
+                            dev._shared_write.clear()
+
+                            # Read all device bytes, because it is shared
+                            fh.seek(dev.offset)
+                            bytesbuff[dev._slc_devoff] = \
+                                fh.read(len(dev._ba_devdata))
+
                         if self._modio._monitoring or dev._shared_procimg:
                             # Inputs und Outputs in Puffer
                             dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
@@ -612,7 +617,7 @@ class ProcimgWriter(Thread):
             # Second default_timer call include calculation time from above
             if default_timer() - ot > self._refresh:
                 warnings.warn(
-                    "cycle time of {0} ms exceeded - can not hold cycle time!"
+                    "io refresh time of {0} ms exceeded!"
                     "".format(int(self._refresh * 1000)),
                     RuntimeWarning
                 )
