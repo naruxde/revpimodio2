@@ -1,3 +1,16 @@
+revpimodio2 (2.6.1-1) stable; urgency=medium
+
+  * style: With shared_procimg, save changed outputs in set instead of list
+  * fix: `autorefresch` with `shared_procimg` writes all outputs automatic
+  * fix: Set shared_procimg value is stored in the device
+  * fix: Wrong values in buffer with autorefresh and shared_procimg active
+    (Closes: #25)
+  * fix: Changed misleading text of a ProcimgWriter warning
+  * build: Add environment variable to set alternative venv path
+  * chore: Release 2.6.1
+
+ -- Sven Sager <s.sager@kunbus.com>  Sat, 09 Sep 2023 12:07:12 +0200
+
 revpimodio2 (2.6.0-1) stable; urgency=medium
 
   [ Sven Sager ]
