@@ -306,7 +306,7 @@ class RevPiModIO(object):
 
         # Device und IO Klassen anlegen
         self.device = devicemodule.DeviceList()
-        self.io = IOList()
+        self.io = IOList(self)
 
         # Devices initialisieren
         err_names_check = {}

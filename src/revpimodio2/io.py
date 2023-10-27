@@ -35,10 +35,11 @@ class IOEvent(object):
 class IOList(object):
     """Basisklasse fuer direkten Zugriff auf IO Objekte."""
 
-    def __init__(self):
+    def __init__(self, modio):
         """Init IOList class."""
         self.__dict_iobyte = {k: [] for k in range(PROCESS_IMAGE_SIZE)}
         self.__dict_iorefname = {}
+        self.__modio = modio
 
     def __contains__(self, key):
         """
@@ -84,6 +85,18 @@ class IOList(object):
 
         object.__delattr__(self, key)
         io_del._parentdevice._update_my_io_list()
+
+    def __enter__(self):
+        if self.__modio._looprunning:
+            raise RuntimeError("can not start multiple mainloop/cycleloop/with sessions")
+        self.__modio._looprunning = True
+
+        self.__modio.readprocimg()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__modio.writeprocimg()
+        self.__modio._looprunning = False
 
     def __getattr__(self, key):
         """
@@ -148,7 +161,11 @@ class IOList(object):
 
     def __setattr__(self, key, value):
         """Verbietet aus Leistungsguenden das direkte Setzen von Attributen."""
-        if key in ("_IOList__dict_iobyte", "_IOList__dict_iorefname"):
+        if key in (
+            "_IOList__dict_iobyte",
+            "_IOList__dict_iorefname",
+            "_IOList__modio",
+        ):
             object.__setattr__(self, key, value)
         else:
             raise AttributeError("direct assignment is not supported - use .value Attribute")
