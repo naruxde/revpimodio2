@@ -18,22 +18,22 @@ from .modio import DevSelect, RevPiModIO as _RevPiModIO
 from .pictory import DeviceType
 
 # Synchronisierungsbefehl
-_syssync = b'\x01\x06\x16\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
+_syssync = b"\x01\x06\x16\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17"
 # Disconnectbefehl
-_sysexit = b'\x01EX\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
+_sysexit = b"\x01EX\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17"
 # DirtyBytes von Server entfernen
-_sysdeldirty = b'\x01EY\x00\x00\x00\x00\xFF\x00\x00\x00\x00\x00\x00\x00\x17'
+_sysdeldirty = b"\x01EY\x00\x00\x00\x00\xFF\x00\x00\x00\x00\x00\x00\x00\x17"
 # piCtory Konfiguration laden
-_syspictory = b'\x01PI\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
-_syspictoryh = b'\x01PH\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
+_syspictory = b"\x01PI\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17"
+_syspictoryh = b"\x01PH\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17"
 # ReplaceIO Konfiguration laden
-_sysreplaceio = b'\x01RP\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
-_sysreplaceioh = b'\x01RH\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17'
+_sysreplaceio = b"\x01RP\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17"
+_sysreplaceioh = b"\x01RH\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x17"
 # Hashvalues
-HASH_FAIL = b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'
+HASH_FAIL = b"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
 # Header start/stop
-HEADER_START = b'\x01'
-HEADER_STOP = b'\x17'
+HEADER_START = b"\x01"
+HEADER_STOP = b"\x17"
 
 
 class AclException(Exception):
@@ -57,12 +57,28 @@ class NetFH(Thread):
     so gesteuert werden.
     """
 
-    __slots__ = "__buff_size", "__buff_block", "__buff_recv", \
-        "__by_buff", "__check_replace_ios", "__config_changed", \
-        "__int_buff", "__dictdirty", "__flusherr", "__replace_ios_h", \
-        "__pictory_h", "__position", "__sockerr", "__sockend", \
-        "__socklock", "__timeout", "__waitsync", "_address", \
-        "_serversock", "daemon"
+    __slots__ = (
+        "__buff_size",
+        "__buff_block",
+        "__buff_recv",
+        "__by_buff",
+        "__check_replace_ios",
+        "__config_changed",
+        "__int_buff",
+        "__dictdirty",
+        "__flusherr",
+        "__replace_ios_h",
+        "__pictory_h",
+        "__position",
+        "__sockerr",
+        "__sockend",
+        "__socklock",
+        "__timeout",
+        "__waitsync",
+        "_address",
+        "_serversock",
+        "daemon",
+    )
 
     def __init__(self, address: tuple, check_replace_ios: bool, timeout=500):
         """
@@ -83,8 +99,8 @@ class NetFH(Thread):
         self.__config_changed = False
         self.__int_buff = 0
         self.__dictdirty = {}
-        self.__replace_ios_h = b''
-        self.__pictory_h = b''
+        self.__replace_ios_h = b""
+        self.__pictory_h = b""
         self.__sockerr = Event()
         self.__sockend = Event()
         self.__socklock = Lock()
@@ -95,9 +111,7 @@ class NetFH(Thread):
 
         # Parameterprüfung
         if not isinstance(address, tuple):
-            raise TypeError(
-                "parameter address must be <class 'tuple'> ('IP', PORT)"
-            )
+            raise TypeError("parameter address must be <class 'tuple'> ('IP', PORT)")
         if not isinstance(timeout, int):
             raise TypeError("parameter timeout must be <class 'int'>")
 
@@ -125,7 +139,7 @@ class NetFH(Thread):
 
         :param bytecode: Antwort, die geprueft werden solll
         """
-        if bytecode == b'\x18':
+        if bytecode == b"\x18":
             # Alles beenden, wenn nicht erlaubt
             self.__sockend.set()
             self.__sockerr.set()
@@ -174,7 +188,7 @@ class NetFH(Thread):
             buff_recv = bytearray(recv_len)
             while recv_len > 0:
                 block = so.recv(recv_len)
-                if block == b'':
+                if block == b"":
                     raise OSError("lost connection on hash receive")
                 buff_recv += block
                 recv_len -= len(block)
@@ -183,18 +197,19 @@ class NetFH(Thread):
             if self.__pictory_h and buff_recv[:16] != self.__pictory_h:
                 self.__config_changed = True
                 self.close()
-                raise ConfigChanged(
-                    "configuration on revolution pi was changed")
+                raise ConfigChanged("configuration on revolution pi was changed")
             else:
                 self.__pictory_h = buff_recv[:16]
 
             # Änderung an replace_ios prüfen
-            if self.__check_replace_ios and self.__replace_ios_h \
-                    and buff_recv[16:] != self.__replace_ios_h:
+            if (
+                self.__check_replace_ios
+                and self.__replace_ios_h
+                and buff_recv[16:] != self.__replace_ios_h
+            ):
                 self.__config_changed = True
                 self.close()
-                raise ConfigChanged(
-                    "configuration on revolution pi was changed")
+                raise ConfigChanged("configuration on revolution pi was changed")
             else:
                 self.__replace_ios_h = buff_recv[16:]
         except ConfigChanged:
@@ -295,11 +310,18 @@ class NetFH(Thread):
             else:
                 # Nur bestimmte Dirtybytes löschen
                 # b CM ii xx c0000000 b = 16
-                buff = self._direct_sr(pack(
-                    "=c2sH2xc7xc",
-                    HEADER_START, b'EY', position, b'\xfe', HEADER_STOP
-                ), 1)
-            if buff != b'\x1e':
+                buff = self._direct_sr(
+                    pack(
+                        "=c2sH2xc7xc",
+                        HEADER_START,
+                        b"EY",
+                        position,
+                        b"\xfe",
+                        HEADER_STOP,
+                    ),
+                    1,
+                )
+            if buff != b"\x1e":
                 # ACL prüfen und ggf Fehler werfen
                 self.__check_acl(buff)
 
@@ -343,12 +365,18 @@ class NetFH(Thread):
 
         try:
             # b CM ii ii 00000000 b = 16
-            buff = self._direct_sr(pack(
-                "=c2sHH8xc",
-                HEADER_START,
-                b'FD', self.__int_buff, len(self.__by_buff),
-                HEADER_STOP
-            ) + self.__by_buff, 1)
+            buff = self._direct_sr(
+                pack(
+                    "=c2sHH8xc",
+                    HEADER_START,
+                    b"FD",
+                    self.__int_buff,
+                    len(self.__by_buff),
+                    HEADER_STOP,
+                )
+                + self.__by_buff,
+                1,
+            )
         except Exception:
             raise
         finally:
@@ -356,7 +384,7 @@ class NetFH(Thread):
             self.__int_buff = 0
             self.__by_buff.clear()
 
-        if buff != b'\x1e':
+        if buff != b"\x1e":
             # ACL prüfen und ggf Fehler werfen
             self.__check_acl(buff)
 
@@ -403,7 +431,7 @@ class NetFH(Thread):
         """
         return int(self.__timeout * 1000)
 
-    def ioctl(self, request: int, arg=b'') -> None:
+    def ioctl(self, request: int, arg=b"") -> None:
         """
         IOCTL Befehle ueber das Netzwerk senden.
 
@@ -419,11 +447,10 @@ class NetFH(Thread):
             raise TypeError("arg must be <class 'bytes'>")
 
         # b CM xx ii iiii0000 b = 16
-        buff = self._direct_sr(pack(
-            "=c2s2xHI4xc",
-            HEADER_START, b'IC', len(arg), request, HEADER_STOP
-        ) + arg, 1)
-        if buff != b'\x1e':
+        buff = self._direct_sr(
+            pack("=c2s2xHI4xc", HEADER_START, b"IC", len(arg), request, HEADER_STOP) + arg, 1
+        )
+        if buff != b"\x1e":
             # ACL prüfen und ggf Fehler werfen
             self.__check_acl(buff)
 
@@ -443,10 +470,9 @@ class NetFH(Thread):
             raise ValueError("read of closed file")
 
         # b CM ii ii 00000000 b = 16
-        buff = self._direct_sr(pack(
-            "=c2sHH8xc",
-            HEADER_START, b'DA', self.__position, length, HEADER_STOP
-        ), length)
+        buff = self._direct_sr(
+            pack("=c2sHH8xc", HEADER_START, b"DA", self.__position, length, HEADER_STOP), length
+        )
 
         self.__position += length
         return buff
@@ -466,10 +492,9 @@ class NetFH(Thread):
         length = len(buffer)
 
         # b CM ii ii 00000000 b = 16
-        buff = self._direct_sr(pack(
-            "=c2sHH8xc",
-            HEADER_START, b'DA', self.__position, length, HEADER_STOP
-        ), length)
+        buff = self._direct_sr(
+            pack("=c2sHH8xc", HEADER_START, b"DA", self.__position, length, HEADER_STOP), length
+        )
 
         buffer[:] = buff
         return len(buffer)
@@ -484,13 +509,11 @@ class NetFH(Thread):
             raise ValueError("read of closed file")
 
         if self.__pictory_h == HASH_FAIL:
-            raise RuntimeError(
-                "could not read/parse piCtory configuration over network"
-            )
+            raise RuntimeError("could not read/parse piCtory configuration over network")
 
         buff = self._direct_sr(_syspictory, 4)
-        recv_length, = unpack("=I", buff)
-        return self._direct_sr(b'', recv_length)
+        (recv_length,) = unpack("=I", buff)
+        return self._direct_sr(b"", recv_length)
 
     def readreplaceio(self) -> bytes:
         """
@@ -502,27 +525,21 @@ class NetFH(Thread):
             raise ValueError("read of closed file")
 
         if self.__replace_ios_h == HASH_FAIL:
-            raise RuntimeError(
-                "replace_io_file: could not read/parse over network"
-            )
+            raise RuntimeError("replace_io_file: could not read/parse over network")
 
         buff = self._direct_sr(_sysreplaceio, 4)
-        recv_length, = unpack("=I", buff)
-        return self._direct_sr(b'', recv_length)
+        (recv_length,) = unpack("=I", buff)
+        return self._direct_sr(b"", recv_length)
 
     def run(self) -> None:
         """Handler fuer Synchronisierung."""
         state_reconnect = False
         while not self.__sockend.is_set():
-
             # Bei Fehlermeldung neu verbinden
             if self.__sockerr.is_set():
                 if not state_reconnect:
                     state_reconnect = True
-                    warnings.warn(
-                        "got a network error and try to reconnect",
-                        RuntimeWarning
-                    )
+                    warnings.warn("got a network error and try to reconnect", RuntimeWarning)
                 self._connect()
                 if self.__sockerr.is_set():
                     # Verhindert beim Scheitern 100% CPU last
@@ -530,10 +547,7 @@ class NetFH(Thread):
                     continue
                 else:
                     state_reconnect = False
-                    warnings.warn(
-                        "successfully reconnected after network error",
-                        RuntimeWarning
-                    )
+                    warnings.warn("successfully reconnected after network error", RuntimeWarning)
 
             # Kein Fehler aufgetreten, sync durchführen wenn socket frei
             if self.__socklock.acquire(blocking=False):
@@ -543,9 +557,7 @@ class NetFH(Thread):
                     self.__buff_recv.clear()
                     recv_lenght = 2
                     while recv_lenght > 0:
-                        count = self._serversock.recv_into(
-                            self.__buff_block, recv_lenght
-                        )
+                        count = self._serversock.recv_into(self.__buff_block, recv_lenght)
                         if count == 0:
                             raise IOError("lost network connection on sync")
                         self.__buff_recv += self.__buff_block[:count]
@@ -554,11 +566,8 @@ class NetFH(Thread):
                 except IOError:
                     self.__sockerr.set()
                 else:
-                    if self.__buff_recv != b'\x06\x16':
-                        warnings.warn(
-                            "data error on network sync",
-                            RuntimeWarning
-                        )
+                    if self.__buff_recv != b"\x06\x16":
+                        warnings.warn("data error on network sync", RuntimeWarning)
                         self.__sockerr.set()
                         continue
                 finally:
@@ -596,12 +605,13 @@ class NetFH(Thread):
 
         try:
             # b CM ii ii 00000000 b = 16
-            buff = self._direct_sr(pack(
-                "=c2sHH8xc",
-                HEADER_START, b'EY', position, len(dirtybytes), HEADER_STOP
-            ) + dirtybytes, 1)
+            buff = self._direct_sr(
+                pack("=c2sHH8xc", HEADER_START, b"EY", position, len(dirtybytes), HEADER_STOP)
+                + dirtybytes,
+                1,
+            )
 
-            if buff != b'\x1e':
+            if buff != b"\x1e":
                 # ACL prüfen und ggf Fehler werfen
                 self.__check_acl(buff)
 
@@ -627,11 +637,8 @@ class NetFH(Thread):
 
         try:
             # b CM ii xx 00000000 b = 16
-            buff = self._direct_sr(pack(
-                "=c2sH10xc",
-                HEADER_START, b'CF', value, HEADER_STOP
-            ), 1)
-            if buff != b'\x1e':
+            buff = self._direct_sr(pack("=c2sH10xc", HEADER_START, b"CF", value, HEADER_STOP), 1)
+            if buff != b"\x1e":
                 raise IOError("set timeout error on network")
         except Exception:
             self.__sockerr.set()
@@ -666,10 +673,11 @@ class NetFH(Thread):
             self.__int_buff += 1
 
             # Datenblock mit Position und Länge in Puffer ablegen
-            self.__by_buff += \
-                self.__position.to_bytes(length=2, byteorder="little") \
-                + len(bytebuff).to_bytes(length=2, byteorder="little") \
+            self.__by_buff += (
+                self.__position.to_bytes(length=2, byteorder="little")
+                + len(bytebuff).to_bytes(length=2, byteorder="little")
                 + bytebuff
+            )
 
         # TODO: Bufferlänge und dann flushen?
 
@@ -697,9 +705,17 @@ class RevPiNetIO(_RevPiModIO):
     __slots__ = "_address"
 
     def __init__(
-            self, address, autorefresh=False, monitoring=False,
-            syncoutputs=True, simulator=False, debug=True,
-            replace_io_file=None, shared_procimg=False, direct_output=False):
+        self,
+        address,
+        autorefresh=False,
+        monitoring=False,
+        syncoutputs=True,
+        simulator=False,
+        debug=True,
+        replace_io_file=None,
+        shared_procimg=False,
+        direct_output=False,
+    ):
         """
         Instantiiert die Grundfunktionen.
 
@@ -714,28 +730,20 @@ class RevPiNetIO(_RevPiModIO):
                                could be insecure for automation
         :param direct_output: Deprecated, use shared_procimg
         """
-        check_ip = compile(
-            r"^(25[0-5]|(2[0-4]|[01]?\d|)\d)"
-            r"(\.(25[0-5]|(2[0-4]|[01]?\d|)\d)){3}$"
-        )
+        check_ip = compile(r"^(25[0-5]|(2[0-4]|[01]?\d|)\d)(\.(25[0-5]|(2[0-4]|[01]?\d|)\d)){3}$")
 
         # Adresse verarbeiten
         if isinstance(address, str):
             self._address = (address, 55234)
         elif isinstance(address, tuple):
-            if len(address) == 2 \
-                    and isinstance(address[0], str) \
-                    and isinstance(address[1], int):
-
+            if len(address) == 2 and isinstance(address[0], str) and isinstance(address[1], int):
                 # Werte prüfen
                 if not 0 < address[1] <= 65535:
                     raise ValueError("port number out of range 1 - 65535")
 
                 self._address = address
             else:
-                raise TypeError(
-                    "address tuple must be (<class 'str'>, <class 'int'>)"
-                )
+                raise TypeError("address tuple must be (<class 'str'>, <class 'int'>)")
         else:
             raise TypeError(
                 "parameter address must be <class 'str'> or <class 'tuple'> "
@@ -749,8 +757,7 @@ class RevPiNetIO(_RevPiModIO):
                 self._address = (ipv4, self._address[1])
             except Exception:
                 raise ValueError(
-                    "can not resolve ip address for hostname '{0}'"
-                    "".format(self._address[0])
+                    "can not resolve ip address for hostname '{0}'".format(self._address[0])
                 )
 
         # Vererben
@@ -801,10 +808,7 @@ class RevPiNetIO(_RevPiModIO):
         try:
             cp.read_string(byte_buff.decode("utf-8"))
         except Exception as e:
-            raise RuntimeError(
-                "replace_io_file: could not read/parse network data | {0}"
-                "".format(e)
-            )
+            raise RuntimeError("replace_io_file: could not read/parse network data | {0}".format(e))
         return cp
 
     def disconnect(self) -> None:
@@ -862,16 +866,12 @@ class RevPiNetIO(_RevPiModIO):
         :param device: nur auf einzelnes Device anwenden, sonst auf Alle
         """
         if self.monitoring:
-            raise RuntimeError(
-                "can not send default values, while system is in "
-                "monitoring mode"
-            )
+            raise RuntimeError("can not send default values, while system is in monitoring mode")
 
         if device is None:
             self._myfh.clear_dirtybytes()
         else:
-            dev = device if isinstance(device, Device) \
-                else self.device.__getitem__(device)
+            dev = device if isinstance(device, Device) else self.device.__getitem__(device)
             mylist = [dev]
 
             for dev in mylist:
@@ -887,16 +887,12 @@ class RevPiNetIO(_RevPiModIO):
         :param device: nur auf einzelnes Device anwenden, sonst auf Alle
         """
         if self.monitoring:
-            raise RuntimeError(
-                "can not send default values, while system is in "
-                "monitoring mode"
-            )
+            raise RuntimeError("can not send default values, while system is in monitoring mode")
 
         if device is None:
             mylist = self.device
         else:
-            dev = device if isinstance(device, Device) \
-                else self.device.__getitem__(device)
+            dev = device if isinstance(device, Device) else self.device.__getitem__(device)
             mylist = [dev]
 
         for dev in mylist:
@@ -921,13 +917,10 @@ class RevPiNetIO(_RevPiModIO):
                             int_byte += 1 if bitio._defaultvalue else 0
 
                     # Errechneten Int-Wert in ein Byte umwandeln
-                    dirtybytes += \
-                        int_byte.to_bytes(length=1, byteorder="little")
+                    dirtybytes += int_byte.to_bytes(length=1, byteorder="little")
 
             # Dirtybytes an PLC Server senden
-            self._myfh.set_dirtybytes(
-                dev._offset + dev._slc_out.start, dirtybytes
-            )
+            self._myfh.set_dirtybytes(dev._offset + dev._slc_out.start, dirtybytes)
 
     config_changed = property(get_config_changed)
     reconnecting = property(get_reconnecting)
@@ -946,9 +939,18 @@ class RevPiNetIOSelected(RevPiNetIO):
     __slots__ = ()
 
     def __init__(
-            self, address, deviceselection, autorefresh=False,
-            monitoring=False, syncoutputs=True, simulator=False, debug=True,
-            replace_io_file=None, shared_procimg=False, direct_output=False):
+        self,
+        address,
+        deviceselection,
+        autorefresh=False,
+        monitoring=False,
+        syncoutputs=True,
+        simulator=False,
+        debug=True,
+        replace_io_file=None,
+        shared_procimg=False,
+        direct_output=False,
+    ):
         """
         Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 
@@ -961,8 +963,15 @@ class RevPiNetIOSelected(RevPiNetIO):
         :ref: :func:`RevPiNetIO.__init__()`
         """
         super().__init__(
-            address, autorefresh, monitoring, syncoutputs, simulator, debug,
-            replace_io_file, shared_procimg, direct_output
+            address,
+            autorefresh,
+            monitoring,
+            syncoutputs,
+            simulator,
+            debug,
+            replace_io_file,
+            shared_procimg,
+            direct_output,
         )
 
         if type(deviceselection) is not DevSelect:
@@ -981,24 +990,19 @@ class RevPiNetIOSelected(RevPiNetIO):
         if len(self.device) == 0:
             if self._devselect.type:
                 raise DeviceNotFoundError(
-                    "could not find ANY given {0} devices in config"
-                    "".format(self._devselect.type)
+                    "could not find ANY given {0} devices in config".format(self._devselect.type)
                 )
             else:
-                raise DeviceNotFoundError(
-                    "could not find ANY given devices in config"
-                )
-        elif not self._devselect.other_device_key \
-                and len(self.device) != len(self._devselect.values):
+                raise DeviceNotFoundError("could not find ANY given devices in config")
+        elif not self._devselect.other_device_key and len(self.device) != len(
+            self._devselect.values
+        ):
             if self._devselect.type:
                 raise DeviceNotFoundError(
-                    "could not find ALL given {0} devices in config"
-                    "".format(self._devselect.type)
+                    "could not find ALL given {0} devices in config".format(self._devselect.type)
                 )
             else:
-                raise DeviceNotFoundError(
-                    "could not find ALL given devices in config"
-                )
+                raise DeviceNotFoundError("could not find ALL given devices in config")
 
 
 class RevPiNetIODriver(RevPiNetIOSelected):
@@ -1014,9 +1018,16 @@ class RevPiNetIODriver(RevPiNetIOSelected):
     __slots__ = ()
 
     def __init__(
-            self, address, virtdev, autorefresh=False,
-            syncoutputs=True, debug=True, replace_io_file=None,
-            shared_procimg=False, direct_output=False):
+        self,
+        address,
+        virtdev,
+        autorefresh=False,
+        syncoutputs=True,
+        debug=True,
+        replace_io_file=None,
+        shared_procimg=False,
+        direct_output=False,
+    ):
         """
         Instantiiert die Grundfunktionen.
 
@@ -1032,13 +1043,20 @@ class RevPiNetIODriver(RevPiNetIOSelected):
             virtdev = (virtdev,)
         dev_select = DevSelect(DeviceType.VIRTUAL, "", virtdev)
         super().__init__(
-            address, dev_select, autorefresh, False, syncoutputs, True, debug,
-            replace_io_file, shared_procimg, direct_output
+            address,
+            dev_select,
+            autorefresh,
+            False,
+            syncoutputs,
+            True,
+            debug,
+            replace_io_file,
+            shared_procimg,
+            direct_output,
         )
 
 
-def run_net_plc(
-        address, func, cycletime=50, replace_io_file=None, debug=True):
+def run_net_plc(address, func, cycletime=50, replace_io_file=None, debug=True):
     """
     Run Revoluton Pi as real plc with cycle loop and exclusive IO access.
 

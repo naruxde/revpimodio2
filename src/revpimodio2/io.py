@@ -8,8 +8,7 @@ import struct
 from re import match as rematch
 from threading import Event
 
-from ._internal import consttostr, RISING, FALLING, BOTH, INP, OUT, \
-    MEM, PROCESS_IMAGE_SIZE
+from ._internal import consttostr, RISING, FALLING, BOTH, INP, OUT, MEM, PROCESS_IMAGE_SIZE
 
 try:
     # Funktioniert nur auf Unix
@@ -69,8 +68,16 @@ class IOList(object):
             self.__dict_iobyte[io_del.address][io_del._bitaddress] = None
 
             # Do not use any() because we want to know None, not 0
-            if self.__dict_iobyte[io_del.address] == \
-                    [None, None, None, None, None, None, None, None]:
+            if self.__dict_iobyte[io_del.address] == [
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            ]:
                 self.__dict_iobyte[io_del.address] = []
         else:
             self.__dict_iobyte[io_del.address].remove(io_del)
@@ -110,9 +117,7 @@ class IOList(object):
         elif type(key) == slice:
             return [
                 self.__dict_iobyte[int_io]
-                for int_io in range(
-                    key.start, key.stop, 1 if key.step is None else key.step
-                )
+                for int_io in range(key.start, key.stop, 1 if key.step is None else key.step)
             ]
         else:
             return getattr(self, key)
@@ -143,15 +148,10 @@ class IOList(object):
 
     def __setattr__(self, key, value):
         """Verbietet aus Leistungsguenden das direkte Setzen von Attributen."""
-        if key in (
-                "_IOList__dict_iobyte",
-                "_IOList__dict_iorefname"
-        ):
+        if key in ("_IOList__dict_iobyte", "_IOList__dict_iorefname"):
             object.__setattr__(self, key, value)
         else:
-            raise AttributeError(
-                "direct assignment is not supported - use .value Attribute"
-            )
+            raise AttributeError("direct assignment is not supported - use .value Attribute")
 
     def __private_replace_oldio_with_newio(self, io) -> None:
         """
@@ -168,16 +168,17 @@ class IOList(object):
             scan_stop = scan_start + (1 if io._length == 0 else io._length)
 
         # Defaultvalue über mehrere Bytes sammeln
-        calc_defaultvalue = b''
+        calc_defaultvalue = b""
 
         for i in range(scan_start, scan_stop):
             for oldio in self.__dict_iobyte[i]:
-
                 if type(oldio) == StructIO:
                     # Hier gibt es schon einen neuen IO
                     if oldio._bitshift:
-                        if io._bitshift == oldio._bitshift \
-                                and io._slc_address == oldio._slc_address:
+                        if (
+                            io._bitshift == oldio._bitshift
+                            and io._slc_address == oldio._slc_address
+                        ):
                             raise MemoryError(
                                 "bit {0} already assigned to '{1}'".format(
                                     io._bitaddress, oldio._name
@@ -186,9 +187,7 @@ class IOList(object):
                     else:
                         # Bereits überschriebene bytes sind ungültig
                         raise MemoryError(
-                            "new io '{0}' overlaps memory of '{1}'".format(
-                                io._name, oldio._name
-                            )
+                            "new io '{0}' overlaps memory of '{1}'".format(io._name, oldio._name)
                         )
                 elif oldio is not None:
                     # IOs im Speicherbereich des neuen IO merken
@@ -201,8 +200,7 @@ class IOList(object):
                         if io._byteorder == "little":
                             calc_defaultvalue += oldio._defaultvalue
                         else:
-                            calc_defaultvalue = \
-                                oldio._defaultvalue + calc_defaultvalue
+                            calc_defaultvalue = oldio._defaultvalue + calc_defaultvalue
 
                     # ios aus listen entfernen
                     delattr(self, oldio._name)
@@ -211,9 +209,7 @@ class IOList(object):
             # Nur bei StructIO und keiner gegebenen defaultvalue übernehmen
             if io._bitshift:
                 io_byte_address = io._parentio_address - io.address
-                io._defaultvalue = bool(
-                    io._parentio_defaultvalue[io_byte_address] & io._bitshift
-                )
+                io._defaultvalue = bool(io._parentio_defaultvalue[io_byte_address] & io._bitshift)
             else:
                 io._defaultvalue = calc_defaultvalue
 
@@ -226,8 +222,7 @@ class IOList(object):
         if isinstance(new_io, IOBase):
             if hasattr(self, new_io._name):
                 raise AttributeError(
-                    "attribute {0} already exists - can not set io"
-                    "".format(new_io._name)
+                    "attribute {0} already exists - can not set io".format(new_io._name)
                 )
 
             if type(new_io) is StructIO:
@@ -239,8 +234,16 @@ class IOList(object):
             if new_io._bitshift:
                 if len(self.__dict_iobyte[new_io.address]) != 8:
                     # "schnell" 8 Einträge erstellen da es BIT IOs sind
-                    self.__dict_iobyte[new_io.address] += \
-                        [None, None, None, None, None, None, None, None]
+                    self.__dict_iobyte[new_io.address] += [
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                    ]
                 self.__dict_iobyte[new_io.address][new_io._bitaddress] = new_io
             else:
                 self.__dict_iobyte[new_io.address].append(new_io)
@@ -289,13 +292,26 @@ class IOBase(object):
     auch als <class 'int'> verwendet werden koennen.
     """
 
-    __slots__ = "__bit_ioctl_off", "__bit_ioctl_on", "_bitaddress", \
-        "_bitshift", "_bitlength", "_byteorder", "_defaultvalue", \
-        "_export", "_iotype", "_length", "_name", "_parentdevice", \
-        "_read_only_io", "_signed", "_slc_address", "bmk"
+    __slots__ = (
+        "__bit_ioctl_off",
+        "__bit_ioctl_on",
+        "_bitaddress",
+        "_bitshift",
+        "_bitlength",
+        "_byteorder",
+        "_defaultvalue",
+        "_export",
+        "_iotype",
+        "_length",
+        "_name",
+        "_parentdevice",
+        "_read_only_io",
+        "_signed",
+        "_slc_address",
+        "bmk",
+    )
 
-    def __init__(self, parentdevice, valuelist: list, iotype: int,
-                 byteorder: str, signed: bool):
+    def __init__(self, parentdevice, valuelist: list, iotype: int, byteorder: str, signed: bool):
         """
         Instantiierung der IOBase-Klasse.
 
@@ -312,8 +328,7 @@ class IOBase(object):
 
         # Bitadressen auf Bytes aufbrechen und umrechnen
         self._bitaddress = -1 if valuelist[7] == "" else int(valuelist[7]) % 8
-        self._bitshift = None if self._bitaddress == -1 \
-            else 1 << self._bitaddress
+        self._bitshift = None if self._bitaddress == -1 else 1 << self._bitaddress
 
         # Längenberechnung
         self._bitlength = int(valuelist[2])
@@ -333,9 +348,7 @@ class IOBase(object):
         if self._bitshift:
             # Höhere Bits als 7 auf nächste Bytes umbrechen
             int_startaddress += int(int(valuelist[7]) / 8)
-            self._slc_address = slice(
-                int_startaddress, int_startaddress + 1
-            )
+            self._slc_address = slice(int_startaddress, int_startaddress + 1)
 
             # Defaultvalue ermitteln, sonst False
             if valuelist[1] is None and type(self) == StructIO:
@@ -347,14 +360,10 @@ class IOBase(object):
                     self._defaultvalue = False
 
             # Ioctl für Bitsetzung setzen
-            self.__bit_ioctl_off = struct.pack(
-                "<HB", self._get_address(), self._bitaddress
-            )
-            self.__bit_ioctl_on = self.__bit_ioctl_off + b'\x01'
+            self.__bit_ioctl_off = struct.pack("<HB", self._get_address(), self._bitaddress)
+            self.__bit_ioctl_on = self.__bit_ioctl_off + b"\x01"
         else:
-            self._slc_address = slice(
-                int_startaddress, int_startaddress + self._length
-            )
+            self._slc_address = slice(int_startaddress, int_startaddress + self._length)
             if str(valuelist[1]).isdigit():
                 # Defaultvalue aus Zahl in Bytes umrechnen
                 self._defaultvalue = int(valuelist[1]).to_bytes(
@@ -382,8 +391,7 @@ class IOBase(object):
                     try:
                         buff = valuelist[1].encode("ASCII")
                         if len(buff) <= self._length:
-                            self._defaultvalue = \
-                                buff + bytes(self._length - len(buff))
+                            self._defaultvalue = buff + bytes(self._length - len(buff))
                     except Exception:
                         pass
 
@@ -394,10 +402,7 @@ class IOBase(object):
         :return: <class 'bool'> Nur False wenn False oder 0 sonst True
         """
         if self._bitshift:
-            return bool(
-                self._parentdevice._ba_devdata[self._slc_address.start]
-                & self._bitshift
-            )
+            return bool(self._parentdevice._ba_devdata[self._slc_address.start] & self._bitshift)
         else:
             return any(self._parentdevice._ba_devdata[self._slc_address])
 
@@ -406,8 +411,7 @@ class IOBase(object):
             # Inline get_value()
             if self._bitshift:
                 return bool(
-                    self._parentdevice._ba_devdata[self._slc_address.start]
-                    & self._bitshift
+                    self._parentdevice._ba_devdata[self._slc_address.start] & self._bitshift
                 )
             else:
                 return bytes(self._parentdevice._ba_devdata[self._slc_address])
@@ -430,8 +434,9 @@ class IOBase(object):
         """
         return self._name
 
-    def __reg_xevent(self, func, delay: int, edge: int, as_thread: bool,
-                     overwrite: bool, prefire: bool) -> None:
+    def __reg_xevent(
+        self, func, delay: int, edge: int, as_thread: bool, overwrite: bool, prefire: bool
+    ) -> None:
         """
         Verwaltet reg_event und reg_timerevent.
 
@@ -444,26 +449,19 @@ class IOBase(object):
         """
         # Prüfen ob Funktion callable ist
         if not callable(func):
-            raise ValueError(
-                "registered function '{0}' is not callable".format(func)
-            )
+            raise ValueError("registered function '{0}' is not callable".format(func))
         if type(delay) != int or delay < 0:
-            raise ValueError(
-                "'delay' must be <class 'int'> and greater or equal 0"
-            )
+            raise ValueError("'delay' must be <class 'int'> and greater or equal 0")
         if edge != BOTH and not self._bitshift:
-            raise ValueError(
-                "parameter 'edge' can be used with bit io objects only"
-            )
+            raise ValueError("parameter 'edge' can be used with bit io objects only")
         if prefire and self._parentdevice._modio._looprunning:
-            raise RuntimeError(
-                "prefire can not be used if mainloop is running"
-            )
+            raise RuntimeError("prefire can not be used if mainloop is running")
 
         if self not in self._parentdevice._dict_events:
             with self._parentdevice._filelock:
-                self._parentdevice._dict_events[self] = \
-                    [IOEvent(func, edge, as_thread, delay, overwrite, prefire)]
+                self._parentdevice._dict_events[self] = [
+                    IOEvent(func, edge, as_thread, delay, overwrite, prefire)
+                ]
         else:
             # Prüfen ob Funktion schon registriert ist
             for regfunc in self._parentdevice._dict_events[self]:
@@ -476,10 +474,7 @@ class IOBase(object):
                         raise RuntimeError(
                             "io '{0}' with function '{1}' already in list "
                             "with edge '{2}' - edge '{3}' not allowed anymore"
-                            "".format(
-                                self._name, func,
-                                consttostr(regfunc.edge), consttostr(edge)
-                            )
+                            "".format(self._name, func, consttostr(regfunc.edge), consttostr(edge))
                         )
                     else:
                         raise RuntimeError(
@@ -490,9 +485,7 @@ class IOBase(object):
                 elif regfunc.edge == edge:
                     raise RuntimeError(
                         "io '{0}' with function '{1}' for given edge '{2}' "
-                        "already in list".format(
-                            self._name, func, consttostr(edge)
-                        )
+                        "already in list".format(self._name, func, consttostr(edge))
                     )
 
             # Eventfunktion einfügen
@@ -548,9 +541,7 @@ class IOBase(object):
 
         if self._bitshift:
             # Write single bit to process image
-            value = \
-                self._parentdevice._ba_devdata[self._slc_address.start] & \
-                self._bitshift
+            value = self._parentdevice._ba_devdata[self._slc_address.start] & self._bitshift
             if self._parentdevice._modio._run_on_pi:
                 # IOCTL auf dem RevPi
                 with self._parentdevice._modio._myfh_lck:
@@ -559,8 +550,7 @@ class IOBase(object):
                         ioctl(
                             self._parentdevice._modio._myfh,
                             19216,
-                            self.__bit_ioctl_on if value
-                            else self.__bit_ioctl_off
+                            self.__bit_ioctl_on if value else self.__bit_ioctl_off,
                         )
                     except Exception as e:
                         self._parentdevice._modio._gotioerror("ioset", e)
@@ -572,12 +562,10 @@ class IOBase(object):
                     try:
                         self._parentdevice._modio._myfh.ioctl(
                             19216,
-                            self.__bit_ioctl_on if value
-                            else self.__bit_ioctl_off
+                            self.__bit_ioctl_on if value else self.__bit_ioctl_off,
                         )
                     except Exception as e:
-                        self._parentdevice._modio._gotioerror(
-                            "net_ioset", e)
+                        self._parentdevice._modio._gotioerror("net_ioset", e)
                         return False
 
             else:
@@ -586,8 +574,7 @@ class IOBase(object):
                     # Set value durchführen (Funktion K+16)
                     self._parentdevice._modio._simulate_ioctl(
                         19216,
-                        self.__bit_ioctl_on if value
-                        else self.__bit_ioctl_off
+                        self.__bit_ioctl_on if value else self.__bit_ioctl_off,
                     )
                 except Exception as e:
                     self._parentdevice._modio._gotioerror("file_ioset", e)
@@ -598,9 +585,7 @@ class IOBase(object):
             value = bytes(self._parentdevice._ba_devdata[self._slc_address])
             with self._parentdevice._modio._myfh_lck:
                 try:
-                    self._parentdevice._modio._myfh.seek(
-                        self._get_address()
-                    )
+                    self._parentdevice._modio._myfh.seek(self._get_address())
                     self._parentdevice._modio._myfh.write(value)
                     if self._parentdevice._modio._buffedwrite:
                         self._parentdevice._modio._myfh.flush()
@@ -625,15 +610,11 @@ class IOBase(object):
         :return: IO-Wert als <class 'bytes'> oder <class 'bool'>
         """
         if self._bitshift:
-            return bool(
-                self._parentdevice._ba_devdata[self._slc_address.start]
-                & self._bitshift
-            )
+            return bool(self._parentdevice._ba_devdata[self._slc_address.start] & self._bitshift)
         else:
             return bytes(self._parentdevice._ba_devdata[self._slc_address])
 
-    def reg_event(
-            self, func, delay=0, edge=BOTH, as_thread=False, prefire=False):
+    def reg_event(self, func, delay=0, edge=BOTH, as_thread=False, prefire=False):
         """
         Registriert fuer IO ein Event bei der Eventueberwachung.
 
@@ -652,8 +633,7 @@ class IOBase(object):
         """
         self.__reg_xevent(func, delay, edge, as_thread, True, prefire)
 
-    def reg_timerevent(
-            self, func, delay, edge=BOTH, as_thread=False, prefire=False):
+    def reg_timerevent(self, func, delay, edge=BOTH, as_thread=False, prefire=False):
         """
         Registriert fuer IO einen Timer, welcher nach delay func ausfuehrt.
 
@@ -685,20 +665,13 @@ class IOBase(object):
             if self._iotype == INP:
                 if self._parentdevice._modio._simulator:
                     raise RuntimeError(
-                        "can not write to output '{0}' in simulator mode"
-                        "".format(self._name)
+                        "can not write to output '{0}' in simulator mode".format(self._name)
                     )
                 else:
-                    raise RuntimeError(
-                        "can not write to input '{0}'".format(self._name)
-                    )
+                    raise RuntimeError("can not write to input '{0}'".format(self._name))
             elif self._iotype == MEM:
-                raise RuntimeError(
-                    "can not write to memory '{0}'".format(self._name)
-                )
-            raise RuntimeError(
-                "the io object '{0}' is read only".format(self._name)
-            )
+                raise RuntimeError("can not write to memory '{0}'".format(self._name))
+            raise RuntimeError("the io object '{0}' is read only".format(self._name))
 
         if self._bitshift:
             # Versuchen egal welchen Typ in Bool zu konvertieren
@@ -722,8 +695,7 @@ class IOBase(object):
                     int_byte -= self._bitshift
 
                 # Zurückschreiben wenn verändert
-                self._parentdevice._ba_devdata[self._slc_address.start] = \
-                    int_byte
+                self._parentdevice._ba_devdata[self._slc_address.start] = int_byte
 
             self._parentdevice._filelock.release()
 
@@ -738,9 +710,7 @@ class IOBase(object):
             if self._length != len(value):
                 raise ValueError(
                     "'{0}' requires a <class 'bytes'> object of "
-                    "length {1}, but {2} was given".format(
-                        self._name, self._length, len(value)
-                    )
+                    "length {1}, but {2} was given".format(self._name, self._length, len(value))
                 )
 
             if self._parentdevice._shared_procimg:
@@ -764,8 +734,7 @@ class IOBase(object):
             else:
                 newlist = []
                 for regfunc in self._parentdevice._dict_events[self]:
-                    if regfunc.func != func or edge is not None \
-                            and regfunc.edge != edge:
+                    if regfunc.func != func or edge is not None and regfunc.edge != edge:
                         newlist.append(regfunc)
 
                 # Wenn Funktionen übrig bleiben, diese übernehmen
@@ -832,17 +801,11 @@ class IOBase(object):
                 "revpimodio2.FALLING or revpimodio2.BOTH"
             )
         if not (exitevent is None or type(exitevent) == Event):
-            raise TypeError(
-                "parameter 'exitevent' must be <class 'threading.Event'>"
-            )
+            raise TypeError("parameter 'exitevent' must be <class 'threading.Event'>")
         if type(timeout) != int or timeout < 0:
-            raise ValueError(
-                "parameter 'timeout' must be <class 'int'> and greater than 0"
-            )
+            raise ValueError("parameter 'timeout' must be <class 'int'> and greater than 0")
         if edge != BOTH and not self._bitshift:
-            raise ValueError(
-                "parameter 'edge' can be used with bit Inputs only"
-            )
+            raise ValueError("parameter 'edge' can be used with bit Inputs only")
 
         # Abbruchwert prüfen
         if okvalue == self.value:
@@ -858,23 +821,27 @@ class IOBase(object):
             exitevent = Event()
 
         flt_timecount = 0 if bool_timecount else -1
-        while not self._parentdevice._modio._waitexit.is_set() \
-                and not exitevent.is_set() \
-                and flt_timecount < timeout:
-
+        while (
+            not self._parentdevice._modio._waitexit.is_set()
+            and not exitevent.is_set()
+            and flt_timecount < timeout
+        ):
             if self._parentdevice._modio._imgwriter.newdata.wait(2.5):
                 self._parentdevice._modio._imgwriter.newdata.clear()
 
                 if val_start != self.value:
-                    if edge == BOTH \
-                            or edge == RISING and not val_start \
-                            or edge == FALLING and val_start:
+                    if (
+                        edge == BOTH
+                        or edge == RISING
+                        and not val_start
+                        or edge == FALLING
+                        and val_start
+                    ):
                         return 0
                     else:
                         val_start = not val_start
                 if bool_timecount:
-                    flt_timecount += \
-                        self._parentdevice._modio._imgwriter._refresh
+                    flt_timecount += self._parentdevice._modio._imgwriter._refresh
             elif bool_timecount:
                 flt_timecount += 2.5
 
@@ -922,7 +889,7 @@ class IntIO(IOBase):
         return int.from_bytes(
             self._parentdevice._ba_devdata[self._slc_address],
             byteorder=self._byteorder,
-            signed=self._signed
+            signed=self._signed,
         )
 
     def __call__(self, value=None):
@@ -931,16 +898,18 @@ class IntIO(IOBase):
             return int.from_bytes(
                 self._parentdevice._ba_devdata[self._slc_address],
                 byteorder=self._byteorder,
-                signed=self._signed
+                signed=self._signed,
             )
         else:
             # Inline from set_intvalue()
             if type(value) == int:
-                self.set_value(value.to_bytes(
-                    self._length,
-                    byteorder=self._byteorder,
-                    signed=self._signed
-                ))
+                self.set_value(
+                    value.to_bytes(
+                        self._length,
+                        byteorder=self._byteorder,
+                        signed=self._signed,
+                    )
+                )
             else:
                 raise TypeError(
                     "'{0}' need a <class 'int'> value, but {1} was given"
@@ -983,9 +952,7 @@ class IntIO(IOBase):
 
         :return: <class 'int'> Defaultvalue
         """
-        return int.from_bytes(
-            self._defaultvalue, byteorder=self._byteorder, signed=self._signed
-        )
+        return int.from_bytes(self._defaultvalue, byteorder=self._byteorder, signed=self._signed)
 
     def get_intvalue(self) -> int:
         """
@@ -996,7 +963,7 @@ class IntIO(IOBase):
         return int.from_bytes(
             self._parentdevice._ba_devdata[self._slc_address],
             byteorder=self._byteorder,
-            signed=self._signed
+            signed=self._signed,
         )
 
     def set_intvalue(self, value: int) -> None:
@@ -1006,11 +973,13 @@ class IntIO(IOBase):
         :param value: <class 'int'> Wert
         """
         if type(value) == int:
-            self.set_value(value.to_bytes(
-                self._length,
-                byteorder=self._byteorder,
-                signed=self._signed
-            ))
+            self.set_value(
+                value.to_bytes(
+                    self._length,
+                    byteorder=self._byteorder,
+                    signed=self._signed,
+                )
+            )
         else:
             raise TypeError(
                 "'{0}' need a <class 'int'> value, but {1} was given"
@@ -1028,9 +997,7 @@ class IntIOCounter(IntIO):
 
     __slots__ = ("__ioctl_arg",)
 
-    def __init__(
-            self, counter_id,
-            parentdevice, valuelist, iotype, byteorder, signed):
+    def __init__(self, counter_id, parentdevice, valuelist, iotype, byteorder, signed):
         """
         Instantiierung der IntIOCounter-Klasse.
 
@@ -1044,10 +1011,11 @@ class IntIOCounter(IntIO):
 
         # Deviceposition + leer + Counter_ID
         # ID-Bits: 7|6|5|4|3|2|1|0|15|14|13|12|11|10|9|8
-        self.__ioctl_arg = \
-            parentdevice._position.to_bytes(1, "little") \
-            + b'\x00' \
+        self.__ioctl_arg = (
+            parentdevice._position.to_bytes(1, "little")
+            + b"\x00"
             + (1 << counter_id).to_bytes(2, "little")
+        )
 
         """
         IOCTL fuellt dieses struct, welches durch padding im Speicher nach
@@ -1067,23 +1035,16 @@ class IntIOCounter(IntIO):
     def reset(self) -> None:
         """Setzt den Counter des Inputs zurueck."""
         if self._parentdevice._modio._monitoring:
-            raise RuntimeError(
-                "can not reset counter, while system is in monitoring mode"
-            )
+            raise RuntimeError("can not reset counter, while system is in monitoring mode")
         if self._parentdevice._modio._simulator:
-            raise RuntimeError(
-                "can not reset counter, while system is in simulator mode"
-            )
+            raise RuntimeError("can not reset counter, while system is in simulator mode")
 
         if self._parentdevice._modio._run_on_pi:
             # IOCTL auf dem RevPi
             with self._parentdevice._modio._myfh_lck:
                 try:
                     # Counter reset durchführen (Funktion K+20)
-                    ioctl(
-                        self._parentdevice._modio._myfh,
-                        19220, self.__ioctl_arg
-                    )
+                    ioctl(self._parentdevice._modio._myfh, 19220, self.__ioctl_arg)
                 except Exception as e:
                     self._parentdevice._modio._gotioerror("iorst", e)
 
@@ -1091,9 +1052,7 @@ class IntIOCounter(IntIO):
             # IOCTL über Netzwerk
             with self._parentdevice._modio._myfh_lck:
                 try:
-                    self._parentdevice._modio._myfh.ioctl(
-                        19220, self.__ioctl_arg
-                    )
+                    self._parentdevice._modio._myfh.ioctl(19220, self.__ioctl_arg)
                 except Exception as e:
                     self._parentdevice._modio._gotioerror("net_iorst", e)
 
@@ -1101,9 +1060,7 @@ class IntIOCounter(IntIO):
             # IOCTL in Datei simulieren
             try:
                 # Set value durchführen (Funktion K+20)
-                self._parentdevice._modio._simulate_ioctl(
-                    19220, self.__ioctl_arg
-                )
+                self._parentdevice._modio._simulate_ioctl(19220, self.__ioctl_arg)
             except Exception as e:
                 self._parentdevice._modio._gotioerror("file_iorst", e)
 
@@ -1153,12 +1110,7 @@ class IntIOReplaceable(IntIO):
         `<https://docs.python.org/3/library/struct.html#format-characters>`_
         """
         # StructIO erzeugen
-        io_new = StructIO(
-            self,
-            name,
-            frm,
-            **kwargs
-        )
+        io_new = StructIO(self, name, frm, **kwargs)
 
         # StructIO in IO-Liste einfügen
         self._parentdevice._modio.io._private_register_new_io_object(io_new)
@@ -1170,7 +1122,7 @@ class IntIOReplaceable(IntIO):
                 reg_event,
                 kwargs.get("delay", 0),
                 kwargs.get("edge", BOTH),
-                kwargs.get("as_thread", False)
+                kwargs.get("as_thread", False),
             )
 
 
@@ -1182,8 +1134,14 @@ class StructIO(IOBase):
     bereit. Der struct-Formatwert wird bei der Instantiierung festgelegt.
     """
 
-    __slots__ = "__frm", "_parentio_address", "_parentio_defaultvalue", \
-        "_parentio_length", "_parentio_name", "_wordorder"
+    __slots__ = (
+        "__frm",
+        "_parentio_address",
+        "_parentio_defaultvalue",
+        "_parentio_length",
+        "_parentio_name",
+        "_wordorder",
+    )
 
     def __init__(self, parentio, name: str, frm: str, **kwargs):
         """
@@ -1215,15 +1173,12 @@ class StructIO(IOBase):
 
             if frm == "?":
                 if self._wordorder:
-                    raise ValueError(
-                        "you can not use wordorder for bit based ios"
-                    )
+                    raise ValueError("you can not use wordorder for bit based ios")
                 bitaddress = kwargs.get("bit", 0)
                 max_bits = parentio._length * 8
                 if not (0 <= bitaddress < max_bits):
                     raise ValueError(
-                        "bitaddress must be a value between 0 and {0}"
-                        "".format(max_bits - 1)
+                        "bitaddress must be a value between 0 and {0}".format(max_bits - 1)
                     )
                 bitlength = 1
 
@@ -1246,8 +1201,7 @@ class StructIO(IOBase):
                         raise ValueError("wordorder must be 'little' or 'big'")
                     if byte_length % 2 != 0:
                         raise ValueError(
-                            "the byte length of new io must must be even to "
-                            "use wordorder"
+                            "the byte length of new io must must be even to use wordorder"
                         )
 
             # [name,default,anzbits,adressbyte,export,adressid,bmk,bitaddress]
@@ -1260,7 +1214,7 @@ class StructIO(IOBase):
                 False,
                 str(parentio._slc_address.start).rjust(4, "0"),
                 kwargs.get("bmk", ""),
-                bitaddress
+                bitaddress,
             ]
         else:
             raise ValueError(
@@ -1270,11 +1224,7 @@ class StructIO(IOBase):
 
         # Basisklasse instantiieren
         super().__init__(
-            parentio._parentdevice,
-            valuelist,
-            parentio._iotype,
-            byteorder,
-            frm == frm.lower()
+            parentio._parentdevice, valuelist, parentio._iotype, byteorder, frm == frm.lower()
         )
         self.__frm = bofrm + frm
         if "export" in kwargs:
@@ -1286,13 +1236,11 @@ class StructIO(IOBase):
             self._export = parentio._export
 
         # Platz für neuen IO prüfen
-        if not (self._slc_address.start >=
-                parentio._parentdevice._dict_slc[parentio._iotype].start and
-                self._slc_address.stop <=
-                parentio._parentdevice._dict_slc[parentio._iotype].stop):
-            raise BufferError(
-                "registered value does not fit process image scope"
-            )
+        if not (
+            self._slc_address.start >= parentio._parentdevice._dict_slc[parentio._iotype].start
+            and self._slc_address.stop <= parentio._parentdevice._dict_slc[parentio._iotype].stop
+        ):
+            raise BufferError("registered value does not fit process image scope")
 
     def __call__(self, value=None):
         if value is None:
@@ -1310,9 +1258,7 @@ class StructIO(IOBase):
             if self._bitshift:
                 self.set_value(value)
             elif self._wordorder == "little" and self._length > 2:
-                self.set_value(
-                    self._swap_word_order(struct.pack(self.__frm, value))
-                )
+                self.set_value(self._swap_word_order(struct.pack(self.__frm, value)))
             else:
                 self.set_value(struct.pack(self.__frm, value))
 
@@ -1343,8 +1289,10 @@ class StructIO(IOBase):
         array_length = len(bytes_to_swap)
         swap_array = bytearray(bytes_to_swap)
         for i in range(0, array_length // 2, 2):
-            swap_array[-i - 2:array_length - i], swap_array[i:i + 2] = \
-                swap_array[i:i + 2], swap_array[-i - 2:array_length - i]
+            swap_array[-i - 2 : array_length - i], swap_array[i : i + 2] = (
+                swap_array[i : i + 2],
+                swap_array[-i - 2 : array_length - i],
+            )
         return bytes(swap_array)
 
     def get_structdefaultvalue(self):
@@ -1394,9 +1342,7 @@ class StructIO(IOBase):
         if self._bitshift:
             self.set_value(value)
         elif self._wordorder == "little" and self._length > 2:
-            self.set_value(
-                self._swap_word_order(struct.pack(self.__frm, value))
-            )
+            self.set_value(self._swap_word_order(struct.pack(self.__frm, value)))
         else:
             self.set_value(struct.pack(self.__frm, value))
 
@@ -1422,7 +1368,7 @@ class MemIO(IOBase):
         if self._bitlength > 64:
             # STRING
             try:
-                val = val.strip(b'\x00').decode()
+                val = val.strip(b"\x00").decode()
             except Exception:
                 pass
             return val

@@ -13,6 +13,7 @@ __license__ = "LGPLv2"
 # - RevPiConCan_20180425_1_0.rap
 # - RevPiGateCANopen_20161102_1_0.rap
 
+
 class ProductType:
     CON_BT = 111
     CON_CAN = 109
@@ -65,6 +66,7 @@ class ProductType:
 
 class DeviceType:
     """Module key "type" in piCtory file."""
+
     IGNORED = ""
     BASE = "BASE"  # Core devices
     EDGE = "EDGE"  # Gateways
@@ -75,6 +77,7 @@ class DeviceType:
 
 class AIO:
     """Memory value mappings for RevPi AIO 1.0 (RevPiAIO_20170301_1_0.rap)."""
+
     OUT_RANGE_OFF = 0  # Off
     OUT_RANGE_0_5V = 1  # 0 - 5V
     OUT_RANGE_0_10V = 2  # 0 - 10V
@@ -148,6 +151,7 @@ class AIO:
 
 class DI:
     """Memory value mappings for RevPi DI 1.0  (RevPiDI_20160818_1_0.rap)."""
+
     IN_MODE_DIRECT = 0  # Direct
     IN_MODE_COUNT_RISING = 1  # Counter, rising edge
     IN_MODE_COUNT_FALLING = 2  # Counter, falling edge
@@ -161,6 +165,7 @@ class DI:
 
 class DO:
     """Memory value mappings for RevPi DO 1.0  (RevPiDO_20160818_1_0.rap)."""
+
     OUT_PWM_FREQ_40HZ = 1  # 40Hz 1%
     OUT_PWM_FREQ_80HZ = 2  # 80Hz 2%
     OUT_PWM_FREQ_160HZ = 4  # 160Hz 4%
@@ -170,11 +175,13 @@ class DO:
 
 class DIO(DI, DO):
     """Memory value mappings for RevPi DIO 1.0 (RevPiDIO_20160818_1_0.rap)."""
+
     pass
 
 
 class MIO:
     """Memory value mappings for RevPi MIO 1.0 (RevPiMIO_20200901_1_0.rap)."""
+
     ENCODER_MODE_DISABLED = 0
     ENCODER_MODE_ENABLED = 1
 
@@ -193,6 +200,7 @@ class MIO:
 
 class COMPACT:
     """Memory value mappings for RevPi Compact 1.0 (RevPiCompact_20171023_1_0.rap)."""
+
     DIN_DEBOUNCE_OFF = 0  # Off
     DIN_DEBOUNCE_25US = 1  # 25us
     DIN_DEBOUNCE_750US = 2  # 750us
@@ -206,5 +214,6 @@ class COMPACT:
 
 class FLAT:
     """Memory value mappings for RevPi Flat 1.0 (RevPiFlat_20200921_1_0.rap)."""
+
     IN_RANGE_0_10V = 0
     IN_RANGE_4_20MA = 1
