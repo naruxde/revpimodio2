@@ -29,11 +29,11 @@ def acheck(check_type, **kwargs) -> None:
     for var_name in kwargs:
         none_okay = var_name.endswith("_noneok")
 
-        if not (isinstance(kwargs[var_name], check_type) or
-                none_okay and kwargs[var_name] is None):
+        if not (isinstance(kwargs[var_name], check_type) or none_okay and kwargs[var_name] is None):
             msg = "Argument '{0}' must be {1}{2}".format(
-                var_name.rstrip("_noneok"), str(check_type),
-                " or <class 'NoneType'>" if none_okay else ""
+                var_name.rstrip("_noneok"),
+                str(check_type),
+                " or <class 'NoneType'>" if none_okay else "",
             )
             raise TypeError(msg)
 

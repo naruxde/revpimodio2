@@ -31,10 +31,10 @@ class DevSelect:
     __slots__ = "type", "other_device_key", "values"
 
     def __init__(
-            self,
-            device_type=DeviceType.IGNORED,
-            search_key: str = None,
-            search_values=(),
+        self,
+        device_type=DeviceType.IGNORED,
+        search_key: str = None,
+        search_values=(),
     ):
         """
         Create a customized search filter for RevPiModIOSelected search.
@@ -65,20 +65,55 @@ class RevPiModIO(object):
     Device Positionen oder Device Namen.
     """
 
-    __slots__ = "__cleanupfunc", \
-        "_autorefresh", "_buffedwrite", "_configrsc", "_debug", "_devselect", \
-        "_exit", "_exit_level", "_imgwriter", "_ioerror", \
-        "_length", "_looprunning", "_lst_devselect", "_lst_refresh", \
-        "_maxioerrors", "_monitoring", "_myfh", "_myfh_lck", \
-        "_procimg", "_replace_io_file", "_run_on_pi", \
-        "_set_device_based_cycle_time", "_simulator", "_init_shared_procimg", \
-        "_syncoutputs", "_th_mainloop", "_waitexit", \
-        "app", "core", "device", "exitsignal", "io", "summary"
+    __slots__ = (
+        "__cleanupfunc",
+        "_autorefresh",
+        "_buffedwrite",
+        "_configrsc",
+        "_debug",
+        "_devselect",
+        "_exit",
+        "_exit_level",
+        "_imgwriter",
+        "_ioerror",
+        "_length",
+        "_looprunning",
+        "_lst_devselect",
+        "_lst_refresh",
+        "_maxioerrors",
+        "_monitoring",
+        "_myfh",
+        "_myfh_lck",
+        "_procimg",
+        "_replace_io_file",
+        "_run_on_pi",
+        "_set_device_based_cycle_time",
+        "_simulator",
+        "_init_shared_procimg",
+        "_syncoutputs",
+        "_th_mainloop",
+        "_waitexit",
+        "app",
+        "core",
+        "device",
+        "exitsignal",
+        "io",
+        "summary",
+    )
 
     def __init__(
-            self, autorefresh=False, monitoring=False, syncoutputs=True,
-            procimg=None, configrsc=None, simulator=False, debug=True,
-            replace_io_file=None, shared_procimg=False, direct_output=False):
+        self,
+        autorefresh=False,
+        monitoring=False,
+        syncoutputs=True,
+        procimg=None,
+        configrsc=None,
+        simulator=False,
+        debug=True,
+        replace_io_file=None,
+        shared_procimg=False,
+        direct_output=False,
+    ):
         """
         Instantiiert die Grundfunktionen.
 
@@ -96,20 +131,27 @@ class RevPiModIO(object):
         """
         # Parameterprüfung
         acheck(
-            bool, autorefresh=autorefresh, monitoring=monitoring,
-            syncoutputs=syncoutputs, simulator=simulator, debug=debug,
-            shared_procimg=shared_procimg, direct_output=direct_output
+            bool,
+            autorefresh=autorefresh,
+            monitoring=monitoring,
+            syncoutputs=syncoutputs,
+            simulator=simulator,
+            debug=debug,
+            shared_procimg=shared_procimg,
+            direct_output=direct_output,
         )
         acheck(
-            str, procimg_noneok=procimg, configrsc_noneok=configrsc,
-            replace_io_file_noneok=replace_io_file
+            str,
+            procimg_noneok=procimg,
+            configrsc_noneok=configrsc,
+            replace_io_file_noneok=replace_io_file,
         )
 
         # TODO: Remove in next release
         if direct_output:
-            warnings.warn(DeprecationWarning(
-                "direct_output is deprecated - use shared_procimg instead!"
-            ))
+            warnings.warn(
+                DeprecationWarning("direct_output is deprecated - use shared_procimg instead!")
+            )
 
         self._autorefresh = autorefresh
         self._configrsc = configrsc
@@ -233,13 +275,11 @@ class RevPiModIO(object):
 
         # Apply device filter
         if self._devselect.values:
-
             # Check for supported types in values
             for dev in self._devselect.values:
                 if type(dev) not in (int, str):
                     raise ValueError(
-                        "need device position as <class 'int'> or "
-                        "device name as <class 'str'>"
+                        "need device position as <class 'int'> or device name as <class 'str'>"
                     )
 
             lst_devices = []
@@ -253,8 +293,10 @@ class RevPiModIO(object):
                         continue
                 else:
                     # Auto search depending of value item type
-                    if not (dev["name"] in self._devselect.values
-                            or int(dev["position"]) in self._devselect.values):
+                    if not (
+                        dev["name"] in self._devselect.values
+                        or int(dev["position"]) in self._devselect.values
+                    ):
                         continue
 
                 lst_devices.append(dev)
@@ -264,12 +306,11 @@ class RevPiModIO(object):
 
         # Device und IO Klassen anlegen
         self.device = devicemodule.DeviceList()
-        self.io = IOList()
+        self.io = IOList(self)
 
         # Devices initialisieren
         err_names_check = {}
         for device in sorted(lst_devices, key=lambda x: x["offset"]):
-
             # VDev alter piCtory Versionen auf KUNBUS-Standard ändern
             if device["position"] == "adap.":
                 device["position"] = 64
@@ -281,64 +322,42 @@ class RevPiModIO(object):
                 pt = int(device["productType"])
                 if pt == ProductType.REVPI_CORE:
                     # RevPi Core
-                    dev_new = devicemodule.Core(
-                        self, device, simulator=self._simulator
-                    )
+                    dev_new = devicemodule.Core(self, device, simulator=self._simulator)
                     self.core = dev_new
                 elif pt == ProductType.REVPI_CONNECT:
                     # RevPi Connect
-                    dev_new = devicemodule.Connect(
-                        self, device, simulator=self._simulator
-                    )
+                    dev_new = devicemodule.Connect(self, device, simulator=self._simulator)
                     self.core = dev_new
                 elif pt == ProductType.REVPI_CONNECT_4:
                     # RevPi Connect 4
-                    dev_new = devicemodule.Connect4(
-                        self, device, simulator=self._simulator
-                    )
+                    dev_new = devicemodule.Connect4(self, device, simulator=self._simulator)
                     self.core = dev_new
                 elif pt == ProductType.REVPI_COMPACT:
                     # RevPi Compact
-                    dev_new = devicemodule.Compact(
-                        self, device, simulator=self._simulator
-                    )
+                    dev_new = devicemodule.Compact(self, device, simulator=self._simulator)
                     self.core = dev_new
                 elif pt == ProductType.REVPI_FLAT:
                     # RevPi Flat
-                    dev_new = devicemodule.Flat(
-                        self, device, simulator=self._simulator
-                    )
+                    dev_new = devicemodule.Flat(self, device, simulator=self._simulator)
                     self.core = dev_new
                 else:
                     # Base immer als Fallback verwenden
-                    dev_new = devicemodule.Base(
-                        self, device, simulator=self._simulator
-                    )
+                    dev_new = devicemodule.Base(self, device, simulator=self._simulator)
             elif device["type"] == DeviceType.LEFT_RIGHT:
                 # IOs
                 pt = int(device["productType"])
-                if pt == ProductType.DIO \
-                        or pt == ProductType.DI \
-                        or pt == ProductType.DO:
+                if pt == ProductType.DIO or pt == ProductType.DI or pt == ProductType.DO:
                     # DIO / DI / DO
-                    dev_new = devicemodule.DioModule(
-                        self, device, simulator=self._simulator
-                    )
+                    dev_new = devicemodule.DioModule(self, device, simulator=self._simulator)
                 else:
                     # Alle anderen IO-Devices
-                    dev_new = devicemodule.Device(
-                        self, device, simulator=self._simulator
-                    )
+                    dev_new = devicemodule.Device(self, device, simulator=self._simulator)
             elif device["type"] == DeviceType.VIRTUAL:
                 # Virtuals
-                dev_new = devicemodule.Virtual(
-                    self, device, simulator=self._simulator
-                )
+                dev_new = devicemodule.Virtual(self, device, simulator=self._simulator)
             elif device["type"] == DeviceType.EDGE:
                 # Gateways
-                dev_new = devicemodule.Gateway(
-                    self, device, simulator=self._simulator
-                )
+                dev_new = devicemodule.Gateway(self, device, simulator=self._simulator)
             elif device["type"] == DeviceType.RIGHT:
                 # Connectdevice
                 dev_new = None
@@ -347,7 +366,7 @@ class RevPiModIO(object):
                 warnings.warn(
                     "device type '{0}' on position {1} unknown"
                     "".format(device["type"], device["position"]),
-                    Warning
+                    Warning,
                 )
                 dev_new = None
 
@@ -378,7 +397,7 @@ class RevPiModIO(object):
                 "equal device name '{0}' in pictory configuration. you can "
                 "access this devices by position number .device[{1}] only!"
                 "".format(check_dev, "|".join(err_names_check[check_dev])),
-                Warning
+                Warning,
             )
 
         # ImgWriter erstellen
@@ -393,17 +412,12 @@ class RevPiModIO(object):
             self.syncoutputs()
 
         # Für RS485 errors am core defaults laden sollte procimg NULL sein
-        if isinstance(self.core, devicemodule.Core) and \
-                not (self._monitoring or self._simulator):
+        if isinstance(self.core, devicemodule.Core) and not (self._monitoring or self._simulator):
             if self.core._slc_errorlimit1 is not None:
-                io = self.io[
-                    self.core.offset + self.core._slc_errorlimit1.start
-                    ][0]
+                io = self.io[self.core.offset + self.core._slc_errorlimit1.start][0]
                 io.set_value(io._defaultvalue)
             if self.core._slc_errorlimit2 is not None:
-                io = self.io[
-                    self.core.offset + self.core._slc_errorlimit2.start
-                    ][0]
+                io = self.io[self.core.offset + self.core._slc_errorlimit2.start][0]
                 io.set_value(io._defaultvalue)
 
             # RS485 errors schreiben
@@ -471,8 +485,7 @@ class RevPiModIO(object):
             if "defaultvalue" in creplaceio[io]:
                 if dict_replace["frm"] == "?":
                     try:
-                        dict_replace["defaultvalue"] = \
-                            creplaceio[io].getboolean("defaultvalue")
+                        dict_replace["defaultvalue"] = creplaceio[io].getboolean("defaultvalue")
                     except Exception:
                         raise ValueError(
                             "replace_io_file: could not convert '{0}' "
@@ -494,8 +507,7 @@ class RevPiModIO(object):
                         )
                 else:
                     try:
-                        dict_replace["defaultvalue"] = \
-                            creplaceio[io].getint("defaultvalue")
+                        dict_replace["defaultvalue"] = creplaceio[io].getint("defaultvalue")
                     except Exception:
                         raise ValueError(
                             "replace_io_file: could not convert '{0}' "
@@ -634,23 +646,19 @@ class RevPiModIO(object):
         self._ioerror += 1
         if self._maxioerrors != 0 and self._ioerror >= self._maxioerrors:
             raise RuntimeError(
-                "reach max io error count {0} on process image"
-                "".format(self._maxioerrors)
+                "reach max io error count {0} on process image".format(self._maxioerrors)
             )
 
         if not show_warn or self._debug == -1:
             return
 
         if self._debug == 0:
-            warnings.warn(
-                "got io error on process image",
-                RuntimeWarning
-            )
+            warnings.warn("got io error on process image", RuntimeWarning)
         else:
             warnings.warn(
                 "got io error during '{0}' and count {1} errors now | {2}"
                 "".format(action, self._ioerror, str(e)),
-                RuntimeWarning
+                RuntimeWarning,
             )
 
     def _set_cycletime(self, milliseconds: int) -> None:
@@ -660,10 +668,7 @@ class RevPiModIO(object):
         :param milliseconds: <class 'int'> in Millisekunden
         """
         if self._looprunning:
-            raise RuntimeError(
-                "can not change cycletime when cycleloop or mainloop is "
-                "running"
-            )
+            raise RuntimeError("can not change cycletime when cycleloop or mainloop is running")
         else:
             self._imgwriter.refresh = milliseconds
 
@@ -701,7 +706,7 @@ class RevPiModIO(object):
         else:
             raise ValueError("value must be 0 or a positive integer")
 
-    def _simulate_ioctl(self, request: int, arg=b'') -> None:
+    def _simulate_ioctl(self, request: int, arg=b"") -> None:
         """
         Simuliert IOCTL Funktionen auf procimg Datei.
 
@@ -717,9 +722,7 @@ class RevPiModIO(object):
             # Simulatonsmodus schreibt direkt in Datei
             with self._myfh_lck:
                 self._myfh.seek(byte_address)
-                int_byte = int.from_bytes(
-                    self._myfh.read(1), byteorder="little"
-                )
+                int_byte = int.from_bytes(self._myfh.read(1), byteorder="little")
                 int_bit = 1 << bit_address
 
                 if not bool(int_byte & int_bit) == new_value:
@@ -741,8 +744,9 @@ class RevPiModIO(object):
 
             for i in range(16):
                 if bool(bit_field & 1 << i):
-                    io_byte = self.device[dev_position].offset \
-                              + int(self.device[dev_position]._lst_counter[i])
+                    io_byte = self.device[dev_position].offset + int(
+                        self.device[dev_position]._lst_counter[i]
+                    )
                     break
 
             if io_byte == -1:
@@ -750,7 +754,7 @@ class RevPiModIO(object):
 
             with self._myfh_lck:
                 self._myfh.seek(io_byte)
-                self._myfh.write(b'\x00\x00\x00\x00')
+                self._myfh.write(b"\x00\x00\x00\x00")
                 if self._buffedwrite:
                     self._myfh.flush()
 
@@ -796,9 +800,7 @@ class RevPiModIO(object):
         """
         # Prüfen ob ein Loop bereits läuft
         if self._looprunning:
-            raise RuntimeError(
-                "can not start multiple loops mainloop/cycleloop"
-            )
+            raise RuntimeError("can not start multiple loops mainloop/cycleloop")
 
         # Prüfen ob Devices in autorefresh sind
         if len(self._lst_refresh) == 0:
@@ -809,16 +811,14 @@ class RevPiModIO(object):
 
         # Prüfen ob Funktion callable ist
         if not callable(func):
-            raise RuntimeError(
-                "registered function '{0}' ist not callable".format(func)
-            )
+            raise RuntimeError("registered function '{0}' ist not callable".format(func))
 
         # Thread erstellen, wenn nicht blockieren soll
         if not blocking:
             self._th_mainloop = Thread(
                 target=self.cycleloop,
                 args=(func,),
-                kwargs={"cycletime": cycletime, "blocking": True}
+                kwargs={"cycletime": cycletime, "blocking": True},
             )
             self._th_mainloop.start()
             return
@@ -851,9 +851,9 @@ class RevPiModIO(object):
                         break
 
                     # Just warn, user has to use maxioerrors to kill program
-                    warnings.warn(RuntimeWarning(
-                        "no new io data in cycle loop for 2500 milliseconds"
-                    ))
+                    warnings.warn(
+                        RuntimeWarning("no new io data in cycle loop for 2500 milliseconds")
+                    )
                     cycleinfo.last = self._exit.is_set()
                     continue
 
@@ -942,7 +942,6 @@ class RevPiModIO(object):
         cp = ConfigParser()
         for io in self.io:
             if isinstance(io, StructIO):
-
                 # Required values
                 cp.add_section(io.name)
                 cp[io.name]["replace"] = io._parentio_name
@@ -958,8 +957,7 @@ class RevPiModIO(object):
                 if type(io.defaultvalue) is bytes:
                     if any(io.defaultvalue):
                         # Convert each byte to an integer
-                        cp[io.name]["defaultvalue"] = \
-                            " ".join(map(str, io.defaultvalue))
+                        cp[io.name]["defaultvalue"] = " ".join(map(str, io.defaultvalue))
                 elif io.defaultvalue != 0:
                     cp[io.name]["defaultvalue"] = str(io.defaultvalue)
                 if io.bmk != "":
@@ -971,10 +969,7 @@ class RevPiModIO(object):
             with open(filename, "w") as fh:
                 cp.write(fh)
         except Exception as e:
-            raise RuntimeError(
-                "could not write export file '{0}' | {1}"
-                "".format(filename, e)
-            )
+            raise RuntimeError("could not write export file '{0}' | {1}".format(filename, e))
 
     def get_jconfigrsc(self) -> dict:
         """
@@ -986,8 +981,8 @@ class RevPiModIO(object):
         if self._configrsc is not None:
             if not access(self._configrsc, F_OK | R_OK):
                 raise RuntimeError(
-                    "can not access pictory configuration at {0}".format(
-                        self._configrsc))
+                    "can not access pictory configuration at {0}".format(self._configrsc)
+                )
         else:
             # piCtory Konfiguration an bekannten Stellen prüfen
             lst_rsc = ["/etc/revpi/config.rsc", "/opt/KUNBUS/config.rsc"]
@@ -1035,10 +1030,7 @@ class RevPiModIO(object):
         """
         # Prüfen ob Funktion callable ist
         if not (cleanupfunc is None or callable(cleanupfunc)):
-            raise RuntimeError(
-                "registered function '{0}' ist not callable"
-                "".format(cleanupfunc)
-            )
+            raise RuntimeError("registered function '{0}' ist not callable".format(cleanupfunc))
         self.__cleanupfunc = cleanupfunc
         signal(SIGINT, self.__evt_exit)
         signal(SIGTERM, self.__evt_exit)
@@ -1063,9 +1055,7 @@ class RevPiModIO(object):
         """
         # Prüfen ob ein Loop bereits läuft
         if self._looprunning:
-            raise RuntimeError(
-                "can not start multiple loops mainloop/cycleloop"
-            )
+            raise RuntimeError("can not start multiple loops mainloop/cycleloop")
 
         # Prüfen ob Devices in autorefresh sind
         if len(self._lst_refresh) == 0:
@@ -1076,9 +1066,7 @@ class RevPiModIO(object):
 
         # Thread erstellen, wenn nicht blockieren soll
         if not blocking:
-            self._th_mainloop = Thread(
-                target=self.mainloop, kwargs={"blocking": True}
-            )
+            self._th_mainloop = Thread(target=self.mainloop, kwargs={"blocking": True})
             self._th_mainloop.start()
             return
 
@@ -1100,17 +1088,17 @@ class RevPiModIO(object):
                         if not regfunc.prefire:
                             continue
 
-                        if regfunc.edge == BOTH \
-                                or regfunc.edge == RISING and io.value \
-                                or regfunc.edge == FALLING and not io.value:
+                        if (
+                            regfunc.edge == BOTH
+                            or regfunc.edge == RISING
+                            and io.value
+                            or regfunc.edge == FALLING
+                            and not io.value
+                        ):
                             if regfunc.as_thread:
-                                self._imgwriter._eventqth.put(
-                                    (regfunc, io._name, io.value), False
-                                )
+                                self._imgwriter._eventqth.put((regfunc, io._name, io.value), False)
                             else:
-                                self._imgwriter._eventq.put(
-                                    (regfunc, io._name, io.value), False
-                                )
+                                self._imgwriter._eventq.put((regfunc, io._name, io.value), False)
 
         # ImgWriter mit Eventüberwachung aktivieren
         self._imgwriter._collect_events(True)
@@ -1118,7 +1106,6 @@ class RevPiModIO(object):
         runtime = -1 if self._debug == -1 else 0
 
         while not self._exit.is_set():
-
             # Laufzeit der Eventqueue auf 0 setzen
             if self._imgwriter._eventq.qsize() == 0:
                 runtime = -1 if self._debug == -1 else 0
@@ -1135,13 +1122,12 @@ class RevPiModIO(object):
                 self._imgwriter._eventq.task_done()
 
                 # Laufzeitprüfung
-                if runtime != -1 and \
-                        default_timer() - runtime > self._imgwriter._refresh:
+                if runtime != -1 and default_timer() - runtime > self._imgwriter._refresh:
                     runtime = -1
                     warnings.warn(
                         "can not execute all event functions in one cycle - "
                         "optimize your event functions or rise .cycletime",
-                        RuntimeWarning
+                        RuntimeWarning,
                     )
             except Empty:
                 if not self._exit.is_set() and not self._imgwriter.is_alive():
@@ -1177,8 +1163,11 @@ class RevPiModIO(object):
         if device is None:
             mylist = self.device
         else:
-            dev = device if isinstance(device, devicemodule.Device) \
+            dev = (
+                device
+                if isinstance(device, devicemodule.Device)
                 else self.device.__getitem__(device)
+            )
 
             if dev._selfupdate:
                 raise RuntimeError(
@@ -1200,7 +1189,6 @@ class RevPiModIO(object):
 
         for dev in mylist:
             if not dev._selfupdate:
-
                 # FileHandler sperren
                 dev._filelock.acquire()
 
@@ -1226,16 +1214,16 @@ class RevPiModIO(object):
         :param device: nur auf einzelnes Device anwenden
         """
         if self._monitoring:
-            raise RuntimeError(
-                "can not set default values, while system is in monitoring "
-                "mode"
-            )
+            raise RuntimeError("can not set default values, while system is in monitoring mode")
 
         if device is None:
             mylist = self.device
         else:
-            dev = device if isinstance(device, devicemodule.Device) \
+            dev = (
+                device
+                if isinstance(device, devicemodule.Device)
                 else self.device.__getitem__(device)
+            )
             mylist = [dev]
 
         for dev in mylist:
@@ -1254,8 +1242,11 @@ class RevPiModIO(object):
         if device is None:
             mylist = self.device
         else:
-            dev = device if isinstance(device, devicemodule.Device) \
+            dev = (
+                device
+                if isinstance(device, devicemodule.Device)
                 else self.device.__getitem__(device)
+            )
 
             if dev._selfupdate:
                 raise RuntimeError(
@@ -1292,16 +1283,16 @@ class RevPiModIO(object):
         :return: True, wenn Arbeiten an allen Devices erfolgreich waren
         """
         if self._monitoring:
-            raise RuntimeError(
-                "can not write process image, while system is in monitoring "
-                "mode"
-            )
+            raise RuntimeError("can not write process image, while system is in monitoring mode")
 
         if device is None:
             mylist = self.device
         else:
-            dev = device if isinstance(device, devicemodule.Device) \
+            dev = (
+                device
+                if isinstance(device, devicemodule.Device)
                 else self.device.__getitem__(device)
+            )
 
             if dev._selfupdate:
                 raise RuntimeError(
@@ -1321,9 +1312,7 @@ class RevPiModIO(object):
             if dev._shared_procimg:
                 for io in dev._shared_write:
                     if not io._write_to_procimg():
-                        global_ex = IOError(
-                            "error on shared procimg while write"
-                        )
+                        global_ex = IOError("error on shared procimg while write")
                 dev._shared_write.clear()
             else:
                 # Outpus auf Bus schreiben
@@ -1375,10 +1364,19 @@ class RevPiModIOSelected(RevPiModIO):
     __slots__ = ()
 
     def __init__(
-            self, deviceselection, autorefresh=False, monitoring=False,
-            syncoutputs=True, procimg=None, configrsc=None,
-            simulator=False, debug=True, replace_io_file=None,
-            shared_procimg=False, direct_output=False):
+        self,
+        deviceselection,
+        autorefresh=False,
+        monitoring=False,
+        syncoutputs=True,
+        procimg=None,
+        configrsc=None,
+        simulator=False,
+        debug=True,
+        replace_io_file=None,
+        shared_procimg=False,
+        direct_output=False,
+    ):
         """
         Instantiiert nur fuer angegebene Devices die Grundfunktionen.
 
@@ -1390,8 +1388,16 @@ class RevPiModIOSelected(RevPiModIO):
         :ref: :func:`RevPiModIO.__init__(...)`
         """
         super().__init__(
-            autorefresh, monitoring, syncoutputs, procimg, configrsc,
-            simulator, debug, replace_io_file, shared_procimg, direct_output
+            autorefresh,
+            monitoring,
+            syncoutputs,
+            procimg,
+            configrsc,
+            simulator,
+            debug,
+            replace_io_file,
+            shared_procimg,
+            direct_output,
         )
 
         if type(deviceselection) is not DevSelect:
@@ -1410,24 +1416,19 @@ class RevPiModIOSelected(RevPiModIO):
         if len(self.device) == 0:
             if self._devselect.type:
                 raise DeviceNotFoundError(
-                    "could not find ANY given {0} devices in config"
-                    "".format(self._devselect.type)
+                    "could not find ANY given {0} devices in config".format(self._devselect.type)
                 )
             else:
-                raise DeviceNotFoundError(
-                    "could not find ANY given devices in config"
-                )
-        elif not self._devselect.other_device_key \
-                and len(self.device) != len(self._devselect.values):
+                raise DeviceNotFoundError("could not find ANY given devices in config")
+        elif not self._devselect.other_device_key and len(self.device) != len(
+            self._devselect.values
+        ):
             if self._devselect.type:
                 raise DeviceNotFoundError(
-                    "could not find ALL given {0} devices in config"
-                    "".format(self._devselect.type)
+                    "could not find ALL given {0} devices in config".format(self._devselect.type)
                 )
             else:
-                raise DeviceNotFoundError(
-                    "could not find ALL given devices in config"
-                )
+                raise DeviceNotFoundError("could not find ALL given devices in config")
 
 
 class RevPiModIODriver(RevPiModIOSelected):
@@ -1443,9 +1444,17 @@ class RevPiModIODriver(RevPiModIOSelected):
     __slots__ = ()
 
     def __init__(
-            self, virtdev, autorefresh=False,
-            syncoutputs=True, procimg=None, configrsc=None, debug=True,
-            replace_io_file=None, shared_procimg=False, direct_output=False):
+        self,
+        virtdev,
+        autorefresh=False,
+        syncoutputs=True,
+        procimg=None,
+        configrsc=None,
+        debug=True,
+        replace_io_file=None,
+        shared_procimg=False,
+        direct_output=False,
+    ):
         """
         Instantiiert die Grundfunktionen.
 
@@ -1460,14 +1469,21 @@ class RevPiModIODriver(RevPiModIOSelected):
             virtdev = (virtdev,)
         dev_select = DevSelect(DeviceType.VIRTUAL, "", virtdev)
         super().__init__(
-            dev_select, autorefresh, False, syncoutputs, procimg, configrsc,
-            True, debug, replace_io_file, shared_procimg, direct_output
+            dev_select,
+            autorefresh,
+            False,
+            syncoutputs,
+            procimg,
+            configrsc,
+            True,
+            debug,
+            replace_io_file,
+            shared_procimg,
+            direct_output,
         )
 
 
-def run_plc(
-        func, cycletime=50, replace_io_file=None, debug=True,
-        procimg=None, configrsc=None):
+def run_plc(func, cycletime=50, replace_io_file=None, debug=True, procimg=None, configrsc=None):
     """
     Run Revoluton Pi as real plc with cycle loop and exclusive IO access.
 

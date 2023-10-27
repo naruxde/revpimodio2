@@ -26,32 +26,56 @@ venv-info:
 	exit 0
 
 venv:
-	$(SYSTEM_PYTHON) -m venv "$(VENV_PATH)"
-	source $(VENV_PATH)/bin/activate && \
+	# Start with empty environment
+	"$(SYSTEM_PYTHON)" -m venv "$(VENV_PATH)"
+	source "$(VENV_PATH)/bin/activate" && \
 		python3 -m pip install --upgrade pip && \
 		python3 -m pip install -r requirements.txt
 	exit 0
 
-.PHONY: venv-info venv
+venv-ssp:
+	# Include system installed site-packages and add just missing modules
+	"$(SYSTEM_PYTHON)" -m venv --system-site-packages "$(VENV_PATH)"
+	source "$(VENV_PATH)/bin/activate" && \
+		python3 -m pip install --upgrade pip && \
+		python3 -m pip install -r requirements.txt
+	exit 0
 
-## Build, install
+.PHONY: venv-info venv venv-ssp
+
+## Build steps
+test:
+	PYTHONPATH=src "$(PYTHON)" -m pytest tests
+
 build:
-	$(PYTHON) -m setup sdist
-	$(PYTHON) -m setup bdist_wheel
+	"$(PYTHON)" -m setup sdist
+	"$(PYTHON)" -m setup bdist_wheel
 
 install: build
-	$(PYTHON) -m pip install dist/$(PACKAGE)-*.whl
+	"$(PYTHON)" -m pip install dist/$(PACKAGE)-$(APP_VERSION)-*.whl
 
+uninstall:
+	"$(PYTHON)" -m pip uninstall --yes $(PACKAGE)
+
+.PHONY: test build install uninstall
+
+## Documentation
 docs:
-	$(PYTHON) -m sphinx.cmd.build -b html docs docs/_build/html
+	"$(PYTHON)" -m sphinx.cmd.build -b html docs docs/_build/html
 
-.PHONY: build docs install
+.PHONY: docs
 
 ## Clean
 clean:
-	rm -rf build docs/_build dist src/*.egg-info *.spec
+	# PyTest caches
+	rm -rf .pytest_cache
+	# Build artifacts
+	rm -rf build dist src/*.egg-info
+	# PyInstaller created files
+	rm -rf *.spec
 
-clean-all: clean
-	rm -R $(VENV_PATH)
+distclean: clean
+	# Virtual environment
+	rm -rf "$(VENV_PATH)"
 
-.PHONY: clean clean-all
+.PHONY: clean distclean
