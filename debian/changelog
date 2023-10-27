@@ -1,3 +1,19 @@
+revpimodio2 (2.7.0~rc1-1) unstable; urgency=medium
+
+  * fix: Insert correct LICENSE.txt file to project (LGPLv2)
+  * feat: Add new and missing ProductTypes to pictory.py module
+  * feat: Import DeviceType on module level
+  * packaging(deb): Create debian release candidate packages
+  * chore: Update git ignore file
+  * build: Fix Makefile targets to match GNU coding standards
+  * style: New line length 100 characters and using black as formatter
+  * style: Format everything with black (100 characters per line)
+  * chore: Increase to RC1 of upcoming Release 2.7.0
+  * feat: Add context manager for ios
+  * test: Add tests directory to migrate unit tests to project
+
+ -- Sven Sager <akira@narux.de>  Fri, 27 Oct 2023 15:46:14 +0200
+
 revpimodio2 (2.6.1-1) stable; urgency=medium
 
   * style: With shared_procimg, save changed outputs in set instead of list
