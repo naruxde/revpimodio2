@@ -99,9 +99,11 @@ class IOList(object):
         When 'autorefresh=True' is used, all read or write actions in the
         background are performed automatically.
         """
-        if self.__modio._looprunning:
-            raise RuntimeError("can not start multiple mainloop/cycleloop/with sessions")
-        self.__modio._looprunning = True
+        if not self.__modio._context_manager:
+            # If ModIO itself is in a context manager, it sets the _looprunning=True flag itself
+            if self.__modio._looprunning:
+                raise RuntimeError("can not enter context manager inside mainloop or cycleloop")
+            self.__modio._looprunning = True
 
         self.__modio.readprocimg()
         return self
@@ -114,7 +116,9 @@ class IOList(object):
         outputs are automatically written in the background.
         """
         self.__modio.writeprocimg()
-        self.__modio._looprunning = False
+        if self.__modio._context_manager:
+            # Do not reset if ModIO is in a context manager itself, it will handle that flag
+            self.__modio._looprunning = False
 
     def __getattr__(self, key):
         """

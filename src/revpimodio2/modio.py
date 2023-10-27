@@ -70,6 +70,7 @@ class RevPiModIO(object):
         "_autorefresh",
         "_buffedwrite",
         "_configrsc",
+        "_context_manager",
         "_debug",
         "_devselect",
         "_exit",
@@ -146,6 +147,7 @@ class RevPiModIO(object):
 
         self._autorefresh = autorefresh
         self._configrsc = configrsc
+        self._context_manager = False
         self._monitoring = monitoring
         self._procimg = "/dev/piControl0" if procimg is None else procimg
         self._set_device_based_cycle_time = True
@@ -204,6 +206,22 @@ class RevPiModIO(object):
             self.exit(full=True)
             if self._myfh is not None:
                 self._myfh.close()
+
+    def __enter__(self):
+        if self._context_manager:
+            raise RuntimeError("can not use multiple context managers of same instance")
+        if self._looprunning:
+            raise RuntimeError("can not enter context manager with running mainloop or cycleloop")
+        self._context_manager = True
+        self._looprunning = True
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.writeprocimg()
+        self.exit(full=True)
+        self._looprunning = False
+        self._context_manager = False
 
     def __evt_exit(self, signum, sigframe) -> None:
         """
@@ -805,6 +823,9 @@ class RevPiModIO(object):
         :param blocking: Wenn False, blockiert das Programm hier NICHT
         :return: None or the return value of the cycle function
         """
+        # Check for context manager
+        if self._context_manager:
+            raise RuntimeError("Can not start cycleloop inside a context manager (with statement)")
         # Prüfen ob ein Loop bereits läuft
         if self._looprunning:
             raise RuntimeError("can not start multiple loops mainloop/cycleloop")
@@ -1060,6 +1081,9 @@ class RevPiModIO(object):
 
         :param blocking: Wenn False, blockiert das Programm hier NICHT
         """
+        # Check for context manager
+        if self._context_manager:
+            raise RuntimeError("Can not start mainloop inside a context manager (with statement)")
         # Prüfen ob ein Loop bereits läuft
         if self._looprunning:
             raise RuntimeError("can not start multiple loops mainloop/cycleloop")
