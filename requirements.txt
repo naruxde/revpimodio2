@@ -1,4 +1,5 @@
 # Build dependencies
+pytest-cov
 setuptools
 sphinx
 wheel
