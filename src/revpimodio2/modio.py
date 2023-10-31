@@ -302,6 +302,19 @@ class RevPiModIO(object):
         # Devices initialisieren
         err_names_check = {}
         for device in sorted(lst_devices, key=lambda x: x["offset"]):
+            # Pre-check of values
+            if float(device.get("offset")) != int(device.get("offset")):
+                # Offset misconfigured
+                warnings.warn(
+                    "Offset value {0} of device {1} on position {2} is invalid. "
+                    "This device and all IOs are ignored.".format(
+                        device.get("offset"),
+                        device.get("name"),
+                        device.get("position"),
+                    )
+                )
+                continue
+
             # VDev alter piCtory Versionen auf KUNBUS-Standard ändern
             if device["position"] == "adap.":
                 device["position"] = 64
