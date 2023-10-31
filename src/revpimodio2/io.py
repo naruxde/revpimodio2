@@ -5,6 +5,7 @@ __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"
 
 import struct
+import warnings
 from re import match as rematch
 from threading import Event
 
@@ -242,10 +243,9 @@ class IOList(object):
                     "attribute {0} already exists - can not set io".format(new_io._name)
                 )
 
-            if type(new_io) is StructIO:
+            do_replace = type(new_io) is StructIO
+            if do_replace:
                 self.__private_replace_oldio_with_newio(new_io)
-
-            object.__setattr__(self, new_io._name, new_io)
 
             # Bytedict für Adresszugriff anpassen
             if new_io._bitshift:
@@ -261,9 +261,53 @@ class IOList(object):
                         None,
                         None,
                     ]
+                # Check for overlapping IOs
+                if (
+                    not do_replace
+                    and self.__dict_iobyte[new_io.address][new_io._bitaddress] is not None
+                ):
+                    warnings.warn(
+                        "ignore io '{0}', as an io already exists at the address '{1} Bit {2}'. "
+                        "this can be caused by an incorrect pictory configuration.".format(
+                            new_io.name,
+                            new_io.address,
+                            new_io._bitaddress,
+                        ),
+                        Warning,
+                    )
+                    return
+
                 self.__dict_iobyte[new_io.address][new_io._bitaddress] = new_io
             else:
+                # Search the previous IO to calculate the length
+                offset_end = new_io.address
+                search_index = new_io.address
+                while search_index >= 0:
+                    previous_io = self.__dict_iobyte[search_index]
+                    if len(previous_io) == 8:
+                        # Bits on this address are always 1 byte
+                        offset_end -= 1
+                    elif len(previous_io) == 1:
+                        # Found IO, calculate offset + length of IO
+                        offset_end = previous_io[0].address + previous_io[0].length
+                        break
+                    search_index -= 1
+
+                # Check if the length of the previous IO overlaps with the new IO
+                if offset_end > new_io.address:
+                    warnings.warn(
+                        "ignore io '{0}', as an io already exists at the address '{1}'. "
+                        "this can be caused by an incorrect pictory configuration.".format(
+                            new_io.name,
+                            new_io.address,
+                        ),
+                        Warning,
+                    )
+                    return
+
                 self.__dict_iobyte[new_io.address].append(new_io)
+
+            object.__setattr__(self, new_io._name, new_io)
 
             if type(new_io) is StructIO:
                 new_io._parentdevice._update_my_io_list()
