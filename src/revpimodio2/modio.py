@@ -353,6 +353,9 @@ class RevPiModIO(object):
                 if pt == ProductType.DIO or pt == ProductType.DI or pt == ProductType.DO:
                     # DIO / DI / DO
                     dev_new = devicemodule.DioModule(self, device, simulator=self._simulator)
+                elif pt == ProductType.RO:
+                    # RO
+                    dev_new = devicemodule.RoModule(self, device, simulator=self._simulator)
                 else:
                     # Alle anderen IO-Devices
                     dev_new = devicemodule.Device(self, device, simulator=self._simulator)

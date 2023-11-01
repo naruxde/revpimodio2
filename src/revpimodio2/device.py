@@ -10,7 +10,7 @@ from threading import Event, Lock, Thread
 
 from ._internal import INP, OUT, MEM, PROCESS_IMAGE_SIZE
 from .helper import ProcimgWriter
-from .io import IOBase, IntIO, IntIOCounter, IntIOReplaceable, MemIO
+from .io import IOBase, IntIO, IntIOCounter, IntIOReplaceable, MemIO, RelaisOutput, IntRelaisOutput
 from .pictory import ProductType
 
 
@@ -333,6 +333,15 @@ class Device(object):
             if iotype == MEM:
                 # Memory setting
                 io_new = MemIO(self, dict_io[key], iotype, "little", False)
+            elif isinstance(self, RoModule) and dict_io[key][3] == "1":
+                # Relais of RO are on device address "1" and has a cycle counter
+                if dict_io[key][7]:
+                    # Each relais output has a single bit
+                    io_new = RelaisOutput(self, dict_io[key], iotype, "little", False)
+                else:
+                    # All relais outputs are in one byte
+                    io_new = IntRelaisOutput(self, dict_io[key], iotype, "little", False)
+
             elif bool(dict_io[key][7]):
                 # Bei Bitwerten IOBase verwenden
                 io_new = IOBase(self, dict_io[key], iotype, "little", False)
@@ -1915,6 +1924,18 @@ class DioModule(Device):
         self._lst_counter = list(map(str, range(6, 70, 4)))
 
         # Basisklasse laden
+        super().__init__(parentmodio, dict_device, simulator=simulator)
+
+
+class RoModule(Device):
+    """Relais output (RO) module with"""
+
+    def __init__(self, parentmodio, dict_device, simulator=False):
+        """
+        Relais outputs of this device has a cycle counter for the relais.
+
+        :rev: :func:`Device.__init__()`
+        """
         super().__init__(parentmodio, dict_device, simulator=simulator)
 
 

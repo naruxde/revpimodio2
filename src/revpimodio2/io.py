@@ -1187,6 +1187,125 @@ class IntIOReplaceable(IntIO):
             )
 
 
+class RelaisOutput(IOBase):
+    """
+    Class for relais outputs to access the cycle counters.
+
+    This class extends the function of <class 'IOBase'> to the function
+    'get_cycles' and the property 'cycles' to retrieve the relay cycle
+    counters.
+
+    :ref: :class:`IOBase`
+    """
+
+    def __init__(self, parentdevice, valuelist, iotype, byteorder, signed):
+        """
+        Extend <class 'IOBase'> with functions to access cycle counters.
+
+        :ref: :func:`IOBase.__init__(...)`
+        """
+        super().__init__(parentdevice, valuelist, iotype, byteorder, signed)
+
+        """
+        typedef struct SROGetCountersStr
+        {
+            /* Address of module in current configuration */
+            uint8_t i8uAddress;
+            uint32_t counter[REVPI_RO_NUM_RELAY_COUNTERS];
+        } SROGetCounters;
+        """
+        # Device position + padding + four counter with 4 byte each
+        self.__ioctl_arg_format = "<BIIII"
+        self.__ioctl_arg = struct.pack(
+            self.__ioctl_arg_format,
+            parentdevice._position,
+            0,
+            0,
+            0,
+            0,
+        )
+
+    def get_switching_cycles(self):
+        """
+        Get the number of switching cycles from this relay.
+
+        If each relay output is represented as BOOL, this function returns a
+        single integer value. If all relays are displayed as a BYTE, this
+        function returns a tuple that contains the values of all relay outputs.
+        The setting is determined by PiCtory and the selected output variant by
+        the RO device.
+
+        This function is only available locally on a Revolution Pi. This
+        function cannot be used via RevPiNetIO.
+
+        :return: Integer of switching cycles as single value or tuple of all
+        """
+        # Using ioctl request K+29 = 19229
+        if self._parentdevice._modio._run_on_pi:
+            # IOCTL to piControl on the RevPi
+            with self._parentdevice._modio._myfh_lck:
+                try:
+                    ioctl_return_value = ioctl(
+                        self._parentdevice._modio._myfh,
+                        19229,
+                        self.__ioctl_arg,
+                    )
+                except Exception as e:
+                    # If not implemented, we return the max value and set an error
+                    ioctl_return_value = b"\xff" * struct.calcsize(self.__ioctl_arg_format)
+                    self._parentdevice._modio._gotioerror("rocounter", e)
+
+        elif hasattr(self._parentdevice._modio._myfh, "ioctl"):
+            # IOCTL over network
+            """
+            The ioctl function over the network does not return a value. Only the successful
+            execution of the ioctl call is checked and reported back. If a new function has been
+            implemented in RevPiPyLoad, the subsequent source code can be activated.
+
+            with self._parentdevice._modio._myfh_lck:
+                try:
+                    ioctl_return_value = self._parentdevice._modio._myfh.ioctl(
+                        19229, self.__ioctl_arg
+                    )
+                except Exception as e:
+                    self._parentdevice._modio._gotioerror("net_rocounter", e)
+            """
+            raise RuntimeError("Can not be called over network via RevPiNetIO")
+
+        else:
+            # Simulate IOCTL on a regular file returns the value of relais index
+            ioctl_return_value = self.__ioctl_arg
+
+        if self._bitaddress == -1:
+            # Return cycle values of all relais as tuple, if this is a BYTE output
+            # Remove fist element, which is the ioctl request value
+            return struct.unpack(self.__ioctl_arg_format, ioctl_return_value)[1:]
+        else:
+            # Return cycle value of just one relais as int, if this is a BOOL output
+            # Increase bit-address bei 1 to ignore fist element, which is the ioctl request value
+            return struct.unpack(self.__ioctl_arg_format, ioctl_return_value)[self._bitaddress + 1]
+
+    switching_cycles = property(get_switching_cycles)
+
+
+class IntRelaisOutput(IntIO, RelaisOutput):
+    """
+    Class for relais outputs to access the cycle counters.
+
+    This class combines the function of <class 'IntIO'> and
+    <class 'RelaisOutput'> to add the function 'get_cycles' and the property
+    'cycles' to retrieve the relay cycle counters.
+
+    Since both classes inherit from BaseIO, both __init__ functions are called
+    and the logic is combined. In this case, there is only one 'self' object of
+    IOBase, which of both classes in inheritance is extended with this.
+
+    :ref: :class:`IOBase`
+    """
+
+    pass
+
+
 class StructIO(IOBase):
     """
     Klasse fuer den Zugriff auf Daten ueber ein definierten struct.
