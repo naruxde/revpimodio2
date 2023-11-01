@@ -714,7 +714,6 @@ class RevPiNetIO(_RevPiModIO):
         debug=True,
         replace_io_file=None,
         shared_procimg=False,
-        direct_output=False,
     ):
         """
         Instantiiert die Grundfunktionen.
@@ -728,7 +727,6 @@ class RevPiNetIO(_RevPiModIO):
         :param replace_io_file: Replace IO Konfiguration aus Datei laden
         :param shared_procimg: Share process image with other processes, this
                                could be insecure for automation
-        :param direct_output: Deprecated, use shared_procimg
         """
         check_ip = compile(r"^(25[0-5]|(2[0-4]|[01]?\d|)\d)(\.(25[0-5]|(2[0-4]|[01]?\d|)\d)){3}$")
 
@@ -771,7 +769,6 @@ class RevPiNetIO(_RevPiModIO):
             debug=debug,
             replace_io_file=replace_io_file,
             shared_procimg=shared_procimg,
-            direct_output=direct_output,
         )
         self._set_device_based_cycle_time = False
 
@@ -949,7 +946,6 @@ class RevPiNetIOSelected(RevPiNetIO):
         debug=True,
         replace_io_file=None,
         shared_procimg=False,
-        direct_output=False,
     ):
         """
         Instantiiert nur fuer angegebene Devices die Grundfunktionen.
@@ -971,7 +967,6 @@ class RevPiNetIOSelected(RevPiNetIO):
             debug,
             replace_io_file,
             shared_procimg,
-            direct_output,
         )
 
         if type(deviceselection) is not DevSelect:
@@ -1026,7 +1021,6 @@ class RevPiNetIODriver(RevPiNetIOSelected):
         debug=True,
         replace_io_file=None,
         shared_procimg=False,
-        direct_output=False,
     ):
         """
         Instantiiert die Grundfunktionen.
@@ -1052,7 +1046,6 @@ class RevPiNetIODriver(RevPiNetIOSelected):
             debug,
             replace_io_file,
             shared_procimg,
-            direct_output,
         )
 
 
