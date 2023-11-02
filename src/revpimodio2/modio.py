@@ -112,7 +112,6 @@ class RevPiModIO(object):
         debug=True,
         replace_io_file=None,
         shared_procimg=False,
-        direct_output=False,
     ):
         """
         Instantiiert die Grundfunktionen.
@@ -127,7 +126,6 @@ class RevPiModIO(object):
         :param replace_io_file: Replace IO Konfiguration aus Datei laden
         :param shared_procimg: Share process image with other processes, this
                                could be insecure for automation
-        :param direct_output: Deprecated, use shared_procimg
         """
         # Parameterprüfung
         acheck(
@@ -138,7 +136,6 @@ class RevPiModIO(object):
             simulator=simulator,
             debug=debug,
             shared_procimg=shared_procimg,
-            direct_output=direct_output,
         )
         acheck(
             str,
@@ -147,19 +144,13 @@ class RevPiModIO(object):
             replace_io_file_noneok=replace_io_file,
         )
 
-        # TODO: Remove in next release
-        if direct_output:
-            warnings.warn(
-                DeprecationWarning("direct_output is deprecated - use shared_procimg instead!")
-            )
-
         self._autorefresh = autorefresh
         self._configrsc = configrsc
         self._monitoring = monitoring
         self._procimg = "/dev/piControl0" if procimg is None else procimg
         self._set_device_based_cycle_time = True
         self._simulator = simulator
-        self._init_shared_procimg = shared_procimg or direct_output
+        self._init_shared_procimg = shared_procimg
         self._syncoutputs = syncoutputs
 
         # TODO: bei simulator und procimg prüfen ob datei existiert / anlegen?
@@ -311,6 +302,19 @@ class RevPiModIO(object):
         # Devices initialisieren
         err_names_check = {}
         for device in sorted(lst_devices, key=lambda x: x["offset"]):
+            # Pre-check of values
+            if float(device.get("offset")) != int(device.get("offset")):
+                # Offset misconfigured
+                warnings.warn(
+                    "Offset value {0} of device {1} on position {2} is invalid. "
+                    "This device and all IOs are ignored.".format(
+                        device.get("offset"),
+                        device.get("name"),
+                        device.get("position"),
+                    )
+                )
+                continue
+
             # VDev alter piCtory Versionen auf KUNBUS-Standard ändern
             if device["position"] == "adap.":
                 device["position"] = 64
@@ -349,6 +353,9 @@ class RevPiModIO(object):
                 if pt == ProductType.DIO or pt == ProductType.DI or pt == ProductType.DO:
                     # DIO / DI / DO
                     dev_new = devicemodule.DioModule(self, device, simulator=self._simulator)
+                elif pt == ProductType.RO:
+                    # RO
+                    dev_new = devicemodule.RoModule(self, device, simulator=self._simulator)
                 else:
                     # Alle anderen IO-Devices
                     dev_new = devicemodule.Device(self, device, simulator=self._simulator)
@@ -1375,7 +1382,6 @@ class RevPiModIOSelected(RevPiModIO):
         debug=True,
         replace_io_file=None,
         shared_procimg=False,
-        direct_output=False,
     ):
         """
         Instantiiert nur fuer angegebene Devices die Grundfunktionen.
@@ -1397,7 +1403,6 @@ class RevPiModIOSelected(RevPiModIO):
             debug,
             replace_io_file,
             shared_procimg,
-            direct_output,
         )
 
         if type(deviceselection) is not DevSelect:
@@ -1453,7 +1458,6 @@ class RevPiModIODriver(RevPiModIOSelected):
         debug=True,
         replace_io_file=None,
         shared_procimg=False,
-        direct_output=False,
     ):
         """
         Instantiiert die Grundfunktionen.
@@ -1479,7 +1483,6 @@ class RevPiModIODriver(RevPiModIOSelected):
             debug,
             replace_io_file,
             shared_procimg,
-            direct_output,
         )
 
 

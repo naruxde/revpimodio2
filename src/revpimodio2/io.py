@@ -5,6 +5,7 @@ __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"
 
 import struct
+import warnings
 from re import match as rematch
 from threading import Event
 
@@ -242,10 +243,9 @@ class IOList(object):
                     "attribute {0} already exists - can not set io".format(new_io._name)
                 )
 
-            if type(new_io) is StructIO:
+            do_replace = type(new_io) is StructIO
+            if do_replace:
                 self.__private_replace_oldio_with_newio(new_io)
-
-            object.__setattr__(self, new_io._name, new_io)
 
             # Bytedict für Adresszugriff anpassen
             if new_io._bitshift:
@@ -261,9 +261,53 @@ class IOList(object):
                         None,
                         None,
                     ]
+                # Check for overlapping IOs
+                if (
+                    not do_replace
+                    and self.__dict_iobyte[new_io.address][new_io._bitaddress] is not None
+                ):
+                    warnings.warn(
+                        "ignore io '{0}', as an io already exists at the address '{1} Bit {2}'. "
+                        "this can be caused by an incorrect pictory configuration.".format(
+                            new_io.name,
+                            new_io.address,
+                            new_io._bitaddress,
+                        ),
+                        Warning,
+                    )
+                    return
+
                 self.__dict_iobyte[new_io.address][new_io._bitaddress] = new_io
             else:
+                # Search the previous IO to calculate the length
+                offset_end = new_io.address
+                search_index = new_io.address
+                while search_index >= 0:
+                    previous_io = self.__dict_iobyte[search_index]
+                    if len(previous_io) == 8:
+                        # Bits on this address are always 1 byte
+                        offset_end -= 1
+                    elif len(previous_io) == 1:
+                        # Found IO, calculate offset + length of IO
+                        offset_end = previous_io[0].address + previous_io[0].length
+                        break
+                    search_index -= 1
+
+                # Check if the length of the previous IO overlaps with the new IO
+                if offset_end > new_io.address:
+                    warnings.warn(
+                        "ignore io '{0}', as an io already exists at the address '{1}'. "
+                        "this can be caused by an incorrect pictory configuration.".format(
+                            new_io.name,
+                            new_io.address,
+                        ),
+                        Warning,
+                    )
+                    return
+
                 self.__dict_iobyte[new_io.address].append(new_io)
+
+            object.__setattr__(self, new_io._name, new_io)
 
             if type(new_io) is StructIO:
                 new_io._parentdevice._update_my_io_list()
@@ -1141,6 +1185,125 @@ class IntIOReplaceable(IntIO):
                 kwargs.get("edge", BOTH),
                 kwargs.get("as_thread", False),
             )
+
+
+class RelaisOutput(IOBase):
+    """
+    Class for relais outputs to access the cycle counters.
+
+    This class extends the function of <class 'IOBase'> to the function
+    'get_cycles' and the property 'cycles' to retrieve the relay cycle
+    counters.
+
+    :ref: :class:`IOBase`
+    """
+
+    def __init__(self, parentdevice, valuelist, iotype, byteorder, signed):
+        """
+        Extend <class 'IOBase'> with functions to access cycle counters.
+
+        :ref: :func:`IOBase.__init__(...)`
+        """
+        super().__init__(parentdevice, valuelist, iotype, byteorder, signed)
+
+        """
+        typedef struct SROGetCountersStr
+        {
+            /* Address of module in current configuration */
+            uint8_t i8uAddress;
+            uint32_t counter[REVPI_RO_NUM_RELAY_COUNTERS];
+        } SROGetCounters;
+        """
+        # Device position + padding + four counter with 4 byte each
+        self.__ioctl_arg_format = "<BIIII"
+        self.__ioctl_arg = struct.pack(
+            self.__ioctl_arg_format,
+            parentdevice._position,
+            0,
+            0,
+            0,
+            0,
+        )
+
+    def get_switching_cycles(self):
+        """
+        Get the number of switching cycles from this relay.
+
+        If each relay output is represented as BOOL, this function returns a
+        single integer value. If all relays are displayed as a BYTE, this
+        function returns a tuple that contains the values of all relay outputs.
+        The setting is determined by PiCtory and the selected output variant by
+        the RO device.
+
+        This function is only available locally on a Revolution Pi. This
+        function cannot be used via RevPiNetIO.
+
+        :return: Integer of switching cycles as single value or tuple of all
+        """
+        # Using ioctl request K+29 = 19229
+        if self._parentdevice._modio._run_on_pi:
+            # IOCTL to piControl on the RevPi
+            with self._parentdevice._modio._myfh_lck:
+                try:
+                    ioctl_return_value = ioctl(
+                        self._parentdevice._modio._myfh,
+                        19229,
+                        self.__ioctl_arg,
+                    )
+                except Exception as e:
+                    # If not implemented, we return the max value and set an error
+                    ioctl_return_value = b"\xff" * struct.calcsize(self.__ioctl_arg_format)
+                    self._parentdevice._modio._gotioerror("rocounter", e)
+
+        elif hasattr(self._parentdevice._modio._myfh, "ioctl"):
+            # IOCTL over network
+            """
+            The ioctl function over the network does not return a value. Only the successful
+            execution of the ioctl call is checked and reported back. If a new function has been
+            implemented in RevPiPyLoad, the subsequent source code can be activated.
+
+            with self._parentdevice._modio._myfh_lck:
+                try:
+                    ioctl_return_value = self._parentdevice._modio._myfh.ioctl(
+                        19229, self.__ioctl_arg
+                    )
+                except Exception as e:
+                    self._parentdevice._modio._gotioerror("net_rocounter", e)
+            """
+            raise RuntimeError("Can not be called over network via RevPiNetIO")
+
+        else:
+            # Simulate IOCTL on a regular file returns the value of relais index
+            ioctl_return_value = self.__ioctl_arg
+
+        if self._bitaddress == -1:
+            # Return cycle values of all relais as tuple, if this is a BYTE output
+            # Remove fist element, which is the ioctl request value
+            return struct.unpack(self.__ioctl_arg_format, ioctl_return_value)[1:]
+        else:
+            # Return cycle value of just one relais as int, if this is a BOOL output
+            # Increase bit-address bei 1 to ignore fist element, which is the ioctl request value
+            return struct.unpack(self.__ioctl_arg_format, ioctl_return_value)[self._bitaddress + 1]
+
+    switching_cycles = property(get_switching_cycles)
+
+
+class IntRelaisOutput(IntIO, RelaisOutput):
+    """
+    Class for relais outputs to access the cycle counters.
+
+    This class combines the function of <class 'IntIO'> and
+    <class 'RelaisOutput'> to add the function 'get_cycles' and the property
+    'cycles' to retrieve the relay cycle counters.
+
+    Since both classes inherit from BaseIO, both __init__ functions are called
+    and the logic is combined. In this case, there is only one 'self' object of
+    IOBase, which of both classes in inheritance is extended with this.
+
+    :ref: :class:`IOBase`
+    """
+
+    pass
 
 
 class StructIO(IOBase):
