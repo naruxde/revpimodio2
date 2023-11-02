@@ -1,3 +1,13 @@
+revpimodio2 (2.7.0~rc2-1) unstable; urgency=medium
+
+  * chore: Increase to RC2 of upcoming Release 2.7.0
+  * feat: Remove deprecated parameter 'direct_output' from ModIO classes
+  * fix: Check offset values of the devices for integers
+  * fix: Check if the length of the previous IO overlaps with the new IO
+  * feat: Add support for RO device
+
+ -- Sven Sager <akira@narux.de>  Thu, 02 Nov 2023 17:42:07 +0100
+
 revpimodio2 (2.7.0~rc1-1) unstable; urgency=medium
 
   * fix: Insert correct LICENSE.txt file to project (LGPLv2)
