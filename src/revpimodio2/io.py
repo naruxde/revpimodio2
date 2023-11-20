@@ -109,13 +109,18 @@ class IOList(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """
-        Write outputs to process image before leaving the context manager.
+        """Write outputs to process image before leaving the context manager."""
+        if self.__modio._imgwriter.is_alive():
+            # Reset new data flat to sync with imgwriter
+            self.__modio._imgwriter.newdata.clear()
 
-        If 'autorefresh=True' is used, this operation is asynchronous. The
-        outputs are automatically written in the background.
-        """
+        # Write outputs on devices without autorefresh
         self.__modio.writeprocimg()
+
+        if self.__modio._imgwriter.is_alive():
+            # Wait until imgwriter has written outputs
+            self.__modio._imgwriter.newdata.wait(2.5)
+
         if self.__modio._context_manager:
             # Do not reset if ModIO is in a context manager itself, it will handle that flag
             self.__modio._looprunning = False
