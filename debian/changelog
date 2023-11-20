@@ -1,3 +1,12 @@
+revpimodio2 (2.7.0~rc3-1) unstable; urgency=medium
+
+  * chore: Increase to RC3 of upcoming Release 2.7.0
+  * docs: Add IO context manager description
+  * feat: Add context manager for modio instance
+  * feat: Add context manager for modio instance
+
+ -- Sven Sager <akira@narux.de>  Mon, 20 Nov 2023 12:44:40 +0100
+
 revpimodio2 (2.7.0~rc2-1) unstable; urgency=medium
 
   * chore: Increase to RC2 of upcoming Release 2.7.0
