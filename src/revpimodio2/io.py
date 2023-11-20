@@ -88,16 +88,42 @@ class IOList(object):
         io_del._parentdevice._update_my_io_list()
 
     def __enter__(self):
-        if self.__modio._looprunning:
-            raise RuntimeError("can not start multiple mainloop/cycleloop/with sessions")
-        self.__modio._looprunning = True
+        """
+        Read inputs on entering context manager and write outputs on leaving.
+
+        All entries are read when entering the context manager. Within the
+        context manager, further .readprocimg() or .writeprocimg() calls can
+        be made and the process image can be read or written. When exiting,
+        all outputs are always written into the process image.
+
+        When 'autorefresh=True' is used, all read or write actions in the
+        background are performed automatically.
+        """
+        if not self.__modio._context_manager:
+            # If ModIO itself is in a context manager, it sets the _looprunning=True flag itself
+            if self.__modio._looprunning:
+                raise RuntimeError("can not enter context manager inside mainloop or cycleloop")
+            self.__modio._looprunning = True
 
         self.__modio.readprocimg()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Write outputs to process image before leaving the context manager."""
+        if self.__modio._imgwriter.is_alive():
+            # Reset new data flat to sync with imgwriter
+            self.__modio._imgwriter.newdata.clear()
+
+        # Write outputs on devices without autorefresh
         self.__modio.writeprocimg()
-        self.__modio._looprunning = False
+
+        if self.__modio._imgwriter.is_alive():
+            # Wait until imgwriter has written outputs
+            self.__modio._imgwriter.newdata.wait(2.5)
+
+        if self.__modio._context_manager:
+            # Do not reset if ModIO is in a context manager itself, it will handle that flag
+            self.__modio._looprunning = False
 
     def __getattr__(self, key):
         """
