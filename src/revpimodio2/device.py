@@ -10,7 +10,7 @@ from threading import Event, Lock, Thread
 
 from ._internal import INP, OUT, MEM, PROCESS_IMAGE_SIZE
 from .helper import ProcimgWriter
-from .io import IOBase, IntIO, IntIOCounter, IntIOReplaceable, MemIO
+from .io import IOBase, IntIO, IntIOCounter, IntIOReplaceable, MemIO, RelaisOutput, IntRelaisOutput
 from .pictory import ProductType
 
 
@@ -94,9 +94,7 @@ class DeviceList(object):
 
         :return: <class 'iter'> aller Devices
         """
-        for dev in sorted(
-                self.__dict_position,
-                key=lambda key: self.__dict_position[key]._offset):
+        for dev in sorted(self.__dict_position, key=lambda key: self.__dict_position[key]._offset):
             yield self.__dict_position[dev]
 
     def __len__(self):
@@ -129,14 +127,37 @@ class Device(object):
     ihren Prozessabbildpuffer und sorgt fuer die Aktualisierung der IO-Werte.
     """
 
-    __slots__ = "__my_io_list", "_ba_devdata", "_ba_datacp", \
-        "_dict_events", "_filelock", "_modio", "_name", \
-        "_offset", "_position", "_producttype", "_selfupdate", \
-        "_slc_devoff", "_slc_inp", "_slc_inpoff", "_slc_mem", \
-        "_slc_memoff", "_slc_out", "_slc_outoff", "_shared_procimg", \
-        "_shared_write", \
-        "bmk", "catalognr", "comment", "extend", \
-        "guid", "id", "inpvariant", "outvariant", "type"
+    __slots__ = (
+        "__my_io_list",
+        "_ba_devdata",
+        "_ba_datacp",
+        "_dict_events",
+        "_filelock",
+        "_modio",
+        "_name",
+        "_offset",
+        "_position",
+        "_producttype",
+        "_selfupdate",
+        "_slc_devoff",
+        "_slc_inp",
+        "_slc_inpoff",
+        "_slc_mem",
+        "_slc_memoff",
+        "_slc_out",
+        "_slc_outoff",
+        "_shared_procimg",
+        "_shared_write",
+        "bmk",
+        "catalognr",
+        "comment",
+        "extend",
+        "guid",
+        "id",
+        "inpvariant",
+        "outvariant",
+        "type",
+    )
 
     def __init__(self, parentmodio, dict_device, simulator=False):
         """
@@ -170,36 +191,30 @@ class Device(object):
                 "must be {1} but is {2} - Overlapping devices overwrite the "
                 "same memory, which has unpredictable effects!!!"
                 "".format(self._name, parentmodio.length, self._offset),
-                Warning
+                Warning,
             )
         # IOM-Objekte erstellen und Adressen in SLCs speichern
         if simulator:
-            self._slc_inp = self._buildio(
-                dict_device.get("out"), INP)
-            self._slc_out = self._buildio(
-                dict_device.get("inp"), OUT)
+            self._slc_inp = self._buildio(dict_device.get("out"), INP)
+            self._slc_out = self._buildio(dict_device.get("inp"), OUT)
         else:
-            self._slc_inp = self._buildio(
-                dict_device.get("inp"), INP)
-            self._slc_out = self._buildio(
-                dict_device.get("out"), OUT)
-        self._slc_mem = self._buildio(
-            dict_device.get("mem"), MEM
-        )
+            self._slc_inp = self._buildio(dict_device.get("inp"), INP)
+            self._slc_out = self._buildio(dict_device.get("out"), OUT)
+        self._slc_mem = self._buildio(dict_device.get("mem"), MEM)
 
         # SLCs mit offset berechnen
         self._slc_devoff = slice(self._offset, self._offset + self.length)
         self._slc_inpoff = slice(
             self._slc_inp.start + self._offset,
-            self._slc_inp.stop + self._offset
+            self._slc_inp.stop + self._offset,
         )
         self._slc_outoff = slice(
             self._slc_out.start + self._offset,
-            self._slc_out.stop + self._offset
+            self._slc_out.stop + self._offset,
         )
         self._slc_memoff = slice(
             self._slc_mem.start + self._offset,
-            self._slc_mem.stop + self._offset
+            self._slc_mem.stop + self._offset,
         )
 
         # Alle restlichen attribute an Klasse anhängen
@@ -245,8 +260,7 @@ class Device(object):
                         return True
             return False
         else:
-            return key in self._modio.io \
-                and getattr(self._modio.io, key)._parentdevice == self
+            return key in self._modio.io and getattr(self._modio.io, key)._parentdevice == self
 
     def __getitem__(self, key):
         """
@@ -315,53 +329,49 @@ class Device(object):
 
         int_min, int_max = PROCESS_IMAGE_SIZE, 0
         for key in sorted(dict_io, key=lambda x: int(x)):
-
             # Neuen IO anlegen
             if iotype == MEM:
                 # Memory setting
-                io_new = MemIO(
-                    self, dict_io[key],
-                    iotype,
-                    "little",
-                    False
-                )
+                io_new = MemIO(self, dict_io[key], iotype, "little", False)
+            elif isinstance(self, RoModule) and dict_io[key][3] == "1":
+                # Relais of RO are on device address "1" and has a cycle counter
+                if dict_io[key][7]:
+                    # Each relais output has a single bit
+                    io_new = RelaisOutput(self, dict_io[key], iotype, "little", False)
+                else:
+                    # All relais outputs are in one byte
+                    io_new = IntRelaisOutput(self, dict_io[key], iotype, "little", False)
+
             elif bool(dict_io[key][7]):
                 # Bei Bitwerten IOBase verwenden
-                io_new = IOBase(
-                    self, dict_io[key], iotype, "little", False
-                )
-            elif isinstance(self, DioModule) and \
-                    dict_io[key][3] in self._lst_counter:
+                io_new = IOBase(self, dict_io[key], iotype, "little", False)
+            elif isinstance(self, DioModule) and dict_io[key][3] in self._lst_counter:
                 # Counter IO auf einem DI oder DIO
                 io_new = IntIOCounter(
                     self._lst_counter.index(dict_io[key][3]),
-                    self, dict_io[key],
+                    self,
+                    dict_io[key],
                     iotype,
                     "little",
-                    False
+                    False,
                 )
             elif isinstance(self, Gateway):
                 # Ersetzbare IOs erzeugen
-                io_new = IntIOReplaceable(
-                    self, dict_io[key],
-                    iotype,
-                    "little",
-                    False
-                )
+                io_new = IntIOReplaceable(self, dict_io[key], iotype, "little", False)
             else:
                 io_new = IntIO(
-                    self, dict_io[key],
+                    self,
+                    dict_io[key],
                     iotype,
                     "little",
                     # Bei AIO (103) signed auf True setzen
-                    self._producttype == ProductType.AIO
+                    self._producttype == ProductType.AIO,
                 )
 
             if io_new.address < self._modio.length:
                 warnings.warn(
-                    "IO {0} is not in the device offset and will be ignored"
-                    "".format(io_new.name),
-                    Warning
+                    "IO {0} is not in the device offset and will be ignored".format(io_new.name),
+                    Warning,
                 )
             else:
                 # IO registrieren
@@ -407,7 +417,6 @@ class Device(object):
         :param activate: Default True fuegt Device zur Synchronisierung hinzu
         """
         if activate and self not in self._modio._lst_refresh:
-
             # Daten bei Aufnahme direkt einlesen!
             self._modio.readprocimg(self)
 
@@ -457,9 +466,7 @@ class Device(object):
         :param export: Nur In-/Outputs mit angegebenen 'Export' Wert in piCtory
         :return: <class 'list'> Input und Output, keine MEMs
         """
-        return list(self.__getioiter(
-            slice(self._slc_inpoff.start, self._slc_outoff.stop), export
-        ))
+        return list(self.__getioiter(slice(self._slc_inpoff.start, self._slc_outoff.stop), export))
 
     def get_inputs(self, export=None) -> list:
         """
@@ -565,7 +572,6 @@ class Base(Device):
 
 
 class GatewayMixin:
-
     @property
     def leftgate(self) -> bool:
         """
@@ -573,9 +579,7 @@ class GatewayMixin:
 
         :return: True, wenn piGate links existiert
         """
-        return bool(int.from_bytes(
-            self._ba_devdata[self._slc_statusbyte], byteorder="little"
-        ) & 16)
+        return bool(int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little") & 16)
 
     @property
     def rightgate(self) -> bool:
@@ -584,9 +588,7 @@ class GatewayMixin:
 
         :return: True, wenn piGate rechts existiert
         """
-        return bool(int.from_bytes(
-            self._ba_devdata[self._slc_statusbyte], byteorder="little"
-        ) & 32)
+        return bool(int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little") & 32)
 
 
 class ModularBase(Base):
@@ -596,9 +598,16 @@ class ModularBase(Base):
     Stellt Funktionen fuer den Status zur Verfuegung.
     """
 
-    __slots__ = "_slc_cycle", "_slc_errorcnt", "_slc_statusbyte", \
-        "_slc_temperature", "_slc_errorlimit1", "_slc_errorlimit2", \
-        "_slc_frequency", "_slc_led"
+    __slots__ = (
+        "_slc_cycle",
+        "_slc_errorcnt",
+        "_slc_statusbyte",
+        "_slc_temperature",
+        "_slc_errorlimit1",
+        "_slc_errorlimit2",
+        "_slc_frequency",
+        "_slc_led",
+    )
 
     def __errorlimit(self, slc_io: slice, errorlimit: int) -> None:
         """
@@ -608,12 +617,9 @@ class ModularBase(Base):
         :return: Aktuellen ErrorLimit oder None wenn nicht verfuegbar
         """
         if 0 <= errorlimit <= 65535:
-            self._ba_devdata[slc_io] = \
-                errorlimit.to_bytes(2, byteorder="little")
+            self._ba_devdata[slc_io] = errorlimit.to_bytes(2, byteorder="little")
         else:
-            raise ValueError(
-                "errorlimit value must be between 0 and 65535"
-            )
+            raise ValueError("errorlimit value must be between 0 and 65535")
 
     def _get_status(self) -> int:
         """
@@ -621,9 +627,7 @@ class ModularBase(Base):
 
         :return: Status als <class 'int'>
         """
-        return int.from_bytes(
-            self._ba_devdata[self._slc_statusbyte], byteorder="little"
-        )
+        return int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little")
 
     @property
     def picontrolrunning(self) -> bool:
@@ -632,9 +636,7 @@ class ModularBase(Base):
 
         :return: True, wenn Treiber laeuft
         """
-        return bool(int.from_bytes(
-            self._ba_devdata[self._slc_statusbyte], byteorder="little"
-        ) & 1)
+        return bool(int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little") & 1)
 
     @property
     def unconfdevice(self) -> bool:
@@ -643,9 +645,7 @@ class ModularBase(Base):
 
         :return: True, wenn IO Modul nicht konfiguriert
         """
-        return bool(int.from_bytes(
-            self._ba_devdata[self._slc_statusbyte], byteorder="little"
-        ) & 2)
+        return bool(int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little") & 2)
 
     @property
     def missingdeviceorgate(self) -> bool:
@@ -654,9 +654,7 @@ class ModularBase(Base):
 
         :return: True, wenn IO-Modul fehlt oder piGate konfiguriert
         """
-        return bool(int.from_bytes(
-            self._ba_devdata[self._slc_statusbyte], byteorder="little"
-        ) & 4)
+        return bool(int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little") & 4)
 
     @property
     def overunderflow(self) -> bool:
@@ -665,9 +663,7 @@ class ModularBase(Base):
 
         :return: True, wenn falscher Speicher belegt ist
         """
-        return bool(int.from_bytes(
-            self._ba_devdata[self._slc_statusbyte], byteorder="little"
-        ) & 8)
+        return bool(int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little") & 8)
 
     @property
     def iocycle(self) -> int:
@@ -676,8 +672,10 @@ class ModularBase(Base):
 
         :return: Zykluszeit in ms ( -1 wenn nicht verfuegbar)
         """
-        return -1 if self._slc_cycle is None else int.from_bytes(
-            self._ba_devdata[self._slc_cycle], byteorder="little"
+        return (
+            -1
+            if self._slc_cycle is None
+            else int.from_bytes(self._ba_devdata[self._slc_cycle], byteorder="little")
         )
 
     @property
@@ -687,8 +685,10 @@ class ModularBase(Base):
 
         :return: CPU-Temperatur in Celsius (-273 wenn nich verfuegbar)
         """
-        return -273 if self._slc_temperature is None else int.from_bytes(
-            self._ba_devdata[self._slc_temperature], byteorder="little"
+        return (
+            -273
+            if self._slc_temperature is None
+            else int.from_bytes(self._ba_devdata[self._slc_temperature], byteorder="little")
         )
 
     @property
@@ -698,9 +698,11 @@ class ModularBase(Base):
 
         :return: CPU Taktfrequenz in MHz (-1 wenn nicht verfuegbar)
         """
-        return -1 if self._slc_frequency is None else int.from_bytes(
-            self._ba_devdata[self._slc_frequency], byteorder="little"
-        ) * 10
+        return (
+            -1
+            if self._slc_frequency is None
+            else int.from_bytes(self._ba_devdata[self._slc_frequency], byteorder="little") * 10
+        )
 
     @property
     def ioerrorcount(self) -> int:
@@ -709,8 +711,10 @@ class ModularBase(Base):
 
         :return: Fehleranzahl der piBridge (-1 wenn nicht verfuegbar)
         """
-        return -1 if self._slc_errorcnt is None else int.from_bytes(
-            self._ba_devdata[self._slc_errorcnt], byteorder="little"
+        return (
+            -1
+            if self._slc_errorcnt is None
+            else int.from_bytes(self._ba_devdata[self._slc_errorcnt], byteorder="little")
         )
 
     @property
@@ -720,8 +724,10 @@ class ModularBase(Base):
 
         :return: Aktueller Wert fuer ErrorLimit1 (-1 wenn nicht verfuegbar)
         """
-        return -1 if self._slc_errorlimit1 is None else int.from_bytes(
-            self._ba_devdata[self._slc_errorlimit1], byteorder="little"
+        return (
+            -1
+            if self._slc_errorlimit1 is None
+            else int.from_bytes(self._ba_devdata[self._slc_errorlimit1], byteorder="little")
         )
 
     @errorlimit1.setter
@@ -732,9 +738,7 @@ class ModularBase(Base):
         :param value: Neuer ErrorLimit1 Wert
         """
         if self._slc_errorlimit1 is None:
-            raise RuntimeError(
-                "selected core item in piCtory does not support errorlimit1"
-            )
+            raise RuntimeError("selected core item in piCtory does not support errorlimit1")
         else:
             self.__errorlimit(self._slc_errorlimit1, value)
 
@@ -745,8 +749,10 @@ class ModularBase(Base):
 
         :return: Aktueller Wert fuer ErrorLimit2 (-1 wenn nicht verfuegbar)
         """
-        return -1 if self._slc_errorlimit2 is None else int.from_bytes(
-            self._ba_devdata[self._slc_errorlimit2], byteorder="little"
+        return (
+            -1
+            if self._slc_errorlimit2 is None
+            else int.from_bytes(self._ba_devdata[self._slc_errorlimit2], byteorder="little")
         )
 
     @errorlimit2.setter
@@ -757,9 +763,7 @@ class ModularBase(Base):
         :param value: Neuer ErrorLimit2 Wert
         """
         if self._slc_errorlimit2 is None:
-            raise RuntimeError(
-                "selected core item in piCtory does not support errorlimit2"
-            )
+            raise RuntimeError("selected core item in piCtory does not support errorlimit2")
         else:
             self.__errorlimit(self._slc_errorlimit2, value)
 
@@ -777,11 +781,8 @@ class Core(ModularBase, GatewayMixin):
 
     def __setattr__(self, key, value):
         """Verhindert Ueberschreibung der LEDs."""
-        if hasattr(self, key) and key in (
-                "a1green", "a1red", "a2green", "a2red", "wd"):
-            raise AttributeError(
-                "direct assignment is not supported - use .value Attribute"
-            )
+        if hasattr(self, key) and key in ("a1green", "a1red", "a2green", "a2red", "wd"):
+            raise AttributeError("direct assignment is not supported - use .value Attribute")
         else:
             object.__setattr__(self, key, value)
 
@@ -831,28 +832,43 @@ class Core(ModularBase, GatewayMixin):
             exp_a2red = exp_a1green
 
         # Echte IOs erzeugen
-        self.a1green = IOBase(self, [
-            "core.a1green", 0, 1, self._slc_led.start,
-            exp_a1green, None, "LED_A1_GREEN", "0"
-        ], OUT, "little", False)
-        self.a1red = IOBase(self, [
-            "core.a1red", 0, 1, self._slc_led.start,
-            exp_a1red, None, "LED_A1_RED", "1"
-        ], OUT, "little", False)
-        self.a2green = IOBase(self, [
-            "core.a2green", 0, 1, self._slc_led.start,
-            exp_a2green, None, "LED_A2_GREEN", "2"
-        ], OUT, "little", False)
-        self.a2red = IOBase(self, [
-            "core.a2red", 0, 1, self._slc_led.start,
-            exp_a2red, None, "LED_A2_RED", "3"
-        ], OUT, "little", False)
+        self.a1green = IOBase(
+            self,
+            ["core.a1green", 0, 1, self._slc_led.start, exp_a1green, None, "LED_A1_GREEN", "0"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a1red = IOBase(
+            self,
+            ["core.a1red", 0, 1, self._slc_led.start, exp_a1red, None, "LED_A1_RED", "1"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a2green = IOBase(
+            self,
+            ["core.a2green", 0, 1, self._slc_led.start, exp_a2green, None, "LED_A2_GREEN", "2"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a2red = IOBase(
+            self,
+            ["core.a2red", 0, 1, self._slc_led.start, exp_a2red, None, "LED_A2_RED", "3"],
+            OUT,
+            "little",
+            False,
+        )
 
         # Watchdog einrichten (Core=soft / Connect=soft/hard)
-        self.wd = IOBase(self, [
-            "core.wd", 0, 1, self._slc_led.start,
-            False, None, "WatchDog", "7"
-        ], OUT, "little", False)
+        self.wd = IOBase(
+            self,
+            ["core.wd", 0, 1, self._slc_led.start, False, None, "WatchDog", "7"],
+            OUT,
+            "little",
+            False,
+        )
 
     def _get_leda1(self) -> int:
         """
@@ -910,16 +926,12 @@ class Connect(Core):
     Stellt Funktionen fuer die LEDs, Watchdog und den Status zur Verfuegung.
     """
 
-    __slots__ = "__evt_wdtoggle", "__th_wdtoggle", "a3green", "a3red", \
-        "x2in", "x2out"
+    __slots__ = "__evt_wdtoggle", "__th_wdtoggle", "a3green", "a3red", "x2in", "x2out"
 
     def __setattr__(self, key, value):
         """Verhindert Ueberschreibung der speziellen IOs."""
-        if hasattr(self, key) and key in (
-                "a3green", "a3red", "x2in", "x2out"):
-            raise AttributeError(
-                "direct assignment is not supported - use .value Attribute"
-            )
+        if hasattr(self, key) and key in ("a3green", "a3red", "x2in", "x2out"):
+            raise AttributeError("direct assignment is not supported - use .value Attribute")
         super(Connect, self).__setattr__(key, value)
 
     def __wdtoggle(self) -> None:
@@ -954,24 +966,36 @@ class Connect(Core):
             exp_x2in = lst_status[0].export
 
         # Echte IOs erzeugen
-        self.a3green = IOBase(self, [
-            "core.a3green", 0, 1, self._slc_led.start,
-            exp_a3green, None, "LED_A3_GREEN", "4"
-        ], OUT, "little", False)
-        self.a3red = IOBase(self, [
-            "core.a3red", 0, 1, self._slc_led.start,
-            exp_a3red, None, "LED_A3_RED", "5"
-        ], OUT, "little", False)
+        self.a3green = IOBase(
+            self,
+            ["core.a3green", 0, 1, self._slc_led.start, exp_a3green, None, "LED_A3_GREEN", "4"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a3red = IOBase(
+            self,
+            ["core.a3red", 0, 1, self._slc_led.start, exp_a3red, None, "LED_A3_RED", "5"],
+            OUT,
+            "little",
+            False,
+        )
 
         # IO Objekte für WD und X2 in/out erzeugen
-        self.x2in = IOBase(self, [
-            "core.x2in", 0, 1, self._slc_statusbyte.start,
-            exp_x2in, None, "Connect_X2_IN", "6"
-        ], INP, "little", False)
-        self.x2out = IOBase(self, [
-            "core.x2out", 0, 1, self._slc_led.start,
-            exp_x2out, None, "Connect_X2_OUT", "6"
-        ], OUT, "little", False)
+        self.x2in = IOBase(
+            self,
+            ["core.x2in", 0, 1, self._slc_statusbyte.start, exp_x2in, None, "Connect_X2_IN", "6"],
+            INP,
+            "little",
+            False,
+        )
+        self.x2out = IOBase(
+            self,
+            ["core.x2out", 0, 1, self._slc_led.start, exp_x2out, None, "Connect_X2_OUT", "6"],
+            OUT,
+            "little",
+            False,
+        )
 
         # Export hardware watchdog to use it with other systems
         self.wd._export = int(exp_wd)  # Do this without mrk for export!
@@ -1021,13 +1045,9 @@ class Connect(Core):
         :param value: True zum aktivieren, False zum beenden
         """
         if self._modio._monitoring:
-            raise RuntimeError(
-                "can not toggle watchdog, while system is in monitoring mode"
-            )
+            raise RuntimeError("can not toggle watchdog, while system is in monitoring mode")
         if self._modio._simulator:
-            raise RuntimeError(
-                "can not toggle watchdog, while system is in simulator mode"
-            )
+            raise RuntimeError("can not toggle watchdog, while system is in simulator mode")
 
         if not value:
             self.__evt_wdtoggle.set()
@@ -1050,26 +1070,47 @@ class Connect4(ModularBase):
 
     __slots__ = (
         "_slc_output",
-        "a1red", "a1green", "a1blue",
-        "a2red", "a2green", "a2blue",
-        "a3red", "a3green", "a3blue",
-        "a4red", "a4green", "a4blue",
-        "a5red", "a5green", "a5blue",
-        "x2in", "x2out"
+        "a1red",
+        "a1green",
+        "a1blue",
+        "a2red",
+        "a2green",
+        "a2blue",
+        "a3red",
+        "a3green",
+        "a3blue",
+        "a4red",
+        "a4green",
+        "a4blue",
+        "a5red",
+        "a5green",
+        "a5blue",
+        "x2in",
+        "x2out",
     )
 
     def __setattr__(self, key, value):
         """Verhindert Ueberschreibung der speziellen IOs."""
         if hasattr(self, key) and key in (
-                "a1red", "a1green", "a1blue",
-                "a2red", "a2green", "a2blue",
-                "a3red", "a3green", "a3blue",
-                "a4red", "a4green", "a4blue",
-                "a5red", "a5green", "a5blue",
-                "x2in", "x2out"):
-            raise AttributeError(
-                "direct assignment is not supported - use .value Attribute"
-            )
+            "a1red",
+            "a1green",
+            "a1blue",
+            "a2red",
+            "a2green",
+            "a2blue",
+            "a3red",
+            "a3green",
+            "a3blue",
+            "a4red",
+            "a4green",
+            "a4blue",
+            "a5red",
+            "a5green",
+            "a5blue",
+            "x2in",
+            "x2out",
+        ):
+            raise AttributeError("direct assignment is not supported - use .value Attribute")
         super(Connect4, self).__setattr__(key, value)
 
     def _devconfigure(self) -> None:
@@ -1137,80 +1178,131 @@ class Connect4(ModularBase):
             exp_x2in = lst_status[0].export
 
         # Echte IOs erzeugen
-        self.a1red = IOBase(self, [
-            "core.a1red", 0, 1, self._slc_led.start,
-            exp_a1red, None, "LED_A1_RED", "0"
-        ], OUT, "little", False)
-        self.a1green = IOBase(self, [
-            "core.a1green", 0, 1, self._slc_led.start,
-            exp_a1green, None, "LED_A1_GREEN", "1"
-        ], OUT, "little", False)
-        self.a1blue = IOBase(self, [
-            "core.a1blue", 0, 1, self._slc_led.start,
-            exp_a1blue, None, "LED_A1_BLUE", "2"
-        ], OUT, "little", False)
+        self.a1red = IOBase(
+            self,
+            ["core.a1red", 0, 1, self._slc_led.start, exp_a1red, None, "LED_A1_RED", "0"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a1green = IOBase(
+            self,
+            ["core.a1green", 0, 1, self._slc_led.start, exp_a1green, None, "LED_A1_GREEN", "1"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a1blue = IOBase(
+            self,
+            ["core.a1blue", 0, 1, self._slc_led.start, exp_a1blue, None, "LED_A1_BLUE", "2"],
+            OUT,
+            "little",
+            False,
+        )
 
-        self.a2red = IOBase(self, [
-            "core.a2red", 0, 1, self._slc_led.start,
-            exp_a2red, None, "LED_A2_RED", "3"
-        ], OUT, "little", False)
-        self.a2green = IOBase(self, [
-            "core.a2green", 0, 1, self._slc_led.start,
-            exp_a2green, None, "LED_A2_GREEN", "4"
-        ], OUT, "little", False)
-        self.a2blue = IOBase(self, [
-            "core.a2blue", 0, 1, self._slc_led.start,
-            exp_a2blue, None, "LED_A2_BLUE", "5"
-        ], OUT, "little", False)
+        self.a2red = IOBase(
+            self,
+            ["core.a2red", 0, 1, self._slc_led.start, exp_a2red, None, "LED_A2_RED", "3"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a2green = IOBase(
+            self,
+            ["core.a2green", 0, 1, self._slc_led.start, exp_a2green, None, "LED_A2_GREEN", "4"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a2blue = IOBase(
+            self,
+            ["core.a2blue", 0, 1, self._slc_led.start, exp_a2blue, None, "LED_A2_BLUE", "5"],
+            OUT,
+            "little",
+            False,
+        )
 
-        self.a3red = IOBase(self, [
-            "core.a3red", 0, 1, self._slc_led.start,
-            exp_a3red, None, "LED_A3_RED", "6"
-        ], OUT, "little", False)
-        self.a3green = IOBase(self, [
-            "core.a3green", 0, 1, self._slc_led.start,
-            exp_a3green, None, "LED_A3_GREEN", "7"
-        ], OUT, "little", False)
-        self.a3blue = IOBase(self, [
-            "core.a3blue", 0, 1, self._slc_led.start,
-            exp_a3blue, None, "LED_A3_BLUE", "8"
-        ], OUT, "little", False)
+        self.a3red = IOBase(
+            self,
+            ["core.a3red", 0, 1, self._slc_led.start, exp_a3red, None, "LED_A3_RED", "6"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a3green = IOBase(
+            self,
+            ["core.a3green", 0, 1, self._slc_led.start, exp_a3green, None, "LED_A3_GREEN", "7"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a3blue = IOBase(
+            self,
+            ["core.a3blue", 0, 1, self._slc_led.start, exp_a3blue, None, "LED_A3_BLUE", "8"],
+            OUT,
+            "little",
+            False,
+        )
 
-        self.a4red = IOBase(self, [
-            "core.a4red", 0, 1, self._slc_led.start,
-            exp_a4red, None, "LED_A4_RED", "9"
-        ], OUT, "little", False)
-        self.a4green = IOBase(self, [
-            "core.a4green", 0, 1, self._slc_led.start,
-            exp_a4green, None, "LED_A4_GREEN", "10"
-        ], OUT, "little", False)
-        self.a4blue = IOBase(self, [
-            "core.a4blue", 0, 1, self._slc_led.start,
-            exp_a4blue, None, "LED_A4_BLUE", "11"
-        ], OUT, "little", False)
+        self.a4red = IOBase(
+            self,
+            ["core.a4red", 0, 1, self._slc_led.start, exp_a4red, None, "LED_A4_RED", "9"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a4green = IOBase(
+            self,
+            ["core.a4green", 0, 1, self._slc_led.start, exp_a4green, None, "LED_A4_GREEN", "10"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a4blue = IOBase(
+            self,
+            ["core.a4blue", 0, 1, self._slc_led.start, exp_a4blue, None, "LED_A4_BLUE", "11"],
+            OUT,
+            "little",
+            False,
+        )
 
-        self.a5red = IOBase(self, [
-            "core.a5red", 0, 1, self._slc_led.start,
-            exp_a5red, None, "LED_A5_RED", "12"
-        ], OUT, "little", False)
-        self.a5green = IOBase(self, [
-            "core.a5green", 0, 1, self._slc_led.start,
-            exp_a5green, None, "LED_A5_GREEN", "13"
-        ], OUT, "little", False)
-        self.a5blue = IOBase(self, [
-            "core.a5blue", 0, 1, self._slc_led.start,
-            exp_a5blue, None, "LED_A5_BLUE", "14"
-        ], OUT, "little", False)
+        self.a5red = IOBase(
+            self,
+            ["core.a5red", 0, 1, self._slc_led.start, exp_a5red, None, "LED_A5_RED", "12"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a5green = IOBase(
+            self,
+            ["core.a5green", 0, 1, self._slc_led.start, exp_a5green, None, "LED_A5_GREEN", "13"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a5blue = IOBase(
+            self,
+            ["core.a5blue", 0, 1, self._slc_led.start, exp_a5blue, None, "LED_A5_BLUE", "14"],
+            OUT,
+            "little",
+            False,
+        )
 
         # IO Objekte für WD und X2 in/out erzeugen
-        self.x2in = IOBase(self, [
-            "core.x2in", 0, 1, self._slc_statusbyte.start,
-            exp_x2in, None, "Connect_X2_IN", "6"
-        ], INP, "little", False)
-        self.x2out = IOBase(self, [
-            "core.x2out", 0, 1, self._slc_led.start,
-            exp_x2out, None, "Connect_X2_OUT", "6"
-        ], OUT, "little", False)
+        self.x2in = IOBase(
+            self,
+            ["core.x2in", 0, 1, self._slc_statusbyte.start, exp_x2in, None, "Connect_X2_IN", "6"],
+            INP,
+            "little",
+            False,
+        )
+        self.x2out = IOBase(
+            self,
+            ["core.x2out", 0, 1, self._slc_led.start, exp_x2out, None, "Connect_X2_OUT", "6"],
+            OUT,
+            "little",
+            False,
+        )
 
     def _get_leda1(self) -> int:
         """
@@ -1333,16 +1425,21 @@ class Compact(Base):
     Objekt zugegriffen.
     """
 
-    __slots__ = "_slc_temperature", "_slc_frequency", "_slc_led", \
-        "a1green", "a1red", "a2green", "a2red", "wd"
+    __slots__ = (
+        "_slc_temperature",
+        "_slc_frequency",
+        "_slc_led",
+        "a1green",
+        "a1red",
+        "a2green",
+        "a2red",
+        "wd",
+    )
 
     def __setattr__(self, key, value):
         """Verhindert Ueberschreibung der LEDs."""
-        if hasattr(self, key) and key in (
-                "a1green", "a1red", "a2green", "a2red", "wd"):
-            raise AttributeError(
-                "direct assignment is not supported - use .value Attribute"
-            )
+        if hasattr(self, key) and key in ("a1green", "a1red", "a2green", "a2red", "wd"):
+            raise AttributeError("direct assignment is not supported - use .value Attribute")
         else:
             object.__setattr__(self, key, value)
 
@@ -1369,28 +1466,43 @@ class Compact(Base):
             exp_a2red = exp_a1green
 
         # Echte IOs erzeugen
-        self.a1green = IOBase(self, [
-            "core.a1green", 0, 1, self._slc_led.start,
-            exp_a1green, None, "LED_A1_GREEN", "0"
-        ], OUT, "little", False)
-        self.a1red = IOBase(self, [
-            "core.a1red", 0, 1, self._slc_led.start,
-            exp_a1red, None, "LED_A1_RED", "1"
-        ], OUT, "little", False)
-        self.a2green = IOBase(self, [
-            "core.a2green", 0, 1, self._slc_led.start,
-            exp_a2green, None, "LED_A2_GREEN", "2"
-        ], OUT, "little", False)
-        self.a2red = IOBase(self, [
-            "core.a2red", 0, 1, self._slc_led.start,
-            exp_a2red, None, "LED_A2_RED", "3"
-        ], OUT, "little", False)
+        self.a1green = IOBase(
+            self,
+            ["core.a1green", 0, 1, self._slc_led.start, exp_a1green, None, "LED_A1_GREEN", "0"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a1red = IOBase(
+            self,
+            ["core.a1red", 0, 1, self._slc_led.start, exp_a1red, None, "LED_A1_RED", "1"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a2green = IOBase(
+            self,
+            ["core.a2green", 0, 1, self._slc_led.start, exp_a2green, None, "LED_A2_GREEN", "2"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a2red = IOBase(
+            self,
+            ["core.a2red", 0, 1, self._slc_led.start, exp_a2red, None, "LED_A2_RED", "3"],
+            OUT,
+            "little",
+            False,
+        )
 
         # Software watchdog einrichten
-        self.wd = IOBase(self, [
-            "core.wd", 0, 1, self._slc_led.start,
-            False, None, "WatchDog", "7"
-        ], OUT, "little", False)
+        self.wd = IOBase(
+            self,
+            ["core.wd", 0, 1, self._slc_led.start, False, None, "WatchDog", "7"],
+            OUT,
+            "little",
+            False,
+        )
 
     def _get_leda1(self) -> int:
         """
@@ -1448,8 +1560,10 @@ class Compact(Base):
 
         :return: CPU-Temperatur in Celsius (-273 wenn nich verfuegbar)
         """
-        return -273 if self._slc_temperature is None else int.from_bytes(
-            self._ba_devdata[self._slc_temperature], byteorder="little"
+        return (
+            -273
+            if self._slc_temperature is None
+            else int.from_bytes(self._ba_devdata[self._slc_temperature], byteorder="little")
         )
 
     @property
@@ -1459,9 +1573,11 @@ class Compact(Base):
 
         :return: CPU Taktfrequenz in MHz (-1 wenn nicht verfuegbar)
         """
-        return -1 if self._slc_frequency is None else int.from_bytes(
-            self._ba_devdata[self._slc_frequency], byteorder="little"
-        ) * 10
+        return (
+            -1
+            if self._slc_frequency is None
+            else int.from_bytes(self._ba_devdata[self._slc_frequency], byteorder="little") * 10
+        )
 
 
 class Flat(Base):
@@ -1472,21 +1588,45 @@ class Flat(Base):
     Objekt zugegriffen.
     """
 
-    __slots__ = "_slc_temperature", "_slc_frequency", "_slc_led", \
-        "_slc_switch", "_slc_dout", \
-        "a1green", "a1red", "a2green", "a2red", \
-        "a3green", "a3red", "a4green", "a4red", \
-        "a5green", "a5red", "relais", "switch", "wd"
+    __slots__ = (
+        "_slc_temperature",
+        "_slc_frequency",
+        "_slc_led",
+        "_slc_switch",
+        "_slc_dout",
+        "a1green",
+        "a1red",
+        "a2green",
+        "a2red",
+        "a3green",
+        "a3red",
+        "a4green",
+        "a4red",
+        "a5green",
+        "a5red",
+        "relais",
+        "switch",
+        "wd",
+    )
 
     def __setattr__(self, key, value):
         """Verhindert Ueberschreibung der LEDs."""
         if hasattr(self, key) and key in (
-                "a1green", "a1red", "a2green", "a2red",
-                "a3green", "a3red", "a4green", "a4red",
-                "a5green", "a5red", "relais", "switch", "wd"):
-            raise AttributeError(
-                "direct assignment is not supported - use .value Attribute"
-            )
+            "a1green",
+            "a1red",
+            "a2green",
+            "a2red",
+            "a3green",
+            "a3red",
+            "a4green",
+            "a4red",
+            "a5green",
+            "a5red",
+            "relais",
+            "switch",
+            "wd",
+        ):
+            raise AttributeError("direct assignment is not supported - use .value Attribute")
         else:
             object.__setattr__(self, key, value)
 
@@ -1530,68 +1670,107 @@ class Flat(Base):
             exp_a5red = exp_a1green
 
         # Echte IOs erzeugen
-        self.a1green = IOBase(self, [
-            "core.a1green", 0, 1, self._slc_led.start,
-            exp_a1green, None, "LED_A1_GREEN", "0"
-        ], OUT, "little", False)
-        self.a1red = IOBase(self, [
-            "core.a1red", 0, 1, self._slc_led.start,
-            exp_a1red, None, "LED_A1_RED", "1"
-        ], OUT, "little", False)
-        self.a2green = IOBase(self, [
-            "core.a2green", 0, 1, self._slc_led.start,
-            exp_a2green, None, "LED_A2_GREEN", "2"
-        ], OUT, "little", False)
-        self.a2red = IOBase(self, [
-            "core.a2red", 0, 1, self._slc_led.start,
-            exp_a2red, None, "LED_A2_RED", "3"
-        ], OUT, "little", False)
-        self.a3green = IOBase(self, [
-            "core.a3green", 0, 1, self._slc_led.start,
-            exp_a3green, None, "LED_A3_GREEN", "4"
-        ], OUT, "little", False)
-        self.a3red = IOBase(self, [
-            "core.a3red", 0, 1, self._slc_led.start,
-            exp_a3red, None, "LED_A3_RED", "5"
-        ], OUT, "little", False)
-        self.a4green = IOBase(self, [
-            "core.a4green", 0, 1, self._slc_led.start,
-            exp_a4green, None, "LED_A4_GREEN", "6"
-        ], OUT, "little", False)
-        self.a4red = IOBase(self, [
-            "core.a4red", 0, 1, self._slc_led.start,
-            exp_a4red, None, "LED_A4_RED", "7"
-        ], OUT, "little", False)
-        self.a5green = IOBase(self, [
-            "core.a5green", 0, 1, self._slc_led.start,
-            exp_a5green, None, "LED_A5_GREEN", "8"
-        ], OUT, "little", False)
-        self.a5red = IOBase(self, [
-            "core.a5red", 0, 1, self._slc_led.start,
-            exp_a5red, None, "LED_A5_RED", "9"
-        ], OUT, "little", False)
+        self.a1green = IOBase(
+            self,
+            ["core.a1green", 0, 1, self._slc_led.start, exp_a1green, None, "LED_A1_GREEN", "0"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a1red = IOBase(
+            self,
+            ["core.a1red", 0, 1, self._slc_led.start, exp_a1red, None, "LED_A1_RED", "1"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a2green = IOBase(
+            self,
+            ["core.a2green", 0, 1, self._slc_led.start, exp_a2green, None, "LED_A2_GREEN", "2"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a2red = IOBase(
+            self,
+            ["core.a2red", 0, 1, self._slc_led.start, exp_a2red, None, "LED_A2_RED", "3"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a3green = IOBase(
+            self,
+            ["core.a3green", 0, 1, self._slc_led.start, exp_a3green, None, "LED_A3_GREEN", "4"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a3red = IOBase(
+            self,
+            ["core.a3red", 0, 1, self._slc_led.start, exp_a3red, None, "LED_A3_RED", "5"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a4green = IOBase(
+            self,
+            ["core.a4green", 0, 1, self._slc_led.start, exp_a4green, None, "LED_A4_GREEN", "6"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a4red = IOBase(
+            self,
+            ["core.a4red", 0, 1, self._slc_led.start, exp_a4red, None, "LED_A4_RED", "7"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a5green = IOBase(
+            self,
+            ["core.a5green", 0, 1, self._slc_led.start, exp_a5green, None, "LED_A5_GREEN", "8"],
+            OUT,
+            "little",
+            False,
+        )
+        self.a5red = IOBase(
+            self,
+            ["core.a5red", 0, 1, self._slc_led.start, exp_a5red, None, "LED_A5_RED", "9"],
+            OUT,
+            "little",
+            False,
+        )
 
         # Real IO for switch
         lst_io = self._modio.io[self._slc_devoff][self._slc_switch.start]
         exp_io = lst_io[0].export
-        self.switch = IOBase(self, [
-            "flat.switch", 0, 1, self._slc_switch.start,
-            exp_io, None, "Flat_Switch", "0"
-        ], INP, "little", False)
+        self.switch = IOBase(
+            self,
+            ["flat.switch", 0, 1, self._slc_switch.start, exp_io, None, "Flat_Switch", "0"],
+            INP,
+            "little",
+            False,
+        )
 
         # Real IO for relais
         lst_io = self._modio.io[self._slc_devoff][self._slc_dout.start]
         exp_io = lst_io[0].export
-        self.relais = IOBase(self, [
-            "flat.relais", 0, 1, self._slc_dout.start,
-            exp_io, None, "Flat_Relais", "0"
-        ], OUT, "little", False)
+        self.relais = IOBase(
+            self,
+            ["flat.relais", 0, 1, self._slc_dout.start, exp_io, None, "Flat_Relais", "0"],
+            OUT,
+            "little",
+            False,
+        )
 
         # Software watchdog einrichten
-        self.wd = IOBase(self, [
-            "core.wd", 0, 1, self._slc_led.start,
-            False, None, "WatchDog", "15"
-        ], OUT, "little", False)
+        self.wd = IOBase(
+            self,
+            ["core.wd", 0, 1, self._slc_led.start, False, None, "WatchDog", "15"],
+            OUT,
+            "little",
+            False,
+        )
 
     def _get_leda1(self) -> int:
         """
@@ -1710,8 +1889,10 @@ class Flat(Base):
 
         :return: CPU-Temperatur in Celsius (-273 wenn nich verfuegbar)
         """
-        return -273 if self._slc_temperature is None else int.from_bytes(
-            self._ba_devdata[self._slc_temperature], byteorder="little"
+        return (
+            -273
+            if self._slc_temperature is None
+            else int.from_bytes(self._ba_devdata[self._slc_temperature], byteorder="little")
         )
 
     @property
@@ -1721,9 +1902,11 @@ class Flat(Base):
 
         :return: CPU Taktfrequenz in MHz (-1 wenn nicht verfuegbar)
         """
-        return -1 if self._slc_frequency is None else int.from_bytes(
-            self._ba_devdata[self._slc_frequency], byteorder="little"
-        ) * 10
+        return (
+            -1
+            if self._slc_frequency is None
+            else int.from_bytes(self._ba_devdata[self._slc_frequency], byteorder="little") * 10
+        )
 
 
 class DioModule(Device):
@@ -1741,6 +1924,18 @@ class DioModule(Device):
         self._lst_counter = list(map(str, range(6, 70, 4)))
 
         # Basisklasse laden
+        super().__init__(parentmodio, dict_device, simulator=simulator)
+
+
+class RoModule(Device):
+    """Relais output (RO) module with"""
+
+    def __init__(self, parentmodio, dict_device, simulator=False):
+        """
+        Relais outputs of this device has a cycle counter for the relais.
+
+        :rev: :func:`Device.__init__()`
+        """
         super().__init__(parentmodio, dict_device, simulator=simulator)
 
 
@@ -1770,7 +1965,7 @@ class Gateway(Device):
         self._dict_slc = {
             INP: self._slc_inp,
             OUT: self._slc_out,
-            MEM: self._slc_mem
+            MEM: self._slc_mem,
         }
 
     def get_rawbytes(self) -> bytes:
@@ -1809,10 +2004,7 @@ class Virtual(Gateway):
         :return: True, wenn Arbeiten am virtuellen Device erfolgreich waren
         """
         if self._modio._monitoring:
-            raise RuntimeError(
-                "can not write process image, while system is in monitoring "
-                "mode"
-            )
+            raise RuntimeError("can not write process image, while system is in monitoring mode")
 
         workokay = True
         self._filelock.acquire()

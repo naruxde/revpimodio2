@@ -87,12 +87,31 @@ class Cycletools:
     Lampen synchron blinken zu lassen.
     """
 
-    __slots__ = "__cycle", "__cycletime", "__ucycle", "__dict_ton", \
-        "__dict_tof", "__dict_tp", "__dict_change", \
-        "_start_timer", "core", "device", \
-        "first", "io", "last", "var", \
-        "flag1c", "flag5c", "flag10c", "flag15c", "flag20c", \
-        "flank5c", "flank10c", "flank15c", "flank20c"
+    __slots__ = (
+        "__cycle",
+        "__cycletime",
+        "__ucycle",
+        "__dict_ton",
+        "__dict_tof",
+        "__dict_tp",
+        "__dict_change",
+        "_start_timer",
+        "core",
+        "device",
+        "first",
+        "io",
+        "last",
+        "var",
+        "flag1c",
+        "flag5c",
+        "flag10c",
+        "flag15c",
+        "flag20c",
+        "flank5c",
+        "flank10c",
+        "flank15c",
+        "flank20c",
+    )
 
     def __init__(self, cycletime, revpi_object):
         """Init Cycletools class."""
@@ -208,16 +227,13 @@ class Cycletools:
             else:
                 value = io.get_value()
                 return self.__dict_change[io] != value and (
-                        value and edge == RISING or
-                        not value and edge == FALLING
+                    value and edge == RISING or not value and edge == FALLING
                 )
         else:
             if not isinstance(io, IOBase):
                 raise TypeError("parameter 'io' must be an io object")
             if not (edge == BOTH or type(io.value) == bool):
-                raise ValueError(
-                    "parameter 'edge' can be used with bit io objects only"
-                )
+                raise ValueError("parameter 'edge' can be used with bit io objects only")
             self.__dict_change[io] = None
             return False
 
@@ -283,8 +299,7 @@ class Cycletools:
         :param milliseconds: Millisekunden, der Verzoegerung wenn neu gestartet
         """
         if self.__dict_ton.get(name, [-1])[0] == -1:
-            self.__dict_ton[name] = \
-                [ceil(milliseconds / self.__cycletime), True]
+            self.__dict_ton[name] = [ceil(milliseconds / self.__cycletime), True]
         else:
             self.__dict_ton[name][1] = True
 
@@ -326,8 +341,7 @@ class Cycletools:
         :param milliseconds: Millisekunden, die der Impuls anstehen soll
         """
         if self.__dict_tp.get(name, [-1])[0] == -1:
-            self.__dict_tp[name] = \
-                [ceil(milliseconds / self.__cycletime), True]
+            self.__dict_tp[name] = [ceil(milliseconds / self.__cycletime), True]
         else:
             self.__dict_tp[name][1] = True
 
@@ -364,9 +378,19 @@ class ProcimgWriter(Thread):
     Event-Handling verwendet.
     """
 
-    __slots__ = "__dict_delay", "__eventth", "_eventqth", "__eventwork", \
-        "_eventq", "_modio", \
-        "_refresh", "_work", "daemon", "lck_refresh", "newdata"
+    __slots__ = (
+        "__dict_delay",
+        "__eventth",
+        "_eventqth",
+        "__eventwork",
+        "_eventq",
+        "_modio",
+        "_refresh",
+        "_work",
+        "daemon",
+        "lck_refresh",
+        "newdata",
+    )
 
     def __init__(self, parentmodio):
         """Init ProcimgWriter class."""
@@ -387,43 +411,38 @@ class ProcimgWriter(Thread):
     def __check_change(self, dev) -> None:
         """Findet Aenderungen fuer die Eventueberwachung."""
         for io_event in dev._dict_events:
-
-            if dev._ba_datacp[io_event._slc_address] == \
-                    dev._ba_devdata[io_event._slc_address]:
+            if dev._ba_datacp[io_event._slc_address] == dev._ba_devdata[io_event._slc_address]:
                 continue
 
             if io_event._bitshift:
-                boolcp = dev._ba_datacp[io_event._slc_address.start] \
-                         & io_event._bitshift
-                boolor = dev._ba_devdata[io_event._slc_address.start] \
-                         & io_event._bitshift
+                boolcp = dev._ba_datacp[io_event._slc_address.start] & io_event._bitshift
+                boolor = dev._ba_devdata[io_event._slc_address.start] & io_event._bitshift
 
                 if boolor == boolcp:
                     continue
 
                 for regfunc in dev._dict_events[io_event]:
-                    if regfunc.edge == BOTH \
-                            or regfunc.edge == RISING and boolor \
-                            or regfunc.edge == FALLING and not boolor:
+                    if (
+                        regfunc.edge == BOTH
+                        or regfunc.edge == RISING
+                        and boolor
+                        or regfunc.edge == FALLING
+                        and not boolor
+                    ):
                         if regfunc.delay == 0:
                             if regfunc.as_thread:
-                                self._eventqth.put(
-                                    (regfunc, io_event._name, io_event.value),
-                                    False
-                                )
+                                self._eventqth.put((regfunc, io_event._name, io_event.value), False)
                             else:
-                                self._eventq.put(
-                                    (regfunc, io_event._name, io_event.value),
-                                    False
-                                )
+                                self._eventq.put((regfunc, io_event._name, io_event.value), False)
                         else:
                             # Verzögertes Event in dict einfügen
                             tup_fire = (
-                                regfunc, io_event._name, io_event.value,
+                                regfunc,
+                                io_event._name,
+                                io_event.value,
                                 io_event,
                             )
-                            if regfunc.overwrite \
-                                    or tup_fire not in self.__dict_delay:
+                            if regfunc.overwrite or tup_fire not in self.__dict_delay:
                                 self.__dict_delay[tup_fire] = ceil(
                                     regfunc.delay / 1000 / self._refresh
                                 )
@@ -431,26 +450,19 @@ class ProcimgWriter(Thread):
                 for regfunc in dev._dict_events[io_event]:
                     if regfunc.delay == 0:
                         if regfunc.as_thread:
-                            self._eventqth.put(
-                                (regfunc, io_event._name, io_event.value),
-                                False
-                            )
+                            self._eventqth.put((regfunc, io_event._name, io_event.value), False)
                         else:
-                            self._eventq.put(
-                                (regfunc, io_event._name, io_event.value),
-                                False
-                            )
+                            self._eventq.put((regfunc, io_event._name, io_event.value), False)
                     else:
                         # Verzögertes Event in dict einfügen
                         tup_fire = (
-                            regfunc, io_event._name, io_event.value,
+                            regfunc,
+                            io_event._name,
+                            io_event.value,
                             io_event,
                         )
-                        if regfunc.overwrite \
-                                or tup_fire not in self.__dict_delay:
-                            self.__dict_delay[tup_fire] = ceil(
-                                regfunc.delay / 1000 / self._refresh
-                            )
+                        if regfunc.overwrite or tup_fire not in self.__dict_delay:
+                            self.__dict_delay[tup_fire] = ceil(regfunc.delay / 1000 / self._refresh)
 
         # Nach Verarbeitung aller IOs die Bytes kopieren (Lock ist noch drauf)
         dev._ba_datacp = dev._ba_devdata[:]
@@ -460,9 +472,7 @@ class ProcimgWriter(Thread):
         while self.__eventwork:
             try:
                 tup_fireth = self._eventqth.get(timeout=1)
-                th = EventCallback(
-                    tup_fireth[0].func, tup_fireth[1], tup_fireth[2]
-                )
+                th = EventCallback(tup_fireth[0].func, tup_fireth[1], tup_fireth[2])
                 th.start()
                 self._eventqth.task_done()
             except queue.Empty:
@@ -524,7 +534,7 @@ class ProcimgWriter(Thread):
                 warnings.warn(
                     "cycle time of {0} ms exceeded in your cycle function"
                     "".format(int(self._refresh * 1000)),
-                    RuntimeWarning
+                    RuntimeWarning,
                 )
                 mrk_delay = self._refresh
                 # Nur durch cycleloop erreichbar - keine verzögerten Events
@@ -545,23 +555,25 @@ class ProcimgWriter(Thread):
 
                             # Read all device bytes, because it is shared
                             fh.seek(dev.offset)
-                            bytesbuff[dev._slc_devoff] = \
-                                fh.read(len(dev._ba_devdata))
+                            bytesbuff[dev._slc_devoff] = fh.read(len(dev._ba_devdata))
 
                         if self._modio._monitoring or dev._shared_procimg:
                             # Inputs und Outputs in Puffer
                             dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
-                            if self.__eventwork \
-                                    and len(dev._dict_events) > 0 \
-                                    and dev._ba_datacp != dev._ba_devdata:
+                            if (
+                                self.__eventwork
+                                and len(dev._dict_events) > 0
+                                and dev._ba_datacp != dev._ba_devdata
+                            ):
                                 self.__check_change(dev)
                         else:
                             # Inputs in Puffer, Outputs in Prozessabbild
-                            dev._ba_devdata[dev._slc_inp] = \
-                                bytesbuff[dev._slc_inpoff]
-                            if self.__eventwork \
-                                    and len(dev._dict_events) > 0 \
-                                    and dev._ba_datacp != dev._ba_devdata:
+                            dev._ba_devdata[dev._slc_inp] = bytesbuff[dev._slc_inpoff]
+                            if (
+                                self.__eventwork
+                                and len(dev._dict_events) > 0
+                                and dev._ba_datacp != dev._ba_devdata
+                            ):
                                 self.__check_change(dev)
 
                             fh.seek(dev._slc_outoff.start)
@@ -579,16 +591,13 @@ class ProcimgWriter(Thread):
             else:
                 if not mrk_warn:
                     if self._modio._debug == 0:
-                        warnings.warn(
-                            "recover from io errors on process image",
-                            RuntimeWarning
-                        )
+                        warnings.warn("recover from io errors on process image", RuntimeWarning)
                     else:
                         warnings.warn(
                             "recover from io errors on process image - total "
                             "count of {0} errors now"
                             "".format(self._modio._ioerror),
-                            RuntimeWarning
+                            RuntimeWarning,
                         )
                 mrk_warn = True
 
@@ -600,8 +609,7 @@ class ProcimgWriter(Thread):
                 # Verzögerte Events prüfen
                 if self.__eventwork:
                     for tup_fire in tuple(self.__dict_delay.keys()):
-                        if tup_fire[0].overwrite and \
-                                tup_fire[3].value != tup_fire[2]:
+                        if tup_fire[0].overwrite and tup_fire[3].value != tup_fire[2]:
                             del self.__dict_delay[tup_fire]
                         else:
                             self.__dict_delay[tup_fire] -= 1
@@ -617,9 +625,8 @@ class ProcimgWriter(Thread):
             # Second default_timer call include calculation time from above
             if default_timer() - ot > self._refresh:
                 warnings.warn(
-                    "io refresh time of {0} ms exceeded!"
-                    "".format(int(self._refresh * 1000)),
-                    RuntimeWarning
+                    "io refresh time of {0} ms exceeded!".format(int(self._refresh * 1000)),
+                    RuntimeWarning,
                 )
                 mrk_delay = 0.0
             else:
@@ -641,8 +648,6 @@ class ProcimgWriter(Thread):
         if type(value) == int and 5 <= value <= 2000:
             self._refresh = value / 1000
         else:
-            raise ValueError(
-                "refresh time must be 5 to 2000 milliseconds"
-            )
+            raise ValueError("refresh time must be 5 to 2000 milliseconds")
 
     refresh = property(get_refresh, set_refresh)

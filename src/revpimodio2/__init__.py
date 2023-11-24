@@ -14,10 +14,25 @@ fuehrt das Modul bei Datenaenderung aus.
 """
 __all__ = [
     "IOEvent",
-    "RevPiModIO", "RevPiModIODriver", "RevPiModIOSelected", "run_plc",
-    "RevPiNetIO", "RevPiNetIODriver", "RevPiNetIOSelected", "run_net_plc",
-    "Cycletools", "EventCallback",
-    "ProductType", "AIO", "COMPACT", "DI", "DO", "DIO", "FLAT", "MIO",
+    "RevPiModIO",
+    "RevPiModIODriver",
+    "RevPiModIOSelected",
+    "run_plc",
+    "RevPiNetIO",
+    "RevPiNetIODriver",
+    "RevPiNetIOSelected",
+    "run_net_plc",
+    "Cycletools",
+    "EventCallback",
+    "ProductType",
+    "DeviceType",
+    "AIO",
+    "COMPACT",
+    "DI",
+    "DO",
+    "DIO",
+    "FLAT",
+    "MIO",
 ]
 __author__ = "Sven Sager <akira@revpimodio.org>"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
@@ -29,4 +44,4 @@ from .helper import Cycletools, EventCallback
 from .io import IOEvent
 from .modio import RevPiModIO, RevPiModIODriver, RevPiModIOSelected, run_plc
 from .netio import RevPiNetIO, RevPiNetIODriver, RevPiNetIOSelected, run_net_plc
-from .pictory import ProductType, AIO, COMPACT, DI, DO, DIO, FLAT, MIO
+from .pictory import ProductType, DeviceType, AIO, COMPACT, DI, DO, DIO, FLAT, MIO
