@@ -115,7 +115,8 @@ class IOList(object):
             self.__modio._imgwriter.newdata.clear()
 
         # Write outputs on devices without autorefresh
-        self.__modio.writeprocimg()
+        if not self.__modio._monitoring:
+            self.__modio.writeprocimg()
 
         if self.__modio._imgwriter.is_alive():
             # Wait until imgwriter has written outputs
