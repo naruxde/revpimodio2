@@ -121,7 +121,7 @@ class IOList(object):
             # Wait until imgwriter has written outputs
             self.__modio._imgwriter.newdata.wait(2.5)
 
-        if self.__modio._context_manager:
+        if not self.__modio._context_manager:
             # Do not reset if ModIO is in a context manager itself, it will handle that flag
             self.__modio._looprunning = False
 
