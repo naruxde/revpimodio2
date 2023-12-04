@@ -218,7 +218,8 @@ class RevPiModIO(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.writeprocimg()
+        if not self._monitoring:
+            self.writeprocimg()
         self.exit(full=True)
         self._looprunning = False
         self._context_manager = False
