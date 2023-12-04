@@ -1,3 +1,11 @@
+revpimodio2 (2.7.1-1) stable; urgency=medium
+
+  * fix: Error of loop management in the context manager
+  * fix: Context manager crashes in monitoring mode
+  * chore: Release 2.7.1
+
+ -- Sven Sager <akira@narux.de>  Mon, 04 Dec 2023 16:18:06 +0100
+
 revpimodio2 (2.7.0-1) stable; urgency=medium
 
   * fix: Insert correct LICENSE.txt file to project (LGPLv2)
