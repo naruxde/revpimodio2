@@ -403,6 +403,9 @@ class RevPiModIO(object):
                 elif pt == ProductType.RO:
                     # RO
                     dev_new = devicemodule.RoModule(self, device, simulator=self._simulator)
+                elif pt == ProductType.MIO:
+                    # MIO
+                    dev_new = devicemodule.MioModule(self, device, simulator=self._simulator)
                 else:
                     # All other IO devices
                     dev_new = devicemodule.Device(self, device, simulator=self._simulator)
