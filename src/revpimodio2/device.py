@@ -345,8 +345,10 @@ class Device(object):
             elif bool(dict_io[key][7]):
                 # Bei Bitwerten IOBase verwenden
                 io_new = IOBase(self, dict_io[key], iotype, "little", False)
-            elif isinstance(self, DioModule) and dict_io[key][3] in self._lst_counter:
-                # Counter IO auf einem DI oder DIO
+            elif (isinstance(self, DioModule) or isinstance(self, MioModule)) and dict_io[key][
+                3
+            ] in self._lst_counter:
+                # Counter IO on a DI, DIO or MIO module
                 io_new = IntIOCounter(
                     self._lst_counter.index(dict_io[key][3]),
                     self,
@@ -1973,6 +1975,24 @@ class DioModule(Device):
         """
         # Stringliste der Byteadressen (alle Module sind gleich)
         self._lst_counter = list(map(str, range(6, 70, 4)))
+
+        # Basisklasse laden
+        super().__init__(parentmodio, dict_device, simulator=simulator)
+
+
+class MioModule(Device):
+    """Represents a MIO module."""
+
+    __slots__ = "_lst_counter"
+
+    def __init__(self, parentmodio, dict_device, simulator=False):
+        """
+        Extended device class to recognize IntIOCounter.
+
+        :rev: :func:`Device.__init__()`
+        """
+        # String list of byte addresses that are a counter.
+        self._lst_counter = list(map(str, range(9, 17, 2)))
 
         # Basisklasse laden
         super().__init__(parentmodio, dict_device, simulator=simulator)
