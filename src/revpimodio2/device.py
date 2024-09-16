@@ -1298,7 +1298,7 @@ class Connect4(ModularBase):
         )
         self.x2out = IOBase(
             self,
-            ["core.x2out", 0, 1, self._slc_led.start, exp_x2out, None, "Connect_X2_OUT", "6"],
+            ["core.x2out", 0, 1, self._slc_output.start, exp_x2out, None, "Connect_X2_OUT", "0"],
             OUT,
             "little",
             False,
