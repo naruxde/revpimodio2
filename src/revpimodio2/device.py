@@ -1113,6 +1113,19 @@ class Connect4(ModularBase):
             raise AttributeError("direct assignment is not supported - use .value Attribute")
         super(Connect4, self).__setattr__(key, value)
 
+    def __led_calculator(self, led_value: int) -> int:
+        """
+        Calculate the LED value of Connect 4.
+
+        Only the Connect 4 has swapped LED colors red and green. We have to recalculate that
+        values to match our values for GREEN, RED and BLUE.
+        """
+        led_calculated = led_value & 0b001
+        led_calculated <<= 1
+        led_calculated += bool(led_value & 0b010)
+        led_calculated += led_value & 0b100
+        return led_calculated
+
     def _devconfigure(self) -> None:
         """Connect4-Klasse vorbereiten."""
         super()._devconfigure()
@@ -1308,52 +1321,52 @@ class Connect4(ModularBase):
         """
         Gibt den Zustand der LED A1 vom Connect zurueck.
 
-        :return: 0=aus, 1=rot, 2=gruen, 4=blau
+        :return: 0=aus, 1=gruen, 2=root, 4=blau
         """
-        return self._ba_devdata[self._slc_led.start] & 0b00000111
+        return self.__led_calculator(self._ba_devdata[self._slc_led.start] & 0b00000111)
 
     def _get_leda2(self) -> int:
         """
         Gibt den Zustand der LED A2 vom Core zurueck.
 
-        :return: 0=aus, 1=rot, 2=gruen, 4=blau
+        :return: 0=aus, 1=gruen, 2=root, 4=blau
         """
-        return (self._ba_devdata[self._slc_led.start] & 0b00111000) >> 3
+        return self.__led_calculator((self._ba_devdata[self._slc_led.start] & 0b00111000) >> 3)
 
     def _get_leda3(self) -> int:
         """
         Gibt den Zustand der LED A3 vom Core zurueck.
 
-        :return: 0=aus, 1=rot, 2=gruen, 4=blau
+        :return: 0=aus, 1=gruen, 2=root, 4=blau
         """
         word_led = self._ba_devdata[self._slc_led]
-        return (unpack("<H", word_led)[0] & 0b0000000111000000) >> 6
+        return self.__led_calculator((unpack("<H", word_led)[0] & 0b0000000111000000) >> 6)
 
     def _get_leda4(self) -> int:
         """
         Gibt den Zustand der LED A4 vom Core zurueck.
 
-        :return: 0=aus, 1=rot, 2=gruen, 4=blau
+        :return: 0=aus, 1=gruen, 2=root, 4=blau
         """
-        return (self._ba_devdata[self._slc_led.start + 1] & 0b00001110) >> 1
+        return self.__led_calculator((self._ba_devdata[self._slc_led.start + 1] & 0b00001110) >> 1)
 
     def _get_leda5(self) -> int:
         """
         Gibt den Zustand der LED A5 vom Core zurueck.
 
-        :return: 0=aus, 1=rot, 2=gruen, 4=blau
+        :return: 0=aus, 1=gruen, 2=root, 4=blau
         """
-        return (self._ba_devdata[self._slc_led.start + 1] & 0b01110000) >> 4
+        return self.__led_calculator((self._ba_devdata[self._slc_led.start + 1] & 0b01110000) >> 4)
 
     def _set_leda1(self, value: int) -> None:
         """
         Setzt den Zustand der LED A1 vom Connect.
 
-        :param: value 0=aus, 1=rot, 2=gruen, 4=blue
+        :param: value 0=aus, 1=gruen, 2=rot, 4=blue
         """
         if 0 <= value <= 7:
-            self.a1red(bool(value & 1))
-            self.a1green(bool(value & 2))
+            self.a1red(bool(value & 2))
+            self.a1green(bool(value & 1))
             self.a1blue(bool(value & 4))
         else:
             raise ValueError("led status must be between 0 and 7")
@@ -1362,11 +1375,11 @@ class Connect4(ModularBase):
         """
         Setzt den Zustand der LED A2 vom Connect.
 
-        :param: value 0=aus, 1=rot, 2=gruen, 4=blue
+        :param: value 0=aus, 1=gruen, 2=rot, 4=blue
         """
         if 0 <= value <= 7:
-            self.a2red(bool(value & 1))
-            self.a2green(bool(value & 2))
+            self.a2red(bool(value & 2))
+            self.a2green(bool(value & 1))
             self.a2blue(bool(value & 4))
         else:
             raise ValueError("led status must be between 0 and 7")
@@ -1375,11 +1388,11 @@ class Connect4(ModularBase):
         """
         Setzt den Zustand der LED A3 vom Connect.
 
-        :param: value 0=aus, 1=rot, 2=gruen, 4=blue
+        :param: value 0=aus, 1=gruen, 2=rot, 4=blue
         """
         if 0 <= value <= 7:
-            self.a3red(bool(value & 1))
-            self.a3green(bool(value & 2))
+            self.a3red(bool(value & 2))
+            self.a3green(bool(value & 1))
             self.a3blue(bool(value & 4))
         else:
             raise ValueError("led status must be between 0 and 7")
@@ -1388,11 +1401,11 @@ class Connect4(ModularBase):
         """
         Setzt den Zustand der LED A4 vom Connect.
 
-        :param: value 0=aus, 1=rot, 2=gruen, 4=blue
+        :param: value 0=aus, 1=gruen, 2=rot, 4=blue
         """
         if 0 <= value <= 7:
-            self.a4red(bool(value & 1))
-            self.a4green(bool(value & 2))
+            self.a4red(bool(value & 2))
+            self.a4green(bool(value & 1))
             self.a4blue(bool(value & 4))
         else:
             raise ValueError("led status must be between 0 and 7")
@@ -1401,11 +1414,11 @@ class Connect4(ModularBase):
         """
         Setzt den Zustand der LED A5 vom Connect.
 
-        :param: value 0=aus, 1=rot, 2=gruen, 4=blue
+        :param: value 0=aus, 1=gruen, 2=rot, 4=blue
         """
         if 0 <= value <= 7:
-            self.a5red(bool(value & 1))
-            self.a5green(bool(value & 2))
+            self.a5red(bool(value & 2))
+            self.a5green(bool(value & 1))
             self.a5blue(bool(value & 4))
         else:
             raise ValueError("led status must be between 0 and 7")
