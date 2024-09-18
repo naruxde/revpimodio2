@@ -1423,6 +1423,13 @@ class Connect4(ModularBase):
         else:
             raise ValueError("led status must be between 0 and 7")
 
+    def wd_toggle(self):
+        """Toggle watchdog bit to prevent a timeout."""
+        raise NotImplementedError(
+            "On the Connect 4, the hardware watchdog was removed from the process image by "
+            "KUNBUS. This function is no longer available on Connect 4 devices."
+        )
+
     A1 = property(_get_leda1, _set_leda1)
     A2 = property(_get_leda2, _set_leda2)
     A3 = property(_get_leda3, _set_leda3)
