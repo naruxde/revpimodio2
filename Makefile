@@ -16,7 +16,7 @@ endif
 SYSTEM_PYTHON  = python3
 PYTHON         = $(or $(wildcard $(VENV_PATH)/bin/python), $(SYSTEM_PYTHON))
 
-all: build docs
+all: test build docs
 
 .PHONY: all
 
