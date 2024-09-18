@@ -1,3 +1,28 @@
+revpimodio2 (2.7.2~rc1-1) unstable; urgency=medium
+
+  [ Sven Sager ]
+  * chore: Release 2.7.0
+  * fix: Error of loop management in the context manager
+  * fix: Context manager crashes in monitoring mode
+  * chore: Release 2.7.1
+
+  [ Ayman628 ]
+  * fix: Address of x2out on connect 4
+
+  [ Sven Sager ]
+  * chore: PyCharm IDE settings update
+  * test: Insert default test class for ModIO
+  * test: Test replace_io file
+  * test: Add connect 4 tests
+  * test: Add RevPi Flat tests
+  * test: Add RevPi Compact tests
+  * fix: Colors of constants GREEN and RED match LEDs of RevPi Connect 4
+  * build: Add test target as dependency of all target in Makefile
+  * chore: Increase to RC1 of upcoming Release 2.7.2
+  * feat(deb): Use rc branch as upstream branch
+
+ -- Sven Sager <akira@narux.de>  Wed, 18 Sep 2024 10:18:44 +0200
+
 revpimodio2 (2.7.0~rc3-1) unstable; urgency=medium
 
   * chore: Increase to RC3 of upcoming Release 2.7.0
