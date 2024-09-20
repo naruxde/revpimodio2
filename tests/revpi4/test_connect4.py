@@ -49,7 +49,7 @@ class TestRevPi4(TestRevPiModIO):
         self.assertIsInstance(rpi.core.temperature, int)
         self.assertIsInstance(rpi.core.frequency, int)
 
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(NotImplementedError):
             rpi.core.wd_toggle()
 
         with self.assertRaisesRegex(AttributeError, r"direct assignment is not supported"):
