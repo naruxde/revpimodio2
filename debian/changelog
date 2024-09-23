@@ -1,3 +1,23 @@
+revpimodio2 (2.7.2-1) stable; urgency=medium
+
+  [ Ayman628 ]
+  * fix: Address of x2out on connect 4
+
+  [ Sven Sager ]
+  * chore: PyCharm IDE settings update
+  * test: Insert default test class for ModIO
+  * test: Test replace_io file
+  * test: Add connect 4 tests
+  * test: Add RevPi Flat tests
+  * test: Add RevPi Compact tests
+  * fix: Colors of constants GREEN and RED match LEDs of RevPi Connect 4
+  * build: Add test target as dependency of all target in Makefile
+  * fix: Raise error on connect 4 when using wd_toggle function
+  * test: Update wd_toggle test for connect 4
+  * chore: Release 2.7.2
+
+ -- Sven Sager <akira@narux.de>  Mon, 23 Sep 2024 12:24:30 +0200
+
 revpimodio2 (2.7.1-1) stable; urgency=medium
 
   * fix: Error of loop management in the context manager
