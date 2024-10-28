@@ -57,3 +57,23 @@ class TestRevPi4(TestRevPiModIO):
 
         rpi.exit()
         del rpi
+
+    def test_connect4_ios(self):
+        rpi = self.modio(configrsc="config_connect4.rsc")
+        rpi.setdefaultvalues()
+
+        # Test X2 output
+        self.assertEqual(rpi.io.RevPiOutput.value, 0)
+        rpi.core.x2out.value = True
+        self.assertEqual(rpi.io.RevPiOutput.value, 1)
+
+        # Test X2 input
+        self.assertEqual(rpi.io.RevPiStatus.value, 0)
+        self.assertFalse(rpi.core.x2in.value)
+
+        # Modify process image: Bit 6 of status is the input (int 64 -> hex 40)
+        self.fh_procimg.write(b"\x40")
+
+        rpi.readprocimg()
+        self.assertEqual(rpi.io.RevPiStatus.value, 64)
+        self.assertTrue(rpi.core.x2in.value)
