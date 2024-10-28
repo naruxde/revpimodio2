@@ -1062,11 +1062,8 @@ class Connect(Core):
     wdautotoggle = property(_get_wdtoggle, _set_wdtoggle)
 
 
-class Connect4(ModularBase):
-    """Klasse fuer den RevPi Connect 4.
-
-    Stellt Funktionen fuer die LEDs und den Status zur Verfuegung.
-    """
+class ModularBaseConnect_4_5(ModularBase):
+    """Class for overlapping functions of Connect 4/5."""
 
     __slots__ = (
         "_slc_output",
@@ -1085,8 +1082,6 @@ class Connect4(ModularBase):
         "a5red",
         "a5green",
         "a5blue",
-        "x2in",
-        "x2out",
     )
 
     def __setattr__(self, key, value):
@@ -1107,17 +1102,15 @@ class Connect4(ModularBase):
             "a5red",
             "a5green",
             "a5blue",
-            "x2in",
-            "x2out",
         ):
             raise AttributeError("direct assignment is not supported - use .value Attribute")
-        super(Connect4, self).__setattr__(key, value)
+        super().__setattr__(key, value)
 
     def __led_calculator(self, led_value: int) -> int:
         """
-        Calculate the LED value of Connect 4.
+        Calculate the LED value of Connect 4/5.
 
-        Only the Connect 4 has swapped LED colors red and green. We have to recalculate that
+        Only the Connect 4/5 have swapped LED colors red and green. We have to recalculate that
         values to match our values for GREEN, RED and BLUE.
         """
         led_calculated = led_value & 0b001
@@ -1127,7 +1120,7 @@ class Connect4(ModularBase):
         return led_calculated
 
     def _devconfigure(self) -> None:
-        """Connect4-Klasse vorbereiten."""
+        """Connect 4/5-Klasse vorbereiten."""
         super()._devconfigure()
 
         self._slc_statusbyte = slice(0, 1)
@@ -1177,18 +1170,6 @@ class Connect4(ModularBase):
             exp_a5red = exp_a1red
             exp_a5green = exp_a1red
             exp_a5blue = exp_a1red
-
-        if len(lst_output) == 8:
-            # prepared for future extension with wdtoggle
-            exp_x2out = lst_output[0].export
-        else:
-            exp_x2out = lst_output[0].export
-
-        lst_status = lst_myios[self._slc_statusbyte.start]
-        if len(lst_status) == 8:
-            exp_x2in = lst_status[6].export
-        else:
-            exp_x2in = lst_status[0].export
 
         # Echte IOs erzeugen
         self.a1red = IOBase(
@@ -1301,7 +1282,176 @@ class Connect4(ModularBase):
             False,
         )
 
-        # IO Objekte für WD und X2 in/out erzeugen
+    def _get_leda1(self) -> int:
+        """
+        Gibt den Zustand der LED A1 vom Connect zurueck.
+
+        :return: 0=aus, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        """
+        return self.__led_calculator(self._ba_devdata[self._slc_led.start] & 0b00000111)
+
+    def _get_leda2(self) -> int:
+        """
+        Gibt den Zustand der LED A2 vom Core zurueck.
+
+        :return: 0=aus, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        """
+        return self.__led_calculator((self._ba_devdata[self._slc_led.start] & 0b00111000) >> 3)
+
+    def _get_leda3(self) -> int:
+        """
+        Gibt den Zustand der LED A3 vom Core zurueck.
+
+        :return: 0=aus, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        """
+        word_led = self._ba_devdata[self._slc_led]
+        return self.__led_calculator((unpack("<H", word_led)[0] & 0b0000000111000000) >> 6)
+
+    def _get_leda4(self) -> int:
+        """
+        Gibt den Zustand der LED A4 vom Core zurueck.
+
+        :return: 0=aus, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        """
+        return self.__led_calculator((self._ba_devdata[self._slc_led.start + 1] & 0b00001110) >> 1)
+
+    def _get_leda5(self) -> int:
+        """
+        Gibt den Zustand der LED A5 vom Core zurueck.
+
+        :return: 0=aus, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        """
+        return self.__led_calculator((self._ba_devdata[self._slc_led.start + 1] & 0b01110000) >> 4)
+
+    def _set_leda1(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A1 vom Connect.
+
+        :param: value 0=aus, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        """
+        if 0 <= value <= 7:
+            self.a1red(bool(value & 2))
+            self.a1green(bool(value & 1))
+            self.a1blue(bool(value & 4))
+        else:
+            raise ValueError("led status must be between 0 and 7")
+
+    def _set_leda2(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A2 vom Connect.
+
+        :param: value 0=aus, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        """
+        if 0 <= value <= 7:
+            self.a2red(bool(value & 2))
+            self.a2green(bool(value & 1))
+            self.a2blue(bool(value & 4))
+        else:
+            raise ValueError("led status must be between 0 and 7")
+
+    def _set_leda3(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A3 vom Connect.
+
+        :param: value 0=aus, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        """
+        if 0 <= value <= 7:
+            self.a3red(bool(value & 2))
+            self.a3green(bool(value & 1))
+            self.a3blue(bool(value & 4))
+        else:
+            raise ValueError("led status must be between 0 and 7")
+
+    def _set_leda4(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A4 vom Connect.
+
+        :param: value 0=aus, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        """
+        if 0 <= value <= 7:
+            self.a4red(bool(value & 2))
+            self.a4green(bool(value & 1))
+            self.a4blue(bool(value & 4))
+        else:
+            raise ValueError("led status must be between 0 and 7")
+
+    def _set_leda5(self, value: int) -> None:
+        """
+        Setzt den Zustand der LED A5 vom Connect.
+
+        :param: value 0=aus, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        """
+        if 0 <= value <= 7:
+            self.a5red(bool(value & 2))
+            self.a5green(bool(value & 1))
+            self.a5blue(bool(value & 4))
+        else:
+            raise ValueError("led status must be between 0 and 7")
+
+    def wd_toggle(self):
+        """Toggle watchdog bit to prevent a timeout."""
+        raise NotImplementedError(
+            "On the Connect 4/5, the hardware watchdog was removed from the process image by "
+            "KUNBUS. This function is no longer available on Connect 4/5 devices."
+        )
+
+    A1 = property(_get_leda1, _set_leda1)
+    A2 = property(_get_leda2, _set_leda2)
+    A3 = property(_get_leda3, _set_leda3)
+    A4 = property(_get_leda4, _set_leda4)
+    A5 = property(_get_leda5, _set_leda5)
+
+
+class Connect5(ModularBaseConnect_4_5, GatewayMixin):
+    """Klasse fuer den RevPi Connect 5.
+
+    Stellt Funktionen fuer die LEDs und den Status zur Verfuegung.
+    """
+
+    pass
+
+
+class Connect4(ModularBaseConnect_4_5):
+    """Klasse fuer den RevPi Connect 4.
+
+    Stellt Funktionen fuer die LEDs und den Status zur Verfuegung.
+    """
+
+    __slots__ = (
+        "x2in",
+        "x2out",
+    )
+
+    def __setattr__(self, key, value):
+        """Verhindert Ueberschreibung der speziellen IOs."""
+        if hasattr(self, key) and key in (
+            "x2in",
+            "x2out",
+        ):
+            raise AttributeError("direct assignment is not supported - use .value Attribute")
+        super().__setattr__(key, value)
+
+    def _devconfigure(self) -> None:
+        """Connect4-Klasse vorbereiten."""
+        super()._devconfigure()
+
+        # Exportflags prüfen (Byte oder Bit)
+        lst_myios = self._modio.io[self._slc_devoff]
+        lst_output = lst_myios[self._slc_output.start]
+
+        if len(lst_output) == 8:
+            # prepared for future extension with wdtoggle
+            exp_x2out = lst_output[0].export
+        else:
+            exp_x2out = lst_output[0].export
+
+        lst_status = lst_myios[self._slc_statusbyte.start]
+        if len(lst_status) == 8:
+            exp_x2in = lst_status[6].export
+        else:
+            exp_x2in = lst_status[0].export
+
+        # IO Objekte für X2 in/out erzeugen
         self.x2in = IOBase(
             self,
             ["core.x2in", 0, 1, self._slc_statusbyte.start, exp_x2in, None, "Connect_X2_IN", "6"],
@@ -1316,125 +1466,6 @@ class Connect4(ModularBase):
             "little",
             False,
         )
-
-    def _get_leda1(self) -> int:
-        """
-        Gibt den Zustand der LED A1 vom Connect zurueck.
-
-        :return: 0=aus, 1=gruen, 2=root, 4=blau
-        """
-        return self.__led_calculator(self._ba_devdata[self._slc_led.start] & 0b00000111)
-
-    def _get_leda2(self) -> int:
-        """
-        Gibt den Zustand der LED A2 vom Core zurueck.
-
-        :return: 0=aus, 1=gruen, 2=root, 4=blau
-        """
-        return self.__led_calculator((self._ba_devdata[self._slc_led.start] & 0b00111000) >> 3)
-
-    def _get_leda3(self) -> int:
-        """
-        Gibt den Zustand der LED A3 vom Core zurueck.
-
-        :return: 0=aus, 1=gruen, 2=root, 4=blau
-        """
-        word_led = self._ba_devdata[self._slc_led]
-        return self.__led_calculator((unpack("<H", word_led)[0] & 0b0000000111000000) >> 6)
-
-    def _get_leda4(self) -> int:
-        """
-        Gibt den Zustand der LED A4 vom Core zurueck.
-
-        :return: 0=aus, 1=gruen, 2=root, 4=blau
-        """
-        return self.__led_calculator((self._ba_devdata[self._slc_led.start + 1] & 0b00001110) >> 1)
-
-    def _get_leda5(self) -> int:
-        """
-        Gibt den Zustand der LED A5 vom Core zurueck.
-
-        :return: 0=aus, 1=gruen, 2=root, 4=blau
-        """
-        return self.__led_calculator((self._ba_devdata[self._slc_led.start + 1] & 0b01110000) >> 4)
-
-    def _set_leda1(self, value: int) -> None:
-        """
-        Setzt den Zustand der LED A1 vom Connect.
-
-        :param: value 0=aus, 1=gruen, 2=rot, 4=blue
-        """
-        if 0 <= value <= 7:
-            self.a1red(bool(value & 2))
-            self.a1green(bool(value & 1))
-            self.a1blue(bool(value & 4))
-        else:
-            raise ValueError("led status must be between 0 and 7")
-
-    def _set_leda2(self, value: int) -> None:
-        """
-        Setzt den Zustand der LED A2 vom Connect.
-
-        :param: value 0=aus, 1=gruen, 2=rot, 4=blue
-        """
-        if 0 <= value <= 7:
-            self.a2red(bool(value & 2))
-            self.a2green(bool(value & 1))
-            self.a2blue(bool(value & 4))
-        else:
-            raise ValueError("led status must be between 0 and 7")
-
-    def _set_leda3(self, value: int) -> None:
-        """
-        Setzt den Zustand der LED A3 vom Connect.
-
-        :param: value 0=aus, 1=gruen, 2=rot, 4=blue
-        """
-        if 0 <= value <= 7:
-            self.a3red(bool(value & 2))
-            self.a3green(bool(value & 1))
-            self.a3blue(bool(value & 4))
-        else:
-            raise ValueError("led status must be between 0 and 7")
-
-    def _set_leda4(self, value: int) -> None:
-        """
-        Setzt den Zustand der LED A4 vom Connect.
-
-        :param: value 0=aus, 1=gruen, 2=rot, 4=blue
-        """
-        if 0 <= value <= 7:
-            self.a4red(bool(value & 2))
-            self.a4green(bool(value & 1))
-            self.a4blue(bool(value & 4))
-        else:
-            raise ValueError("led status must be between 0 and 7")
-
-    def _set_leda5(self, value: int) -> None:
-        """
-        Setzt den Zustand der LED A5 vom Connect.
-
-        :param: value 0=aus, 1=gruen, 2=rot, 4=blue
-        """
-        if 0 <= value <= 7:
-            self.a5red(bool(value & 2))
-            self.a5green(bool(value & 1))
-            self.a5blue(bool(value & 4))
-        else:
-            raise ValueError("led status must be between 0 and 7")
-
-    def wd_toggle(self):
-        """Toggle watchdog bit to prevent a timeout."""
-        raise NotImplementedError(
-            "On the Connect 4, the hardware watchdog was removed from the process image by "
-            "KUNBUS. This function is no longer available on Connect 4 devices."
-        )
-
-    A1 = property(_get_leda1, _set_leda1)
-    A2 = property(_get_leda2, _set_leda2)
-    A3 = property(_get_leda3, _set_leda3)
-    A4 = property(_get_leda4, _set_leda4)
-    A5 = property(_get_leda5, _set_leda5)
 
 
 class Compact(Base):
