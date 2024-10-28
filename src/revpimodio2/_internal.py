@@ -68,5 +68,7 @@ def consttostr(value) -> str:
         return "OUT"
     elif value == 302:
         return "MEM"
+    elif value == 4096:
+        return "PROCESS_IMAGE_SIZE"
     else:
         return ""
