@@ -27,6 +27,19 @@ class ChangeThread(Thread):
         self.revpi.io[self.ioname].value = self.iovalue
 
 
+class ExitSignal(Thread):
+    """Call SIGINT after given time."""
+
+    def __init__(self, time):
+        """Signal SIGINT after given time."""
+        super().__init__()
+        self.time = time
+
+    def run(self):
+        sleep(self.time)
+        os.kill(os.getpid(), SIGINT)
+
+
 class ExitThread(Thread):
     """Call .exit() of ModIO after given time."""
 
