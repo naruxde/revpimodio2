@@ -91,3 +91,19 @@ class TestRevPiCore(TestRevPiModIO):
         self.assertEqual(rpi.core.errorlimit2, 1100)
         with self.assertRaises(ValueError):
             rpi.core.errorlimit2 = 65999
+
+    def test_core_old_errorlimits(self):
+        """Test non-existing error limits of first core rap file."""
+        with self.assertWarnsRegex(Warning, r"equal device name '.*' in pictory configuration."):
+            rpi = self.modio(configrsc="config_old.rsc")
+
+        # Errorlimits testen, die es nicht gibt (damals None, jetzt -1)
+        self.assertEqual(rpi.core.errorlimit1, -1)
+        self.assertEqual(rpi.core.errorlimit2, -1)
+
+        with self.assertRaises(RuntimeError):
+            rpi.core.errorlimit1 = 100
+        with self.assertRaises(RuntimeError):
+            rpi.core.errorlimit2 = 100
+
+        del rpi
