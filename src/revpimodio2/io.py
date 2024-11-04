@@ -9,6 +9,8 @@ import warnings
 from re import match as rematch
 from threading import Event
 
+from revpimodio2.pictory import ProductType
+
 from ._internal import consttostr, RISING, FALLING, BOTH, INP, OUT, MEM, PROCESS_IMAGE_SIZE
 
 try:
@@ -749,7 +751,10 @@ class IOBase(object):
 
         :param value: IO-Wert als <class bytes'> oder <class 'bool'>
         """
-        if self._read_only_io:
+        if self._read_only_io and not self._parentdevice.producttype in (
+            ProductType.VIRTUAL_MODBUS_RTU_SERVER,
+            ProductType.VIRTUAL_MODBUS_TCP_SERVER,
+        ):
             if self._iotype == INP:
                 if self._parentdevice._modio._simulator:
                     raise RuntimeError(
