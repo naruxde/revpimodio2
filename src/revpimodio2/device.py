@@ -262,6 +262,48 @@ class Device(object):
         else:
             return key in self._modio.io and getattr(self._modio.io, key)._parentdevice == self
 
+    def __enter__(self):
+        """
+        Read/write inputs/outputs on entering/leaving context manager.
+
+        All inputs of this device are read when entering the context manager.
+        Within the context manager, further .readprocimg() or .writeprocimg()
+        calls can be made. When exiting, all outputs of this device will be
+        written into the process image.
+
+        When 'autorefresh=True' is used, all read or write actions in the
+        background are performed automatically.
+        """
+        if not self._modio._context_manager:
+            # If ModIO itself is in a context manager, it sets the _looprunning=True flag itself
+            if self._modio._looprunning:
+                raise RuntimeError(
+                    "can not enter context manager inside mainloop, cycleloop or "
+                    "another context manager"
+                )
+            self._modio._looprunning = True
+
+        self.readprocimg()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Write outputs of this device to process image on leaving."""
+        if self._modio._imgwriter.is_alive():
+            # Reset new data flag to sync with imgwriter
+            self._modio._imgwriter.newdata.clear()
+
+        # Write outputs on devices without autorefresh
+        if not self._modio._monitoring:
+            self.writeprocimg()
+
+        if self._modio._imgwriter.is_alive():
+            # Wait until imgwriter has written outputs
+            self._modio._imgwriter.newdata.wait(2.5)
+
+        if not self._modio._context_manager:
+            # Do not reset if ModIO is in a context manager itself, it will handle that flag
+            self._modio._looprunning = False
+
     def __getitem__(self, key):
         """
         Gibt IO an angegebener Stelle zurueck.

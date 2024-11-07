@@ -93,8 +93,8 @@ class IOList(object):
 
         All entries are read when entering the context manager. Within the
         context manager, further .readprocimg() or .writeprocimg() calls can
-        be made and the process image can be read or written. When exiting,
-        all outputs are always written into the process image.
+        be made. When exiting, all outputs will be written into the process
+        image.
 
         When 'autorefresh=True' is used, all read or write actions in the
         background are performed automatically.
@@ -102,7 +102,10 @@ class IOList(object):
         if not self.__modio._context_manager:
             # If ModIO itself is in a context manager, it sets the _looprunning=True flag itself
             if self.__modio._looprunning:
-                raise RuntimeError("can not enter context manager inside mainloop or cycleloop")
+                raise RuntimeError(
+                    "can not enter context manager inside mainloop, cycleloop or "
+                    "another context manager"
+                )
             self.__modio._looprunning = True
 
         self.__modio.readprocimg()
