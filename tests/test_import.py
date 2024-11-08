@@ -19,7 +19,7 @@ class ModuleImport(unittest.TestCase):
 
         self.assertEqual(revpimodio2._internal.consttostr(999), "")
 
-        lst_const = [0, 1, 2, 4, 31, 32, 33, 300, 301, 302, 4096]
+        lst_const = [0, 1, 2, 3, 4, 5, 6, 7, 31, 32, 33, 300, 301, 302, 4096]
         internal_dict = revpimodio2._internal.__dict__  # type: dict
         for key in internal_dict:
             if type(internal_dict[key]) is int:

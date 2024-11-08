@@ -8,7 +8,11 @@ __license__ = "LGPLv2"
 OFF = 0
 GREEN = 1
 RED = 2
+ORANGE = 3
 BLUE = 4
+CYAN = 5
+MAGENTA = 6
+WHITE = 7
 RISING = 31
 FALLING = 32
 BOTH = 33
@@ -54,8 +58,16 @@ def consttostr(value) -> str:
         return "GREEN"
     elif value == 2:
         return "RED"
+    elif value == 3:
+        return "ORANGE"
     elif value == 4:
         return "BLUE"
+    elif value == 5:
+        return "CYAN"
+    elif value == 6:
+        return "MAGENTA"
+    elif value == 7:
+        return "WHITE"
     elif value == 31:
         return "RISING"
     elif value == 32:
