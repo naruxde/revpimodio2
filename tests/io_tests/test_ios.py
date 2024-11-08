@@ -7,7 +7,7 @@ __license__ = "GPLv2"
 from os.path import dirname
 
 from revpimodio2.io import IntIOCounter
-from tests import TestRevPiModIO
+from .. import TestRevPiModIO
 
 
 class TestIos(TestRevPiModIO):

@@ -9,8 +9,8 @@ from threading import Event
 from time import sleep
 
 from revpimodio2 import RISING, FALLING
-from tests import TestRevPiModIO
-from tests.helper import ChangeThread
+from .. import TestRevPiModIO
+from ..helper import ChangeThread
 
 event_data = (None, None)
 

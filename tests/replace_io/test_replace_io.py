@@ -7,7 +7,7 @@ __license__ = "GPLv2"
 from os.path import join, dirname
 
 from revpimodio2.io import IntIOReplaceable
-from tests import TestRevPiModIO
+from .. import TestRevPiModIO
 
 
 class TestReplaceIO(TestRevPiModIO):
@@ -148,20 +148,16 @@ class TestReplaceIO(TestRevPiModIO):
 
     def test_replace_io_file_fail(self):
         with self.assertRaises(RuntimeError):
-            rpi = self.modio(replace_io_file=join(self.data_dir, "replace_io_fail.conf"))
+            self.modio(replace_io_file=join(self.data_dir, "replace_io_fail.conf"))
         with self.assertRaises(RuntimeError):
-            rpi = self.modio(replace_io_file="no_file_nonono")
+            self.modio(replace_io_file="no_file_nonono")
         with self.assertRaises(RuntimeError):
-            rpi = self.modio(replace_io_file=join(self.data_dir, "replace_io_failformat.conf"))
+            self.modio(replace_io_file=join(self.data_dir, "replace_io_failformat.conf"))
         with self.assertRaises(ValueError):
-            rpi = self.modio(
-                replace_io_file=join(self.data_dir, "replace_io_faildefaultvalue_bool.conf")
-            )
+            self.modio(replace_io_file=join(self.data_dir, "replace_io_faildefaultvalue_bool.conf"))
         with self.assertRaises(ValueError):
-            rpi = self.modio(
-                replace_io_file=join(self.data_dir, "replace_io_faildefaultvalue_int.conf")
-            )
+            self.modio(replace_io_file=join(self.data_dir, "replace_io_faildefaultvalue_int.conf"))
         with self.assertRaises(ValueError):
-            rpi = self.modio(replace_io_file=join(self.data_dir, "replace_io_failbit_int.conf"))
+            self.modio(replace_io_file=join(self.data_dir, "replace_io_failbit_int.conf"))
         with self.assertRaisesRegex(ValueError, r"defaultvalue to bytes"):
-            rpi = self.modio(replace_io_file=join(self.data_dir, "replace_io_bytes_fail.conf"))
+            self.modio(replace_io_file=join(self.data_dir, "replace_io_bytes_fail.conf"))

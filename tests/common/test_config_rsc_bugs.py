@@ -6,7 +6,7 @@ __license__ = "GPLv2"
 
 from os.path import dirname
 
-from tests import TestRevPiModIO
+from .. import TestRevPiModIO
 
 
 class TestConfigRscBugs(TestRevPiModIO):

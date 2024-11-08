@@ -9,7 +9,7 @@ from os.path import join, dirname
 from shutil import copyfile
 
 import revpimodio2
-from tests import TestRevPiModIO
+from .. import TestRevPiModIO
 
 
 class TestInitModio(TestRevPiModIO):

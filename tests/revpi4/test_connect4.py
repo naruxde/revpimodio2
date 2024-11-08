@@ -4,10 +4,10 @@ __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2024 Sven Sager"
 __license__ = "GPLv2"
 
-from os.path import join, dirname
+from os.path import dirname
 
 import revpimodio2
-from tests import TestRevPiModIO
+from .. import TestRevPiModIO
 
 
 class TestRevPi4(TestRevPiModIO):

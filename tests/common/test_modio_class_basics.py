@@ -9,7 +9,7 @@ from os.path import join, dirname
 from signal import SIGINT
 from threading import Event
 
-from tests import TestRevPiModIO
+from .. import TestRevPiModIO
 
 
 class TestModioClassBasics(TestRevPiModIO):

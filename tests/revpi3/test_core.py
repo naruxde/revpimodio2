@@ -8,7 +8,7 @@ from os.path import dirname
 
 from revpimodio2 import RED, GREEN, OFF, BLUE
 from revpimodio2.io import IOBase, IntIO
-from tests import TestRevPiModIO
+from .. import TestRevPiModIO
 
 
 class TestRevPiCore(TestRevPiModIO):

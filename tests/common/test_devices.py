@@ -8,7 +8,7 @@ from os.path import dirname
 
 from revpimodio2 import OUT, MEM, INP
 from revpimodio2.device import Virtual, Base
-from tests import TestRevPiModIO
+from .. import TestRevPiModIO
 
 
 class TestDevicesModule(TestRevPiModIO):

@@ -8,8 +8,8 @@ from os.path import dirname
 from time import sleep
 
 import revpimodio2
-from tests import TestRevPiModIO
-from tests.helper import ExitThread, ChangeThread
+from .. import TestRevPiModIO
+from ..helper import ExitThread, ChangeThread
 
 event_data = (None, None)
 

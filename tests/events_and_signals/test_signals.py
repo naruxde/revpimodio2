@@ -6,8 +6,8 @@ __license__ = "GPLv2"
 
 from os.path import dirname
 
-from tests import TestRevPiModIO
-from tests.helper import ExitSignal
+from .. import TestRevPiModIO
+from ..helper import ExitSignal
 
 
 class TestSignals(TestRevPiModIO):
