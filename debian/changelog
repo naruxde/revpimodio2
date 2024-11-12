@@ -1,3 +1,11 @@
+revpimodio2 (2.8.0~rc2-1) unstable; urgency=medium
+
+  * test: Fix test for default location of config.rsc
+  * test: Update runtime warning for exceeded cycle time in mainloop
+  * chore: Increase to RC2 of upcoming Release 2.8.0
+
+ -- Sven Sager <akira@narux.de>  Tue, 12 Nov 2024 10:54:46 +0100
+
 revpimodio2 (2.8.0~rc1-1) unstable; urgency=medium
 
   * fix: Raise error on connect 4 when using wd_toggle function
