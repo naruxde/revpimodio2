@@ -141,14 +141,15 @@ class TestMainloop(TestRevPiModIO):
 
         rpi.io.test1.unreg_event()
         rpi.io.test1.reg_event(xxx_timeout)
+        rpi.exit()
 
-        sleep(0.3)
-
-        # Exceed cylcle time in main loop
+        # Exceed cycle time in mainloop
         with self.assertWarnsRegex(RuntimeWarning, r"io refresh time of 0 ms exceeded!"):
+            rpi = self.modio(debug=False, autorefresh=True)
+            rpi.mainloop(blocking=False)
             rpi._imgwriter._refresh = 0.0001
             sleep(0.1)
-        rpi.exit()
+            rpi.exit()
 
         del rpi
 
