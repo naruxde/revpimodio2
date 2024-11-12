@@ -4,9 +4,10 @@ __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2024 Sven Sager"
 __license__ = "GPLv2"
 
-from os import remove
+from os import remove, makedirs
 from os.path import join, dirname
 from shutil import copyfile
+from warnings import warn
 
 import revpimodio2
 from .. import TestRevPiModIO
@@ -30,11 +31,17 @@ class TestInitModio(TestRevPiModIO):
             "configrsc": join(self.data_dir, "config.rsc"),
         }
 
-        # Datei an richtigen Ort kopieren und löschen
-        copyfile(defaultkwargs["configrsc"], "/opt/KUNBUS/config.rsc")
-        rpi = revpimodio2.RevPiModIO(procimg=self.fh_procimg.name)
-        del rpi
-        remove("/opt/KUNBUS/config.rsc")
+        # Check default path of config.rsc
+        for config_file in ("/opt/KUNBUS/config.rsc", "/etc/revpi/config.rsc"):
+            config_dir = dirname(config_file)
+            try:
+                makedirs(config_dir, exist_ok=True)
+                copyfile(defaultkwargs["configrsc"], config_file)
+            except PermissionError:
+                warn(f"Skip test for default location of '{config_file}' - permission denied")
+            else:
+                revpimodio2.RevPiModIO(procimg=self.fh_procimg.name)
+                remove(config_file)
 
         # RevPiModIO
         rpi = self.modio()
