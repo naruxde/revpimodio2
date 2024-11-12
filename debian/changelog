@@ -1,3 +1,32 @@
+revpimodio2 (2.8.0~rc1-1) unstable; urgency=medium
+
+  * fix: Raise error on connect 4 when using wd_toggle function
+  * test: Update wd_toggle test for connect 4
+  * chore: Release 2.7.2
+  * test: Connect 4 integrated input and output
+  * fix: Resolve constants of internal module
+  * test: Configuration errors in config.rsc
+  * test: Init ModIO classes
+  * test: ModIO class basics
+  * test: Common device functions
+  * test: Replace io function
+  * test: Basic IO functions
+  * test: Core devices
+  * test: Connect devices
+  * test: Old core rap file without error limits
+  * test: IO values and counter
+  * test: Test mainloop functions
+  * test: Events and signals
+  * test: Cycle loop functions
+  * test: Cleanup tests and use relative imports
+  * feat: Add more colors in constants for a RGB status LED
+  * refactor: Show deprecation warning on root context manager
+  * feat: Add support for RevPi Connect 5
+  * test: Add tests for RevPi Connect 5
+  * chore: Increase to RC1 of upcoming Release 2.8.0
+
+ -- Sven Sager <akira@narux.de>  Tue, 12 Nov 2024 10:52:27 +0100
+
 revpimodio2 (2.7.2~rc1-1) unstable; urgency=medium
 
   [ Sven Sager ]
