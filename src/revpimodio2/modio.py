@@ -208,6 +208,19 @@ class RevPiModIO(object):
                 self._myfh.close()
 
     def __enter__(self):
+        # todo: Remove this context manager in future
+        warnings.warn(
+            "This context manager is deprecated and will be removed!\n\n"
+            "You should use the context manager of the IO object `with revpi.io:` "
+            "or with a single device `with revpi.device.my_device:`.\n\n"
+            "This deprecated context manager can be reproduced as follows:\n"
+            "```"
+            "revpi = revpimodio2.RevPiModIO()"
+            "with revpi.io:"
+            "    ..."
+            "```",
+            DeprecationWarning,
+        )
         if self._context_manager:
             raise RuntimeError("can not use multiple context managers of same instance")
         if self._looprunning:
@@ -354,6 +367,10 @@ class RevPiModIO(object):
                 elif pt == ProductType.REVPI_CONNECT_4:
                     # RevPi Connect 4
                     dev_new = devicemodule.Connect4(self, device, simulator=self._simulator)
+                    self.core = dev_new
+                elif pt == ProductType.REVPI_CONNECT_5:
+                    # RevPi Connect 5
+                    dev_new = devicemodule.Connect5(self, device, simulator=self._simulator)
                     self.core = dev_new
                 elif pt == ProductType.REVPI_COMPACT:
                     # RevPi Compact

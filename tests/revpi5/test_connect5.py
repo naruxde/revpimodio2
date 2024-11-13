@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for RevPi 4 devices."""
+"""Tests for RevPi 5 devices."""
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2024 Sven Sager"
 __license__ = "GPLv2"
@@ -10,15 +10,15 @@ import revpimodio2
 from .. import TestRevPiModIO
 
 
-class TestRevPi4(TestRevPiModIO):
+class TestRevPi5(TestRevPiModIO):
 
     data_dir = dirname(__file__)
 
-    def test_connect4(self):
-        rpi = self.modio(configrsc="config_connect4.rsc")
+    def test_connect5(self):
+        rpi = self.modio(configrsc="config_connect5.rsc")
         rpi.setdefaultvalues()
 
-        self.assertIsInstance(rpi.core, revpimodio2.device.Connect4)
+        self.assertIsInstance(rpi.core, revpimodio2.device.Connect5)
 
         # Test all LED (A1 - A5) with all colors
         lst_led_test = [
@@ -35,6 +35,10 @@ class TestRevPi4(TestRevPiModIO):
                 (revpimodio2.GREEN, 2),
                 (revpimodio2.RED, 1),
                 (revpimodio2.BLUE, 4),
+                (revpimodio2.ORANGE, 3),
+                (revpimodio2.MAGENTA, 5),  # Switched GR bit
+                (revpimodio2.WHITE, 7),
+                (revpimodio2.CYAN, 6),  # Switched GR bit
                 (revpimodio2.OFF, 0),
             ):
                 set_led(k[0])
@@ -55,25 +59,11 @@ class TestRevPi4(TestRevPiModIO):
         with self.assertRaisesRegex(AttributeError, r"direct assignment is not supported"):
             rpi.core.a5green = True
 
+        # Connect 5 has no IOs build in
+        with self.assertRaises(AttributeError):
+            output = rpi.core.x2out.value
+        with self.assertRaises(AttributeError):
+            rpi.core.x2in.value = True
+
         rpi.exit()
         del rpi
-
-    def test_connect4_ios(self):
-        rpi = self.modio(configrsc="config_connect4.rsc")
-        rpi.setdefaultvalues()
-
-        # Test X2 output
-        self.assertEqual(rpi.io.RevPiOutput.value, 0)
-        rpi.core.x2out.value = True
-        self.assertEqual(rpi.io.RevPiOutput.value, 1)
-
-        # Test X2 input
-        self.assertEqual(rpi.io.RevPiStatus.value, 0)
-        self.assertFalse(rpi.core.x2in.value)
-
-        # Modify process image: Bit 6 of status is the input (int 64 -> hex 40)
-        self.fh_procimg.write(b"\x40")
-
-        rpi.readprocimg()
-        self.assertEqual(rpi.io.RevPiStatus.value, 64)
-        self.assertTrue(rpi.core.x2in.value)
