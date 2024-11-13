@@ -1,3 +1,34 @@
+revpimodio2 (2.8.0-1) stable; urgency=medium
+
+  * chore: Increase to RC1 of upcoming Release 2.7.2
+  * test: Connect 4 integrated input and output
+  * fix: Resolve constants of internal module
+  * test: Configuration errors in config.rsc
+  * test: Init ModIO classes
+  * test: ModIO class basics
+  * test: Common device functions
+  * test: Replace io function
+  * test: Basic IO functions
+  * test: Core devices
+  * test: Connect devices
+  * test: Old core rap file without error limits
+  * test: IO values and counter
+  * test: Test mainloop functions
+  * test: Events and signals
+  * test: Cycle loop functions
+  * test: Cleanup tests and use relative imports
+  * feat: Add more colors in constants for a RGB status LED
+  * refactor: Show deprecation warning on root context manager
+  * feat: Add support for RevPi Connect 5
+  * test: Add tests for RevPi Connect 5
+  * chore: Increase to RC1 of upcoming Release 2.8.0
+  * test: Fix test for default location of config.rsc
+  * test: Update runtime warning for exceeded cycle time in mainloop
+  * chore: Increase to RC2 of upcoming Release 2.8.0
+  * chore: Release 2.8.0
+
+ -- Sven Sager <akira@narux.de>  Wed, 13 Nov 2024 14:15:50 +0100
+
 revpimodio2 (2.7.2-1) stable; urgency=medium
 
   [ Ayman628 ]
