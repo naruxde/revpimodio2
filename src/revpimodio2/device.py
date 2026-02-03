@@ -219,14 +219,23 @@ class Device(object):
 
         # Attach all remaining attributes to class
         self.bmk = dict_device.get("bmk", "")
+        """Component designator from piCtory configuration."""
         self.catalognr = dict_device.get("catalogNr", "")
+        """Catalog number of the device (deprecated)."""
         self.comment = dict_device.get("comment", "")
+        """Comment text from piCtory configuration."""
         self.extend = dict_device.get("extend", {})
+        """Extended configuration data from piCtory."""
         self.guid = dict_device.get("GUID", "")
+        """Global unique identifier of the device."""
         self.id = dict_device.get("id", "")
+        """Device identifier from piCtory configuration."""
         self.inpvariant = dict_device.get("inpVariant", 0)
+        """Input variant number."""
         self.outvariant = dict_device.get("outVariant", 0)
+        """Output variant number."""
         self.type = dict_device.get("type", "")
+        """Device position type string."""
 
         # Perform special configuration from derived classes
         self._devconfigure()
@@ -634,9 +643,9 @@ class ModularBase(Base):
     @property
     def picontrolrunning(self) -> bool:
         """
-        Statusbit for piControl-Treiber laeuft.
+        Status bit indicating piControl driver is running.
 
-        :return: True, if Treiber laeuft
+        :return: True if driver is running
         """
         return bool(int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little") & 1)
 
@@ -841,6 +850,7 @@ class Core(ModularBase, GatewayMixin):
             "little",
             False,
         )
+        """LED A1 green."""
         self.a1red = IOBase(
             self,
             ["core.a1red", 0, 1, self._slc_led.start, exp_a1red, None, "LED_A1_RED", "1"],
@@ -848,6 +858,7 @@ class Core(ModularBase, GatewayMixin):
             "little",
             False,
         )
+        """LED A1 red."""
         self.a2green = IOBase(
             self,
             ["core.a2green", 0, 1, self._slc_led.start, exp_a2green, None, "LED_A2_GREEN", "2"],
@@ -855,6 +866,7 @@ class Core(ModularBase, GatewayMixin):
             "little",
             False,
         )
+        """LED A2 green."""
         self.a2red = IOBase(
             self,
             ["core.a2red", 0, 1, self._slc_led.start, exp_a2red, None, "LED_A2_RED", "3"],
@@ -862,6 +874,7 @@ class Core(ModularBase, GatewayMixin):
             "little",
             False,
         )
+        """LED A2 red."""
 
         # Watchdog einrichten (Core=soft / Connect=soft/hard)
         self.wd = IOBase(
@@ -871,6 +884,7 @@ class Core(ModularBase, GatewayMixin):
             "little",
             False,
         )
+        """Watchdog bit."""
 
     def _get_leda1(self) -> int:
         """
@@ -975,6 +989,7 @@ class Connect(Core):
             "little",
             False,
         )
+        """LED A3 green."""
         self.a3red = IOBase(
             self,
             ["core.a3red", 0, 1, self._slc_led.start, exp_a3red, None, "LED_A3_RED", "5"],
@@ -982,6 +997,7 @@ class Connect(Core):
             "little",
             False,
         )
+        """LED A3 red."""
 
         # Create IO objects for WD and X2 in/out
         self.x2in = IOBase(
@@ -991,6 +1007,7 @@ class Connect(Core):
             "little",
             False,
         )
+        """Digital input on X2 connector."""
         self.x2out = IOBase(
             self,
             ["core.x2out", 0, 1, self._slc_led.start, exp_x2out, None, "Connect_X2_OUT", "6"],
@@ -998,6 +1015,7 @@ class Connect(Core):
             "little",
             False,
         )
+        """Digital output on X2 connector."""
 
         # Export hardware watchdog to use it with other systems
         self.wd._export = int(exp_wd)  # Do this without mrk for export!
@@ -1170,6 +1188,7 @@ class ModularBaseConnect_4_5(ModularBase):
             exp_a5blue = exp_a1red
 
         # Create actual IOs
+        """LED A1 red."""
         self.a1red = IOBase(
             self,
             ["core.a1red", 0, 1, self._slc_led.start, exp_a1red, None, "LED_A1_RED", "0"],
@@ -1177,6 +1196,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A1 red."""
         self.a1green = IOBase(
             self,
             ["core.a1green", 0, 1, self._slc_led.start, exp_a1green, None, "LED_A1_GREEN", "1"],
@@ -1184,6 +1204,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A1 green."""
         self.a1blue = IOBase(
             self,
             ["core.a1blue", 0, 1, self._slc_led.start, exp_a1blue, None, "LED_A1_BLUE", "2"],
@@ -1191,6 +1212,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A1 blue."""
 
         self.a2red = IOBase(
             self,
@@ -1199,6 +1221,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A2 red."""
         self.a2green = IOBase(
             self,
             ["core.a2green", 0, 1, self._slc_led.start, exp_a2green, None, "LED_A2_GREEN", "4"],
@@ -1206,6 +1229,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A2 green."""
         self.a2blue = IOBase(
             self,
             ["core.a2blue", 0, 1, self._slc_led.start, exp_a2blue, None, "LED_A2_BLUE", "5"],
@@ -1213,6 +1237,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A2 blue."""
 
         self.a3red = IOBase(
             self,
@@ -1221,6 +1246,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A3 red."""
         self.a3green = IOBase(
             self,
             ["core.a3green", 0, 1, self._slc_led.start, exp_a3green, None, "LED_A3_GREEN", "7"],
@@ -1228,6 +1254,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A3 green."""
         self.a3blue = IOBase(
             self,
             ["core.a3blue", 0, 1, self._slc_led.start, exp_a3blue, None, "LED_A3_BLUE", "8"],
@@ -1235,6 +1262,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A3 blue."""
 
         self.a4red = IOBase(
             self,
@@ -1243,6 +1271,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A4 red."""
         self.a4green = IOBase(
             self,
             ["core.a4green", 0, 1, self._slc_led.start, exp_a4green, None, "LED_A4_GREEN", "10"],
@@ -1250,6 +1279,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A4 green."""
         self.a4blue = IOBase(
             self,
             ["core.a4blue", 0, 1, self._slc_led.start, exp_a4blue, None, "LED_A4_BLUE", "11"],
@@ -1257,6 +1287,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A4 blue."""
 
         self.a5red = IOBase(
             self,
@@ -1265,6 +1296,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A5 red."""
         self.a5green = IOBase(
             self,
             ["core.a5green", 0, 1, self._slc_led.start, exp_a5green, None, "LED_A5_GREEN", "13"],
@@ -1272,6 +1304,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A5 green."""
         self.a5blue = IOBase(
             self,
             ["core.a5blue", 0, 1, self._slc_led.start, exp_a5blue, None, "LED_A5_BLUE", "14"],
@@ -1279,6 +1312,7 @@ class ModularBaseConnect_4_5(ModularBase):
             "little",
             False,
         )
+        """LED A5 blue."""
 
     def _get_leda1(self) -> int:
         """
@@ -1457,6 +1491,7 @@ class Connect4(ModularBaseConnect_4_5):
             "little",
             False,
         )
+        """Digital input on X2 connector."""
         self.x2out = IOBase(
             self,
             ["core.x2out", 0, 1, self._slc_output.start, exp_x2out, None, "Connect_X2_OUT", "0"],
@@ -1464,6 +1499,7 @@ class Connect4(ModularBaseConnect_4_5):
             "little",
             False,
         )
+        """Digital output on X2 connector."""
 
 
 class Compact(Base):
@@ -1522,6 +1558,7 @@ class Compact(Base):
             "little",
             False,
         )
+        """LED A1 green."""
         self.a1red = IOBase(
             self,
             ["core.a1red", 0, 1, self._slc_led.start, exp_a1red, None, "LED_A1_RED", "1"],
@@ -1529,6 +1566,7 @@ class Compact(Base):
             "little",
             False,
         )
+        """LED A1 red."""
         self.a2green = IOBase(
             self,
             ["core.a2green", 0, 1, self._slc_led.start, exp_a2green, None, "LED_A2_GREEN", "2"],
@@ -1536,6 +1574,7 @@ class Compact(Base):
             "little",
             False,
         )
+        """LED A2 green."""
         self.a2red = IOBase(
             self,
             ["core.a2red", 0, 1, self._slc_led.start, exp_a2red, None, "LED_A2_RED", "3"],
@@ -1543,6 +1582,7 @@ class Compact(Base):
             "little",
             False,
         )
+        """LED A2 red."""
 
         # Software watchdog einrichten
         self.wd = IOBase(
@@ -1552,6 +1592,7 @@ class Compact(Base):
             "little",
             False,
         )
+        """Watchdog bit."""
 
     def _get_leda1(self) -> int:
         """
@@ -1726,6 +1767,7 @@ class Flat(Base):
             "little",
             False,
         )
+        """LED A1 green."""
         self.a1red = IOBase(
             self,
             ["core.a1red", 0, 1, self._slc_led.start, exp_a1red, None, "LED_A1_RED", "1"],
@@ -1733,6 +1775,7 @@ class Flat(Base):
             "little",
             False,
         )
+        """LED A1 red."""
         self.a2green = IOBase(
             self,
             ["core.a2green", 0, 1, self._slc_led.start, exp_a2green, None, "LED_A2_GREEN", "2"],
@@ -1740,6 +1783,7 @@ class Flat(Base):
             "little",
             False,
         )
+        """LED A2 green."""
         self.a2red = IOBase(
             self,
             ["core.a2red", 0, 1, self._slc_led.start, exp_a2red, None, "LED_A2_RED", "3"],
@@ -1747,6 +1791,7 @@ class Flat(Base):
             "little",
             False,
         )
+        """LED A2 red."""
         self.a3green = IOBase(
             self,
             ["core.a3green", 0, 1, self._slc_led.start, exp_a3green, None, "LED_A3_GREEN", "4"],
@@ -1754,6 +1799,7 @@ class Flat(Base):
             "little",
             False,
         )
+        """LED A3 green."""
         self.a3red = IOBase(
             self,
             ["core.a3red", 0, 1, self._slc_led.start, exp_a3red, None, "LED_A3_RED", "5"],
@@ -1761,6 +1807,7 @@ class Flat(Base):
             "little",
             False,
         )
+        """LED A3 red."""
         self.a4green = IOBase(
             self,
             ["core.a4green", 0, 1, self._slc_led.start, exp_a4green, None, "LED_A4_GREEN", "6"],
@@ -1768,6 +1815,7 @@ class Flat(Base):
             "little",
             False,
         )
+        """LED A4 green."""
         self.a4red = IOBase(
             self,
             ["core.a4red", 0, 1, self._slc_led.start, exp_a4red, None, "LED_A4_RED", "7"],
@@ -1775,6 +1823,7 @@ class Flat(Base):
             "little",
             False,
         )
+        """LED A4 red."""
         self.a5green = IOBase(
             self,
             ["core.a5green", 0, 1, self._slc_led.start, exp_a5green, None, "LED_A5_GREEN", "8"],
@@ -1782,6 +1831,7 @@ class Flat(Base):
             "little",
             False,
         )
+        """LED A5 green."""
         self.a5red = IOBase(
             self,
             ["core.a5red", 0, 1, self._slc_led.start, exp_a5red, None, "LED_A5_RED", "9"],
@@ -1789,6 +1839,7 @@ class Flat(Base):
             "little",
             False,
         )
+        """LED A5 red."""
 
         # Real IO for switch
         lst_io = self._modio.io[self._slc_devoff][self._slc_switch.start]
@@ -1800,6 +1851,7 @@ class Flat(Base):
             "little",
             False,
         )
+        """Switch input."""
 
         # Real IO for relais
         lst_io = self._modio.io[self._slc_devoff][self._slc_dout.start]
@@ -1811,6 +1863,7 @@ class Flat(Base):
             "little",
             False,
         )
+        """Relais output."""
 
         # Software watchdog einrichten
         self.wd = IOBase(
@@ -1820,6 +1873,7 @@ class Flat(Base):
             "little",
             False,
         )
+        """Watchdog bit."""
 
     def _get_leda1(self) -> int:
         """
@@ -2056,7 +2110,7 @@ class Virtual(Gateway):
         for io in self.get_inputs():
             self._ba_devdata[io._slc_address] = io._defaultvalue
 
-        # Inputs to Bus schreiben
+        # Write inputs to bus
         self._modio._myfh_lck.acquire()
         try:
             self._modio._myfh.seek(self._slc_inpoff.start)
