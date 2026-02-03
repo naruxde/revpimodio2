@@ -1013,9 +1013,9 @@ class Connect(Core):
 
     def _get_wdtoggle(self) -> bool:
         """
-        Retrieves the value for Autowatchdog.
+        Retrieves the automatic watchdog toggle status.
 
-        :return: True if autowatchdog is active
+        :return: True if automatic watchdog toggle is active
         """
         return self.__th_wdtoggle is not None and self.__th_wdtoggle.is_alive()
 
@@ -1033,14 +1033,14 @@ class Connect(Core):
 
     def _set_wdtoggle(self, value: bool) -> None:
         """
-                Sets the value for autowatchdog.
+        Sets the automatic watchdog toggle.
 
-                If this value is set to True, the necessary bit to toggle the watchdog is switched between True and False every 10 seconds in the background.
+        If this value is set to True, the necessary bit to toggle the watchdog is switched between True and False every 10 seconds in the background.
         This bit is automatically written to the process image with autorefresh=True.
 
         IMPORTANT: If autorefresh=False, .writeprocimg() must be called cyclically to write the value to the process image!!!
 
-                :param value: True to activate, False to terminate
+        :param value: True to activate, False to terminate
         """
         if self._modio._monitoring:
             raise RuntimeError("can not toggle watchdog, while system is in monitoring mode")
