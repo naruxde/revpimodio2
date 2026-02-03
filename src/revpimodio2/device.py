@@ -572,6 +572,8 @@ class Base(Device):
 
 
 class GatewayMixin:
+    """Mixin class providing piGate module detection functionality."""
+
     @property
     def leftgate(self) -> bool:
         """

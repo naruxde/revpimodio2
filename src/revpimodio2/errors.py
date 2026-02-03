@@ -6,8 +6,12 @@ __license__ = "LGPLv2"
 
 
 class RevPiModIOError(Exception):
+    """Base exception class for RevPiModIO errors."""
+
     pass
 
 
 class DeviceNotFoundError(RevPiModIOError):
+    """Raised when a requested device cannot be found in the configuration."""
+
     pass

@@ -493,6 +493,12 @@ class IOBase(object):
             return any(self._parentdevice._ba_devdata[self._slc_address])
 
     def __call__(self, value=None):
+        """
+        Get or set the IO value using function call syntax.
+
+        :param value: If None, returns current value; otherwise sets the value
+        :return: Current IO value when called without arguments
+        """
         if value is None:
             # Inline get_value()
             if self._bitshift:
@@ -978,6 +984,13 @@ class IntIO(IOBase):
         )
 
     def __call__(self, value=None):
+        """
+        Get or set the integer IO value using function call syntax.
+
+        :param value: If None, returns current integer value; otherwise sets the integer value
+        :return: Current IO value as integer when called without arguments
+        :raises TypeError: If value is not an integer
+        """
         if value is None:
             # Inline get_intvalue()
             return int.from_bytes(
@@ -1447,6 +1460,14 @@ class StructIO(IOBase):
             raise BufferError("registered value does not fit process image scope")
 
     def __call__(self, value=None):
+        """
+        Get or set the structured IO value using function call syntax.
+
+        Handles byte and word order conversion based on configuration.
+
+        :param value: If None, returns current value unpacked using struct format; otherwise packs and sets the value
+        :return: Current IO value unpacked according to struct format when called without arguments
+        """
         if value is None:
             # Inline get_structdefaultvalue()
             if self._bitshift:
@@ -1567,6 +1588,13 @@ class MemIO(IOBase):
     """
 
     def get_variantvalue(self):
+        """
+        Get the default value as either string or integer based on bit length.
+
+        For values > 64 bits, returns as decoded string. Otherwise returns as integer.
+
+        :return: Default value as string (if > 64 bits) or integer
+        """
         val = bytes(self._defaultvalue)
 
         if self._bitlength > 64:
