@@ -70,6 +70,7 @@ ModularBaseConnect_4_5
    :members:
    :undoc-members:
    :show-inheritance:
+   :inherited-members:
    :special-members: __init__
 
    Base class for Connect 4 and Connect 5 modules.
@@ -81,6 +82,7 @@ Core
    :members:
    :undoc-members:
    :show-inheritance:
+   :inherited-members:
    :special-members: __init__
 
    Revolution Pi Core module.
@@ -92,6 +94,7 @@ Connect
    :members:
    :undoc-members:
    :show-inheritance:
+   :inherited-members:
    :special-members: __init__
 
    Revolution Pi Connect module.
@@ -103,6 +106,7 @@ Connect4
    :members:
    :undoc-members:
    :show-inheritance:
+   :inherited-members:
    :special-members: __init__
 
    Revolution Pi Connect 4 module.
@@ -114,6 +118,7 @@ Connect5
    :members:
    :undoc-members:
    :show-inheritance:
+   :inherited-members:
    :special-members: __init__
 
    Revolution Pi Connect 5 module.
@@ -125,6 +130,7 @@ DioModule
    :members:
    :undoc-members:
    :show-inheritance:
+   :inherited-members:
    :special-members: __init__
 
    Digital I/O module.
@@ -136,6 +142,7 @@ RoModule
    :members:
    :undoc-members:
    :show-inheritance:
+   :inherited-members:
    :special-members: __init__
 
    Relay output module.
@@ -147,6 +154,7 @@ Gateway
    :members:
    :undoc-members:
    :show-inheritance:
+   :inherited-members:
    :special-members: __init__
 
    Gateway module (ModbusTCP, Profinet, etc.).
@@ -158,6 +166,7 @@ Virtual
    :members:
    :undoc-members:
    :show-inheritance:
+   :inherited-members:
    :special-members: __init__
 
    Virtual device for custom applications.
