@@ -27,7 +27,7 @@ class TestModioClassBasics(TestRevPiModIO):
         self.assertEqual(rpi.app.savets.tm_hour, 12)
         del rpi
 
-        # Alte config ohne saveTS
+        # Old config without saveTS
         with self.assertWarnsRegex(Warning, r"equal device name '.*' in pictory configuration."):
             rpi = self.modio(configrsc="config_old.rsc")
         self.assertIsNone(rpi.app.savets)
@@ -79,7 +79,7 @@ class TestModioClassBasics(TestRevPiModIO):
         """Test interaction with process image."""
         rpi = self.modio()
 
-        # Procimg IO alle
+        # Procimg IO all
         self.assertIsNone(rpi.setdefaultvalues())
         self.assertEqual(rpi.writeprocimg(), True)
         self.assertEqual(rpi.syncoutputs(), True)
