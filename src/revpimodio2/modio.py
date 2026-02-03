@@ -853,7 +853,7 @@ class RevPiModIO(object):
 
         # Check if function is callable
         if not callable(func):
-            raise RuntimeError("registered function '{0}' ist not callable".format(func))
+            raise RuntimeError("registered function '{0}' is not callable".format(func))
 
         # Create thread if it should not block
         if not blocking:
@@ -868,7 +868,7 @@ class RevPiModIO(object):
         # Take over cycle time
         old_cycletime = self._imgwriter.refresh
         if not cycletime == self._imgwriter.refresh:
-            # Set new cycle time and wait one imgwriter cycle to sync fist cycle
+            # Set new cycle time and wait one imgwriter cycle to sync first cycle
             self._imgwriter.refresh = cycletime
             self._imgwriter.newdata.clear()
             self._imgwriter.newdata.wait(self._imgwriter._refresh)
@@ -961,7 +961,7 @@ class RevPiModIO(object):
         self._exit.set()
         self._waitexit.set()
 
-        # Auf beenden von mainloop thread warten
+        # Wait for mainloop thread to finish
         if self._th_mainloop is not None and self._th_mainloop.is_alive():
             self._th_mainloop.join(2.5)
 
@@ -1070,7 +1070,7 @@ class RevPiModIO(object):
         """
         # Check if function is callable
         if not (cleanupfunc is None or callable(cleanupfunc)):
-            raise RuntimeError("registered function '{0}' ist not callable".format(cleanupfunc))
+            raise RuntimeError("registered function '{0}' is not callable".format(cleanupfunc))
         self.__cleanupfunc = cleanupfunc
         signal(SIGINT, self.__evt_exit)
         signal(SIGTERM, self.__evt_exit)
