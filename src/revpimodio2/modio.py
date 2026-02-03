@@ -208,6 +208,12 @@ class RevPiModIO(object):
                 self._myfh.close()
 
     def __enter__(self):
+        """
+        Context manager entry (deprecated).
+
+        .. deprecated::
+            Use ``with revpi.io:`` or ``with revpi.device.my_device:`` instead.
+        """
         # todo: Remove this context manager in future
         warnings.warn(
             "This context manager is deprecated and will be removed!\n\n"
@@ -231,6 +237,11 @@ class RevPiModIO(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Context manager exit (deprecated).
+
+        Writes process image and performs cleanup.
+        """
         if not self._monitoring:
             self.writeprocimg()
         self.exit(full=True)
