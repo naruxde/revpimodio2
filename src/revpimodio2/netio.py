@@ -678,7 +678,7 @@ class NetFH(Thread):
                 + bytebuff
             )
 
-        # TODO: Bufferlänge and dann flushen?
+        # TODO: Buffer length and then flush?
 
         return len(bytebuff)
 

@@ -858,7 +858,7 @@ class IOBase(object):
         specified milliseconds! It is always rounded up!)
 
         :param edge: Edge RISING, FALLING, BOTH that must occur
-        :param exitevent: <class 'thrading.Event'> for early termination
+        :param exitevent: <class 'threading.Event'> for early termination
         :param okvalue: IO value at which waiting ends immediately
         :param timeout: Time in ms after which to abort
         :return: <class 'int'> successful values <= 0

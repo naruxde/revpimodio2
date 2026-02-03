@@ -16,7 +16,7 @@ class App:
         """
         Instantiates the App class.
 
-        :param app: piCtory Appinformationen
+        :param app: piCtory app information
         """
         self.name = app.get("name", "")
         """Name of creating app"""
@@ -28,7 +28,7 @@ class App:
         """Language of creating app"""
 
         self.savets = app.get("saveTS", None)
-        """Timestamp of configuraiton"""
+        """Timestamp of configuration"""
 
         if self.savets is not None:
             try:

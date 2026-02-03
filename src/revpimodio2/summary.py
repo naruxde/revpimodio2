@@ -14,7 +14,7 @@ class Summary:
         """
         Instantiates the RevPiSummary class.
 
-        :param summary: piCtory Summaryinformationen
+        :param summary: piCtory summary information
         """
         self.inptotal = summary.get("inpTotal", -1)
         self.outtotal = summary.get("outTotal", -1)
