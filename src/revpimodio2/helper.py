@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""RevPiModIO Helperklassen und Tools."""
+"""RevPiModIO helper classes and tools."""
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"
@@ -16,22 +16,14 @@ from .io import IOBase
 
 
 class EventCallback(Thread):
-    """Thread fuer das interne Aufrufen von Event-Funktionen.
+    """Thread for internal calling of event functions.
 
-    Der Eventfunktion, welche dieser Thread aufruft, wird der Thread selber
-    als Parameter uebergeben. Darauf muss bei der definition der Funktion
-    geachtet werden z.B. "def event(th):". Bei umfangreichen Funktionen kann
-    dieser ausgewertet werden um z.B. doppeltes Starten zu verhindern.
-    Ueber EventCallback.ioname kann der Name des IO-Objekts abgerufen werden,
-    welches das Event ausgeloest hast. EventCallback.iovalue gibt den Wert des
-    IO-Objekts zum Ausloesezeitpunkt zurueck.
-    Der Thread stellt das EventCallback.exit Event als Abbruchbedingung fuer
-    die aufgerufene Funktion zur Verfuegung.
-    Durch Aufruf der Funktion EventCallback.stop() wird das exit-Event gesetzt
-    und kann bei Schleifen zum Abbrechen verwendet werden.
-    Mit dem .exit() Event auch eine Wartefunktion realisiert
-    werden: "th.exit.wait(0.5)" - Wartet 500ms oder bricht sofort ab, wenn
-    fuer den Thread .stop() aufgerufen wird.
+    The event function that this thread calls will receive the thread itself as a parameter. This must be considered when defining the function, e.g., "def event(th):". For extensive functions, this can be evaluated to prevent duplicate starts.
+    The name of the IO object can be retrieved via EventCallback.ioname,
+    which triggered the event. EventCallback.iovalue returns the value of the IO object at the time of triggering.
+    The thread provides the EventCallback.exit event as an abort condition for the called function.
+    By calling the EventCallback.stop() function, the exit event is set and can be used to abort loops.
+    A wait function can also be implemented with the .exit() event: "th.exit.wait(0.5)" - waits 500ms or aborts immediately if .stop() is called on the thread.
 
     while not th.exit.is_set():
         # IO-Arbeiten
@@ -44,9 +36,9 @@ class EventCallback(Thread):
         """
         Init EventCallback class.
 
-        :param func: Funktion die beim Start aufgerufen werden soll
+        :param func: Function that should be called at startup
         :param name: IO-Name
-        :param value: IO-Value zum Zeitpunkt des Events
+        :param value: IO value at the time of the event
         """
         super().__init__()
         self.daemon = True
@@ -56,35 +48,33 @@ class EventCallback(Thread):
         self.iovalue = value
 
     def run(self):
-        """Ruft die registrierte Funktion auf."""
+        """Calls the registered function."""
         self.func(self)
 
     def stop(self):
-        """Setzt das exit-Event mit dem die Funktion beendet werden kann."""
+        """Sets the exit event that can be used to terminate the function."""
         self.exit.set()
 
 
 class Cycletools:
     """
-    Werkzeugkasten fuer Cycleloop-Funktion.
+    Toolbox for cycle loop function.
 
-    Diese Klasse enthaelt Werkzeuge fuer Zyklusfunktionen, wie Taktmerker
-    und Flankenmerker.
-    Zu beachten ist, dass die Flankenmerker beim ersten Zyklus alle den Wert
-    True haben! Ueber den Merker Cycletools.first kann ermittelt werden,
-    ob es sich um den ersten Zyklus handelt.
+    This class contains tools for cycle functions, such as clock flags and edge flags.
+    Note that all edge flags have the value True on the first cycle! The Cycletools.first
+    flag can be used to determine if it is the first cycle.
 
-    Taktmerker flag1c, flag5c, flag10c, usw. haben den als Zahl angegebenen
-    Wert an Zyklen jeweils False und True.
-    Beispiel: flag5c hat 5 Zyklen den Wert False und in den naechsten 5 Zyklen
-    den Wert True.
+    Clock flags flag1c, flag5c, flag10c, etc. have the numerically specified
+    value for the specified number of cycles, alternating between False and True.
 
-    Flankenmerker flank5c, flank10c, usw. haben immer im, als Zahl angebenen
-    Zyklus fuer einen Zyklusdurchlauf den Wert True, sonst False.
-    Beispiel: flank5c hat immer alle 5 Zyklen den Wert True.
+    Example: flag5c has the value False for 5 cycles and True for the next 5 cycles.
 
-    Diese Merker koennen z.B. verwendet werden um, an Outputs angeschlossene,
-    Lampen synchron blinken zu lassen.
+    Edge flags flank5c, flank10c, etc. always have the value True for one cycle
+    at the numerically specified cycle, otherwise False.
+
+    Example: flank5c always has the value True every 5 cycles.
+
+    These flags can be used, for example, to make lamps connected to outputs blink synchronously.
     """
 
     __slots__ = (
@@ -129,7 +119,7 @@ class Cycletools:
         self.device = revpi_object.device
         self.io = revpi_object.io
 
-        # Taktmerker
+        # Clock flags
         self.first = True
         self.flag1c = False
         self.flag5c = False
@@ -138,28 +128,28 @@ class Cycletools:
         self.flag20c = False
         self.last = False
 
-        # Flankenmerker
+        # Edge flags
         self.flank5c = True
         self.flank10c = True
         self.flank15c = True
         self.flank20c = True
 
-        # Benutzerdaten
+        # User data
         class Var:
-            """Hier remanente Variablen anfuegen."""
+            """Add remanent variables here."""
 
             pass
 
         self.var = Var()
 
     def _docycle(self) -> None:
-        """Zyklusarbeiten."""
-        # Einschaltverzoegerung
+        """Cycle operations."""
+        # Turn-off delay
         for tof in self.__dict_tof:
             if self.__dict_tof[tof] > 0:
                 self.__dict_tof[tof] -= 1
 
-        # Ausschaltverzoegerung
+        # Turn-on delay
         for ton in self.__dict_ton:
             if self.__dict_ton[ton][1]:
                 if self.__dict_ton[ton][0] > 0:
@@ -168,7 +158,7 @@ class Cycletools:
             else:
                 self.__dict_ton[ton][0] = -1
 
-        # Impuls
+        # Pulse
         for tp in self.__dict_tp:
             if self.__dict_tp[tp][1]:
                 if self.__dict_tp[tp][0] > 0:
@@ -178,7 +168,7 @@ class Cycletools:
             else:
                 self.__dict_tp[tp][0] = -1
 
-        # Flankenmerker
+        # Edge flags
         self.flank5c = False
         self.flank10c = False
         self.flank15c = False
@@ -188,7 +178,7 @@ class Cycletools:
         self.first = False
         self.flag1c = not self.flag1c
 
-        # Berechnete Flags
+        # Calculated flags
         self.__cycle += 1
         if self.__cycle == 5:
             self.__ucycle += 1
@@ -239,64 +229,64 @@ class Cycletools:
 
     def get_tof(self, name: str) -> bool:
         """
-        Wert der Ausschaltverzoegerung.
+        Value of the off-delay.
 
-        :param name: Eindeutiger Name des Timers
-        :return: Wert <class 'bool'> der Ausschaltverzoegerung
+        :param name: Unique name of the timer
+        :return: Value <class 'bool'> of the off-delay
         """
         return self.__dict_tof.get(name, 0) > 0
 
     def get_tofc(self, name: str) -> bool:
         """
-        Wert der Ausschaltverzoegerung.
+        Value of the off-delay.
 
-        :param name: Eindeutiger Name des Timers
-        :return: Wert <class 'bool'> der Ausschaltverzoegerung
+        :param name: Unique name of the timer
+        :return: Value <class 'bool'> of the off-delay
         """
         return self.__dict_tof.get(name, 0) > 0
 
     def set_tof(self, name: str, milliseconds: int) -> None:
         """
-        Startet bei Aufruf einen ausschaltverzoegerten Timer.
+        Starts an off-delay timer when called.
 
-        :param name: Eindeutiger Name fuer Zugriff auf Timer
-        :param milliseconds: Verzoegerung in Millisekunden
+        :param name: Unique name for accessing the timer
+        :param milliseconds: Delay in milliseconds
         """
         self.__dict_tof[name] = ceil(milliseconds / self.__cycletime)
 
     def set_tofc(self, name: str, cycles: int) -> None:
         """
-        Startet bei Aufruf einen ausschaltverzoegerten Timer.
+        Starts an off-delay timer when called.
 
-        :param name: Eindeutiger Name fuer Zugriff auf Timer
-        :param cycles: Zyklusanzahl, der Verzoegerung wenn nicht neu gestartet
+        :param name: Unique name for accessing the timer
+        :param cycles: Number of cycles for the delay if not restarted
         """
         self.__dict_tof[name] = cycles
 
     def get_ton(self, name: str) -> bool:
         """
-        Einschaltverzoegerung.
+        On-delay.
 
-        :param name: Eindeutiger Name des Timers
-        :return: Wert <class 'bool'> der Einschaltverzoegerung
+        :param name: Unique name of the timer
+        :return: Value <class 'bool'> of the on-delay
         """
         return self.__dict_ton.get(name, [-1])[0] == 0
 
     def get_tonc(self, name: str) -> bool:
         """
-        Einschaltverzoegerung.
+        On-delay.
 
-        :param name: Eindeutiger Name des Timers
-        :return: Wert <class 'bool'> der Einschaltverzoegerung
+        :param name: Unique name of the timer
+        :return: Value <class 'bool'> of the on-delay
         """
         return self.__dict_ton.get(name, [-1])[0] == 0
 
     def set_ton(self, name: str, milliseconds: int) -> None:
         """
-        Startet einen einschaltverzoegerten Timer.
+        Starts an on-delay timer.
 
-        :param name: Eindeutiger Name fuer Zugriff auf Timer
-        :param milliseconds: Millisekunden, der Verzoegerung wenn neu gestartet
+        :param name: Unique name for accessing the timer
+        :param milliseconds: Milliseconds for the delay if restarted
         """
         if self.__dict_ton.get(name, [-1])[0] == -1:
             self.__dict_ton[name] = [ceil(milliseconds / self.__cycletime), True]
@@ -305,10 +295,10 @@ class Cycletools:
 
     def set_tonc(self, name: str, cycles: int) -> None:
         """
-        Startet einen einschaltverzoegerten Timer.
+        Starts an on-delay timer.
 
-        :param name: Eindeutiger Name fuer Zugriff auf Timer
-        :param cycles: Zyklusanzahl, der Verzoegerung wenn neu gestartet
+        :param name: Unique name for accessing the timer
+        :param cycles: Number of cycles for the delay if restarted
         """
         if self.__dict_ton.get(name, [-1])[0] == -1:
             self.__dict_ton[name] = [cycles, True]
@@ -317,28 +307,28 @@ class Cycletools:
 
     def get_tp(self, name: str) -> bool:
         """
-        Impulstimer.
+        Pulse timer.
 
-        :param name: Eindeutiger Name des Timers
-        :return: Wert <class 'bool'> des Impulses
+        :param name: Unique name of the timer
+        :return: Value <class 'bool'> of the pulse
         """
         return self.__dict_tp.get(name, [-1])[0] > 0
 
     def get_tpc(self, name: str) -> bool:
         """
-        Impulstimer.
+        Pulse timer.
 
-        :param name: Eindeutiger Name des Timers
-        :return: Wert <class 'bool'> des Impulses
+        :param name: Unique name of the timer
+        :return: Value <class 'bool'> of the pulse
         """
         return self.__dict_tp.get(name, [-1])[0] > 0
 
     def set_tp(self, name: str, milliseconds: int) -> None:
         """
-        Startet einen Impuls Timer.
+        Starts a pulse timer.
 
-        :param name: Eindeutiger Name fuer Zugriff auf Timer
-        :param milliseconds: Millisekunden, die der Impuls anstehen soll
+        :param name: Unique name for accessing the timer
+        :param milliseconds: Milliseconds the pulse should be active
         """
         if self.__dict_tp.get(name, [-1])[0] == -1:
             self.__dict_tp[name] = [ceil(milliseconds / self.__cycletime), True]
@@ -347,10 +337,10 @@ class Cycletools:
 
     def set_tpc(self, name: str, cycles: int) -> None:
         """
-        Startet einen Impuls Timer.
+        Starts a pulse timer.
 
-        :param name: Eindeutiger Name fuer Zugriff auf Timer
-        :param cycles: Zyklusanzahl, die der Impuls anstehen soll
+        :param name: Unique name for accessing the timer
+        :param cycles: Number of cycles the pulse should be active
         """
         if self.__dict_tp.get(name, [-1])[0] == -1:
             self.__dict_tp[name] = [cycles, True]
@@ -371,11 +361,9 @@ class Cycletools:
 
 class ProcimgWriter(Thread):
     """
-    Klasse fuer Synchroniseriungs-Thread.
+    Class for synchronization thread.
 
-    Diese Klasse wird als Thread gestartet, wenn das Prozessabbild zyklisch
-    synchronisiert werden soll. Diese Funktion wird hauptsaechlich fuer das
-    Event-Handling verwendet.
+    This class is started as a thread if the process image should be synchronized cyclically. This function is mainly used for event handling.
     """
 
     __slots__ = (
@@ -409,7 +397,7 @@ class ProcimgWriter(Thread):
         self.newdata = Event()
 
     def __check_change(self, dev) -> None:
-        """Findet Aenderungen fuer die Eventueberwachung."""
+        """Finds changes for event monitoring."""
         for io_event in dev._dict_events:
             if dev._ba_datacp[io_event._slc_address] == dev._ba_devdata[io_event._slc_address]:
                 continue
@@ -435,7 +423,7 @@ class ProcimgWriter(Thread):
                             else:
                                 self._eventq.put((regfunc, io_event._name, io_event.value), False)
                         else:
-                            # Verzögertes Event in dict einfügen
+                            # Insert delayed event into dict
                             tup_fire = (
                                 regfunc,
                                 io_event._name,
@@ -454,7 +442,7 @@ class ProcimgWriter(Thread):
                         else:
                             self._eventq.put((regfunc, io_event._name, io_event.value), False)
                     else:
-                        # Verzögertes Event in dict einfügen
+                        # Insert delayed event into dict
                         tup_fire = (
                             regfunc,
                             io_event._name,
@@ -464,11 +452,11 @@ class ProcimgWriter(Thread):
                         if regfunc.overwrite or tup_fire not in self.__dict_delay:
                             self.__dict_delay[tup_fire] = ceil(regfunc.delay / 1000 / self._refresh)
 
-        # Nach Verarbeitung aller IOs die Bytes kopieren (Lock ist noch drauf)
+        # Copy the bytes after processing all IOs (lock is still active)
         dev._ba_datacp = dev._ba_devdata[:]
 
     def __exec_th(self) -> None:
-        """Laeuft als Thread, der Events als Thread startet."""
+        """Runs as thread that starts events as threads."""
         while self.__eventwork:
             try:
                 tup_fireth = self._eventqth.get(timeout=1)
@@ -480,15 +468,15 @@ class ProcimgWriter(Thread):
 
     def _collect_events(self, value: bool) -> bool:
         """
-        Aktiviert oder Deaktiviert die Eventueberwachung.
+        Enables or disables event monitoring.
 
-        :param value: True aktiviert / False deaktiviert
-        :return: True, wenn Anforderung erfolgreich war
+        :param value: True activates / False deactivates
+        :return: True, if request was successful
         """
         if type(value) != bool:
             raise TypeError("value must be <class 'bool'>")
 
-        # Nur starten, wenn System läuft
+        # Only start if system is running
         if not self.is_alive():
             self.__eventwork = False
             return False
@@ -497,12 +485,12 @@ class ProcimgWriter(Thread):
             with self.lck_refresh:
                 self.__eventwork = value
                 if not value:
-                    # Nur leeren beim deaktivieren
+                    # Only empty when deactivating
                     self._eventqth = queue.Queue()
                     self._eventq = queue.Queue()
                     self.__dict_delay = {}
 
-            # Threadmanagement
+            # Thread management
             if value and not self.__eventth.is_alive():
                 self.__eventth = Thread(target=self.__exec_th)
                 self.__eventth.daemon = True
@@ -512,14 +500,14 @@ class ProcimgWriter(Thread):
 
     def get_refresh(self) -> int:
         """
-        Gibt Zykluszeit zurueck.
+        Returns cycle time.
 
-        :return: <class 'int'> Zykluszeit in Millisekunden
+        :return: <class 'int'> cycle time in milliseconds
         """
         return int(self._refresh * 1000)
 
     def run(self):
-        """Startet die automatische Prozessabbildsynchronisierung."""
+        """Starts automatic process image synchronization."""
         fh = self._modio._create_myfh()
 
         mrk_delay = self._refresh
@@ -537,7 +525,7 @@ class ProcimgWriter(Thread):
                     RuntimeWarning,
                 )
                 mrk_delay = self._refresh
-                # Nur durch cycleloop erreichbar - keine verzögerten Events
+                # Only reachable through cycleloop - no delayed events
                 continue
 
             try:
@@ -558,7 +546,7 @@ class ProcimgWriter(Thread):
                             bytesbuff[dev._slc_devoff] = fh.read(len(dev._ba_devdata))
 
                         if self._modio._monitoring or dev._shared_procimg:
-                            # Inputs und Outputs in Puffer
+                            # Inputs and outputs in buffer
                             dev._ba_devdata[:] = bytesbuff[dev._slc_devoff]
                             if (
                                 self.__eventwork
@@ -567,7 +555,7 @@ class ProcimgWriter(Thread):
                             ):
                                 self.__check_change(dev)
                         else:
-                            # Inputs in Puffer, Outputs in Prozessabbild
+                            # Inputs in buffer, outputs in process image
                             dev._ba_devdata[dev._slc_inp] = bytesbuff[dev._slc_inpoff]
                             if (
                                 self.__eventwork
@@ -601,12 +589,12 @@ class ProcimgWriter(Thread):
                         )
                 mrk_warn = True
 
-                # Alle aufwecken
+                # Wake all
                 self.lck_refresh.release()
                 self.newdata.set()
 
             finally:
-                # Verzögerte Events prüfen
+                # Check delayed events
                 if self.__eventwork:
                     for tup_fire in tuple(self.__dict_delay.keys()):
                         if tup_fire[0].overwrite and tup_fire[3].value != tup_fire[2]:
@@ -614,7 +602,7 @@ class ProcimgWriter(Thread):
                         else:
                             self.__dict_delay[tup_fire] -= 1
                             if self.__dict_delay[tup_fire] <= 0:
-                                # Verzögertes Event übernehmen und löschen
+                                # Accept and delete delayed event
                                 if tup_fire[0].as_thread:
                                     self._eventqth.put(tup_fire, False)
                                 else:
@@ -633,18 +621,18 @@ class ProcimgWriter(Thread):
                 # Sleep and not .wait (.wait uses system clock)
                 sleep(self._refresh - mrk_delay)
 
-        # Alle am Ende erneut aufwecken
+        # Wake all again at the end
         self._collect_events(False)
         self.newdata.set()
         fh.close()
 
     def stop(self):
-        """Beendet die automatische Prozessabbildsynchronisierung."""
+        """Terminates automatic process image synchronization."""
         self._work.set()
 
     def set_refresh(self, value):
-        """Setzt die Zykluszeit in Millisekunden.
-        @param value <class 'int'> Millisekunden"""
+        """Sets the cycle time in milliseconds.
+        @param value <class 'int'> Milliseconds"""
         if type(value) == int and 5 <= value <= 2000:
             self._refresh = value / 1000
         else:

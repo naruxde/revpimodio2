@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""RevPiModIO Modul fuer die Verwaltung der IOs."""
+"""RevPiModIO module for managing IOs."""
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"
@@ -12,14 +12,14 @@ from threading import Event
 from ._internal import consttostr, RISING, FALLING, BOTH, INP, OUT, MEM, PROCESS_IMAGE_SIZE
 
 try:
-    # Funktioniert nur auf Unix
+    # Only works on Unix
     from fcntl import ioctl
 except Exception:
     ioctl = None
 
 
 class IOEvent(object):
-    """Basisklasse fuer IO-Events."""
+    """Base class for IO events."""
 
     __slots__ = "as_thread", "delay", "edge", "func", "overwrite", "prefire"
 
@@ -34,7 +34,7 @@ class IOEvent(object):
 
 
 class IOList(object):
-    """Basisklasse fuer direkten Zugriff auf IO Objekte."""
+    """Base class for direct access to IO objects."""
 
     def __init__(self, modio):
         """Init IOList class."""
@@ -44,10 +44,10 @@ class IOList(object):
 
     def __contains__(self, key):
         """
-        Prueft ob IO existiert.
+        Checks if IO exists.
 
-        :param key: IO-Name <class 'str'> oder Bytenummer <class 'int'>
-        :return: True, wenn IO vorhanden / Byte belegt
+        :param key: IO name <class 'str'> or byte number <class 'int'>
+        :return: True if IO exists / byte is occupied
         """
         if type(key) == int:
             return len(self.__dict_iobyte.get(key, [])) > 0
@@ -56,16 +56,16 @@ class IOList(object):
 
     def __delattr__(self, key):
         """
-        Entfernt angegebenen IO.
+        Removes specified IO.
 
-        :param key: IO zum entfernen
+        :param key: IO to remove
         """
         io_del = object.__getattribute__(self, key)
 
-        # Alte Events vom Device löschen
+        # Delete old events from device
         io_del.unreg_event()
 
-        # IO aus Byteliste und Attributen entfernen
+        # Remove IO from byte list and attributes
         if io_del._bitshift:
             self.__dict_iobyte[io_del.address][io_del._bitaddress] = None
 
@@ -128,10 +128,10 @@ class IOList(object):
 
     def __getattr__(self, key):
         """
-        Verwaltet geloeschte IOs (Attribute, die nicht existieren).
+        Manages deleted IOs (attributes that do not exist).
 
-        :param key: Name oder Byte eines alten IOs
-        :return: Alten IO, wenn in Ref-Listen
+        :param key: Name or byte of an old IO
+        :return: Old IO if in ref lists
         """
         if key in self.__dict_iorefname:
             return self.__dict_iorefname[key]
@@ -140,16 +140,15 @@ class IOList(object):
 
     def __getitem__(self, key):
         """
-        Ruft angegebenen IO ab.
+        Retrieves specified IO.
 
-        Wenn der Key <class 'str'> ist, wird ein einzelner IO geliefert. Wird
-        der Key als <class 'int'> uebergeben, wird eine <class 'list'>
-        geliefert mit 0, 1 oder 8 Eintraegen.
-        Wird als Key <class 'slice'> gegeben, werden die Listen in einer Liste
-        zurueckgegeben.
+        If the key is <class 'str'>, a single IO is returned. If the key
+        is passed as <class 'int'>, a <class 'list'> is returned with 0, 1
+        or 8 entries. If a <class 'slice'> is given as key, the lists are
+        returned in a list.
 
-        :param key: IO Name als <class 'str> oder Byte als <class 'int'>.
-        :return: IO Objekt oder Liste der IOs
+        :param key: IO name as <class 'str'> or byte as <class 'int'>.
+        :return: IO object or list of IOs
         """
         if type(key) == int:
             if key not in self.__dict_iobyte:
@@ -165,9 +164,9 @@ class IOList(object):
 
     def __iter__(self):
         """
-        Gibt Iterator aller IOs zurueck.
+        Returns iterator of all IOs.
 
-        :return: Iterator aller IOs
+        :return: Iterator of all IOs
         """
         for int_io in sorted(self.__dict_iobyte):
             for io in self.__dict_iobyte[int_io]:
@@ -176,9 +175,9 @@ class IOList(object):
 
     def __len__(self):
         """
-        Gibt die Anzahl aller IOs zurueck.
+        Returns the number of all IOs.
 
-        :return: Anzahl aller IOs
+        :return: Number of all IOs
         """
         int_ios = 0
         for int_io in self.__dict_iobyte:
@@ -188,7 +187,7 @@ class IOList(object):
         return int_ios
 
     def __setattr__(self, key, value):
-        """Verbietet aus Leistungsguenden das direkte Setzen von Attributen."""
+        """Prohibits direct setting of attributes for performance reasons."""
         if key in (
             "_IOList__dict_iobyte",
             "_IOList__dict_iorefname",
@@ -200,11 +199,11 @@ class IOList(object):
 
     def __private_replace_oldio_with_newio(self, io) -> None:
         """
-        Ersetzt bestehende IOs durch den neu Registrierten.
+        Replaces existing IOs with the newly registered one.
 
-        :param io: Neuer IO der eingefuegt werden soll
+        :param io: New IO to be inserted
         """
-        # Scanbereich festlegen
+        # Define scan range
         if io._bitshift:
             scan_start = io._parentio_address
             scan_stop = scan_start + io._parentio_length
@@ -212,13 +211,13 @@ class IOList(object):
             scan_start = io.address
             scan_stop = scan_start + (1 if io._length == 0 else io._length)
 
-        # Defaultvalue über mehrere Bytes sammeln
+        # Collect default value over multiple bytes
         calc_defaultvalue = b""
 
         for i in range(scan_start, scan_stop):
             for oldio in self.__dict_iobyte[i]:
                 if type(oldio) == StructIO:
-                    # Hier gibt es schon einen neuen IO
+                    # There is already a new IO here
                     if oldio._bitshift:
                         if (
                             io._bitshift == oldio._bitshift
@@ -230,28 +229,28 @@ class IOList(object):
                                 )
                             )
                     else:
-                        # Bereits überschriebene bytes sind ungültig
+                        # Already overwritten bytes are invalid
                         raise MemoryError(
                             "new io '{0}' overlaps memory of '{1}'".format(io._name, oldio._name)
                         )
                 elif oldio is not None:
-                    # IOs im Speicherbereich des neuen IO merken
+                    # Remember IOs in the memory area of the new IO
                     if io._bitshift:
-                        # ios für ref bei bitaddress speichern
+                        # Store IOs for ref at bitaddress
                         self.__dict_iorefname[oldio._name] = DeadIO(oldio)
                     else:
-                        # Defaultwert berechnen
+                        # Calculate default value
                         oldio.byteorder = io._byteorder
                         if io._byteorder == "little":
                             calc_defaultvalue += oldio._defaultvalue
                         else:
                             calc_defaultvalue = oldio._defaultvalue + calc_defaultvalue
 
-                    # ios aus listen entfernen
+                    # Remove IOs from lists
                     delattr(self, oldio._name)
 
         if io._defaultvalue is None:
-            # Nur bei StructIO und keiner gegebenen defaultvalue übernehmen
+            # Only take over for StructIO and no given defaultvalue
             if io._bitshift:
                 io_byte_address = io._parentio_address - io.address
                 io._defaultvalue = bool(io._parentio_defaultvalue[io_byte_address] & io._bitshift)
@@ -260,9 +259,9 @@ class IOList(object):
 
     def _private_register_new_io_object(self, new_io) -> None:
         """
-        Registriert neues IO Objekt unabhaenging von __setattr__.
+        Registers new IO object independently of __setattr__.
 
-        :param new_io: Neues IO Objekt
+        :param new_io: New IO object
         """
         if isinstance(new_io, IOBase):
             if hasattr(self, new_io._name):
@@ -274,10 +273,10 @@ class IOList(object):
             if do_replace:
                 self.__private_replace_oldio_with_newio(new_io)
 
-            # Bytedict für Adresszugriff anpassen
+            # Adapt byte dict for address access
             if new_io._bitshift:
                 if len(self.__dict_iobyte[new_io.address]) != 8:
-                    # "schnell" 8 Einträge erstellen da es BIT IOs sind
+                    # "Quickly" create 8 entries since these are BIT IOs
                     self.__dict_iobyte[new_io.address] += [
                         None,
                         None,
@@ -343,21 +342,21 @@ class IOList(object):
 
 
 class DeadIO(object):
-    """Klasse, mit der ersetzte IOs verwaltet werden."""
+    """Class for managing replaced IOs."""
 
     __slots__ = "__deadio"
 
     def __init__(self, deadio):
         """
-        Instantiierung der DeadIO-Klasse.
+        Instantiation of the DeadIO class.
 
-        :param deadio: IO, der ersetzt wurde
+        :param deadio: IO that was replaced
         """
         self.__deadio = deadio
 
     def replace_io(self, name: str, frm: str, **kwargs) -> None:
         """
-        Stellt Funktion fuer weiter Bit-Ersetzungen bereit.
+        Provides function for further bit replacements.
 
         :ref: :func:IntIOReplaceable.replace_io()
         """
@@ -368,16 +367,15 @@ class DeadIO(object):
 
 class IOBase(object):
     """
-    Basisklasse fuer alle IO-Objekte.
+    Base class for all IO objects.
 
-    Die Basisfunktionalitaet ermoeglicht das Lesen und Schreiben der Werte
-    als <class bytes'> oder <class 'bool'>. Dies entscheidet sich bei der
-    Instantiierung.
-    Wenn eine Bittadresse angegeben wird, werden <class 'bool'>-Werte erwartet
-    und zurueckgegeben, ansonsten <class bytes'>.
+    The basic functionality enables reading and writing of values as
+    <class bytes'> or <class 'bool'>. This is decided during instantiation.
+    If a bit address is specified, <class 'bool'> values are expected and
+    returned, otherwise <class bytes'>.
 
-    Diese Klasse dient als Basis fuer andere IO-Klassen mit denen die Werte
-    auch als <class 'int'> verwendet werden koennen.
+    This class serves as a basis for other IO classes with which the values
+    can also be used as <class 'int'>.
     """
 
     __slots__ = (
@@ -401,24 +399,24 @@ class IOBase(object):
 
     def __init__(self, parentdevice, valuelist: list, iotype: int, byteorder: str, signed: bool):
         """
-        Instantiierung der IOBase-Klasse.
+        Instantiation of the IOBase class.
 
-        :param parentdevice: Parentdevice auf dem der IO liegt
-        :param valuelist: Datenliste fuer Instantiierung
+        :param parentdevice: Parent device on which the IO is located
+        :param valuelist: Data list for instantiation
             ["name","defval","bitlen","startaddrdev",exp,"idx","bmk","bitaddr"]
-        :param iotype: <class 'int'> Wert
-        :param byteorder: Byteorder 'little'/'big' fuer <class 'int'> Berechnung
-        :param signed: Intberechnung mit Vorzeichen durchfuehren
+        :param iotype: <class 'int'> value
+        :param byteorder: Byteorder 'little'/'big' for <class 'int'> calculation
+        :param signed: Perform int calculation with sign
         """
         # ["name","defval","bitlen","startaddrdev",exp,"idx","bmk","bitaddr"]
         # [  0   ,   1    ,   2    ,       3      , 4 ,  5  ,  6  ,    7    ]
         self._parentdevice = parentdevice
 
-        # Bitadressen auf Bytes aufbrechen und umrechnen
+        # Break down bit addresses to bytes and convert
         self._bitaddress = -1 if valuelist[7] == "" else int(valuelist[7]) % 8
         self._bitshift = None if self._bitaddress == -1 else 1 << self._bitaddress
 
-        # Längenberechnung
+        # Length calculation
         self._bitlength = int(valuelist[2])
         self._length = 1 if self._bitaddress == 0 else int(self._bitlength / 8)
 
@@ -434,11 +432,11 @@ class IOBase(object):
 
         int_startaddress = int(valuelist[3])
         if self._bitshift:
-            # Höhere Bits als 7 auf nächste Bytes umbrechen
+            # Wrap bits higher than 7 to next bytes
             int_startaddress += int(int(valuelist[7]) / 8)
             self._slc_address = slice(int_startaddress, int_startaddress + 1)
 
-            # Defaultvalue ermitteln, sonst False
+            # Determine default value, otherwise False
             if valuelist[1] is None and type(self) == StructIO:
                 self._defaultvalue = None
             else:
@@ -447,21 +445,21 @@ class IOBase(object):
                 except Exception:
                     self._defaultvalue = False
 
-            # Ioctl für Bitsetzung setzen
+            # Set ioctl for bit setting
             self.__bit_ioctl_off = struct.pack("<HB", self._get_address(), self._bitaddress)
             self.__bit_ioctl_on = self.__bit_ioctl_off + b"\x01"
         else:
             self._slc_address = slice(int_startaddress, int_startaddress + self._length)
             if str(valuelist[1]).isdigit():
-                # Defaultvalue aus Zahl in Bytes umrechnen
+                # Convert default value from number to bytes
                 self._defaultvalue = int(valuelist[1]).to_bytes(
                     self._length, byteorder=self._byteorder
                 )
             elif valuelist[1] is None and type(self) == StructIO:
-                # Auf None setzen um später berechnete Werte zu übernehmen
+                # Set to None to take over calculated values later
                 self._defaultvalue = None
             elif type(valuelist[1]) == bytes:
-                # Defaultvalue direkt von bytes übernehmen
+                # Take default value directly from bytes
                 if len(valuelist[1]) == self._length:
                     self._defaultvalue = valuelist[1]
                 else:
@@ -471,10 +469,10 @@ class IOBase(object):
                         "".format(self._length, len(valuelist[1]))
                     )
             else:
-                # Defaultvalue mit leeren Bytes füllen
+                # Fill default value with empty bytes
                 self._defaultvalue = bytes(self._length)
 
-                # Versuchen String in ASCII Bytes zu wandeln
+                # Try to convert string to ASCII bytes
                 if type(valuelist[1]) == str:
                     try:
                         buff = valuelist[1].encode("ASCII")
@@ -485,9 +483,9 @@ class IOBase(object):
 
     def __bool__(self):
         """
-        <class 'bool'>-Wert der Klasse.
+        <class 'bool'> value of the class.
 
-        :return: <class 'bool'> Nur False wenn False oder 0 sonst True
+        :return: <class 'bool'> Only False if False or 0, otherwise True
         """
         if self._bitshift:
             return bool(self._parentdevice._ba_devdata[self._slc_address.start] & self._bitshift)
@@ -508,17 +506,17 @@ class IOBase(object):
 
     def __len__(self):
         """
-        Gibt die Bytelaenge des IO zurueck.
+        Returns the byte length of the IO.
 
-        :return: Bytelaenge des IO - 0 bei BITs
+        :return: Byte length of the IO - 0 for BITs
         """
         return 0 if self._bitaddress > 0 else self._length
 
     def __str__(self):
         """
-        <class 'str'>-Wert der Klasse.
+        <class 'str'> value of the class.
 
-        :return: Namen des IOs
+        :return: Name of the IO
         """
         return self._name
 
@@ -526,16 +524,16 @@ class IOBase(object):
         self, func, delay: int, edge: int, as_thread: bool, overwrite: bool, prefire: bool
     ) -> None:
         """
-        Verwaltet reg_event und reg_timerevent.
+        Manages reg_event and reg_timerevent.
 
-        :param func: Funktion die bei Aenderung aufgerufen werden soll
-        :param delay: Verzoegerung in ms zum Ausloesen - auch bei Wertaenderung
-        :param edge: Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
-        :param as_thread: Bei True, Funktion als EventCallback-Thread ausfuehren
-        :param overwrite: Wenn True, wird Event bei ueberschrieben
-        :param prefire: Ausloesen mit aktuellem Wert, wenn mainloop startet
+        :param func: Function to be called on change
+        :param delay: Delay in ms for triggering - also on value change
+        :param edge: Execute on RISING, FALLING or BOTH value change
+        :param as_thread: If True, execute function as EventCallback thread
+        :param overwrite: If True, event will be overwritten
+        :param prefire: Trigger with current value when mainloop starts
         """
-        # Prüfen ob Funktion callable ist
+        # Check if function is callable
         if not callable(func):
             raise ValueError("registered function '{0}' is not callable".format(func))
         if type(delay) != int or delay < 0:
@@ -551,10 +549,10 @@ class IOBase(object):
                     IOEvent(func, edge, as_thread, delay, overwrite, prefire)
                 ]
         else:
-            # Prüfen ob Funktion schon registriert ist
+            # Check if function is already registered
             for regfunc in self._parentdevice._dict_events[self]:
                 if regfunc.func != func:
-                    # Nächsten Eintrag testen
+                    # Test next entry
                     continue
 
                 if edge == BOTH or regfunc.edge == BOTH:
@@ -576,7 +574,7 @@ class IOBase(object):
                         "already in list".format(self._name, func, consttostr(edge))
                     )
 
-            # Eventfunktion einfügen
+            # Insert event function
             with self._parentdevice._filelock:
                 self._parentdevice._dict_events[self].append(
                     IOEvent(func, edge, as_thread, delay, overwrite, prefire)
@@ -584,15 +582,15 @@ class IOBase(object):
 
     def _get_address(self) -> int:
         """
-        Gibt die absolute Byteadresse im Prozessabbild zurueck.
+        Returns the absolute byte address in the process image.
 
-        :return: Absolute Byteadresse
+        :return: Absolute byte address
         """
         return self._parentdevice._offset + self._slc_address.start
 
     def _get_byteorder(self) -> str:
         """
-        Gibt konfigurierte Byteorder zurueck.
+        Returns configured byteorder.
 
         :return: <class 'str'> Byteorder
         """
@@ -604,7 +602,7 @@ class IOBase(object):
 
     def _get_iotype(self) -> int:
         """
-        Gibt io type zurueck.
+        Returns io type.
 
         :return: <class 'int'> io type
         """
@@ -631,10 +629,10 @@ class IOBase(object):
             # Write single bit to process image
             value = self._parentdevice._ba_devdata[self._slc_address.start] & self._bitshift
             if self._parentdevice._modio._run_on_pi:
-                # IOCTL auf dem RevPi
+                # IOCTL on the RevPi
                 with self._parentdevice._modio._myfh_lck:
                     try:
-                        # Set value durchführen (Funktion K+16)
+                        # Perform set value (function K+16)
                         ioctl(
                             self._parentdevice._modio._myfh,
                             19216,
@@ -645,7 +643,7 @@ class IOBase(object):
                         return False
 
             elif hasattr(self._parentdevice._modio._myfh, "ioctl"):
-                # IOCTL über Netzwerk
+                # IOCTL over network
                 with self._parentdevice._modio._myfh_lck:
                     try:
                         self._parentdevice._modio._myfh.ioctl(
@@ -657,9 +655,9 @@ class IOBase(object):
                         return False
 
             else:
-                # IOCTL in Datei simulieren
+                # Simulate IOCTL in file
                 try:
-                    # Set value durchführen (Funktion K+16)
+                    # Execute set value (function K+16)
                     self._parentdevice._modio._simulate_ioctl(
                         19216,
                         self.__bit_ioctl_on if value else self.__bit_ioctl_off,
@@ -685,17 +683,17 @@ class IOBase(object):
 
     def get_defaultvalue(self):
         """
-        Gibt die Defaultvalue von piCtory zurueck.
+        Returns the default value from piCtory.
 
-        :return: Defaultvalue als <class 'byte'> oder <class 'bool'>
+        :return: Default value as <class 'byte'> or <class 'bool'>
         """
         return self._defaultvalue
 
     def get_value(self):
         """
-        Gibt den Wert des IOs zurueck.
+        Returns the value of the IO.
 
-        :return: IO-Wert als <class 'bytes'> oder <class 'bool'>
+        :return: IO value as <class 'bytes'> or <class 'bool'>
         """
         if self._bitshift:
             return bool(self._parentdevice._ba_devdata[self._slc_address.start] & self._bitshift)
@@ -704,50 +702,49 @@ class IOBase(object):
 
     def reg_event(self, func, delay=0, edge=BOTH, as_thread=False, prefire=False):
         """
-        Registriert fuer IO ein Event bei der Eventueberwachung.
+        Registers an event for the IO in the event monitoring.
 
-        Die uebergebene Funktion wird ausgefuehrt, wenn sich der IO Wert
-        aendert. Mit Angabe von optionalen Parametern kann das
-        Ausloeseverhalten gesteuert werden.
+        The passed function is executed when the IO value changes. With
+        specification of optional parameters, the trigger behavior can be
+        controlled.
 
-        HINWEIS: Die delay-Zeit muss in die .cycletime passen, ist dies nicht
-        der Fall, wird IMMER aufgerundet!
+        NOTE: The delay time must fit into .cycletime, if not, it will
+        ALWAYS be rounded up!
 
-        :param func: Funktion die bei Aenderung aufgerufen werden soll
-        :param delay: Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
-        :param edge: Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
-        :param as_thread: Bei True, Funktion als EventCallback-Thread ausfuehren
-        :param prefire: Ausloesen mit aktuellem Wert, wenn mainloop startet
+        :param func: Function to be called on change
+        :param delay: Delay in ms for triggering if value stays the same
+        :param edge: Execute on RISING, FALLING or BOTH value change
+        :param as_thread: If True, execute function as EventCallback thread
+        :param prefire: Trigger with current value when mainloop starts
         """
         self.__reg_xevent(func, delay, edge, as_thread, True, prefire)
 
     def reg_timerevent(self, func, delay, edge=BOTH, as_thread=False, prefire=False):
         """
-        Registriert fuer IO einen Timer, welcher nach delay func ausfuehrt.
+        Registers a timer for the IO which executes func after delay.
 
-        Der Timer wird gestartet, wenn sich der IO Wert aendert und fuehrt die
-        uebergebene Funktion aus - auch wenn sich der IO Wert in der
-        zwischenzeit geaendert hat. Sollte der Timer nicht abelaufen sein und
-        die Bedingugn erneut zutreffen, wird der Timer NICHT auf den delay Wert
-        zurueckgesetzt oder ein zweites Mal gestartet. Fuer dieses Verhalten
-        kann .reg_event(..., delay=wert) verwendet werden.
+        The timer is started when the IO value changes and executes the passed
+        function - even if the IO value has changed in the meantime. If the
+        timer has not expired and the condition is met again, the timer is NOT
+        reset to the delay value or started a second time. For this behavior,
+        .reg_event(..., delay=value) can be used.
 
-        HINWEIS: Die delay-Zeit muss in die .cycletime passen, ist dies nicht
-        der Fall, wird IMMER aufgerundet!
+        NOTE: The delay time must fit into .cycletime, if not, it will
+        ALWAYS be rounded up!
 
-        :param func: Funktion die bei Aenderung aufgerufen werden soll
-        :param delay: Verzoegerung in ms zum Ausloesen - auch bei Wertaenderung
-        :param edge: Ausfuehren bei RISING, FALLING or BOTH Wertaenderung
-        :param as_thread: Bei True, Funktion als EventCallback-Thread ausfuehren
-        :param prefire: Ausloesen mit aktuellem Wert, wenn mainloop startet
+        :param func: Function to be called on change
+        :param delay: Delay in ms for triggering - also on value change
+        :param edge: Execute on RISING, FALLING or BOTH value change
+        :param as_thread: If True, execute function as EventCallback thread
+        :param prefire: Trigger with current value when mainloop starts
         """
         self.__reg_xevent(func, delay, edge, as_thread, False, prefire)
 
     def set_value(self, value) -> None:
         """
-        Setzt den Wert des IOs.
+        Sets the value of the IO.
 
-        :param value: IO-Wert als <class bytes'> oder <class 'bool'>
+        :param value: IO value as <class bytes'> or <class 'bool'>
         """
         if self._read_only_io:
             if self._iotype == INP:
@@ -762,27 +759,27 @@ class IOBase(object):
             raise RuntimeError("the io object '{0}' is read only".format(self._name))
 
         if self._bitshift:
-            # Versuchen egal welchen Typ in Bool zu konvertieren
+            # Try to convert any type to bool
             value = bool(value)
 
-            # Für Bitoperationen sperren
+            # Lock for bit operations
             self._parentdevice._filelock.acquire()
 
             if self._parentdevice._shared_procimg:
                 # Mark this IO for write operations
                 self._parentdevice._shared_write.add(self)
 
-            # Hier gibt es immer nur ein byte, als int holen
+            # There is always only one byte here, get as int
             int_byte = self._parentdevice._ba_devdata[self._slc_address.start]
 
-            # Aktuellen Wert vergleichen und ggf. setzen
+            # Compare current value and set if necessary
             if not bool(int_byte & self._bitshift) == value:
                 if value:
                     int_byte += self._bitshift
                 else:
                     int_byte -= self._bitshift
 
-                # Zurückschreiben wenn verändert
+                # Write back if changed
                 self._parentdevice._ba_devdata[self._slc_address.start] = int_byte
 
             self._parentdevice._filelock.release()
@@ -810,10 +807,10 @@ class IOBase(object):
 
     def unreg_event(self, func=None, edge=None) -> None:
         """
-        Entfernt ein Event aus der Eventueberwachung.
+        Removes an event from event monitoring.
 
-        :param func: Nur Events mit angegebener Funktion
-        :param edge: Nur Events mit angegebener Funktion und angegebener Edge
+        :param func: Only events with specified function
+        :param edge: Only events with specified function and specified edge
         """
         if self in self._parentdevice._dict_events:
             if func is None:
@@ -825,7 +822,7 @@ class IOBase(object):
                     if regfunc.func != func or edge is not None and regfunc.edge != edge:
                         newlist.append(regfunc)
 
-                # Wenn Funktionen übrig bleiben, diese übernehmen
+                # If functions remain, take them over
                 with self._parentdevice._filelock:
                     if len(newlist) > 0:
                         self._parentdevice._dict_events[self] = newlist
@@ -834,48 +831,48 @@ class IOBase(object):
 
     def wait(self, edge=BOTH, exitevent=None, okvalue=None, timeout=0) -> int:
         """
-        Wartet auf Wertaenderung eines IOs.
+        Waits for value change of an IO.
 
-        Die Wertaenderung wird immer uerberprueft, wenn fuer Devices
-        mit aktiviertem autorefresh neue Daten gelesen wurden.
+        The value change is always checked when new data has been read for devices
+        with autorefresh enabled.
 
-        Bei Wertaenderung, wird das Warten mit 0 als Rueckgabewert beendet.
+        On value change, waiting ends with 0 as return value.
 
-        HINWEIS: Wenn <class 'ProcimgWriter'> keine neuen Daten liefert, wird
-        bis in die Ewigkeit gewartet (nicht bei Angabe von "timeout").
+        NOTE: If <class 'ProcimgWriter'> does not deliver new data,
+        it will wait forever (not when "timeout" is specified).
 
-        Wenn edge mit RISING oder FALLING angegeben wird, muss diese Flanke
-        ausgeloest werden. Sollte der Wert 1 sein beim Eintritt mit Flanke
-        RISING, wird das Warten erst bei Aenderung von 0 auf 1 beendet.
+        If edge is specified with RISING or FALLING, this edge must be
+        triggered. If the value is 1 when entering with edge
+        RISING, the wait will only end when changing from 0 to 1.
 
-        Als exitevent kann ein <class 'threading.Event'>-Objekt uebergeben
-        werden, welches das Warten bei is_set() sofort mit 1 als Rueckgabewert
-        beendet.
+        A <class 'threading.Event'> object can be passed as exitevent,
+        which ends the waiting immediately with 1 as return value
+        when is_set().
 
-        Wenn der Wert okvalue an dem IO fuer das Warten anliegt, wird
-        das Warten sofort mit -1 als Rueckgabewert beendet.
+        If the value okvalue is present at the IO for waiting, the
+        waiting ends immediately with -1 as return value.
 
-        Der Timeoutwert bricht beim Erreichen das Warten sofort mit
-        Wert 2 Rueckgabewert ab. (Das Timeout wird ueber die Zykluszeit
-        der autorefresh Funktion berechnet, entspricht also nicht exakt den
-        angegeben Millisekunden! Es wird immer nach oben gerundet!)
+        The timeout value aborts the waiting immediately when reached with
+        value 2 as return value. (The timeout is calculated via the cycle time
+        of the autorefresh function, so it does not correspond exactly to the
+        specified milliseconds! It is always rounded up!)
 
-        :param edge: Flanke RISING, FALLING, BOTH die eintreten muss
-        :param exitevent: <class 'thrading.Event'> fuer vorzeitiges Beenden
-        :param okvalue: IO-Wert, bei dem das Warten sofort beendet wird
-        :param timeout: Zeit in ms nach der abgebrochen wird
-        :return: <class 'int'> erfolgreich Werte <= 0
+        :param edge: Edge RISING, FALLING, BOTH that must occur
+        :param exitevent: <class 'thrading.Event'> for early termination
+        :param okvalue: IO value at which waiting ends immediately
+        :param timeout: Time in ms after which to abort
+        :return: <class 'int'> successful values <= 0
 
-        - Erfolgreich gewartet
-            - Wert 0: IO hat den Wert gewechselt
-            - Wert -1: okvalue stimmte mit IO ueberein
-        - Fehlerhaft gewartet
-            - Wert 1: exitevent wurde gesetzt
-            - Wert 2: timeout abgelaufen
-            - Wert 100: Devicelist.exit() wurde aufgerufen
+        - Successfully waited
+            - Value 0: IO has changed value
+            - Value -1: okvalue matched IO
+        - Erroneously waited
+            - Value 1: exitevent was set
+            - Value 2: timeout expired
+            - Value 100: Devicelist.exit() was called
 
         """
-        # Prüfen ob Device in autorefresh ist
+        # Check if device is in autorefresh
         if not self._parentdevice._selfupdate:
             raise RuntimeError(
                 "autorefresh is not activated for device '{0}|{1}' - there "
@@ -895,7 +892,7 @@ class IOBase(object):
         if edge != BOTH and not self._bitshift:
             raise ValueError("parameter 'edge' can be used with bit Inputs only")
 
-        # Abbruchwert prüfen
+        # Check abort value
         if okvalue == self.value:
             return -1
 
@@ -933,15 +930,15 @@ class IOBase(object):
             elif bool_timecount:
                 flt_timecount += 2.5
 
-        # Abbruchevent wurde gesetzt
+        # Abort event was set
         if exitevent.is_set():
             return 1
 
-        # RevPiModIO mainloop wurde verlassen
+        # RevPiModIO mainloop was exited
         if self._parentdevice._modio._waitexit.is_set():
             return 100
 
-        # Timeout abgelaufen
+        # Timeout expired
         return 2
 
     address = property(_get_address)
@@ -956,12 +953,12 @@ class IOBase(object):
 
 class IntIO(IOBase):
     """
-    Klasse fuer den Zugriff auf die Daten mit Konvertierung in int.
+    Class for accessing data with conversion to int.
 
-    Diese Klasse erweitert die Funktion von <class 'IOBase'> um Funktionen,
-    ueber die mit <class 'int'> Werten gearbeitet werden kann. Fuer die
-    Umwandlung koennen 'Byteorder' (Default 'little') und 'signed' (Default
-    False) als Parameter gesetzt werden.
+    This class extends the functionality of <class 'IOBase'> with functions
+    for working with <class 'int'> values. For the
+    conversion, 'byteorder' (default 'little') and 'signed' (default
+    False) can be set as parameters.
 
     :ref: :class:`IOBase`
     """
@@ -970,9 +967,9 @@ class IntIO(IOBase):
 
     def __int__(self):
         """
-        Gibt IO-Wert zurueck mit Beachtung byteorder/signed.
+        Returns IO value considering byteorder/signed.
 
-        :return: IO-Wert als <class 'int'>
+        :return: IO value as <class 'int'>
         """
         return int.from_bytes(
             self._parentdevice._ba_devdata[self._slc_address],
@@ -1006,15 +1003,15 @@ class IntIO(IOBase):
 
     def _get_signed(self) -> bool:
         """
-        Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.
+        Retrieves whether the value should be treated as signed.
 
-        :return: True, wenn Vorzeichenbehaftet
+        :return: True if signed
         """
         return self._signed
 
     def _set_byteorder(self, value: str) -> None:
         """
-        Setzt Byteorder fuer <class 'int'> Umwandlung.
+        Sets byteorder for <class 'int'> conversion.
 
         :param value: <class 'str'> 'little' or 'big'
         """
@@ -1026,9 +1023,9 @@ class IntIO(IOBase):
 
     def _set_signed(self, value: bool) -> None:
         """
-        Left fest, ob der Wert Vorzeichenbehaftet behandelt werden soll.
+        Sets whether the value should be treated as signed.
 
-        :param value: True, wenn mit Vorzeichen behandel
+        :param value: True if to be treated as signed
         """
         if type(value) != bool:
             raise TypeError("signed must be <class 'bool'> True or False")
@@ -1036,17 +1033,17 @@ class IntIO(IOBase):
 
     def get_intdefaultvalue(self) -> int:
         """
-        Gibt die Defaultvalue als <class 'int'> zurueck.
+        Returns the default value as <class 'int'>.
 
-        :return: <class 'int'> Defaultvalue
+        :return: <class 'int'> Default value
         """
         return int.from_bytes(self._defaultvalue, byteorder=self._byteorder, signed=self._signed)
 
     def get_intvalue(self) -> int:
         """
-        Gibt IO-Wert zurueck mit Beachtung byteorder/signed.
+        Returns IO value considering byteorder/signed.
 
-        :return: IO-Wert als <class 'int'>
+        :return: IO value as <class 'int'>
         """
         return int.from_bytes(
             self._parentdevice._ba_devdata[self._slc_address],
@@ -1056,9 +1053,9 @@ class IntIO(IOBase):
 
     def set_intvalue(self, value: int) -> None:
         """
-        Setzt IO mit Beachtung byteorder/signed.
+        Sets IO considering byteorder/signed.
 
-        :param value: <class 'int'> Wert
+        :param value: <class 'int'> Value
         """
         if type(value) == int:
             self.set_value(
@@ -1081,15 +1078,15 @@ class IntIO(IOBase):
 
 
 class IntIOCounter(IntIO):
-    """Erweitert die IntIO-Klasse um die .reset() Funktion fuer Counter."""
+    """Extends the IntIO class with the .reset() function for counters."""
 
     __slots__ = ("__ioctl_arg",)
 
     def __init__(self, counter_id, parentdevice, valuelist, iotype, byteorder, signed):
         """
-        Instantiierung der IntIOCounter-Klasse.
+        Instantiation of the IntIOCounter class.
 
-        :param counter_id: ID fuer den Counter, zu dem der IO gehoert (0-15)
+        :param counter_id: ID for the counter to which the IO belongs (0-15)
         :ref: :func:`IOBase.__init__(...)`
         """
         if not isinstance(counter_id, int):
@@ -1097,7 +1094,7 @@ class IntIOCounter(IntIO):
         if not 0 <= counter_id <= 15:
             raise ValueError("counter_id must be 0 - 15")
 
-        # Deviceposition + leer + Counter_ID
+        # Device position + empty + Counter_ID
         # ID-Bits: 7|6|5|4|3|2|1|0|15|14|13|12|11|10|9|8
         self.__ioctl_arg = (
             parentdevice._position.to_bytes(1, "little")
@@ -1106,9 +1103,9 @@ class IntIOCounter(IntIO):
         )
 
         """
-        IOCTL fuellt dieses struct, welches durch padding im Speicher nach
-        uint8_t ein byte frei hat. Es muessen also 4 Byte uebergeben werden
-        wobei das Bitfield die Byteorder little hat!!!
+        IOCTL fills this struct, which has one byte free in memory after
+        uint8_t due to padding. Therefore 4 bytes must be passed
+        where the bitfield has little byteorder!!!
 
         typedef struct SDIOResetCounterStr
         {
@@ -1117,27 +1114,27 @@ class IntIOCounter(IntIO):
         } SDIOResetCounter;
         """
 
-        # Basisklasse laden
+        # Load base class
         super().__init__(parentdevice, valuelist, iotype, byteorder, signed)
 
     def reset(self) -> None:
-        """Setzt den Counter des Inputs zurueck."""
+        """Resets the counter of the input."""
         if self._parentdevice._modio._monitoring:
             raise RuntimeError("can not reset counter, while system is in monitoring mode")
         if self._parentdevice._modio._simulator:
             raise RuntimeError("can not reset counter, while system is in simulator mode")
 
         if self._parentdevice._modio._run_on_pi:
-            # IOCTL auf dem RevPi
+            # IOCTL on the RevPi
             with self._parentdevice._modio._myfh_lck:
                 try:
-                    # Counter reset durchführen (Funktion K+20)
+                    # Execute counter reset (function K+20)
                     ioctl(self._parentdevice._modio._myfh, 19220, self.__ioctl_arg)
                 except Exception as e:
                     self._parentdevice._modio._gotioerror("iorst", e)
 
         elif hasattr(self._parentdevice._modio._myfh, "ioctl"):
-            # IOCTL über Netzwerk
+            # IOCTL over network
             with self._parentdevice._modio._myfh_lck:
                 try:
                     self._parentdevice._modio._myfh.ioctl(19220, self.__ioctl_arg)
@@ -1145,62 +1142,62 @@ class IntIOCounter(IntIO):
                     self._parentdevice._modio._gotioerror("net_iorst", e)
 
         else:
-            # IOCTL in Datei simulieren
+            # Simulate IOCTL in file
             try:
-                # Set value durchführen (Funktion K+20)
+                # Execute set value (function K+20)
                 self._parentdevice._modio._simulate_ioctl(19220, self.__ioctl_arg)
             except Exception as e:
                 self._parentdevice._modio._gotioerror("file_iorst", e)
 
 
 class IntIOReplaceable(IntIO):
-    """Erweitert die IntIO-Klasse um die .replace_io Funktion."""
+    """Extends the IntIO class with the .replace_io function."""
 
     __slots__ = ()
 
     def replace_io(self, name: str, frm: str, **kwargs) -> None:
         """
-        Ersetzt bestehenden IO mit Neuem.
+        Replaces existing IO with new one.
 
-        Wenn die kwargs fuer byteorder und defaultvalue nicht angegeben werden,
-        uebernimmt das System die Daten aus dem ersetzten IO.
+        If the kwargs for byteorder and defaultvalue are not specified,
+        the system takes the data from the replaced IO.
 
-        Es darf nur ein einzelnes Formatzeichen 'frm' uebergeben werden. Daraus
-        wird dann die benoetigte Laenge an Bytes berechnet und der Datentyp
-        festgelegt. Moeglich sind:
+        Only a single format character 'frm' may be passed. From this,
+        the required length in bytes is calculated and the data type
+        is determined. Possible values are:
         - Bits / Bytes: ?, c, s
         - Integer     : bB, hH, iI, lL, qQ
         - Float       : e, f, d
 
-        Eine Ausnahme ist die Formatierung 's'. Hier koennen mehrere Bytes
-        zu einem langen IO zusammengefasst werden. Die Formatierung muss
-        '8s' fuer z.B. 8 Bytes sein - NICHT 'ssssssss'!
+        An exception is the 's' format. Here, multiple bytes
+        can be combined into one long IO. The formatting must be
+        '8s' for e.g. 8 bytes - NOT 'ssssssss'!
 
-        Wenn durch die Formatierung mehr Bytes benoetigt werden, als
-        der urspruenglige IO hat, werden die nachfolgenden IOs ebenfalls
-        verwendet und entfernt.
+        If more bytes are needed by the formatting than
+        the original IO has, the following IOs will also be
+        used and removed.
 
-        :param name: Name des neuen Inputs
-        :param frm: struct formatierung (1 Zeichen) oder 'ANZAHLs' z.B. '8s'
-        :param kwargs: Weitere Parameter
+        :param name: Name of the new input
+        :param frm: struct formatting (1 character) or 'NUMBERs' e.g. '8s'
+        :param kwargs: Additional parameters
 
-        - bmk: interne Bezeichnung fuer IO
-        - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
-        - byteorder: Byteorder fuer den IO, Standardwert=little
-        - wordorder: Wordorder wird vor byteorder angewendet
-        - defaultvalue: Standardwert fuer IO
-        - event: Funktion fuer Eventhandling registrieren
-        - delay: Verzoegerung in ms zum Ausloesen wenn Wert gleich bleibt
-        - edge: Event ausfuehren bei RISING, FALLING or BOTH Wertaenderung
-        - as_thread: Fuehrt die event-Funktion als RevPiCallback-Thread aus
-        - prefire: Ausloesen mit aktuellem Wert, wenn mainloop startet
+        - bmk: internal designation for IO
+        - bit: Registers IO as <class 'bool'> at the specified bit in the byte
+        - byteorder: Byteorder for the IO, default=little
+        - wordorder: Wordorder is applied before byteorder
+        - defaultvalue: Default value for IO
+        - event: Register function for event handling
+        - delay: Delay in ms for triggering when value remains the same
+        - edge: Execute event on RISING, FALLING or BOTH value change
+        - as_thread: Executes the event function as RevPiCallback thread
+        - prefire: Trigger with current value when mainloop starts
 
         `<https://docs.python.org/3/library/struct.html#format-characters>`_
         """
-        # StructIO erzeugen
+        # Create StructIO
         io_new = StructIO(self, name, frm, **kwargs)
 
-        # StructIO in IO-Liste einfügen
+        # Insert StructIO into IO list
         self._parentdevice._modio.io._private_register_new_io_object(io_new)
 
         # Optional Event eintragen
@@ -1309,7 +1306,7 @@ class RelaisOutput(IOBase):
             return struct.unpack(self.__ioctl_arg_format, ioctl_return_value)[1:]
         else:
             # Return cycle value of just one relais as int, if this is a BOOL output
-            # Increase bit-address bei 1 to ignore fist element, which is the ioctl request value
+            # Increase bit-address by 1 to ignore first element, which is the ioctl request value
             return struct.unpack(self.__ioctl_arg_format, ioctl_return_value)[self._bitaddress + 1]
 
     switching_cycles = property(get_switching_cycles)
@@ -1335,10 +1332,10 @@ class IntRelaisOutput(IntIO, RelaisOutput):
 
 class StructIO(IOBase):
     """
-    Klasse fuer den Zugriff auf Daten ueber ein definierten struct.
+    Class for accessing data via a defined struct.
 
-    Sie stellt ueber struct die Werte in der gewuenschten Formatierung
-    bereit. Der struct-Formatwert wird bei der Instantiierung festgelegt.
+    It provides the values in the desired formatting via struct.
+    The struct format value is defined during instantiation.
     """
 
     __slots__ = (
@@ -1352,30 +1349,30 @@ class StructIO(IOBase):
 
     def __init__(self, parentio, name: str, frm: str, **kwargs):
         """
-        Erstellt einen IO mit struct-Formatierung.
+        Creates an IO with struct formatting.
 
-        :param parentio: ParentIO Objekt, welches ersetzt wird
-        :param name: Name des neuen IO
-        :param frm: struct formatierung (1 Zeichen) oder 'ANZAHLs' z.B. '8s'
-        :param kwargs: Weitere Parameter:
-            - bmk: Bezeichnung fuer IO
-            - bit: Registriert IO als <class 'bool'> am angegebenen Bit im Byte
-            - byteorder: Byteorder fuer IO, Standardwert vom ersetzten IO
-            - wordorder: Wordorder wird vor byteorder angewendet
-            - defaultvalue: Standardwert fuer IO, Standard vom ersetzten IO
+        :param parentio: ParentIO object that will be replaced
+        :param name: Name of the new IO
+        :param frm: struct formatting (1 character) or 'NUMBERs' e.g. '8s'
+        :param kwargs: Additional parameters:
+            - bmk: Description for IO
+            - bit: Registers IO as <class 'bool'> at specified bit in byte
+            - byteorder: Byteorder for IO, default from replaced IO
+            - wordorder: Wordorder is applied before byteorder
+            - defaultvalue: Default value for IO, default from replaced IO
         """
-        # Structformatierung prüfen
+        # Check struct formatting
         regex = rematch("^([0-9]*s|[cbB?hHiIlLqQefd])$", frm)
 
         if regex is not None:
-            # Byteorder prüfen und übernehmen
+            # Check and take over byteorder
             byteorder = kwargs.get("byteorder", parentio._byteorder)
             if byteorder not in ("little", "big"):
                 raise ValueError("byteorder must be 'little' or 'big'")
             bofrm = "<" if byteorder == "little" else ">"
             self._wordorder = kwargs.get("wordorder", None)
 
-            # Namen des parent fuer export merken
+            # Remember parent name for export
             self._parentio_name = parentio._name
 
             if frm == "?":
@@ -1389,7 +1386,7 @@ class StructIO(IOBase):
                     )
                 bitlength = 1
 
-                # Bitweise Ersetzung erfordert diese Informationen zusätzlich
+                # Bitwise replacement requires this information additionally
                 if parentio._byteorder == byteorder:
                     self._parentio_defaultvalue = parentio._defaultvalue
                 else:
@@ -1414,7 +1411,7 @@ class StructIO(IOBase):
             # [name,default,anzbits,adressbyte,export,adressid,bmk,bitaddress]
             valuelist = [
                 name,
-                # Darf nur bei StructIO None sein, wird nur dann berechnet
+                # May only be None for StructIO, is only calculated then
                 kwargs.get("defaultvalue", None),
                 bitlength,
                 parentio._slc_address.start,
@@ -1429,7 +1426,7 @@ class StructIO(IOBase):
                 "or 'COUNTs' e.g. '8s'"
             )
 
-        # Basisklasse instantiieren
+        # Instantiate base class
         super().__init__(
             parentio._parentdevice, valuelist, parentio._iotype, byteorder, frm == frm.lower()
         )
@@ -1442,7 +1439,7 @@ class StructIO(IOBase):
             # export, so use parent settings for the new IO
             self._export = parentio._export
 
-        # Platz für neuen IO prüfen
+        # Check space for new IO
         if not (
             self._slc_address.start >= parentio._parentdevice._dict_slc[parentio._iotype].start
             and self._slc_address.stop <= parentio._parentdevice._dict_slc[parentio._iotype].stop
@@ -1471,15 +1468,15 @@ class StructIO(IOBase):
 
     def _get_frm(self) -> str:
         """
-        Ruft die struct Formatierung ab.
+        Retrieves the struct formatting.
 
-        :return: struct Formatierung
+        :return: struct formatting
         """
         return self.__frm[1:]
 
     def _get_signed(self) -> bool:
         """
-        Ruft ab, ob der Wert Vorzeichenbehaftet behandelt werden soll.
+        Retrieves whether the value should be treated as signed.
 
         :return: True, wenn Vorzeichenbehaftet
         """
@@ -1504,9 +1501,9 @@ class StructIO(IOBase):
 
     def get_structdefaultvalue(self):
         """
-        Gibt die Defaultvalue mit struct Formatierung zurueck.
+        Returns the default value with struct formatting.
 
-        :return: Defaultvalue vom Typ der struct-Formatierung
+        :return: Default value of struct formatting type
         """
         if self._bitshift:
             return self._defaultvalue
@@ -1519,7 +1516,7 @@ class StructIO(IOBase):
 
     def get_wordorder(self) -> str:
         """
-        Gibt die wordorder für diesen IO zurück.
+        Returns the wordorder for this IO.
 
         :return: "little", "big" or "ignored"
         """
@@ -1527,9 +1524,9 @@ class StructIO(IOBase):
 
     def get_structvalue(self):
         """
-        Gibt den Wert mit struct Formatierung zurueck.
+        Returns the value with struct formatting.
 
-        :return: Wert vom Typ der struct-Formatierung
+        :return: Value of struct formatting type
         """
         if self._bitshift:
             return self.get_value()
@@ -1542,9 +1539,9 @@ class StructIO(IOBase):
 
     def set_structvalue(self, value):
         """
-        Setzt den Wert mit struct Formatierung.
+        Sets the value with struct formatting.
 
-        :param value: Wert vom Typ der struct-Formatierung
+        :param value: Value of struct formatting type
         """
         if self._bitshift:
             self.set_value(value)
@@ -1562,11 +1559,11 @@ class StructIO(IOBase):
 
 class MemIO(IOBase):
     """
-    Erstellt einen IO für die Memory Werte in piCtory.
+    Creates an IO for the memory values in piCtory.
 
-    Dieser Typ ist nur für lesenden Zugriff vorgesehen und kann verschiedene
-    Datentypen über .value zurückgeben. Damit hat man nun auch Zugriff
-    auf Strings, welche in piCtory vergeben werden.
+    This type is only intended for read access and can return various
+    data types via .value. This also provides access to strings that
+    are assigned in piCtory.
     """
 
     def get_variantvalue(self):

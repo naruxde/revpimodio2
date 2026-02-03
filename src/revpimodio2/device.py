@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Modul fuer die Verwaltung der Devices."""
+"""Module for managing devices."""
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"
@@ -15,7 +15,7 @@ from .pictory import ProductType
 
 
 class DeviceList(object):
-    """Basisklasse fuer direkten Zugriff auf Device Objekte."""
+    """Base class for direct access to device objects."""
 
     def __init__(self):
         """Init DeviceList class."""
@@ -23,10 +23,10 @@ class DeviceList(object):
 
     def __contains__(self, key):
         """
-        Prueft ob Device existiert.
+        Checks if device exists.
 
-        :param key: DeviceName <class 'str'> / Positionsnummer <class 'int'>
-        :return: True, wenn Device vorhanden
+        :param key: DeviceName <class 'str'> / Position number <class 'int'>
+        :return: True if device exists
         """
         if type(key) == int:
             return key in self.__dict_position
@@ -37,25 +37,25 @@ class DeviceList(object):
 
     def __delattr__(self, key, delcomplete=True):
         """
-        Entfernt angegebenes Device.
+        Removes specified device.
 
-        :param key: Device zum entfernen
-        :param delcomplete: Wenn True wird Device komplett entfernt
+        :param key: Device to remove
+        :param delcomplete: If True, device will be removed completely
         """
         if delcomplete:
-            # Device finden
+            # Find device
             if type(key) == int:
                 dev_del = self.__dict_position[key]
                 key = dev_del._name
             else:
                 dev_del = getattr(self, key)
 
-            # Reinigungsjobs
+            # Cleanup jobs
             dev_del.autorefresh(False)
             for io in dev_del:
                 delattr(dev_del._modio.io, io._name)
 
-            # Device aus dict löschen
+            # Delete device from dict
             del self.__dict_position[dev_del._position]
 
         if hasattr(self, key):
@@ -63,9 +63,9 @@ class DeviceList(object):
 
     def __delitem__(self, key):
         """
-        Entfernt Device an angegebener Position.
+        Removes device at specified position.
 
-        :param key: Deviceposition zum entfernen
+        :param key: Device position to remove
         """
         if isinstance(key, Device):
             key = key._position
@@ -73,10 +73,10 @@ class DeviceList(object):
 
     def __getitem__(self, key):
         """
-        Gibt angegebenes Device zurueck.
+        Returns specified device.
 
-        :param key: DeviceName <class 'str'> / Positionsnummer <class 'int'>
-        :return: Gefundenes <class 'Device'>-Objekt
+        :param key: DeviceName <class 'str'> / Position number <class 'int'>
+        :return: Found <class 'Device'> object
         """
         if type(key) == int:
             if key not in self.__dict_position:
@@ -87,29 +87,29 @@ class DeviceList(object):
 
     def __iter__(self):
         """
-        Gibt Iterator aller Devices zurueck.
+        Returns iterator of all devices.
 
-        Die Reihenfolge ist nach Position im Prozessabbild sortiert und nicht
-        nach Positionsnummer (Dies entspricht der Positionierung aus piCtory)!
+        The order is sorted by position in the process image and not
+        by position number (this corresponds to the positioning from piCtory)!
 
-        :return: <class 'iter'> aller Devices
+        :return: <class 'iter'> of all devices
         """
         for dev in sorted(self.__dict_position, key=lambda key: self.__dict_position[key]._offset):
             yield self.__dict_position[dev]
 
     def __len__(self):
         """
-        Gibt Anzahl der Devices zurueck.
+        Returns number of devices.
 
-        :return: Anzahl der Devices"""
+        :return: Number of devices"""
         return len(self.__dict_position)
 
     def __setattr__(self, key, value):
         """
-        Setzt Attribute nur wenn Device.
+        Sets attributes only if device.
 
-        :param key: Attributname
-        :param value: Attributobjekt
+        :param key: Attribute name
+        :param value: Attribute object
         """
         if isinstance(value, Device):
             object.__setattr__(self, key, value)
@@ -120,11 +120,11 @@ class DeviceList(object):
 
 class Device(object):
     """
-    Basisklasse fuer alle Device-Objekte.
+    Base class for all device objects.
 
-    Die Basisfunktionalitaet generiert bei Instantiierung alle IOs und
-    erweitert den Prozessabbildpuffer um die benoetigten Bytes. Sie verwaltet
-    ihren Prozessabbildpuffer und sorgt fuer die Aktualisierung der IO-Werte.
+    The base functionality generates all IOs upon instantiation and
+    extends the process image buffer by the required bytes. It manages
+    its process image buffer and ensures the updating of IO values.
     """
 
     __slots__ = (
@@ -161,11 +161,11 @@ class Device(object):
 
     def __init__(self, parentmodio, dict_device, simulator=False):
         """
-        Instantiierung der Device-Klasse.
+        Instantiation of the Device class.
 
         :param parentmodio: RevpiModIO parent object
-        :param dict_device: <class 'dict'> fuer dieses Device aus piCotry
-        :param simulator: Laedt das Modul als Simulator und vertauscht IOs
+        :param dict_device: <class 'dict'> for this device from piCtory
+        :param simulator: Loads the module as simulator and swaps IOs
         """
         self._modio = parentmodio
 
@@ -178,7 +178,7 @@ class Device(object):
         self._shared_procimg = False
         self._shared_write = set()
 
-        # Wertzuweisung aus dict_device
+        # Value assignment from dict_device
         self._name = dict_device.get("name")
         self._offset = int(dict_device.get("offset"))
         self._position = int(dict_device.get("position"))
@@ -193,7 +193,7 @@ class Device(object):
                 "".format(self._name, parentmodio.length, self._offset),
                 Warning,
             )
-        # IOM-Objekte erstellen und Adressen in SLCs speichern
+        # Create IOM objects and store addresses in SLCs
         if simulator:
             self._slc_inp = self._buildio(dict_device.get("out"), INP)
             self._slc_out = self._buildio(dict_device.get("inp"), OUT)
@@ -202,7 +202,7 @@ class Device(object):
             self._slc_out = self._buildio(dict_device.get("out"), OUT)
         self._slc_mem = self._buildio(dict_device.get("mem"), MEM)
 
-        # SLCs mit offset berechnen
+        # Calculate SLCs with offset
         self._slc_devoff = slice(self._offset, self._offset + self.length)
         self._slc_inpoff = slice(
             self._slc_inp.start + self._offset,
@@ -217,7 +217,7 @@ class Device(object):
             self._slc_mem.stop + self._offset,
         )
 
-        # Alle restlichen attribute an Klasse anhängen
+        # Attach all remaining attributes to class
         self.bmk = dict_device.get("bmk", "")
         self.catalognr = dict_device.get("catalogNr", "")
         self.comment = dict_device.get("comment", "")
@@ -228,29 +228,29 @@ class Device(object):
         self.outvariant = dict_device.get("outVariant", 0)
         self.type = dict_device.get("type", "")
 
-        # Spezielle Konfiguration von abgeleiteten Klassen durchführen
+        # Perform special configuration from derived classes
         self._devconfigure()
 
-        # IO Liste aktualisieren für schnellen Indexzugriff
+        # Update IO list for fast index access
         self._update_my_io_list()
 
     def __bytes__(self):
         """
-        Gibt alle Daten des Devices als <class 'bytes'> zurueck.
+        Returns all device data as <class 'bytes'>.
 
-        :return: Devicedaten als <class 'bytes'>
+        :return: Device data as <class 'bytes'>
         """
         return bytes(self._ba_devdata)
 
     def __contains__(self, key):
         """
-        Prueft ob IO auf diesem Device liegt.
+        Checks if IO is on this device.
 
         :param key: IO-Name <class 'str'> / IO-Bytenummer <class 'int'>
-        :return: True, wenn IO auf Device vorhanden
+        :return: True if IO is present on device
         """
         if isinstance(key, IOBase):
-            # Umwandlung für key
+            # Conversion for key
             key = key._name
 
         if type(key) == int:
@@ -264,32 +264,32 @@ class Device(object):
 
     def __getitem__(self, key):
         """
-        Gibt IO an angegebener Stelle zurueck.
+        Returns IO at specified position.
 
-        :param key: Index des IOs auf dem device als <class 'int'>
-        :return: Gefundenes IO-Objekt
+        :param key: Index of the IO on the device as <class 'int'>
+        :return: Found IO object
         """
         return self.__my_io_list[key]
 
     def __int__(self):
         """
-        Gibt die Positon im RevPi Bus zurueck.
+        Returns the position on the RevPi bus.
 
-        :return: Positionsnummer
+        :return: Position number
         """
         return self._position
 
     def __iter__(self):
         """
-        Gibt Iterator aller IOs zurueck.
+        Returns iterator of all IOs.
 
-        :return: <class 'iter'> aller IOs
+        :return: <class 'iter'> of all IOs
         """
         return self.__getioiter(self._slc_devoff, None)
 
     def __len__(self):
         """
-        Gibt Anzahl der Bytes zurueck, die dieses Device belegt.
+        Returns number of bytes occupied by this device.
 
         :return: <class 'int'>
         """
@@ -297,19 +297,19 @@ class Device(object):
 
     def __str__(self):
         """
-        Gibt den Namen des Devices zurueck.
+        Returns the name of the device.
 
-        :return: Devicename
+        :return: Device name
         """
         return self._name
 
     def __getioiter(self, ioslc: slice, export):
         """
-        Gibt <class 'iter'> mit allen IOs zurueck.
+        Returns <class 'iter'> with all IOs.
 
-        :param ioslc: IO Abschnitt <class 'slice'>
-        :param export: Filter fuer 'Export' Flag in piCtory
-        :return: IOs als Iterator
+        :param ioslc: IO section <class 'slice'>
+        :param export: Filter for 'Export' flag in piCtory
+        :return: IOs as Iterator
         """
         for lst_io in self._modio.io[ioslc]:
             for io in lst_io:
@@ -318,23 +318,23 @@ class Device(object):
 
     def _buildio(self, dict_io: dict, iotype: int) -> slice:
         """
-        Erstellt aus der piCtory-Liste die IOs fuer dieses Device.
+        Creates the IOs for this device from the piCtory list.
 
-        :param dict_io: <class 'dict'>-Objekt aus piCtory Konfiguration
-        :param iotype: <class 'int'> Wert
-        :return: <class 'slice'> mit Start und Stop Position dieser IOs
+        :param dict_io: <class 'dict'> object from piCtory configuration
+        :param iotype: <class 'int'> value
+        :return: <class 'slice'> with start and stop position of these IOs
         """
         if len(dict_io) <= 0:
             return slice(0, 0)
 
         int_min, int_max = PROCESS_IMAGE_SIZE, 0
         for key in sorted(dict_io, key=lambda x: int(x)):
-            # Neuen IO anlegen
+            # Create new IO
             if iotype == MEM:
                 # Memory setting
                 io_new = MemIO(self, dict_io[key], iotype, "little", False)
             elif isinstance(self, RoModule) and dict_io[key][3] == "1":
-                # Relais of RO are on device address "1" and has a cycle counter
+                # Relays of RO are on device address "1" and has a cycle counter
                 if dict_io[key][7]:
                     # Each relais output has a single bit
                     io_new = RelaisOutput(self, dict_io[key], iotype, "little", False)
@@ -343,10 +343,10 @@ class Device(object):
                     io_new = IntRelaisOutput(self, dict_io[key], iotype, "little", False)
 
             elif bool(dict_io[key][7]):
-                # Bei Bitwerten IOBase verwenden
+                # Use IOBase for bit values
                 io_new = IOBase(self, dict_io[key], iotype, "little", False)
             elif isinstance(self, DioModule) and dict_io[key][3] in self._lst_counter:
-                # Counter IO auf einem DI oder DIO
+                # Counter IO on a DI or DIO
                 io_new = IntIOCounter(
                     self._lst_counter.index(dict_io[key][3]),
                     self,
@@ -356,7 +356,7 @@ class Device(object):
                     False,
                 )
             elif isinstance(self, Gateway):
-                # Ersetzbare IOs erzeugen
+                # Create replaceable IOs
                 io_new = IntIOReplaceable(self, dict_io[key], iotype, "little", False)
             else:
                 io_new = IntIO(
@@ -364,7 +364,7 @@ class Device(object):
                     dict_io[key],
                     iotype,
                     "little",
-                    # Bei AIO (103) signed auf True setzen
+                    # Set signed to True for AIO (103)
                     self._producttype == ProductType.AIO,
                 )
 
@@ -374,10 +374,10 @@ class Device(object):
                     Warning,
                 )
             else:
-                # IO registrieren
+                # Register IO
                 self._modio.io._private_register_new_io_object(io_new)
 
-            # Kleinste und größte Speicheradresse ermitteln
+            # Determine smallest and largest memory address
             if io_new._slc_address.start < int_min:
                 int_min = io_new._slc_address.start
             if io_new._slc_address.stop > int_max:
@@ -387,143 +387,143 @@ class Device(object):
         return slice(int_min, int_max)
 
     def _devconfigure(self):
-        """Funktion zum ueberschreiben von abgeleiteten Klassen."""
+        """Function to override in derived classes."""
         pass
 
     def _get_offset(self) -> int:
         """
-        Gibt den Deviceoffset im Prozessabbild zurueck.
+        Returns the device offset in the process image.
 
-        :return: Deviceoffset
+        :return: Device offset
         """
         return self._offset
 
     def _get_producttype(self) -> int:
         """
-        Gibt den Produkttypen des device zurueck.
+        Returns the product type of the device.
 
-        :return: Deviceprodukttyp
+        :return: Device product type
         """
         return self._producttype
 
     def _update_my_io_list(self) -> None:
-        """Erzeugt eine neue IO Liste fuer schnellen Zugriff."""
+        """Creates a new IO list for fast access."""
         self.__my_io_list = list(self.__iter__())
 
     def autorefresh(self, activate=True) -> None:
         """
-        Registriert dieses Device fuer die automatische Synchronisierung.
+        Registers this device for automatic synchronization.
 
-        :param activate: Default True fuegt Device zur Synchronisierung hinzu
+        :param activate: Default True adds device to synchronization
         """
         if activate and self not in self._modio._lst_refresh:
-            # Daten bei Aufnahme direkt einlesen!
+            # Read data directly when adding!
             self._modio.readprocimg(self)
 
-            # Datenkopie anlegen
+            # Create data copy
             with self._filelock:
                 self._ba_datacp = self._ba_devdata[:]
 
             self._selfupdate = True
 
-            # Sicher in Liste einfügen
+            # Safely insert into list
             with self._modio._imgwriter.lck_refresh:
                 self._modio._lst_refresh.append(self)
 
-            # Thread starten, wenn er noch nicht läuft
+            # Start thread if it is not yet running
             if not self._modio._imgwriter.is_alive():
-                # Alte Einstellungen speichern
+                # Save old settings
                 imgrefresh = self._modio._imgwriter.refresh
 
-                # ImgWriter mit alten Einstellungen erstellen
+                # Create ImgWriter with old settings
                 self._modio._imgwriter = ProcimgWriter(self._modio)
                 self._modio._imgwriter.refresh = imgrefresh
                 self._modio._imgwriter.start()
 
         elif not activate and self in self._modio._lst_refresh:
-            # Sicher aus Liste entfernen
+            # Safely remove from list
             with self._modio._imgwriter.lck_refresh:
                 self._modio._lst_refresh.remove(self)
             self._selfupdate = False
 
-            # Beenden, wenn keien Devices mehr in Liste sind
+            # Terminate if no more devices are in the list
             if len(self._modio._lst_refresh) == 0:
                 self._modio._imgwriter.stop()
 
-            # Daten beim Entfernen noch einmal schreiben
+            # Write data once more when removing
             if not self._modio._monitoring:
                 self._modio.writeprocimg(self)
 
     def get_allios(self, export=None) -> list:
         """
-        Gibt eine Liste aller Inputs und Outputs zurueck, keine MEMs.
+        Returns a list of all inputs and outputs, no MEMs.
 
-        Bleibt Parameter 'export' auf None werden alle Inputs und Outputs
-        zurueckgegeben. Wird 'export' auf True/False gesetzt, werden nur Inputs
-        und Outputs zurueckgegeben, bei denen der Wert 'Export' in piCtory
-        uebereinstimmt.
+        If parameter 'export' remains None, all inputs and outputs will be
+        returned. If 'export' is set to True/False, only inputs
+        and outputs will be returned for which the 'Export' value in piCtory
+        matches.
 
-        :param export: Nur In-/Outputs mit angegebenen 'Export' Wert in piCtory
-        :return: <class 'list'> Input und Output, keine MEMs
+        :param export: Only in-/outputs with specified 'Export' value in piCtory
+        :return: <class 'list'> Input and Output, no MEMs
         """
         return list(self.__getioiter(slice(self._slc_inpoff.start, self._slc_outoff.stop), export))
 
     def get_inputs(self, export=None) -> list:
         """
-        Gibt eine Liste aller Inputs zurueck.
+        Returns a list of all inputs.
 
-        Bleibt Parameter 'export' auf None werden alle Inputs zurueckgegeben.
-        Wird 'export' auf True/False gesetzt, werden nur Inputs zurueckgegeben,
-        bei denen der Wert 'Export' in piCtory uebereinstimmt.
+        If parameter 'export' remains None, all inputs will be returned.
+        If 'export' is set to True/False, only inputs will be returned
+        for which the 'Export' value in piCtory matches.
 
-        :param export: Nur Inputs mit angegebenen 'Export' Wert in piCtory
+        :param export: Only inputs with specified 'Export' value in piCtory
         :return: <class 'list'> Inputs
         """
         return list(self.__getioiter(self._slc_inpoff, export))
 
     def get_outputs(self, export=None) -> list:
         """
-        Gibt eine Liste aller Outputs zurueck.
+        Returns a list of all outputs.
 
-        Bleibt Parameter 'export' auf None werden alle Outputs zurueckgegeben.
-        Wird 'export' auf True/False gesetzt, werden nur Outputs
-        zurueckgegeben, bei denen der Wert 'Export' in piCtory uebereinstimmt.
+        If parameter 'export' remains None, all outputs will be returned.
+        If 'export' is set to True/False, only outputs
+        returned, for which the value 'Export' in piCtory matches.
 
-        :param export: Nur Outputs mit angegebenen 'Export' Wert in piCtory
+        :param export: Only outputs with specified 'Export' value in piCtory
         :return: <class 'list'> Outputs
         """
         return list(self.__getioiter(self._slc_outoff, export))
 
     def get_memories(self, export=None) -> list:
         """
-        Gibt eine Liste aller Memoryobjekte zurueck.
+        Returns a list of all memory objects.
 
-        Bleibt Parameter 'export' auf None werden alle Mems zurueckgegeben.
-        Wird 'export' auf True/False gesetzt, werden nur Mems zurueckgegeben,
-        bei denen der Wert 'Export' in piCtory uebereinstimmt.
+        If parameter 'export' remains None, all mems will be returned.
+        If 'export' is set to True/False, only mems will be returned
+        for which the 'Export' value in piCtory matches.
 
-        :param export: Nur Mems mit angegebenen 'Export' Wert in piCtory
+        :param export: Only mems with specified 'Export' value in piCtory
         :return: <class 'list'> Mems
         """
         return list(self.__getioiter(self._slc_memoff, export))
 
     def readprocimg(self) -> bool:
         """
-        Alle Inputs fuer dieses Device vom Prozessabbild einlesen.
+        Read all inputs for this device from process image.
 
 
         Same  see
 
-        :return: True, wenn erfolgreich ausgefuehrt
+        :return: True if successfully executed
         :ref: :func:`revpimodio2.modio.RevPiModIO.readprocimg()`
         """
         return self._modio.readprocimg(self)
 
     def setdefaultvalues(self) -> None:
         """
-        Alle Outputbuffer fuer dieses Device auf default Werte setzen.
+        Set all output buffers for this device to default values.
 
-        :return: True, wenn erfolgreich ausgefuehrt
+        :return: True if successfully executed
         :ref: :func:`revpimodio2.modio.RevPiModIO.setdefaultvalues()`
         """
         self._modio.setdefaultvalues(self)
@@ -540,18 +540,18 @@ class Device(object):
 
     def syncoutputs(self) -> bool:
         """
-        Lesen aller Outputs im Prozessabbild fuer dieses Device.
+        Read all outputs in process image for this device.
 
-        :return: True, wenn erfolgreich ausgefuehrt
+        :return: True if successfully executed
         :ref: :func:`revpimodio2.modio.RevPiModIO.syncoutputs()`
         """
         return self._modio.syncoutputs(self)
 
     def writeprocimg(self) -> bool:
         """
-        Schreiben aller Outputs dieses Devices ins Prozessabbild.
+        Write all outputs of this device to process image.
 
-        :return: True, wenn erfolgreich ausgefuehrt
+        :return: True if successfully executed
         :ref: :func:`revpimodio2.modio.RevPiModIO.writeprocimg()`
         """
         return self._modio.writeprocimg(self)
@@ -564,7 +564,7 @@ class Device(object):
 
 
 class Base(Device):
-    """Klasse fuer alle Base-Devices wie Core / Connect usw."""
+    """Class for all base devices like Core / Connect etc."""
 
     __slots__ = ()
 
@@ -575,27 +575,27 @@ class GatewayMixin:
     @property
     def leftgate(self) -> bool:
         """
-        Statusbit links vom RevPi ist ein piGate Modul angeschlossen.
+        Statusbit links vom RevPi is a piGate Modul angeschlossen.
 
-        :return: True, wenn piGate links existiert
+        :return: True if piGate left exists
         """
         return bool(int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little") & 16)
 
     @property
     def rightgate(self) -> bool:
         """
-        Statusbit rechts vom RevPi ist ein piGate Modul angeschlossen.
+        Statusbit rechts vom RevPi is a piGate Modul angeschlossen.
 
-        :return: True, wenn piGate rechts existiert
+        :return: True if piGate right exists
         """
         return bool(int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little") & 32)
 
 
 class ModularBase(Base):
     """
-    Klasse fuer alle modularen Base-Devices wie Core / Connect usw..
+    Class for all modular base devices like Core / Connect etc..
 
-    Stellt Funktionen fuer den Status zur Verfuegung.
+    Provides functions for the status.
     """
 
     __slots__ = (
@@ -611,10 +611,10 @@ class ModularBase(Base):
 
     def __errorlimit(self, slc_io: slice, errorlimit: int) -> None:
         """
-        Verwaltet das Schreiben der ErrorLimits.
+        Manages writing the error limits.
 
         :param slc_io: Byte Slice vom ErrorLimit
-        :return: Aktuellen ErrorLimit oder None wenn nicht verfuegbar
+        :return: Current ErrorLimit or None if not available
         """
         if 0 <= errorlimit <= 65535:
             self._ba_devdata[slc_io] = errorlimit.to_bytes(2, byteorder="little")
@@ -623,54 +623,54 @@ class ModularBase(Base):
 
     def _get_status(self) -> int:
         """
-        Gibt den RevPi Core Status zurueck.
+        Returns the RevPi Core status.
 
-        :return: Status als <class 'int'>
+        :return: Status as <class 'int'>
         """
         return int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little")
 
     @property
     def picontrolrunning(self) -> bool:
         """
-        Statusbit fuer piControl-Treiber laeuft.
+        Statusbit for piControl-Treiber laeuft.
 
-        :return: True, wenn Treiber laeuft
+        :return: True, if Treiber laeuft
         """
         return bool(int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little") & 1)
 
     @property
     def unconfdevice(self) -> bool:
         """
-        Statusbit fuer ein IO-Modul nicht mit PiCtory konfiguriert.
+                Status bit for an IO module not configured with piCtory.
 
-        :return: True, wenn IO Modul nicht konfiguriert
+        :return: True if IO module is not configured
         """
         return bool(int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little") & 2)
 
     @property
     def missingdeviceorgate(self) -> bool:
         """
-        Statusbit fuer ein IO-Modul fehlt oder piGate konfiguriert.
+                Status bit for an IO module missing or piGate configured.
 
-        :return: True, wenn IO-Modul fehlt oder piGate konfiguriert
+        :return: True if IO module is missing or piGate is configured
         """
         return bool(int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little") & 4)
 
     @property
     def overunderflow(self) -> bool:
         """
-        Statusbit Modul belegt mehr oder weniger Speicher als konfiguriert.
+        Status bit: Module occupies more or less memory than configured.
 
-        :return: True, wenn falscher Speicher belegt ist
+        :return: True if wrong memory is occupied
         """
         return bool(int.from_bytes(self._ba_devdata[self._slc_statusbyte], byteorder="little") & 8)
 
     @property
     def iocycle(self) -> int:
         """
-        Gibt Zykluszeit der Prozessabbildsynchronisierung zurueck.
+        Returns cycle time of process image synchronization.
 
-        :return: Zykluszeit in ms ( -1 wenn nicht verfuegbar)
+        :return: Cycle time in ms (-1 if not available)
         """
         return (
             -1
@@ -681,9 +681,9 @@ class ModularBase(Base):
     @property
     def temperature(self) -> int:
         """
-        Gibt CPU-Temperatur zurueck.
+        Returns CPU temperature.
 
-        :return: CPU-Temperatur in Celsius (-273 wenn nich verfuegbar)
+        :return: CPU temperature in Celsius (-273 if not available)
         """
         return (
             -273
@@ -694,9 +694,9 @@ class ModularBase(Base):
     @property
     def frequency(self) -> int:
         """
-        Gibt CPU Taktfrequenz zurueck.
+        Returns CPU clock frequency.
 
-        :return: CPU Taktfrequenz in MHz (-1 wenn nicht verfuegbar)
+        :return: CPU clock frequency in MHz (-1 if not available)
         """
         return (
             -1
@@ -707,9 +707,9 @@ class ModularBase(Base):
     @property
     def ioerrorcount(self) -> int:
         """
-        Gibt Fehleranzahl auf RS485 piBridge Bus zurueck.
+        Returns error count on RS485 piBridge bus.
 
-        :return: Fehleranzahl der piBridge (-1 wenn nicht verfuegbar)
+        :return: Number of errors of the piBridge (-1 if not available)
         """
         return (
             -1
@@ -720,9 +720,9 @@ class ModularBase(Base):
     @property
     def errorlimit1(self) -> int:
         """
-        Gibt RS485 ErrorLimit1 Wert zurueck.
+        Returns RS485 ErrorLimit1 value.
 
-        :return: Aktueller Wert fuer ErrorLimit1 (-1 wenn nicht verfuegbar)
+        :return: Current value for ErrorLimit1 (-1 if not available)
         """
         return (
             -1
@@ -733,9 +733,9 @@ class ModularBase(Base):
     @errorlimit1.setter
     def errorlimit1(self, value: int) -> None:
         """
-        Setzt RS485 ErrorLimit1 auf neuen Wert.
+        Sets RS485 ErrorLimit1 to new value.
 
-        :param value: Neuer ErrorLimit1 Wert
+        :param value: Neuer ErrorLimit1 value
         """
         if self._slc_errorlimit1 is None:
             raise RuntimeError("selected core item in piCtory does not support errorlimit1")
@@ -745,9 +745,9 @@ class ModularBase(Base):
     @property
     def errorlimit2(self) -> int:
         """
-        Gibt RS485 ErrorLimit2 Wert zurueck.
+        Returns RS485 ErrorLimit2 value.
 
-        :return: Aktueller Wert fuer ErrorLimit2 (-1 wenn nicht verfuegbar)
+        :return: Current value for ErrorLimit2 (-1 if not available)
         """
         return (
             -1
@@ -758,9 +758,9 @@ class ModularBase(Base):
     @errorlimit2.setter
     def errorlimit2(self, value: int) -> None:
         """
-        Setzt RS485 ErrorLimit2 auf neuen Wert.
+        Sets RS485 ErrorLimit2 to new value.
 
-        :param value: Neuer ErrorLimit2 Wert
+        :param value: Neuer ErrorLimit2 value
         """
         if self._slc_errorlimit2 is None:
             raise RuntimeError("selected core item in piCtory does not support errorlimit2")
@@ -772,25 +772,25 @@ class ModularBase(Base):
 
 class Core(ModularBase, GatewayMixin):
     """
-    Klasse fuer den RevPi Core.
+    Class for the RevPi Core.
 
-    Stellt Funktionen fuer die LEDs und den Status zur Verfuegung.
+    Provides functions for the LEDs and the status.
     """
 
     __slots__ = "a1green", "a1red", "a2green", "a2red", "wd"
 
     def __setattr__(self, key, value):
-        """Verhindert Ueberschreibung der LEDs."""
+        """Prevents overwriting the LEDs."""
         if hasattr(self, key) and key in ("a1green", "a1red", "a2green", "a2red", "wd"):
             raise AttributeError("direct assignment is not supported - use .value Attribute")
         else:
             object.__setattr__(self, key, value)
 
     def _devconfigure(self) -> None:
-        """Core-Klasse vorbereiten."""
+        """Prepare Core class."""
         super()._devconfigure()
 
-        # Statische IO Verknüpfungen je nach Core-Variante
+        # Static IO links depending on Core variant
         # 2 Byte = Core1.0
         self._slc_statusbyte = slice(0, 1)
         self._slc_led = slice(1, 2)
@@ -818,7 +818,7 @@ class Core(ModularBase, GatewayMixin):
             self._slc_errorlimit1 = slice(7, 9)
             self._slc_errorlimit2 = slice(9, 11)
 
-        # Exportflags prüfen (Byte oder Bit)
+        # Check export flags (Byte or Bit)
         lst_led = self._modio.io[self._slc_devoff][self._slc_led.start]
         if len(lst_led) == 8:
             exp_a1green = lst_led[0].export
@@ -831,7 +831,7 @@ class Core(ModularBase, GatewayMixin):
             exp_a2green = exp_a1green
             exp_a2red = exp_a1green
 
-        # Echte IOs erzeugen
+        # Create actual IOs
         self.a1green = IOBase(
             self,
             ["core.a1green", 0, 1, self._slc_led.start, exp_a1green, None, "LED_A1_GREEN", "0"],
@@ -872,27 +872,27 @@ class Core(ModularBase, GatewayMixin):
 
     def _get_leda1(self) -> int:
         """
-        Gibt den Zustand der LED A1 vom Core zurueck.
+        Returns the state of LED A1 from the Core.
 
-        :return: 0=aus, 1=gruen, 2=rot
+        :return: 0=from, 1=gruen, 2=rot
         """
         # 0b00000011 = 3
         return self._ba_devdata[self._slc_led.start] & 3
 
     def _get_leda2(self) -> int:
         """
-        Gibt den Zustand der LED A2 vom Core zurueck.
+        Returns the state of LED A2 from the Core.
 
-        :return: 0=aus, 1=gruen, 2=rot
+        :return: 0=from, 1=gruen, 2=rot
         """
         # 0b00001100 = 12
         return (self._ba_devdata[self._slc_led.start] & 12) >> 2
 
     def _set_leda1(self, value: int) -> None:
         """
-        Setzt den Zustand der LED A1 vom Core.
+        Sets the state of LED A1 from the Core.
 
-        :param value: 0=aus, 1=gruen, 2=rot
+        :param value: 0=from, 1=gruen, 2=rot
         """
         if 0 <= value <= 3:
             self.a1green(bool(value & 1))
@@ -902,9 +902,9 @@ class Core(ModularBase, GatewayMixin):
 
     def _set_leda2(self, value: int) -> None:
         """
-        Setzt den Zustand der LED A2 vom Core.
+        Sets the state of LED A2 from the Core.
 
-        :param value: 0=aus, 1=gruen, 2=rot
+        :param value: 0=from, 1=gruen, 2=rot
         """
         if 0 <= value <= 3:
             self.a2green(bool(value & 1))
@@ -921,32 +921,32 @@ class Core(ModularBase, GatewayMixin):
 
 
 class Connect(Core):
-    """Klasse fuer den RevPi Connect.
+    """Class for the RevPi Connect.
 
-    Stellt Funktionen fuer die LEDs, Watchdog und den Status zur Verfuegung.
+    Provides functions for the LEDs, watchdog and the status.
     """
 
     __slots__ = "__evt_wdtoggle", "__th_wdtoggle", "a3green", "a3red", "x2in", "x2out"
 
     def __setattr__(self, key, value):
-        """Verhindert Ueberschreibung der speziellen IOs."""
+        """Prevents overwriting the special IOs."""
         if hasattr(self, key) and key in ("a3green", "a3red", "x2in", "x2out"):
             raise AttributeError("direct assignment is not supported - use .value Attribute")
         super(Connect, self).__setattr__(key, value)
 
     def __wdtoggle(self) -> None:
-        """WD Ausgang alle 10 Sekunden automatisch toggeln."""
+        """WD Ausgang all 10 Sekunden automatisch toggeln."""
         while not self.__evt_wdtoggle.wait(10):
             self.wd.value = not self.wd.value
 
     def _devconfigure(self) -> None:
-        """Connect-Klasse vorbereiten."""
+        """Prepare Connect class."""
         super()._devconfigure()
 
         self.__evt_wdtoggle = Event()
         self.__th_wdtoggle = None
 
-        # Exportflags prüfen (Byte oder Bit)
+        # Check export flags (Byte or Bit)
         lst_myios = self._modio.io[self._slc_devoff]
         lst_led = lst_myios[self._slc_led.start]
         if len(lst_led) == 8:
@@ -965,7 +965,7 @@ class Connect(Core):
         else:
             exp_x2in = lst_status[0].export
 
-        # Echte IOs erzeugen
+        # Create actual IOs
         self.a3green = IOBase(
             self,
             ["core.a3green", 0, 1, self._slc_led.start, exp_a3green, None, "LED_A3_GREEN", "4"],
@@ -981,7 +981,7 @@ class Connect(Core):
             False,
         )
 
-        # IO Objekte für WD und X2 in/out erzeugen
+        # Create IO objects for WD and X2 in/out
         self.x2in = IOBase(
             self,
             ["core.x2in", 0, 1, self._slc_statusbyte.start, exp_x2in, None, "Connect_X2_IN", "6"],
@@ -1002,26 +1002,26 @@ class Connect(Core):
 
     def _get_leda3(self) -> int:
         """
-        Gibt den Zustand der LED A3 vom Connect zurueck.
+        Returns the Zustand the LED A3 vom Connect.
 
-        :return: 0=aus, 1=gruen, 2=rot
+        :return: 0=from, 1=gruen, 2=rot
         """
         # 0b00110000 = 48
         return (self._ba_devdata[self._slc_led.start] & 48) >> 4
 
     def _get_wdtoggle(self) -> bool:
         """
-        Ruft den Wert fuer Autowatchdog ab.
+        Retrieves the value for Autowatchdog.
 
-        :return: True, wenn Autowatchdog aktiv ist
+        :return: True if autowatchdog is active
         """
         return self.__th_wdtoggle is not None and self.__th_wdtoggle.is_alive()
 
     def _set_leda3(self, value: int) -> None:
         """
-        Setzt den Zustand der LED A3 vom Connect.
+        Sets the state of LED A3 on the Connect.
 
-        :param: value 0=aus, 1=gruen, 2=rot
+        :param: value 0=from, 1=gruen, 2=rot
         """
         if 0 <= value <= 3:
             self.a3green(bool(value & 1))
@@ -1031,18 +1031,14 @@ class Connect(Core):
 
     def _set_wdtoggle(self, value: bool) -> None:
         """
-        Setzt den Wert fuer Autowatchdog.
+                Sets the value for autowatchdog.
 
-        Wird dieser Wert auf True gesetzt, wechselt im Hintergrund das noetige
-        Bit zum toggeln des Watchdogs alle 10 Sekunden zwichen True und False.
-        Dieses Bit wird bei autorefresh=True natuerlich automatisch in das
-        Prozessabbild geschrieben.
+                If this value is set to True, the necessary bit to toggle the watchdog is switched between True and False every 10 seconds in the background.
+        This bit is automatically written to the process image with autorefresh=True.
 
-        WICHTIG: Sollte autorefresh=False sein, muss zyklisch
-                 .writeprocimg() aufgerufen werden, um den Wert in das
-                 Prozessabbild zu schreiben!!!
+        IMPORTANT: If autorefresh=False, .writeprocimg() must be called cyclically to write the value to the process image!!!
 
-        :param value: True zum aktivieren, False zum beenden
+                :param value: True to activate, False to terminate
         """
         if self._modio._monitoring:
             raise RuntimeError("can not toggle watchdog, while system is in monitoring mode")
@@ -1053,7 +1049,7 @@ class Connect(Core):
             self.__evt_wdtoggle.set()
 
         elif not self._get_wdtoggle():
-            # Watchdogtoggler erstellen
+            # Create watchdog toggler
             self.__evt_wdtoggle.clear()
             self.__th_wdtoggle = Thread(target=self.__wdtoggle, daemon=True)
             self.__th_wdtoggle.start()
@@ -1085,7 +1081,7 @@ class ModularBaseConnect_4_5(ModularBase):
     )
 
     def __setattr__(self, key, value):
-        """Verhindert Ueberschreibung der speziellen IOs."""
+        """Prevents overwriting the special IOs."""
         if hasattr(self, key) and key in (
             "a1red",
             "a1green",
@@ -1120,7 +1116,7 @@ class ModularBaseConnect_4_5(ModularBase):
         return led_calculated
 
     def _devconfigure(self) -> None:
-        """Connect 4/5-Klasse vorbereiten."""
+        """Prepare Connect 4/5 class."""
         super()._devconfigure()
 
         self._slc_statusbyte = slice(0, 1)
@@ -1133,7 +1129,7 @@ class ModularBaseConnect_4_5(ModularBase):
         self._slc_errorlimit2 = slice(9, 11)
         self._slc_led = slice(11, 13)
 
-        # Exportflags prüfen (Byte oder Bit)
+        # Check export flags (Byte or Bit)
         lst_myios = self._modio.io[self._slc_devoff]
         lst_led = lst_myios[self._slc_led.start]
         lst_output = lst_myios[self._slc_output.start]
@@ -1171,7 +1167,7 @@ class ModularBaseConnect_4_5(ModularBase):
             exp_a5green = exp_a1red
             exp_a5blue = exp_a1red
 
-        # Echte IOs erzeugen
+        # Create actual IOs
         self.a1red = IOBase(
             self,
             ["core.a1red", 0, 1, self._slc_led.start, exp_a1red, None, "LED_A1_RED", "0"],
@@ -1284,50 +1280,50 @@ class ModularBaseConnect_4_5(ModularBase):
 
     def _get_leda1(self) -> int:
         """
-        Gibt den Zustand der LED A1 vom Connect zurueck.
+        Returns the Zustand the LED A1 vom Connect.
 
-        :return: 0=aus, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        :return: 0=from, 1=gruen, 2=root, 4=blau, mixed RGB colors
         """
         return self.__led_calculator(self._ba_devdata[self._slc_led.start] & 0b00000111)
 
     def _get_leda2(self) -> int:
         """
-        Gibt den Zustand der LED A2 vom Core zurueck.
+        Returns the state of LED A2 from the Core.
 
-        :return: 0=aus, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        :return: 0=from, 1=gruen, 2=root, 4=blau, mixed RGB colors
         """
         return self.__led_calculator((self._ba_devdata[self._slc_led.start] & 0b00111000) >> 3)
 
     def _get_leda3(self) -> int:
         """
-        Gibt den Zustand der LED A3 vom Core zurueck.
+        Returns the Zustand the LED A3 vom Core.
 
-        :return: 0=aus, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        :return: 0=from, 1=gruen, 2=root, 4=blau, mixed RGB colors
         """
         word_led = self._ba_devdata[self._slc_led]
         return self.__led_calculator((unpack("<H", word_led)[0] & 0b0000000111000000) >> 6)
 
     def _get_leda4(self) -> int:
         """
-        Gibt den Zustand der LED A4 vom Core zurueck.
+        Returns the Zustand the LED A4 vom Core.
 
-        :return: 0=aus, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        :return: 0=from, 1=gruen, 2=root, 4=blau, mixed RGB colors
         """
         return self.__led_calculator((self._ba_devdata[self._slc_led.start + 1] & 0b00001110) >> 1)
 
     def _get_leda5(self) -> int:
         """
-        Gibt den Zustand der LED A5 vom Core zurueck.
+        Returns the Zustand the LED A5 vom Core.
 
-        :return: 0=aus, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        :return: 0=from, 1=gruen, 2=root, 4=blau, mixed RGB colors
         """
         return self.__led_calculator((self._ba_devdata[self._slc_led.start + 1] & 0b01110000) >> 4)
 
     def _set_leda1(self, value: int) -> None:
         """
-        Setzt den Zustand der LED A1 vom Connect.
+        Sets the state of LED A1 on the Connect.
 
-        :param: value 0=aus, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        :param: value 0=from, 1=gruen, 2=rot, 4=blue, mixed RGB colors
         """
         if 0 <= value <= 7:
             self.a1red(bool(value & 2))
@@ -1338,9 +1334,9 @@ class ModularBaseConnect_4_5(ModularBase):
 
     def _set_leda2(self, value: int) -> None:
         """
-        Setzt den Zustand der LED A2 vom Connect.
+        Sets the state of LED A2 on the Connect.
 
-        :param: value 0=aus, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        :param: value 0=from, 1=gruen, 2=rot, 4=blue, mixed RGB colors
         """
         if 0 <= value <= 7:
             self.a2red(bool(value & 2))
@@ -1351,9 +1347,9 @@ class ModularBaseConnect_4_5(ModularBase):
 
     def _set_leda3(self, value: int) -> None:
         """
-        Setzt den Zustand der LED A3 vom Connect.
+        Sets the state of LED A3 on the Connect.
 
-        :param: value 0=aus, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        :param: value 0=from, 1=gruen, 2=rot, 4=blue, mixed RGB colors
         """
         if 0 <= value <= 7:
             self.a3red(bool(value & 2))
@@ -1364,9 +1360,9 @@ class ModularBaseConnect_4_5(ModularBase):
 
     def _set_leda4(self, value: int) -> None:
         """
-        Setzt den Zustand der LED A4 vom Connect.
+        Sets the state of LED A4 on the Connect.
 
-        :param: value 0=aus, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        :param: value 0=from, 1=gruen, 2=rot, 4=blue, mixed RGB colors
         """
         if 0 <= value <= 7:
             self.a4red(bool(value & 2))
@@ -1377,9 +1373,9 @@ class ModularBaseConnect_4_5(ModularBase):
 
     def _set_leda5(self, value: int) -> None:
         """
-        Setzt den Zustand der LED A5 vom Connect.
+        Sets the state of LED A5 on the Connect.
 
-        :param: value 0=aus, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        :param: value 0=from, 1=gruen, 2=rot, 4=blue, mixed RGB colors
         """
         if 0 <= value <= 7:
             self.a5red(bool(value & 2))
@@ -1403,18 +1399,18 @@ class ModularBaseConnect_4_5(ModularBase):
 
 
 class Connect5(ModularBaseConnect_4_5, GatewayMixin):
-    """Klasse fuer den RevPi Connect 5.
+    """Class for the RevPi Connect 5.
 
-    Stellt Funktionen fuer die LEDs und den Status zur Verfuegung.
+    Provides functions for the LEDs and the status.
     """
 
     pass
 
 
 class Connect4(ModularBaseConnect_4_5):
-    """Klasse fuer den RevPi Connect 4.
+    """Class for the RevPi Connect 4.
 
-    Stellt Funktionen fuer die LEDs und den Status zur Verfuegung.
+    Provides functions for the LEDs and the status.
     """
 
     __slots__ = (
@@ -1423,7 +1419,7 @@ class Connect4(ModularBaseConnect_4_5):
     )
 
     def __setattr__(self, key, value):
-        """Verhindert Ueberschreibung der speziellen IOs."""
+        """Prevents overwriting the special IOs."""
         if hasattr(self, key) and key in (
             "x2in",
             "x2out",
@@ -1432,10 +1428,10 @@ class Connect4(ModularBaseConnect_4_5):
         super().__setattr__(key, value)
 
     def _devconfigure(self) -> None:
-        """Connect4-Klasse vorbereiten."""
+        """Prepare Connect4 class."""
         super()._devconfigure()
 
-        # Exportflags prüfen (Byte oder Bit)
+        # Check export flags (Byte or Bit)
         lst_myios = self._modio.io[self._slc_devoff]
         lst_output = lst_myios[self._slc_output.start]
 
@@ -1451,7 +1447,7 @@ class Connect4(ModularBaseConnect_4_5):
         else:
             exp_x2in = lst_status[0].export
 
-        # IO Objekte für X2 in/out erzeugen
+        # Create IO objects for X2 in/out
         self.x2in = IOBase(
             self,
             ["core.x2in", 0, 1, self._slc_statusbyte.start, exp_x2in, None, "Connect_X2_IN", "6"],
@@ -1470,10 +1466,10 @@ class Connect4(ModularBaseConnect_4_5):
 
 class Compact(Base):
     """
-    Klasse fuer den RevPi Compact.
+    Class for the RevPi Compact.
 
-    Stellt Funktionen fuer die LEDs zur Verfuegung. Auf IOs wird ueber das .io
-    Objekt zugegriffen.
+    Provides functions for the LEDs. IOs are accessed via the .io
+    object zugegriffen.
     """
 
     __slots__ = (
@@ -1488,22 +1484,22 @@ class Compact(Base):
     )
 
     def __setattr__(self, key, value):
-        """Verhindert Ueberschreibung der LEDs."""
+        """Prevents overwriting the LEDs."""
         if hasattr(self, key) and key in ("a1green", "a1red", "a2green", "a2red", "wd"):
             raise AttributeError("direct assignment is not supported - use .value Attribute")
         else:
             object.__setattr__(self, key, value)
 
     def _devconfigure(self) -> None:
-        """Core-Klasse vorbereiten."""
+        """Prepare Core class."""
         super()._devconfigure()
 
-        # Statische IO Verknüpfungen des Compacts
+        # Statische IO Verknüpfungen of the Compacts
         self._slc_led = slice(23, 24)
         self._slc_temperature = slice(0, 1)
         self._slc_frequency = slice(1, 2)
 
-        # Exportflags prüfen (Byte oder Bit)
+        # Check export flags (Byte or Bit)
         lst_led = self._modio.io[self._slc_devoff][self._slc_led.start]
         if len(lst_led) == 8:
             exp_a1green = lst_led[0].export
@@ -1516,7 +1512,7 @@ class Compact(Base):
             exp_a2green = exp_a1green
             exp_a2red = exp_a1green
 
-        # Echte IOs erzeugen
+        # Create actual IOs
         self.a1green = IOBase(
             self,
             ["core.a1green", 0, 1, self._slc_led.start, exp_a1green, None, "LED_A1_GREEN", "0"],
@@ -1557,27 +1553,27 @@ class Compact(Base):
 
     def _get_leda1(self) -> int:
         """
-        Gibt den Zustand der LED A1 vom Compact zurueck.
+        Returns the Zustand the LED A1 vom Compact.
 
-        :return: 0=aus, 1=gruen, 2=rot
+        :return: 0=from, 1=gruen, 2=rot
         """
         # 0b00000011 = 3
         return self._ba_devdata[self._slc_led.start] & 3
 
     def _get_leda2(self) -> int:
         """
-        Gibt den Zustand der LED A2 vom Compact zurueck.
+        Returns the Zustand the LED A2 vom Compact.
 
-        :return: 0=aus, 1=gruen, 2=rot
+        :return: 0=from, 1=gruen, 2=rot
         """
         # 0b00001100 = 12
         return (self._ba_devdata[self._slc_led.start] & 12) >> 2
 
     def _set_leda1(self, value: int) -> None:
         """
-        Setzt den Zustand der LED A1 vom Compact.
+        Sets the state of LED A1 on the Compact.
 
-        :param value: 0=aus, 1=gruen, 2=rot
+        :param value: 0=from, 1=gruen, 2=rot
         """
         if 0 <= value <= 3:
             self.a1green(bool(value & 1))
@@ -1587,9 +1583,9 @@ class Compact(Base):
 
     def _set_leda2(self, value: int) -> None:
         """
-        Setzt den Zustand der LED A2 vom Compact.
+        Sets the state of LED A2 on the Compact.
 
-        :param value: 0=aus, 1=gruen, 2=rot
+        :param value: 0=from, 1=gruen, 2=rot
         """
         if 0 <= value <= 3:
             self.a2green(bool(value & 1))
@@ -1607,9 +1603,9 @@ class Compact(Base):
     @property
     def temperature(self) -> int:
         """
-        Gibt CPU-Temperatur zurueck.
+        Returns CPU temperature.
 
-        :return: CPU-Temperatur in Celsius (-273 wenn nich verfuegbar)
+        :return: CPU temperature in Celsius (-273 if not available)
         """
         return (
             -273
@@ -1620,9 +1616,9 @@ class Compact(Base):
     @property
     def frequency(self) -> int:
         """
-        Gibt CPU Taktfrequenz zurueck.
+        Returns CPU clock frequency.
 
-        :return: CPU Taktfrequenz in MHz (-1 wenn nicht verfuegbar)
+        :return: CPU clock frequency in MHz (-1 if not available)
         """
         return (
             -1
@@ -1633,10 +1629,10 @@ class Compact(Base):
 
 class Flat(Base):
     """
-    Klasse fuer den RevPi Flat.
+    Class for the RevPi Flat.
 
-    Stellt Funktionen fuer die LEDs zur Verfuegung. Auf IOs wird ueber das .io
-    Objekt zugegriffen.
+    Provides functions for the LEDs. IOs are accessed via the .io
+    object zugegriffen.
     """
 
     __slots__ = (
@@ -1661,7 +1657,7 @@ class Flat(Base):
     )
 
     def __setattr__(self, key, value):
-        """Verhindert Ueberschreibung der LEDs."""
+        """Prevents overwriting the LEDs."""
         if hasattr(self, key) and key in (
             "a1green",
             "a1red",
@@ -1682,17 +1678,17 @@ class Flat(Base):
             object.__setattr__(self, key, value)
 
     def _devconfigure(self) -> None:
-        """Core-Klasse vorbereiten."""
+        """Prepare Core class."""
         super()._devconfigure()
 
-        # Statische IO Verknüpfungen des Compacts
+        # Statische IO Verknüpfungen of the Compacts
         self._slc_led = slice(7, 9)
         self._slc_temperature = slice(4, 5)
         self._slc_frequency = slice(5, 6)
         self._slc_switch = slice(6, 7)
         self._slc_dout = slice(11, 12)
 
-        # Exportflags prüfen (Byte oder Bit)
+        # Check export flags (Byte or Bit)
         lst_led = self._modio.io[self._slc_devoff][self._slc_led.start]
         if len(lst_led) == 8:
             exp_a1green = lst_led[0].export
@@ -1720,7 +1716,7 @@ class Flat(Base):
             exp_a5green = exp_a1green
             exp_a5red = exp_a1green
 
-        # Echte IOs erzeugen
+        # Create actual IOs
         self.a1green = IOBase(
             self,
             ["core.a1green", 0, 1, self._slc_led.start, exp_a1green, None, "LED_A1_GREEN", "0"],
@@ -1936,9 +1932,9 @@ class Flat(Base):
     @property
     def temperature(self) -> int:
         """
-        Gibt CPU-Temperatur zurueck.
+        Returns CPU temperature.
 
-        :return: CPU-Temperatur in Celsius (-273 wenn nich verfuegbar)
+        :return: CPU temperature in Celsius (-273 if not available)
         """
         return (
             -273
@@ -1949,9 +1945,9 @@ class Flat(Base):
     @property
     def frequency(self) -> int:
         """
-        Gibt CPU Taktfrequenz zurueck.
+        Returns CPU clock frequency.
 
-        :return: CPU Taktfrequenz in MHz (-1 wenn nicht verfuegbar)
+        :return: CPU clock frequency in MHz (-1 if not available)
         """
         return (
             -1
@@ -1961,20 +1957,20 @@ class Flat(Base):
 
 
 class DioModule(Device):
-    """Stellt ein DIO / DI / DO Modul dar."""
+    """Represents a DIO / DI / DO module."""
 
     __slots__ = "_lst_counter"
 
     def __init__(self, parentmodio, dict_device, simulator=False):
         """
-        Erweitert Device-Klasse zum Erkennen von IntIOCounter.
+        Extends Device class for detecting IntIOCounter.
 
         :rev: :func:`Device.__init__()`
         """
-        # Stringliste der Byteadressen (alle Module sind gleich)
+        # Stringliste the Byteadressen (all Module are gleich)
         self._lst_counter = list(map(str, range(6, 70, 4)))
 
-        # Basisklasse laden
+        # Load base class
         super().__init__(parentmodio, dict_device, simulator=simulator)
 
 
@@ -1992,13 +1988,12 @@ class RoModule(Device):
 
 class Gateway(Device):
     """
-    Klasse fuer die RevPi Gateway-Devices.
+    Class for the RevPi Gateway-Devices.
 
-    Stellt neben den Funktionen von RevPiDevice weitere Funktionen fuer die
-    Gateways bereit. IOs auf diesem Device stellen die replace_io Funktion
-    zur verfuegung, ueber die eigene IOs definiert werden, die ein
-    RevPiStructIO-Objekt abbilden.
-    Dieser IO-Typ kann Werte ueber mehrere Bytes verarbeiten und zurueckgeben.
+    Provides additional functions for the RevPi Gateway devices besides the functions from RevPiDevice.
+    Gateways are ready. IOs on this device provide the replace_io function,
+    which allows defining custom IOs that map to a RevPiStructIO object.
+    This IO type can process and return values via multiple bytes.
 
     :ref: :func:`revpimodio2.io.IntIOReplaceable.replace_io()`
     """
@@ -2007,7 +2002,7 @@ class Gateway(Device):
 
     def __init__(self, parent, dict_device, simulator=False):
         """
-        Erweitert Device-Klasse um get_rawbytes-Funktionen.
+        Extends Device class with get_rawbytes functions.
 
         :ref: :func:`Device.__init__()`
         """
@@ -2021,21 +2016,20 @@ class Gateway(Device):
 
     def get_rawbytes(self) -> bytes:
         """
-        Gibt die Bytes aus, die dieses Device verwendet.
+        Returns the bytes used by this device.
 
-        :return: <class 'bytes'> des Devices
+        :return: <class 'bytes'> of the Devices
         """
         return bytes(self._ba_devdata)
 
 
 class Virtual(Gateway):
     """
-    Klasse fuer die RevPi Virtual-Devices.
+    Class for the RevPi Virtual-Devices.
 
-    Stellt die selben Funktionen wie Gateway zur Verfuegung. Es koennen
-    ueber die reg_*-Funktionen eigene IOs definiert werden, die ein
-    RevPiStructIO-Objekt abbilden.
-    Dieser IO-Typ kann Werte ueber mehrere Bytes verarbeiten und zurueckgeben.
+    Provides the same functions as Gateway. Custom IOs can be
+    defined via the replace_io functions that map to RevPiStructIO objects.
+    This IO type can process and return values via multiple bytes.
 
     :ref: :func:`Gateway`
     """
@@ -2044,15 +2038,12 @@ class Virtual(Gateway):
 
     def writeinputdefaults(self):
         """
-        Schreibt fuer ein virtuelles Device piCtory Defaultinputwerte.
+                Writes piCtory default input values for a virtual device.
 
-        Sollten in piCtory Defaultwerte fuer Inputs eines virtuellen Devices
-        angegeben sein, werden diese nur beim Systemstart oder einem piControl
-        Reset gesetzt. Sollte danach das Prozessabbild mit NULL ueberschrieben,
-        gehen diese Werte verloren.
-        Diese Funktion kann nur auf virtuelle Devices angewendet werden!
+        If default values for inputs of a virtual device are specified in piCtory, these are only set at system startup or a piControl reset. If the process image is subsequently overwritten with NULL, these values will be lost.
+        This function can only be applied to virtual devices!
 
-        :return: True, wenn Arbeiten am virtuellen Device erfolgreich waren
+                :return: True if operations on the virtual device were successful
         """
         if self._modio._monitoring:
             raise RuntimeError("can not write process image, while system is in monitoring mode")
@@ -2063,7 +2054,7 @@ class Virtual(Gateway):
         for io in self.get_inputs():
             self._ba_devdata[io._slc_address] = io._defaultvalue
 
-        # Inputs auf Bus schreiben
+        # Inputs to Bus schreiben
         self._modio._myfh_lck.acquire()
         try:
             self._modio._myfh.seek(self._slc_inpoff.start)

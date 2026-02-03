@@ -96,7 +96,7 @@ class TestDevicesModule(TestRevPiModIO):
         self.assertEqual(33 in rpi.device.virt01, False)
         self.assertEqual(552 in rpi.device.virt01, True)
 
-        # Löschen
+        # Delete
         del rpi.device.virt01
         with self.assertRaises(AttributeError):
             rpi.device.virt01
