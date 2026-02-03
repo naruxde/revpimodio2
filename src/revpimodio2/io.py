@@ -1499,7 +1499,7 @@ class StructIO(IOBase):
         """
         Retrieves whether the value should be treated as signed.
 
-        :return: True, wenn Vorzeichenbehaftet
+        :return: True if signed
         """
         return self._signed
 
