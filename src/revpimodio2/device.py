@@ -577,7 +577,7 @@ class GatewayMixin:
     @property
     def leftgate(self) -> bool:
         """
-        Statusbit links vom RevPi is a piGate Modul angeschlossen.
+        Status bit indicating a piGate module is connected on the left side.
 
         :return: True if piGate left exists
         """
@@ -586,7 +586,7 @@ class GatewayMixin:
     @property
     def rightgate(self) -> bool:
         """
-        Statusbit rechts vom RevPi is a piGate Modul angeschlossen.
+        Status bit indicating a piGate module is connected on the right side.
 
         :return: True if piGate right exists
         """
@@ -615,7 +615,7 @@ class ModularBase(Base):
         """
         Manages writing the error limits.
 
-        :param slc_io: Byte Slice vom ErrorLimit
+        :param slc_io: Byte Slice of the ErrorLimit
         :return: Current ErrorLimit or None if not available
         """
         if 0 <= errorlimit <= 65535:
@@ -876,7 +876,7 @@ class Core(ModularBase, GatewayMixin):
         """
         Returns the state of LED A1 from the Core.
 
-        :return: 0=from, 1=gruen, 2=rot
+        :return: 0=off, 1=green, 2=red
         """
         # 0b00000011 = 3
         return self._ba_devdata[self._slc_led.start] & 3
@@ -885,7 +885,7 @@ class Core(ModularBase, GatewayMixin):
         """
         Returns the state of LED A2 from the Core.
 
-        :return: 0=from, 1=gruen, 2=rot
+        :return: 0=off, 1=green, 2=red
         """
         # 0b00001100 = 12
         return (self._ba_devdata[self._slc_led.start] & 12) >> 2
@@ -894,7 +894,7 @@ class Core(ModularBase, GatewayMixin):
         """
         Sets the state of LED A1 from the Core.
 
-        :param value: 0=from, 1=gruen, 2=rot
+        :param value: 0=off, 1=green, 2=red
         """
         if 0 <= value <= 3:
             self.a1green(bool(value & 1))
@@ -906,7 +906,7 @@ class Core(ModularBase, GatewayMixin):
         """
         Sets the state of LED A2 from the Core.
 
-        :param value: 0=from, 1=gruen, 2=rot
+        :param value: 0=off, 1=green, 2=red
         """
         if 0 <= value <= 3:
             self.a2green(bool(value & 1))
@@ -937,7 +937,7 @@ class Connect(Core):
         super(Connect, self).__setattr__(key, value)
 
     def __wdtoggle(self) -> None:
-        """WD Ausgang all 10 Sekunden automatisch toggeln."""
+        """Automatically toggle WD output every 10 seconds."""
         while not self.__evt_wdtoggle.wait(10):
             self.wd.value = not self.wd.value
 
@@ -1004,9 +1004,9 @@ class Connect(Core):
 
     def _get_leda3(self) -> int:
         """
-        Returns the Zustand the LED A3 vom Connect.
+        Returns the state of LED A3 of the Connect.
 
-        :return: 0=from, 1=gruen, 2=rot
+        :return: 0=off, 1=green, 2=red
         """
         # 0b00110000 = 48
         return (self._ba_devdata[self._slc_led.start] & 48) >> 4
@@ -1023,7 +1023,7 @@ class Connect(Core):
         """
         Sets the state of LED A3 on the Connect.
 
-        :param: value 0=from, 1=gruen, 2=rot
+        :param: value 0=off, 1=green, 2=red
         """
         if 0 <= value <= 3:
             self.a3green(bool(value & 1))
@@ -1282,9 +1282,9 @@ class ModularBaseConnect_4_5(ModularBase):
 
     def _get_leda1(self) -> int:
         """
-        Returns the Zustand the LED A1 vom Connect.
+        Returns the state of LED A1 of the Connect.
 
-        :return: 0=from, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        :return: 0=off, 1=green, 2=red, 4=blue, mixed RGB colors
         """
         return self.__led_calculator(self._ba_devdata[self._slc_led.start] & 0b00000111)
 
@@ -1292,32 +1292,32 @@ class ModularBaseConnect_4_5(ModularBase):
         """
         Returns the state of LED A2 from the Core.
 
-        :return: 0=from, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        :return: 0=off, 1=green, 2=red, 4=blue, mixed RGB colors
         """
         return self.__led_calculator((self._ba_devdata[self._slc_led.start] & 0b00111000) >> 3)
 
     def _get_leda3(self) -> int:
         """
-        Returns the Zustand the LED A3 vom Core.
+        Returns the state of LED A3 of the Core.
 
-        :return: 0=from, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        :return: 0=off, 1=green, 2=red, 4=blue, mixed RGB colors
         """
         word_led = self._ba_devdata[self._slc_led]
         return self.__led_calculator((unpack("<H", word_led)[0] & 0b0000000111000000) >> 6)
 
     def _get_leda4(self) -> int:
         """
-        Returns the Zustand the LED A4 vom Core.
+        Returns the state of LED A4 of the Core.
 
-        :return: 0=from, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        :return: 0=off, 1=green, 2=red, 4=blue, mixed RGB colors
         """
         return self.__led_calculator((self._ba_devdata[self._slc_led.start + 1] & 0b00001110) >> 1)
 
     def _get_leda5(self) -> int:
         """
-        Returns the Zustand the LED A5 vom Core.
+        Returns the state of LED A5 of the Core.
 
-        :return: 0=from, 1=gruen, 2=root, 4=blau, mixed RGB colors
+        :return: 0=off, 1=green, 2=red, 4=blue, mixed RGB colors
         """
         return self.__led_calculator((self._ba_devdata[self._slc_led.start + 1] & 0b01110000) >> 4)
 
@@ -1325,7 +1325,7 @@ class ModularBaseConnect_4_5(ModularBase):
         """
         Sets the state of LED A1 on the Connect.
 
-        :param: value 0=from, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        :param: value 0=off, 1=green, 2=red, 4=blue, mixed RGB colors
         """
         if 0 <= value <= 7:
             self.a1red(bool(value & 2))
@@ -1338,7 +1338,7 @@ class ModularBaseConnect_4_5(ModularBase):
         """
         Sets the state of LED A2 on the Connect.
 
-        :param: value 0=from, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        :param: value 0=off, 1=green, 2=red, 4=blue, mixed RGB colors
         """
         if 0 <= value <= 7:
             self.a2red(bool(value & 2))
@@ -1351,7 +1351,7 @@ class ModularBaseConnect_4_5(ModularBase):
         """
         Sets the state of LED A3 on the Connect.
 
-        :param: value 0=from, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        :param: value 0=off, 1=green, 2=red, 4=blue, mixed RGB colors
         """
         if 0 <= value <= 7:
             self.a3red(bool(value & 2))
@@ -1364,7 +1364,7 @@ class ModularBaseConnect_4_5(ModularBase):
         """
         Sets the state of LED A4 on the Connect.
 
-        :param: value 0=from, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        :param: value 0=off, 1=green, 2=red, 4=blue, mixed RGB colors
         """
         if 0 <= value <= 7:
             self.a4red(bool(value & 2))
@@ -1377,7 +1377,7 @@ class ModularBaseConnect_4_5(ModularBase):
         """
         Sets the state of LED A5 on the Connect.
 
-        :param: value 0=from, 1=gruen, 2=rot, 4=blue, mixed RGB colors
+        :param: value 0=off, 1=green, 2=red, 4=blue, mixed RGB colors
         """
         if 0 <= value <= 7:
             self.a5red(bool(value & 2))
@@ -1555,18 +1555,18 @@ class Compact(Base):
 
     def _get_leda1(self) -> int:
         """
-        Returns the Zustand the LED A1 vom Compact.
+        Returns the state of LED A1 of the Compact.
 
-        :return: 0=from, 1=gruen, 2=rot
+        :return: 0=off, 1=green, 2=red
         """
         # 0b00000011 = 3
         return self._ba_devdata[self._slc_led.start] & 3
 
     def _get_leda2(self) -> int:
         """
-        Returns the Zustand the LED A2 vom Compact.
+        Returns the state of LED A2 of the Compact.
 
-        :return: 0=from, 1=gruen, 2=rot
+        :return: 0=off, 1=green, 2=red
         """
         # 0b00001100 = 12
         return (self._ba_devdata[self._slc_led.start] & 12) >> 2
@@ -1575,7 +1575,7 @@ class Compact(Base):
         """
         Sets the state of LED A1 on the Compact.
 
-        :param value: 0=from, 1=gruen, 2=rot
+        :param value: 0=off, 1=green, 2=red
         """
         if 0 <= value <= 3:
             self.a1green(bool(value & 1))
@@ -1587,7 +1587,7 @@ class Compact(Base):
         """
         Sets the state of LED A2 on the Compact.
 
-        :param value: 0=from, 1=gruen, 2=rot
+        :param value: 0=off, 1=green, 2=red
         """
         if 0 <= value <= 3:
             self.a2green(bool(value & 1))
