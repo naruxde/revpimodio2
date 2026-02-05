@@ -18,12 +18,20 @@ from .io import IOBase
 class EventCallback(Thread):
     """Thread for internal calling of event functions.
 
-    The event function that this thread calls will receive the thread itself as a parameter. This must be considered when defining the function, e.g., "def event(th):". For extensive functions, this can be evaluated to prevent duplicate starts.
+    The event function that this thread calls will receive the thread itself
+    as a parameter. This must be considered when defining the function, e.g.,
+    "def event(th):". For extensive functions, this can be evaluated to
+    prevent duplicate starts.
     The name of the IO object can be retrieved via EventCallback.ioname,
-    which triggered the event. EventCallback.iovalue returns the value of the IO object at the time of triggering.
-    The thread provides the EventCallback.exit event as an abort condition for the called function.
-    By calling the EventCallback.stop() function, the exit event is set and can be used to abort loops.
-    A wait function can also be implemented with the .exit() event: "th.exit.wait(0.5)" - waits 500ms or aborts immediately if .stop() is called on the thread.
+    which triggered the event. EventCallback.iovalue returns the value of
+    the IO object at the time of triggering.
+    The thread provides the EventCallback.exit event as an abort condition
+    for the called function.
+    By calling the EventCallback.stop() function, the exit event is set
+    and can be used to abort loops.
+    A wait function can also be implemented with the .exit() event:
+    "th.exit.wait(0.5)" - waits 500ms or aborts immediately if .stop()
+    is called on the thread.
 
     while not th.exit.is_set():
         # IO-Arbeiten
@@ -363,7 +371,9 @@ class ProcimgWriter(Thread):
     """
     Class for synchronization thread.
 
-    This class is started as a thread if the process image should be synchronized cyclically. This function is mainly used for event handling.
+    This class is started as a thread if the process image should be
+    synchronized cyclically. This function is mainly used for event
+    handling.
     """
 
     __slots__ = (

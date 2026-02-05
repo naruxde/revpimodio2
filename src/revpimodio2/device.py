@@ -1053,10 +1053,14 @@ class Connect(Core):
         """
         Sets the automatic watchdog toggle.
 
-        If this value is set to True, the necessary bit to toggle the watchdog is switched between True and False every 10 seconds in the background.
-        This bit is automatically written to the process image with autorefresh=True.
+        If this value is set to True, the necessary bit to toggle the
+        watchdog is switched between True and False every 10 seconds in
+        the background.
+        This bit is automatically written to the process image with
+        autorefresh=True.
 
-        IMPORTANT: If autorefresh=False, .writeprocimg() must be called cyclically to write the value to the process image!!!
+        IMPORTANT: If autorefresh=False, .writeprocimg() must be called
+        cyclically to write the value to the process image!!!
 
         :param value: True to activate, False to terminate
         """
@@ -2046,9 +2050,11 @@ class Gateway(Device):
     """
     Class for the RevPi Gateway-Devices.
 
-    Provides additional functions for the RevPi Gateway devices besides the functions from RevPiDevice.
-    Gateways are ready. IOs on this device provide the replace_io function,
-    which allows defining custom IOs that map to a RevPiStructIO object.
+    Provides additional functions for the RevPi Gateway devices besides
+    the functions from RevPiDevice.
+    Gateways are ready. IOs on this device provide the replace_io
+    function, which allows defining custom IOs that map to a
+    RevPiStructIO object.
     This IO type can process and return values via multiple bytes.
 
     :ref: :func:`revpimodio2.io.IntIOReplaceable.replace_io()`
@@ -2096,7 +2102,10 @@ class Virtual(Gateway):
         """
                 Writes piCtory default input values for a virtual device.
 
-        If default values for inputs of a virtual device are specified in piCtory, these are only set at system startup or a piControl reset. If the process image is subsequently overwritten with NULL, these values will be lost.
+        If default values for inputs of a virtual device are specified
+        in piCtory, these are only set at system startup or a piControl
+        reset. If the process image is subsequently overwritten with NULL,
+        these values will be lost.
         This function can only be applied to virtual devices!
 
                 :return: True if operations on the virtual device were successful
