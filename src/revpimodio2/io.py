@@ -1465,8 +1465,10 @@ class StructIO(IOBase):
 
         Handles byte and word order conversion based on configuration.
 
-        :param value: If None, returns current value unpacked using struct format; otherwise packs and sets the value
-        :return: Current IO value unpacked according to struct format when called without arguments
+        :param value: If None, returns current value unpacked using struct
+            format; otherwise packs and sets the value
+        :return: Current IO value unpacked according to struct format when
+            called without arguments
         """
         if value is None:
             # Inline get_structdefaultvalue()
