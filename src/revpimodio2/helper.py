@@ -34,7 +34,7 @@ class EventCallback(Thread):
     is called on the thread.
 
     while not th.exit.is_set():
-        # IO-Arbeiten
+        # Work with IOs
         th.exit.wait(0.5)
     """
 
@@ -45,7 +45,7 @@ class EventCallback(Thread):
         Init EventCallback class.
 
         :param func: Function that should be called at startup
-        :param name: IO-Name
+        :param name: IO name
         :param value: IO value at the time of the event
         """
         super().__init__()
@@ -612,7 +612,7 @@ class ProcimgWriter(Thread):
                         else:
                             self.__dict_delay[tup_fire] -= 1
                             if self.__dict_delay[tup_fire] <= 0:
-                                # Accept and delete delayed event
+                                # Put event to queue and delete delayed event
                                 if tup_fire[0].as_thread:
                                     self._eventqth.put(tup_fire, False)
                                 else:

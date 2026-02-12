@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 """RevPiModIO main class for network access."""
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
@@ -50,7 +51,7 @@ class ConfigChanged(Exception):
 
 class NetFH(Thread):
     """
-        Network file handler for the process image.
+    Network file handler for the process image.
 
     This file-object-like object manages reading and writing of the
     process image via the network. A remote Revolution Pi can be controlled this way.
@@ -131,7 +132,7 @@ class NetFH(Thread):
 
     def __check_acl(self, bytecode: bytes) -> None:
         """
-                Checks if ACL allows the operation on RevPi.
+        Checks if ACL allows the operation on RevPi.
 
         If the operation is not permitted, the socket is immediately closed
         and an exception is thrown.
@@ -151,7 +152,7 @@ class NetFH(Thread):
 
     def __set_systimeout(self, value: int) -> None:
         """
-                System function for timeout calculation.
+        System function for timeout calculation.
 
         :param value: Timeout in milliseconds 100 - 60000
         """
@@ -284,7 +285,7 @@ class NetFH(Thread):
 
     def clear_dirtybytes(self, position=None) -> None:
         """
-                Removes the configured dirty bytes from the RevPi server.
+        Removes the configured dirty bytes from the RevPi server.
 
         This function does not throw an exception on transmission error,
         but triggers a reconnection.
@@ -392,7 +393,7 @@ class NetFH(Thread):
 
     def get_closed(self) -> bool:
         """
-                Check if connection is closed.
+        Check if connection is closed.
 
         :return: True if connection is closed
         """
@@ -400,7 +401,7 @@ class NetFH(Thread):
 
     def get_config_changed(self) -> bool:
         """
-                Check if RevPi configuration was changed.
+        Check if RevPi configuration was changed.
 
         :return: True if RevPi configuration was changed
         """
@@ -408,7 +409,7 @@ class NetFH(Thread):
 
     def get_name(self) -> str:
         """
-                Return connection name.
+        Return connection name.
 
         :return: <class 'str'> IP:PORT
         """
@@ -416,7 +417,7 @@ class NetFH(Thread):
 
     def get_reconnecting(self) -> bool:
         """
-                Internal reconnect active due to network errors.
+        Internal reconnect active due to network errors.
 
         :return: True if reconnect is active
         """
@@ -424,7 +425,7 @@ class NetFH(Thread):
 
     def get_timeout(self) -> int:
         """
-                Returns current timeout.
+        Returns current timeout.
 
         :return: <class 'int'> in milliseconds
         """
@@ -458,7 +459,7 @@ class NetFH(Thread):
 
     def read(self, length: int) -> bytes:
         """
-                Read data via the network.
+        Read data via the network.
 
         :param length: Number of bytes
         :return: Read <class 'bytes'>
@@ -586,12 +587,12 @@ class NetFH(Thread):
 
     def set_dirtybytes(self, position: int, dirtybytes: bytes) -> None:
         """
-                Configures dirty bytes for process image on connection error.
+        Configures dirty bytes for process image on connection error.
 
-                This function does not throw an exception on transmission error,
-                but triggers a reconnection.
+        This function does not throw an exception on transmission error,
+        but triggers a reconnection.
 
-                :param position: Start position for writing
+        :param position: Start position for writing
         :param dirtybytes: <class 'bytes'> to be written
         """
         if self.__config_changed:
@@ -624,7 +625,7 @@ class NetFH(Thread):
 
     def set_timeout(self, value: int) -> None:
         """
-                Sets timeout value for connection.
+        Sets timeout value for connection.
 
         :param value: Timeout in milliseconds
         """
@@ -644,9 +645,9 @@ class NetFH(Thread):
 
     def tell(self) -> int:
         """
-        Returns aktuelle Position.
+        Returns actual position in file.
 
-        :return: Aktuelle Position
+        :return: Actual position in file
         """
         if self.__config_changed:
             raise ConfigChanged("configuration on revolution pi was changed")
@@ -656,7 +657,7 @@ class NetFH(Thread):
 
     def write(self, bytebuff: bytes) -> int:
         """
-                Write data via the network.
+        Write data via the network.
 
         :param bytebuff: Bytes to write
         :return: <class 'int'> Number of written bytes
@@ -691,7 +692,7 @@ class NetFH(Thread):
 
 class RevPiNetIO(_RevPiModIO):
     """
-        Class for managing the piCtory configuration via the network.
+    Class for managing the piCtory configuration via the network.
 
     This class takes over the entire configuration from piCtory and maps
     the devices and IOs. It takes over exclusive management of the
@@ -714,7 +715,7 @@ class RevPiNetIO(_RevPiModIO):
         shared_procimg=False,
     ):
         """
-                Instantiates the basic functions.
+        Instantiates the basic functions.
 
         :param address: IP address <class 'str'> / (IP, Port) <class 'tuple'>
         :param autorefresh: If True, add all devices to autorefresh
@@ -723,8 +724,8 @@ class RevPiNetIO(_RevPiModIO):
         :param simulator: Loads the module as simulator and swaps IOs
         :param debug: Output complete messages for all errors
         :param replace_io_file: Load replace IO configuration from file
-                :param shared_procimg: Share process image with other processes, this
-                                       could be insecure for automation
+        :param shared_procimg: Share process image with other processes, this
+            could be insecure for automation
         """
         check_ip = compile(r"^(25[0-5]|(2[0-4]|[01]?\d|)\d)(\.(25[0-5]|(2[0-4]|[01]?\d|)\d)){3}$")
 
@@ -823,7 +824,7 @@ class RevPiNetIO(_RevPiModIO):
 
     def get_config_changed(self) -> bool:
         """
-                Check if RevPi configuration was changed.
+        Check if RevPi configuration was changed.
 
         In this case, the connection is closed and RevPiNetIO must be
         reinstantiated.
@@ -834,7 +835,7 @@ class RevPiNetIO(_RevPiModIO):
 
     def get_jconfigrsc(self) -> dict:
         """
-                Loads the piCtory configuration and creates a <class 'dict'>.
+        Loads the piCtory configuration and creates a <class 'dict'>.
 
         :return: <class 'dict'> of the piCtory configuration
         """
@@ -845,7 +846,7 @@ class RevPiNetIO(_RevPiModIO):
 
     def get_reconnecting(self) -> bool:
         """
-                Internal reconnect active due to network errors.
+        Internal reconnect active due to network errors.
 
         The module tries internally to reestablish the connection. No
         further action is needed.
@@ -874,12 +875,12 @@ class RevPiNetIO(_RevPiModIO):
 
     def net_setdefaultvalues(self, device=None) -> None:
         """
-                Configures the PLC server with the piCtory default values.
+        Configures the PLC server with the piCtory default values.
 
         These values are set on the RevPi if the connection is
         unexpectedly interrupted (network error).
 
-                :param device: Only apply to single device, otherwise to all
+        :param device: Only apply to single device, otherwise to all
         """
         if self.monitoring:
             raise RuntimeError("can not send default values, while system is in monitoring mode")
@@ -923,7 +924,7 @@ class RevPiNetIO(_RevPiModIO):
 
 class RevPiNetIOSelected(RevPiNetIO):
     """
-        Class for managing individual devices from piCtory.
+    Class for managing individual devices from piCtory.
 
     This class only takes over specified devices from the piCtory configuration
     and maps them including IOs. It takes over exclusive management of the
@@ -946,15 +947,15 @@ class RevPiNetIOSelected(RevPiNetIO):
         shared_procimg=False,
     ):
         """
-                Instantiates the basic functions only for specified devices.
+        Instantiates the basic functions only for specified devices.
 
-                The parameter deviceselection can be a single
+        The parameter deviceselection can be a single
         device position / single device name or a list with
         multiple positions / names
 
         :param address: IP address <class 'str'> / (IP, Port) <class 'tuple'>
         :param deviceselection: Position number or device name
-                :ref: :func:`RevPiNetIO.__init__()`
+        :ref: :func:`RevPiNetIO.__init__()`
         """
         super().__init__(
             address,
@@ -1020,14 +1021,14 @@ class RevPiNetIODriver(RevPiNetIOSelected):
         shared_procimg=False,
     ):
         """
-                Instantiates the basic functions.
+        Instantiates the basic functions.
 
-                Parameters 'monitoring' and 'simulator' are not available here,
+        Parameters 'monitoring' and 'simulator' are not available here,
         as these are set automatically.
 
         :param address: IP address <class 'str'> / (IP, Port) <class 'tuple'>
         :param virtdev: Virtual device or multiple as <class 'list'>
-                :ref: :func:`RevPiModIO.__init__()`
+        :ref: :func:`RevPiModIO.__init__()`
         """
         # Load parent with monitoring=False and simulator=True
         if type(virtdev) not in (list, tuple):
