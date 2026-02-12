@@ -23,6 +23,12 @@ setup(
 
     python_requires=">= 3.2",
     install_requires=[],
+    extras_require={
+        "docs": [
+            "sphinx",
+            "sphinx_rtd_theme",
+        ],
+    },
     entry_points={},
 
     platforms=["all"],
