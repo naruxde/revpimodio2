@@ -520,9 +520,6 @@ class Device(object):
         """
         Read all inputs for this device from process image.
 
-
-        Same  see
-
         :return: True if successfully executed
         :ref: :func:`revpimodio2.modio.RevPiModIO.readprocimg()`
         """
@@ -652,7 +649,7 @@ class ModularBase(Base):
     @property
     def unconfdevice(self) -> bool:
         """
-                Status bit for an IO module not configured with piCtory.
+        Status bit for an IO module not configured with piCtory.
 
         :return: True if IO module is not configured
         """
@@ -661,7 +658,7 @@ class ModularBase(Base):
     @property
     def missingdeviceorgate(self) -> bool:
         """
-                Status bit for an IO module missing or piGate configured.
+        Status bit for an IO module missing or piGate configured.
 
         :return: True if IO module is missing or piGate is configured
         """
@@ -746,7 +743,7 @@ class ModularBase(Base):
         """
         Sets RS485 ErrorLimit1 to new value.
 
-        :param value: Neuer ErrorLimit1 value
+        :param value: New ErrorLimit1 value
         """
         if self._slc_errorlimit1 is None:
             raise RuntimeError("selected core item in piCtory does not support errorlimit1")
@@ -771,7 +768,7 @@ class ModularBase(Base):
         """
         Sets RS485 ErrorLimit2 to new value.
 
-        :param value: Neuer ErrorLimit2 value
+        :param value: New ErrorLimit2 value
         """
         if self._slc_errorlimit2 is None:
             raise RuntimeError("selected core item in piCtory does not support errorlimit2")
@@ -1192,7 +1189,6 @@ class ModularBaseConnect_4_5(ModularBase):
             exp_a5blue = exp_a1red
 
         # Create actual IOs
-        """LED A1 red."""
         self.a1red = IOBase(
             self,
             ["core.a1red", 0, 1, self._slc_led.start, exp_a1red, None, "LED_A1_RED", "0"],
@@ -1511,7 +1507,7 @@ class Compact(Base):
     Class for the RevPi Compact.
 
     Provides functions for the LEDs. IOs are accessed via the .io
-    object zugegriffen.
+    object.
     """
 
     __slots__ = (
@@ -1536,7 +1532,7 @@ class Compact(Base):
         """Prepare Core class."""
         super()._devconfigure()
 
-        # Statische IO Verknüpfungen of the Compacts
+        # Link static IOs of the Compact
         self._slc_led = slice(23, 24)
         self._slc_temperature = slice(0, 1)
         self._slc_frequency = slice(1, 2)
@@ -2100,7 +2096,7 @@ class Virtual(Gateway):
 
     def writeinputdefaults(self):
         """
-                Writes piCtory default input values for a virtual device.
+        Writes piCtory default input values for a virtual device.
 
         If default values for inputs of a virtual device are specified
         in piCtory, these are only set at system startup or a piControl
@@ -2108,7 +2104,7 @@ class Virtual(Gateway):
         these values will be lost.
         This function can only be applied to virtual devices!
 
-                :return: True if operations on the virtual device were successful
+        :return: True if operations on the virtual device were successful
         """
         if self._modio._monitoring:
             raise RuntimeError("can not write process image, while system is in monitoring mode")
