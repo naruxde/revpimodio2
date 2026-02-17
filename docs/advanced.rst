@@ -36,7 +36,6 @@ Gateway modules provide generic IOs (like ``Input_1``, ``Output_1``, etc.) that 
     rpi.io.Input_1.replace_io(
         "temperature",     # New IO name
         "h",              # struct format: signed short
-        defaultvalue=0    # Default value
     )
 
     # Use the custom IO by its new name
@@ -70,6 +69,7 @@ Common format codes for ``replace_io`` (see `Python struct format characters <ht
 * ``'i'`` - signed int (-2147483648 to 2147483647)
 * ``'I'`` - unsigned int (0 to 4294967295)
 * ``'f'`` - float (32-bit)
+* ``'d'`` - float (64-bit)
 
 Multiple Custom IOs
 -------------------
@@ -82,8 +82,8 @@ Define multiple custom IOs programmatically by replacing generic gateway IOs:
 
     # Replace multiple gateway IOs with custom definitions
     # Assuming a gateway module with Input_1, Input_2, Output_1, Output_2
-    rpi.io.Input_1.replace_io("temperature", "h", defaultvalue=0)
-    rpi.io.Input_2.replace_io("humidity", "h", defaultvalue=0)
+    rpi.io.Input_1.replace_io("temperature", "h")
+    rpi.io.Input_2.replace_io("humidity", "h")
     rpi.io.Output_1.replace_io("setpoint", "h", defaultvalue=700)
     rpi.io.Output_2.replace_io("control_word", "H", defaultvalue=0)
 
@@ -126,12 +126,10 @@ Create an INI-style configuration file (``replace_ios.conf``):
     [temperature]
     replace = Input_1
     frm = h
-    defaultvalue = 0
 
     [humidity]
     replace = Input_2
     frm = h
-    defaultvalue = 0
 
     [setpoint]
     replace = Output_1
@@ -181,7 +179,9 @@ This is useful for:
 Watchdog Management
 ===================
 
-The hardware watchdog monitors your program and resets the system if it stops responding.
+The hardware watchdog monitors your program and resets the system if it stops responding. If you
+use the software watchdog will will only works if you use RevPiPyControl as runtime for your python
+program.
 
 How the Watchdog Works
 -----------------------
@@ -197,8 +197,6 @@ Cyclic Watchdog Toggle
 
     import revpimodio2
 
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-
     def main_cycle(ct):
         # Toggle every 10 cycles (200ms @ 20ms)
         if ct.flank10c:
@@ -207,7 +205,7 @@ Cyclic Watchdog Toggle
         # Your control logic
         ct.io.output.value = ct.io.input.value
 
-    rpi.cycleloop(main_cycle)
+    revpimodio2.run_plc(main_cycle)
 
 Event-Driven Watchdog Toggle
 -----------------------------
@@ -233,134 +231,6 @@ Event-Driven Watchdog Toggle
 
     rpi.handlesignalend()
     rpi.mainloop()
-
-Conditional Watchdog
---------------------
-
-Enable watchdog only when system is operational:
-
-.. code-block:: python
-
-    def machine_with_watchdog(ct):
-        if ct.first:
-            ct.var.state = "IDLE"
-            ct.var.watchdog_enabled = False
-
-        # Enable watchdog only in RUNNING state
-        if ct.var.state == "RUNNING":
-            if not ct.var.watchdog_enabled:
-                ct.var.watchdog_enabled = True
-                print("Watchdog enabled")
-
-            # Toggle watchdog
-            if ct.flank10c:
-                ct.core.wd_toggle()
-
-        else:
-            ct.var.watchdog_enabled = False
-
-        # State machine logic
-        if ct.var.state == "IDLE":
-            if ct.io.start_button.value:
-                ct.var.state = "RUNNING"
-
-        elif ct.var.state == "RUNNING":
-            ct.io.motor.value = True
-            if ct.io.stop_button.value:
-                ct.var.state = "IDLE"
-
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-    rpi.cycleloop(machine_with_watchdog)
-
-Combining Paradigms
-===================
-
-Combine cyclic and event-driven programming for optimal results.
-
-Cyclic Control with Event UI
------------------------------
-
-Use cyclic for time-critical control, events for user interface:
-
-.. code-block:: python
-
-    import revpimodio2
-    import threading
-
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-
-    def cyclic_control(ct: revpimodio2.Cycletools):
-        """Fast control loop."""
-        if ct.first:
-            ct.var.setpoint = 50.0
-            ct.var.running = False
-
-        if ct.var.running:
-            # Fast control logic
-            error = ct.var.setpoint - ct.io.sensor.value
-            if error > 5:
-                ct.io.actuator.value = True
-            elif error < -5:
-                ct.io.actuator.value = False
-
-    def on_setpoint_change(ioname, iovalue):
-        """Event handler for user setpoint changes."""
-        print(f"New setpoint: {iovalue}")
-        # Access ct.var from event requires thread-safe approach
-        # In practice, use shared data structure or message queue
-
-    def on_start(ioname, iovalue):
-        print("System started")
-
-    def on_stop(ioname, iovalue):
-        print("System stopped")
-
-    # Register user events
-    rpi.io.start_button.reg_event(on_start, edge=revpimodio2.RISING)
-    rpi.io.stop_button.reg_event(on_stop, edge=revpimodio2.RISING)
-    rpi.io.setpoint_input.reg_event(on_setpoint_change, delay=100)
-
-    # Run cyclic loop in background
-    threading.Thread(
-        target=lambda: rpi.cycleloop(cyclic_control),
-        daemon=True
-    ).start()
-
-    # Run event loop in main thread
-    rpi.handlesignalend()
-    rpi.mainloop()
-
-Event Triggers with Cyclic Processing
---------------------------------------
-
-Use events to trigger actions, cyclic for processing:
-
-.. code-block:: python
-
-    import revpimodio2
-
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-
-    def cyclic_processor(ct):
-        """Process work queue."""
-        if ct.first:
-            ct.var.work_queue = []
-
-        # Process queued work
-        if ct.var.work_queue:
-            item = ct.var.work_queue.pop(0)
-            process_item(item)
-
-    def on_new_item(ioname, iovalue):
-        """Queue work from events."""
-        # Note: Accessing ct.var from events requires synchronization
-        # This is a simplified example
-        print(f"New item queued from {ioname}")
-
-    rpi.io.trigger1.reg_event(on_new_item, edge=revpimodio2.RISING)
-    rpi.io.trigger2.reg_event(on_new_item, edge=revpimodio2.RISING)
-
-    rpi.cycleloop(cyclic_processor)
 
 Performance Optimization
 ========================
@@ -487,23 +357,19 @@ Track and handle I/O errors:
 
 .. code-block:: python
 
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-    rpi.maxioerrors = 10  # Exception after 10 errors
+    maxioerrors = 10  # Exception after 10 errors
 
     def main_cycle(ct):
         # Check error count periodically
         if ct.flank20c:
-            if rpi.ioerrors > 5:
-                print(f"Warning: {rpi.ioerrors} I/O errors detected")
+            if rpi.core.ioerrorcount > maxioerrors:
+                print(f"Warning: {rpi.core.ioerrorcount} I/O errors detected")
                 ct.io.warning_led.value = True
 
         # Normal logic
         ct.io.output.value = ct.io.input.value
 
-    try:
-        rpi.cycleloop(main_cycle)
-    except RuntimeError as e:
-        print(f"I/O error threshold exceeded: {e}")
+    revpimodio2.run_plc(main_cycle)
 
 Best Practices
 ==============
@@ -600,35 +466,6 @@ Document complex logic:
         # State machine implementation
         # ...
 
-Testing
--------
-
-Test your code thoroughly:
-
-.. code-block:: python
-
-    def test_temperature_control(ct):
-        """Test temperature control logic."""
-
-        if ct.first:
-            ct.var.cooling_active = False
-            ct.var.test_temp = 20.0
-
-        # Simulate temperature increase
-        if ct.var.test_temp < 80:
-            ct.var.test_temp += 0.5
-
-        # Test control logic
-        temp = ct.var.test_temp
-
-        if temp > 75 and not ct.var.cooling_active:
-            assert ct.io.cooling.value == True
-            ct.var.cooling_active = True
-
-        if temp < 65 and ct.var.cooling_active:
-            assert ct.io.cooling.value == False
-            ct.var.cooling_active = False
-
 Logging
 -------
 
@@ -676,6 +513,7 @@ Always validate external inputs:
         """Validate setpoint range."""
         if 0 <= iovalue <= 100:
             rpi.io.setpoint.value = iovalue
+            rpi.io.error_led.value = False
         else:
             print(f"Invalid setpoint: {iovalue}")
             rpi.io.error_led.value = True

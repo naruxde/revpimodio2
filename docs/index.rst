@@ -24,13 +24,12 @@ Quick Example
 **Cyclic Programming**::
 
     import revpimodio2
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
 
     def main(ct):
         if ct.io.button.value:
             ct.io.led.value = True
 
-    rpi.cycleloop(main)
+    revpimodio2.run_plc(main)
 
 **Event-Driven Programming**::
 

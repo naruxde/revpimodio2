@@ -94,29 +94,6 @@ Register callbacks for IO value changes:
 * ``revpimodio2.FALLING`` - True to False transition
 * ``revpimodio2.BOTH`` - Any change (default)
 
-Lambda Functions
-----------------
-
-Use lambda for simple callbacks:
-
-.. code-block:: python
-
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-
-    # Simple lambda callback
-    rpi.io.button.reg_event(
-        lambda name, val: print(f"Button: {val}")
-    )
-
-    # Lambda with edge filter
-    rpi.io.start_button.reg_event(
-        lambda name, val: print("Started!"),
-        edge=revpimodio2.RISING
-    )
-
-    rpi.handlesignalend()
-    rpi.mainloop()
-
 Multiple Events
 ---------------
 
@@ -212,12 +189,15 @@ Debouncing with Edge Detection
 Timer Events
 ============
 
-Execute callbacks at regular intervals independent of IO changes:
+The timer is started when the IO value changes and executes the passed
+function - even if the IO value has changed in the meantime. If the
+timer has not expired and the condition is met again, the timer is NOT
+reset to the delay value or started a second time.
 
 .. code-block:: python
 
     def periodic_task(ioname, iovalue):
-        """Called every 500ms."""
+        """Called after 500ms."""
         print(f"Periodic task: {iovalue}")
 
     rpi = revpimodio2.RevPiModIO(autorefresh=True)
@@ -255,8 +235,8 @@ Timer Event Parameters
 
 **Parameters:**
 
-* ``interval`` - Milliseconds between calls
-* ``prefire`` - If True, trigger immediately on registration
+* ``interval`` - Delay in milliseconds.
+* ``prefire`` - If True, trigger immediately after starting the mainloop.
 
 Threaded Events
 ===============
@@ -425,29 +405,6 @@ Sensor Logging
     rpi.handlesignalend()
     rpi.mainloop()
 
-Periodic Status Report
-----------------------
-
-.. code-block:: python
-
-    import revpimodio2
-
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-
-    def status_report(ioname, iovalue):
-        """Print system status every 10 seconds."""
-        print("=== Status Report ===")
-        print(f"Temperature: {rpi.core.temperature.value}°C")
-        print(f"CPU Frequency: {rpi.core.frequency.value} MHz")
-        print(f"IO Errors: {rpi.core.ioerrorcount.value}")
-        print()
-
-    # Status report every 10 seconds
-    rpi.io.dummy.reg_timerevent(status_report, 10000, prefire=True)
-
-    rpi.handlesignalend()
-    rpi.mainloop()
-
 Threaded Data Processing
 -------------------------
 
@@ -515,19 +472,6 @@ For slow operations, use threaded events:
 
     rpi.io.trigger.reg_event(slow_task, as_thread=True)
 
-Use Debouncing
---------------
-
-Always debounce mechanical inputs:
-
-.. code-block:: python
-
-    # Good - Debounced button
-    rpi.io.button.reg_event(callback, delay=30)
-
-    # Poor - No debounce (may trigger multiple times)
-    rpi.io.button.reg_event(callback)
-
 Handle Errors Gracefully
 -------------------------
 
@@ -542,18 +486,6 @@ Protect callbacks from exceptions:
         except Exception as e:
             print(f"Error in callback: {e}")
             rpi.io.output.value = False  # Safe state
-
-Check IO Existence
-------------------
-
-Verify IOs exist before registering events:
-
-.. code-block:: python
-
-    if "optional_button" in rpi.io:
-        rpi.io.optional_button.reg_event(callback)
-    else:
-        print("Optional button not configured")
 
 Clean Up Threads
 ----------------

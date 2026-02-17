@@ -65,8 +65,6 @@ For continuous operation, use a cyclic loop:
 
     import revpimodio2
 
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-
     def main_cycle(ct: revpimodio2.Cycletools):
         """Called every cycle (default: 20-50ms)."""
 
@@ -91,7 +89,7 @@ For continuous operation, use a cyclic loop:
             print("Program stopped")
 
     # Run cyclic loop
-    rpi.cycleloop(main_cycle)
+    revpimodio2.run_plc(main_cycle)
 
 Event-Driven Program
 --------------------

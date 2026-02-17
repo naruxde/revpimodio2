@@ -5,7 +5,7 @@ Installation
 System Requirements
 ===================
 
-* Python 3.7 or higher
+* Python 3.2 or higher
 * Revolution Pi hardware (Core, Core3, Connect, Compact, Flat)
 * piCtory configuration tool
 
@@ -23,6 +23,9 @@ Log out and log back in for the group change to take effect.
 
 Installing RevPiModIO
 =====================
+
+RevPiModIO is preinstalled on your Revolution Pi. It is distributed as debian package and will be
+updated by `apt`.
 
 Using pip
 ---------

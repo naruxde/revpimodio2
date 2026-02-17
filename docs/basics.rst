@@ -78,10 +78,11 @@ Adjust cycle time to match your needs:
 
 .. code-block:: python
 
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
+    rpi = revpimodio2.RevPiModIO()
     rpi.cycletime = 100  # Set to 100ms
+    rpi.autorefresh_all()
 
-**Important:** Faster cycle times consume more CPU. Choose the slowest cycle time that meets your requirements.
+**Important:** Faster cycle times consume more CPU. Choose the slowest cycle time that meets your requirements. Default values will fit most needs.
 
 Error Handling
 --------------
@@ -90,10 +91,10 @@ Configure I/O error threshold:
 
 .. code-block:: python
 
-    rpi.maxioerrors = 10  # Raise exception after 10 errors
+    maxioerrors = 10  # Raise exception after 10 errors
 
     # Check error count
-    if rpi.ioerrors > 5:
+    if rpi.core.ioerrorcount > maxioerrors:
         print("Warning: I/O errors detected")
 
 Core Objects

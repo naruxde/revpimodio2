@@ -42,8 +42,6 @@ Simple Cycle Loop
 
     import revpimodio2
 
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-
     def main_cycle(ct: revpimodio2.Cycletools):
         """Execute each cycle."""
         if ct.io.start_button.value:
@@ -51,9 +49,16 @@ Simple Cycle Loop
         if ct.io.stop_button.value:
             ct.io.motor.value = False
 
-    rpi.cycleloop(main_cycle)
+    revpimodio2.run_plc(main_cycle)
+
+    # .run_plc is a shortcut for:
+    # rpi = revpimodio2.RevPiModIO(autorefresh=True)
+    # rpi.handlesignalend()
+    # rpi.cycleloop(main_cycle)
 
 The ``main_cycle`` function is called repeatedly at the configured cycle time (typically 20-50ms).
+
+**Info:** ``rpi.handlesignalend()``
 
 Understanding Cycle Time
 -------------------------
@@ -68,10 +73,9 @@ Adjust cycle time to match your needs:
 
 .. code-block:: python
 
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-    rpi.cycletime = 100  # 100ms = 10 Hz
+    revpimodio2.run_plc(main_cycle, cycletime=100)  # 100ms = 10 Hz
 
-**Important:** Faster cycle times consume more CPU. Choose the slowest cycle time that meets your requirements.
+**Important:** Faster cycle times consume more CPU but will detect fast changes of input values.
 
 Cycletools Object
 =================
@@ -109,8 +113,7 @@ Use ``ct.first`` and ``ct.last`` for setup and teardown:
             ct.io.motor.value = False
             print(f"Total cycles: {ct.var.counter}")
 
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-    rpi.cycleloop(main_cycle)
+    revpimodio2.run_plc(main_cycle)
 
 Persistent Variables
 ====================
@@ -155,6 +158,7 @@ Detect input changes efficiently without storing previous values:
             print("Button released!")
 
     rpi = revpimodio2.RevPiModIO(autorefresh=True)
+    rpi.handlesignalend()
     rpi.cycleloop(main_cycle)
 
 Edge types:
@@ -176,17 +180,16 @@ Toggle flags alternate between True/False at regular intervals:
 .. code-block:: python
 
     def main_cycle(ct):
-        # Blink LED - flag5c alternates every 5 cycles
-        ct.io.blink_led.value = ct.flag5c
+        # Blink LED - flag5c alternates every cycle
+        ct.io.blink_led.value = ct.flag1c
 
         # Different blink rates
-        ct.io.fast_blink.value = ct.flag2c    # Every 2 cycles
+        ct.io.fast_blink.value = ct.flag5c    # Every 5 cycles
         ct.io.slow_blink.value = ct.flag20c   # Every 20 cycles
 
 **Available toggle flags:**
 
 * ``ct.flag1c`` - Every cycle
-* ``ct.flag2c`` - Every 2 cycles
 * ``ct.flag5c`` - Every 5 cycles
 * ``ct.flag10c`` - Every 10 cycles
 * ``ct.flag20c`` - Every 20 cycles
@@ -218,12 +221,12 @@ Flank flags are True for exactly one cycle at regular intervals:
 Timers
 ======
 
-RevPiModIO provides three timer types based on PLC standards. All timers are specified in cycle counts.
+RevPiModIO provides three timer types based on PLC standards. All timers are specified in cycle counts or milliseconds.
 
 On-Delay Timer (TON/TONC)
 --------------------------
 
-Output becomes True only after input is continuously True for specified cycles:
+Output becomes True only after input is continuously True for specified cycles (use ton with milliseconds value instead of cycles):
 
 .. code-block:: python
 
@@ -253,7 +256,7 @@ Output becomes True only after input is continuously True for specified cycles:
 Off-Delay Timer (TOF/TOFC)
 ---------------------------
 
-Output stays True for specified cycles after input goes False:
+Output stays True for specified cycles or milliseconds after input goes False (use tof with milliseconds value instead of cycles):
 
 .. code-block:: python
 
@@ -280,7 +283,7 @@ Output stays True for specified cycles after input goes False:
 Pulse Timer (TP/TPC)
 --------------------
 
-Generates a one-shot pulse of specified duration:
+Generates a one-shot pulse of specified duration (use tp with milliseconds value instead of cycles):
 
 .. code-block:: python
 
@@ -305,25 +308,6 @@ Generates a one-shot pulse of specified duration:
 * Acknowledgment pulses
 * Retriggerable delays
 
-Converting Time to Cycles
---------------------------
-
-Calculate cycles from desired time:
-
-.. code-block:: python
-
-    # At 20ms cycle time:
-    # 1 second = 50 cycles
-    # 100ms = 5 cycles
-    # 2 seconds = 100 cycles
-
-    def main_cycle(ct):
-        cycle_time_ms = rpi.cycletime
-        desired_time_ms = 1500  # 1.5 seconds
-
-        cycles_needed = int(desired_time_ms / cycle_time_ms)
-        ct.set_tonc("my_delay", cycles_needed)
-
 State Machines
 ==============
 
@@ -345,28 +329,29 @@ Simple State Machine
             ct.io.yellow_led.value = False
             ct.io.red_led.value = False
 
-            # After 100 cycles (2s @ 20ms), go to yellow
-            ct.set_tonc("green_time", 100)
-            if ct.get_tonc("green_time"):
+            # After 2 seconds, go to yellow
+            ct.set_ton("green_time", 2000)
+            if ct.get_ton("green_time"):
                 ct.var.state = "YELLOW"
 
         elif ct.var.state == "YELLOW":
             ct.io.green_led.value = False
             ct.io.yellow_led.value = True
 
-            ct.set_tonc("yellow_time", 25)  # 500ms
-            if ct.get_tonc("yellow_time"):
+            ct.set_ton("yellow_time", 500)
+            if ct.get_ton("yellow_time"):
                 ct.var.state = "RED"
 
         elif ct.var.state == "RED":
             ct.io.yellow_led.value = False
             ct.io.red_led.value = True
 
-            ct.set_tonc("red_time", 150)  # 3s
-            if ct.get_tonc("red_time"):
+            ct.set_ton("red_time", 3000)
+            if ct.get_ton("red_time"):
                 ct.var.state = "GREEN"
 
     rpi = revpimodio2.RevPiModIO(autorefresh=True)
+    rpi.handlesignalend()
     rpi.cycleloop(traffic_light)
 
 Complex State Machine
@@ -396,8 +381,8 @@ Complex State Machine
             ct.io.yellow_led.value = True
 
             # 2-second startup delay
-            ct.set_tonc("startup", 100)
-            if ct.get_tonc("startup"):
+            ct.set_ton("startup", 2000)
+            if ct.get_ton("startup"):
                 ct.var.state = "RUNNING"
                 print("Running")
 
@@ -422,8 +407,8 @@ Complex State Machine
         # State: STOPPING - Controlled shutdown
         elif ct.var.state == "STOPPING":
             # Coast motor for 1 second
-            ct.set_tofc("coast", 50)
-            ct.io.motor.value = ct.get_tofc("coast")
+            ct.set_tof("coast", 1000)
+            ct.io.motor.value = ct.get_tof("coast")
 
             if not ct.io.motor.value:
                 ct.var.state = "IDLE"
@@ -432,7 +417,7 @@ Complex State Machine
         # State: ERROR - Fault condition
         elif ct.var.state == "ERROR":
             ct.io.motor.value = False
-            ct.io.red_led.value = ct.flag2c  # Blink red
+            ct.io.red_led.value = ct.flag5c  # Blink red
 
             if ct.changed(ct.io.ack_button, edge=revpimodio2.RISING):
                 if not ct.io.error_sensor.value:
@@ -442,8 +427,7 @@ Complex State Machine
         if ct.last:
             print(f"Total production: {ct.var.production_count}")
 
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-    rpi.cycleloop(machine_controller)
+    revpimodio.run_plc(machine_controller)
 
 Practical Examples
 ==================
@@ -476,14 +460,17 @@ Temperature monitoring with hysteresis control:
 
         # Warning if too hot
         if temp > 85:
-            ct.io.warning_led.value = ct.flag2c  # Blink
+            ct.core.a1green.value = False
+            ct.core.a1red.value = ct.flag5c  # Blink
+        else:
+            ct.core.a1green.value = ct.flag5c  # Blink
+            ct.core.a1red.value = False
 
         # Emergency shutdown
         if temp > 95:
             ct.io.emergency_shutdown.value = True
 
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-    rpi.cycleloop(temperature_monitor)
+    revpimodio2.run_plc(temperature_monitor)
 
 Production Counter
 ------------------
@@ -520,8 +507,7 @@ Count production items with start/stop control:
             print(f"Final count: {ct.var.total_count}")
             ct.var.total_count = 0
 
-    rpi = revpimodio2.RevPiModIO(autorefresh=True)
-    rpi.cycleloop(production_counter)
+    revpimodio2.run_plc(production_counter)
 
 Best Practices
 ==============
@@ -544,7 +530,7 @@ Minimize processing time in each cycle:
 **Guidelines:**
 
 * Avoid blocking operations (network, file I/O)
-* Use flank flags for expensive operations
+* Use flank flags for expensive operations or even Threads
 * Keep cycle time ≥20ms for stability
 
 Use Appropriate Cycle Time
