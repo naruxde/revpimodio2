@@ -2,6 +2,7 @@
 pytest-cov
 setuptools
 sphinx
+sphinx-rtd-theme
 wheel
 
 # Runtime dependencies, must match install_requires in setup.py

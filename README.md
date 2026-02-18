@@ -1,5 +1,11 @@
 # RevPiModIO
 
+### Documentation:
+
+For a complete reference of all classes, methods, and functions, please see the
+official documentation:
+[https://revpimodio2.readthedocs.io/](https://revpimodio2.readthedocs.io/)
+
 ### Python3 programming for RevolutionPi of KUNBUS GmbH.
 
 The module provides all devices and IOs from the piCtory configuration in

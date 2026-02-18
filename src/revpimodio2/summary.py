@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
-"""Bildet die Summary-Sektion von piCtory ab."""
+"""Maps the Summary section from piCtory."""
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"
 
 
 class Summary:
-    """Bildet die Summary-Sektion der config.rsc ab."""
+    """Maps the Summary section of config.rsc."""
 
     __slots__ = "inptotal", "outtotal"
 
     def __init__(self, summary: dict):
         """
-        Instantiiert die RevPiSummary-Klasse.
+        Instantiates the RevPiSummary class.
 
-        :param summary: piCtory Summaryinformationen
+        :param summary: piCtory summary information
         """
         self.inptotal = summary.get("inpTotal", -1)
         self.outtotal = summary.get("outTotal", -1)

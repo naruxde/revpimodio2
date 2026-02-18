@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Stellt alle Klassen fuer den RevolutionPi zur Verfuegung.
+Provides all classes for the RevolutionPi.
 
 Webpage: https://revpimodio.org/
 
-Stellt Klassen fuer die einfache Verwendung des Revolution Pis der
-KUNBUS GmbH (https://revolution.kunbus.de/) zur Verfuegung. Alle I/Os werden
-aus der piCtory Konfiguration eingelesen und mit deren Namen direkt zugreifbar
-gemacht. Fuer Gateways sind eigene IOs ueber mehrere Bytes konfigurierbar
-Mit den definierten Namen greift man direkt auf die gewuenschten Daten zu.
-Auf alle IOs kann der Benutzer Funktionen als Events registrieren. Diese
-fuehrt das Modul bei Datenaenderung aus.
+Provides classes for easy use of the Revolution Pi from
+KUNBUS GmbH (https://revolutionpi.com/) . All I/Os are
+read from the piCtory configuration and made directly accessible by their names.
+For gateways, custom IOs can be configured across multiple bytes.
+With the defined names, the desired data is accessed directly.
+The user can register functions as events for all IOs. The module
+executes these when data changes.
 """
 __all__ = [
     "IOEvent",

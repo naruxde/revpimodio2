@@ -15,6 +15,8 @@ __license__ = "LGPLv2"
 
 
 class ProductType:
+    """Product type constants for Revolution Pi devices and modules."""
+
     CON_BT = 111
     CON_CAN = 109
     CON_MBUS = 110
