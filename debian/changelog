@@ -1,3 +1,34 @@
+revpimodio2 (2.8.1-1) stable; urgency=medium
+
+  [ Nicolai Buchwitz ]
+  * docs: translate German comments and docstrings to English
+  * fix: correct typos and complete German translations
+  * docs: add comprehensive documentation structure and API reference
+  * docs: add missing docstrings to classes and methods
+  * docs: translate German text in docstrings to English
+  * docs: fix last German text in io.py docstring
+  * docs: improve watchdog toggle terminology and formatting
+  * docs: enable inherited members display by default
+  * docs: use inline attribute docstrings for Sphinx compatibility
+  * ci: add Read the Docs configuration
+  * docs: enforce 100 character line width in docstrings
+
+  [ Sven Sager ]
+  * style: Remove redundant whitespaces from docstrings and comments
+
+  [ Nicolai Buchwitz ]
+  * docs: add docs extra dependencies and missing _static directory
+
+  [ Sven Sager ]
+  * docs: Update documentation for improved clarity and consistency
+  * chore: Update `setup.py` and README with project URLs
+  * chore: Bump version to 2.8.1
+  * chore: Add `sphinx-rtd-theme` to `requirements.txt` for documentation
+  * build: Add `docs/_build` to `make clean` target in Makefile
+  * fix(deb): Use default sphinx theme
+
+ -- Sven Sager <akira@narux.de>  Wed, 18 Feb 2026 16:00:10 +0100
+
 revpimodio2 (2.8.0-1) stable; urgency=medium
 
   * chore: Increase to RC1 of upcoming Release 2.7.2
