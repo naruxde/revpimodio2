@@ -1288,9 +1288,13 @@ class RelaisOutput(IOBase):
                         self.__ioctl_arg,
                     )
                 except Exception as e:
-                    # If not implemented, we return the max value and set an error
-                    ioctl_return_value = b"\xff" * struct.calcsize(self.__ioctl_arg_format)
+                    # A failed ioctl means the counters could not be read, e.g.
+                    # the module is not present or not responding. Returning a
+                    # fake value would hide that from the caller, so raise.
                     self._parentdevice._modio._gotioerror("rocounter", e)
+                    raise RuntimeError(
+                        "could not read switching cycles from module: {0}".format(e)
+                    ) from e
 
         elif hasattr(self._parentdevice._modio._myfh, "ioctl"):
             # IOCTL over network
