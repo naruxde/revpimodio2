@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """RevPiModIO module for managing IOs."""
+
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module for managing devices."""
+
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"

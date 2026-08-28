@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """RevPiModIO main class for network access."""
+
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"

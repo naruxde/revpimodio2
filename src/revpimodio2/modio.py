@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """RevPiModIO main class for piControl0 access."""
+
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"
@@ -1533,7 +1534,15 @@ class RevPiModIODriver(RevPiModIOSelected):
         )
 
 
-def run_plc(func, cycletime=50, replace_io_file=None, debug=True, procimg=None, configrsc=None, shared_procimg=False):
+def run_plc(
+    func,
+    cycletime=50,
+    replace_io_file=None,
+    debug=True,
+    procimg=None,
+    configrsc=None,
+    shared_procimg=False,
+):
     """
     Run Revoluton Pi as real plc with cycle loop and exclusive IO access.
 
@@ -1560,7 +1569,7 @@ def run_plc(func, cycletime=50, replace_io_file=None, debug=True, procimg=None, 
         debug=debug,
         procimg=procimg,
         configrsc=configrsc,
-        shared_procimg=shared_procimg
+        shared_procimg=shared_procimg,
     )
     rpi.handlesignalend()
     return rpi.cycleloop(func, cycletime)
