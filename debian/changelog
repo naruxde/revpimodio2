@@ -1,3 +1,45 @@
+revpimodio2 (2.9.0~rc1-1) unstable; urgency=medium
+
+  [ Sven Sager ]
+  * chore: Release 2.8.0
+
+  [ Nicolai Buchwitz ]
+  * docs: translate German comments and docstrings to English
+  * fix: correct typos and complete German translations
+  * docs: add comprehensive documentation structure and API reference
+  * docs: add missing docstrings to classes and methods
+  * docs: translate German text in docstrings to English
+  * docs: fix last German text in io.py docstring
+  * docs: improve watchdog toggle terminology and formatting
+  * docs: enable inherited members display by default
+  * docs: use inline attribute docstrings for Sphinx compatibility
+  * ci: add Read the Docs configuration
+  * docs: enforce 100 character line width in docstrings
+
+  [ Sven Sager ]
+  * style: Remove redundant whitespaces from docstrings and comments
+
+  [ Nicolai Buchwitz ]
+  * docs: add docs extra dependencies and missing _static directory
+
+  [ Sven Sager ]
+  * docs: Update documentation for improved clarity and consistency
+  * chore: Update `setup.py` and README with project URLs
+  * chore: Bump version to 2.8.1
+  * chore: Add `sphinx-rtd-theme` to `requirements.txt` for documentation
+  * build: Add `docs/_build` to `make clean` target in Makefile
+
+  [ kellergoech ]
+  * Add shared_procimg to run_plc function
+
+  [ Sven Sager ]
+  * feat: Add counter reset function to the MIO module
+  * style: Format code with black
+  * chore: Increase to RC1 of upcoming Release 2.9.0
+  * feat(deb): Add python3-sphinx-rtd-theme as build dependency
+
+ -- Sven Sager <akira@narux.de>  Mon, 31 Aug 2026 16:07:37 +0200
+
 revpimodio2 (2.8.0~rc2-1) unstable; urgency=medium
 
   * test: Fix test for default location of config.rsc
