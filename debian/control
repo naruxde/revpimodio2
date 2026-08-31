@@ -11,7 +11,8 @@ Build-Depends:
   dh-python,
   python3-all,
   python3-setuptools,
-  python3-sphinx
+  python3-sphinx,
+  python3-sphinx-rtd-theme,
 Standards-Version: 4.3.0
 
 Package: python3-revpimodio2
