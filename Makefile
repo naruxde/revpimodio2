@@ -73,6 +73,8 @@ clean:
 	rm -rf build dist src/*.egg-info
 	# PyInstaller created files
 	rm -rf *.spec
+	# Documentation builds
+	rm -rf docs/_build
 
 distclean: clean
 	# Virtual environment

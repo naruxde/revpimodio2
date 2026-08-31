@@ -16,18 +16,24 @@ with open("README.md") as fh:
 setup(
     name="revpimodio2",
     version=__version__,
-
     packages=find_namespace_packages("src"),
-    package_dir={'': 'src'},
+    package_dir={"": "src"},
     include_package_data=True,
-
     python_requires=">= 3.2",
     install_requires=[],
+    extras_require={
+        "docs": [
+            "sphinx",
+            "sphinx_rtd_theme",
+        ],
+    },
     entry_points={},
-
     platforms=["all"],
-
     url="https://revpimodio.org/",
+    project_urls={
+        "Documentation": "https://revpimodio2.readthedocs.io/",
+        "Source": "https://github.com/naruxde/revpimodio2",
+    },
     license="LGPLv2",
     author="Sven Sager",
     author_email="akira@narux.de",
@@ -41,12 +47,11 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: "
-        "GNU Lesser General Public License v2 (LGPLv2)",
+        "License :: OSI Approved :: " "GNU Lesser General Public License v2 (LGPLv2)",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX",
         "Programming Language :: Python :: 3",
-        "Topic :: Software Development :: Libraries :: Python Modules"
+        "Topic :: Software Development :: Libraries :: Python Modules",
     ],
 )

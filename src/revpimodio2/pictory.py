@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Pictory aliases for IO values."""
+
 __author__ = "Théo Rozier"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"
@@ -15,6 +16,8 @@ __license__ = "LGPLv2"
 
 
 class ProductType:
+    """Product type constants for Revolution Pi devices and modules."""
+
     CON_BT = 111
     CON_CAN = 109
     CON_MBUS = 110

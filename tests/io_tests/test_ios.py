@@ -84,7 +84,7 @@ class TestIos(TestRevPiModIO):
         """Testet mehrbittige IOs."""
         rpi = self.modio(configrsc="config_supervirt.rsc")
 
-        # Adressen und Längen prüfen
+        # Check addresses and lengths
         self.assertEqual(rpi.device[65]._offset, 75)
 
         self.assertEqual(rpi.io.InBit_1.length, 1)

@@ -48,7 +48,7 @@ class TestRevPiConnect(TestRevPiModIO):
             with self.assertRaises(ValueError):
                 rpi.core.A3 = BLUE
 
-            # Direkte Zuweisung darf nicht funktionieren
+            # Direct assignment must not work
             with self.assertRaises(AttributeError):
                 rpi.core.a3green = True
             with self.assertRaises(AttributeError):

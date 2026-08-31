@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Internal functions and values for this package."""
+
 __author__ = "Sven Sager"
 __copyright__ = "Copyright (C) 2023 Sven Sager"
 __license__ = "LGPLv2"
@@ -45,12 +46,12 @@ def acheck(check_type, **kwargs) -> None:
 
 def consttostr(value) -> str:
     """
-    Gibt <class 'str'> fuer Konstanten zurueck.
+    Returns <class 'str'> for constants.
 
-    Diese Funktion ist erforderlich, da enum in Python 3.2 nicht existiert.
+    This function is required because enum does not exist in Python 3.2.
 
-    :param value: Konstantenwert
-    :return: <class 'str'> Name der Konstanten
+    :param value: Constant value
+    :return: <class 'str'> Name of the constant
     """
     if value == 0:
         return "OFF"

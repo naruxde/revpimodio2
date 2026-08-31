@@ -93,10 +93,10 @@ class TestInitModio(TestRevPiModIO):
         self.assertEqual(2, len(rpi.device))
         del rpi
         with self.assertRaises(revpimodio2.errors.DeviceNotFoundError):
-            # Liste mit einem ungültigen Device als <class 'list'>
+            # List with an invalid device as <class 'list'>
             rpi = revpimodio2.RevPiModIOSelected([32, 10], **defaultkwargs)
         with self.assertRaises(revpimodio2.errors.DeviceNotFoundError):
-            # Ungültiges Device als <class 'int'>
+            # Invalid device as <class 'int'>
             rpi = revpimodio2.RevPiModIOSelected(100, **defaultkwargs)
         with self.assertRaises(ValueError):
             # Ungültiger Devicetype
@@ -116,10 +116,10 @@ class TestInitModio(TestRevPiModIO):
 
         # RevPiModIODriver
         with self.assertRaises(revpimodio2.errors.DeviceNotFoundError):
-            # Liste mit einem ungültigen Device als <class 'list'>
+            # List with an invalid device as <class 'list'>
             rpi = revpimodio2.RevPiModIODriver([64, 100], **defaultkwargs)
         with self.assertRaises(revpimodio2.errors.DeviceNotFoundError):
-            # Ungültiges Device als <class 'int'>
+            # Invalid device as <class 'int'>
             rpi = revpimodio2.RevPiModIODriver([100], **defaultkwargs)
         with self.assertRaises(ValueError):
             # Ungültiger Devicetype
@@ -132,7 +132,7 @@ class TestInitModio(TestRevPiModIO):
         self.assertEqual(1, len(rpi.device))
         del rpi
 
-        # Core ios als bits
+        # Core ios as bits
         rpi = self.modio(configrsc="config_core_bits.json")
         del rpi
 

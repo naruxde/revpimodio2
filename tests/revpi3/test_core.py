@@ -97,7 +97,7 @@ class TestRevPiCore(TestRevPiModIO):
         with self.assertWarnsRegex(Warning, r"equal device name '.*' in pictory configuration."):
             rpi = self.modio(configrsc="config_old.rsc")
 
-        # Errorlimits testen, die es nicht gibt (damals None, jetzt -1)
+        # Test error limits that don't exist (formerly None, now -1)
         self.assertEqual(rpi.core.errorlimit1, -1)
         self.assertEqual(rpi.core.errorlimit2, -1)
 

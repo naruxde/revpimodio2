@@ -20,7 +20,7 @@ class TestFlat(TestRevPiModIO):
 
         self.assertIsInstance(rpi.core, revpimodio2.device.Flat)
 
-        # FLAT LEDs prüfen
+        # Check FLAT LEDs
         rpi.core.A1 = revpimodio2.OFF
         self.assertEqual(rpi.io.RevPiLED.get_value(), b"\x00\x00")
         self.assertEqual(rpi.core.A1, 0)
@@ -77,12 +77,12 @@ class TestFlat(TestRevPiModIO):
         with self.assertRaises(ValueError):
             rpi.core.A5 = 5
 
-        # Spezielle Werte aufrufen
+        # Call special values
         self.assertIsInstance(rpi.core.temperature, int)
         self.assertIsInstance(rpi.core.frequency, int)
         rpi.core.wd_toggle()
 
-        # Directzuweisung nicht erlaubt
+        # Direct assignment not allowed
         with self.assertRaisesRegex(AttributeError, r"direct assignment is not supported"):
             rpi.core.a1green = True
 
