@@ -1,3 +1,21 @@
+revpimodio2 (2.9.0-1) stable; urgency=medium
+
+  [ kellergoech ]
+  * Add shared_procimg to run_plc function
+
+  [ Sven Sager ]
+  * feat: Add counter reset function to the MIO module
+  * style: Format code with black
+  * chore: Increase to RC1 of upcoming Release 2.9.0
+  * fix: Update `reset` method to return a boolean indicating success
+  * feat: Return -1 to indicate an error in `get_switching_cycles` method
+  * test: Return -1 to indicate an error in `get_switching_cycles` method
+  * chore: Update IDE configuration for Black formatting tool integration
+  * chore: Increase to RC2 of upcoming Release 2.9.0
+  * chore: Bump version to 2.9.0
+
+ -- Sven Sager <akira@narux.de>  Tue, 01 Sep 2026 13:51:34 +0200
+
 revpimodio2 (2.8.1-1) stable; urgency=medium
 
   [ Nicolai Buchwitz ]
