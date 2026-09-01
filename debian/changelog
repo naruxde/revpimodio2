@@ -1,3 +1,13 @@
+revpimodio2 (2.9.0~rc2-1) unstable; urgency=medium
+
+  * fix: Update `reset` method to return a boolean indicating success
+  * feat: Return -1 to indicate an error in `get_switching_cycles` method
+  * test: Return -1 to indicate an error in `get_switching_cycles` method
+  * chore: Update IDE configuration for Black formatting tool integration
+  * chore: Increase to RC2 of upcoming Release 2.9.0
+
+ -- Sven Sager <akira@narux.de>  Tue, 01 Sep 2026 08:46:14 +0200
+
 revpimodio2 (2.9.0~rc1-1) unstable; urgency=medium
 
   [ Sven Sager ]
