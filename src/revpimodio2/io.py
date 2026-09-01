@@ -1131,8 +1131,12 @@ class IntIOCounter(IntIO):
         # Load base class
         super().__init__(parentdevice, valuelist, iotype, byteorder, signed)
 
-    def reset(self) -> None:
-        """Resets the counter of the input."""
+    def reset(self) -> bool:
+        """
+        Resets the counter of the input.
+
+        :return: True if reset was successful, False otherwise
+        """
         if self._parentdevice._modio._monitoring:
             raise RuntimeError("can not reset counter, while system is in monitoring mode")
         if self._parentdevice._modio._simulator:
@@ -1146,6 +1150,7 @@ class IntIOCounter(IntIO):
                     ioctl(self._parentdevice._modio._myfh, 19220, self.__ioctl_arg)
                 except Exception as e:
                     self._parentdevice._modio._gotioerror("iorst", e)
+                    return False
 
         elif hasattr(self._parentdevice._modio._myfh, "ioctl"):
             # IOCTL over network
@@ -1154,6 +1159,7 @@ class IntIOCounter(IntIO):
                     self._parentdevice._modio._myfh.ioctl(19220, self.__ioctl_arg)
                 except Exception as e:
                     self._parentdevice._modio._gotioerror("net_iorst", e)
+                    return False
 
         else:
             # Simulate IOCTL in file
@@ -1162,6 +1168,9 @@ class IntIOCounter(IntIO):
                 self._parentdevice._modio._simulate_ioctl(19220, self.__ioctl_arg)
             except Exception as e:
                 self._parentdevice._modio._gotioerror("file_iorst", e)
+                return False
+
+        return True
 
 
 class IntIOReplaceable(IntIO):
