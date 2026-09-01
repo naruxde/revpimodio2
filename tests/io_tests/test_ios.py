@@ -105,3 +105,30 @@ class TestIos(TestRevPiModIO):
         self.assertEqual(rpi.device[65]._ba_devdata[32:38], b"\x20\x00\x00\x00\x00\x00")
         rpi.io.OutBit_48.value = True
         self.assertEqual(rpi.device[65]._ba_devdata[32:38], b"\x20\x00\x00\x00\x00\x80")
+
+    def test_get_switching_cycles(self):
+        rpi = self.modio(configrsc="config_ro_multi.rsc")
+        self.assertEqual(rpi.io.RelayOutput_1.get_switching_cycles(), 0)
+        self.assertEqual(rpi.io.RelayOutput_2.get_switching_cycles(), 0)
+        self.assertEqual(rpi.io.RelayOutput_3.get_switching_cycles(), 0)
+        self.assertEqual(rpi.io.RelayOutput_4.get_switching_cycles(), 0)
+
+        # This will use ioctl calls
+        rpi._run_on_pi = True
+
+        with self.assertWarnsRegex(RuntimeWarning, r"'rocounter' and count \d"):
+            self.assertEqual(rpi.io.RelayOutput_1.get_switching_cycles(), -1)
+            self.assertEqual(rpi.io.RelayOutput_2.get_switching_cycles(), -1)
+            self.assertEqual(rpi.io.RelayOutput_3.get_switching_cycles(), -1)
+            self.assertEqual(rpi.io.RelayOutput_4.get_switching_cycles(), -1)
+        self.assertEqual(rpi.ioerrors, 4)
+
+        rpi = self.modio(configrsc="config_ro_single.rsc")
+        self.assertEqual(rpi.io.RelayOutputs.get_switching_cycles(), (0, 0, 0, 0))
+
+        # This will use ioctl calls
+        rpi._run_on_pi = True
+
+        with self.assertWarnsRegex(RuntimeWarning, r"'rocounter' and count \d"):
+            self.assertEqual(rpi.io.RelayOutputs.get_switching_cycles(), (-1, -1, -1, -1))
+        self.assertEqual(rpi.ioerrors, 1)
