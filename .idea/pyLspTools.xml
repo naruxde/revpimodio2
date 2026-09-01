@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PyToolsState">
+    <option name="tools">
+      <map>
+        <entry key="black">
+          <value>
+            <ToolEntry>
+              <option name="enabled" value="true" />
+              <option name="discoveryMode" value="PATH" />
+              <option name="customPathToExecutable" value="/opt/homebrew/bin/black" />
+            </ToolEntry>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

@@ -12,6 +12,7 @@ With the defined names, the desired data is accessed directly.
 The user can register functions as events for all IOs. The module
 executes these when data changes.
 """
+
 __all__ = [
     "IOEvent",
     "RevPiModIO",
