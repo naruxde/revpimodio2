@@ -1285,7 +1285,8 @@ class RelaisOutput(IOBase):
         This function is only available locally on a Revolution Pi. This
         function cannot be used via RevPiNetIO.
 
-        :return: Integer of switching cycles as single value or tuple of all
+        :return: Integer of switching cycles as single value or tuple of all. The
+                 value -1 indicates an error.
         """
         # Using ioctl request K+29 = 19229
         if self._parentdevice._modio._run_on_pi:
@@ -1298,9 +1299,13 @@ class RelaisOutput(IOBase):
                         self.__ioctl_arg,
                     )
                 except Exception as e:
-                    # If not implemented, we return the max value and set an error
-                    ioctl_return_value = b"\xff" * struct.calcsize(self.__ioctl_arg_format)
                     self._parentdevice._modio._gotioerror("rocounter", e)
+
+                    # To report an error, return -1 values
+                    if self._bitaddress == -1:
+                        return -1, -1, -1, -1
+                    else:
+                        return -1
 
         elif hasattr(self._parentdevice._modio._myfh, "ioctl"):
             # IOCTL over network
